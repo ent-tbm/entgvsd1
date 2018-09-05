@@ -262,7 +262,8 @@ C****
       enddo
 
       do j=1,JM
-         lat(j) = 90.25 - 0.25/2 - .25*j
+!         lat(j) = 90.25 - 0.25/2 - .25*j
+         lat(j) = -90.25 + 0.25/2 + .25*j
       enddo
 
       end subroutine calc_lon_lat_025x025
@@ -368,7 +369,7 @@ C****
 
       integer :: k,p,i,j,m
       real*4 :: laimaxin(X1km,Y1km)
-      real*4 :: hin(X1km,Y1km)
+      real*4 :: hin(X1km,Y1km),hinpre(X1km,Y1km)
       real*4 :: wlaiin(X1km,Y1km)
       
       real*4 :: hlaiprod(X1km,Y1km)
@@ -468,98 +469,52 @@ C****
          
          ! read height
          err = NF_GET_VARA_REAL(fileidhin,varidhin,start3d,
-     &        count3d,hin)
+     &        count3d,hinpre)
+	 do i = 1,longin
+	     do j = 1,latin
+	        hin(i,j) = hinpre(i,j+Y1km+1-2*j)
+	     enddo
+	 enddo	
          write(*,*) err, ' height in', shape(hin)
- 	 
-         ! read laimax
-         err = NF_GET_VARA_REAL(fileidlaimaxin(k),
-     &        varidlaimaxin(k),start,count,laimaxin)
-         write(*,*) err, ' laimax in', shape(laimaxin)
-
-         do i = 1,X1km
-            do j = 1,Y1km
-               hlaiprod(i,j) = hin(i,j)*laimaxin(i,j)
-            enddo
-         enddo
-
-         do i = 1,X1km
-            do j = 1,Y1km
-		if (hlaiprod(i,j).eq.0) then
-		    hlaiprod(i,j) = undef
-		endif
-            enddo
-         enddo
-
-         !* Setup grids
-         write(*,*) longin,latin,OFFIA,DLATA,
-     &        longout,latout,OFFIB,DLATB,DATMIS
-         
-         write(*,*) 'Calling HNTR40'
-         call HNTR40(longin,latin,OFFIA,DLATA,
-     *        longout,latout,OFFIB,DLATB, DATMIS)
-         write(*,*) 'Finished HNTR40'
 
          do i=1,longin
             do j=1,latin
-               !* Weights, if any
-               WTIN(i,j) = 1.
-               if (hlaiprod(i,j).eq.undef) WTIN(i,j) = 0.
-            end do
-         end do
-
-         write(*,*) 'Calling HNTR40'
-         call HNTR4P(WTIN, hlaiprod, hlaiprodout)
-         write(*,*) 'Finished HNTR40'
-
-         !* Setup grids
-         write(*,*) longin,latin,OFFIA,DLATA,
-     &        longout,latout,OFFIB,DLATB,DATMIS
-         
-         write(*,*) 'Calling HNTR40'
-         call HNTR40(longin,latin,OFFIA,DLATA,
-     *        longout,latout,OFFIB,DLATB, DATMIS)
-         write(*,*) 'Finished HNTR40'
-
-         do i = 1,X1km
-            do j = 1,Y1km
-		if (laimaxin(i,j).eq.0) then
-		    laimaxin(i,j) = undef
-		endif
-            enddo
-         enddo
-
-         do i=1,longin
-            do j=1,latin
-               !* Weights, if any
-               WTIN(i,j) = 1.
-               if (laimaxin(i,j).eq.undef) WTIN(i,j) = 0.
-            end do
-         end do
-
-         write(*,*) 'Calling HNTR40'
-         call HNTR4P(WTIN, laimaxin,laiout)
-         write(*,*) 'Finished HNTR40'
-         
-         do i = 1,IM25
-            do j = 1,JM25
-               if (laiout(i,j).eq.undef) then
-                  heightout(i,j) = undef
-	       elseif (hlaiprodout(i,j).eq.undef) then
-		       heightout(i,j) = undef
-               else
-                  heightout(i,j) = hlaiprodout(i,j)/laiout(i,j)
+               if (hin(i,j).eq.0) then
+                  hin(i,j) = undef
                endif
-		  write(*,*) hlaiprodout(i,j),laiout(i,j),heightout(i,j)
-            enddo
-         enddo
+            end do
+         end do
 
-         do i = 1,IM25
-            do j = 1,JM25
-		if (heightout(i,j).gt.100) then
-		    heightout(i,j) = undef
-		endif
-            enddo
-         enddo
+         ! read laimax
+
+         !* Setup grids
+         write(*,*) longin,latin,OFFIA,DLATA,
+     &        longout,latout,OFFIB,DLATB,DATMIS
+         
+         write(*,*) 'Calling HNTR40'
+         call HNTR40(longin,latin,OFFIA,DLATA,
+     *        longout,latout,OFFIB,DLATB, DATMIS)
+         write(*,*) 'Finished HNTR40'
+
+         do i=1,longin
+            do j=1,latin
+               !* Weights, if any
+               WTIN(i,j) = 1.
+               if (hin(i,j).eq.undef) WTIN(i,j) = 0.
+            end do
+         end do
+
+         write(*,*) 'Calling HNTR40'
+         call HNTR4P(WTIN, hin, heightout)
+         write(*,*) 'Finished HNTR40'
+
+         do i=1,longout
+            do j=1,latout
+               if (heightout(i,j).eq.undef) then
+                  heightout(i,j) = 0
+               endif
+            end do
+         end do
 
          start3d(1) = k
          start3d(2) = 1

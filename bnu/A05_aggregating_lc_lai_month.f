@@ -262,7 +262,8 @@ C****
       enddo
 
       do j=1,JM
-         lat(j) = 90.25 - 0.25/2 - .25*j
+!         lat(j) = 90.25 - 0.25/2 - .25*j
+         lat(j) = -90.25 + 0.25/2 + .25*j
       enddo
 
       end subroutine calc_lon_lat_025x025
@@ -373,8 +374,8 @@ C****
       real*4 :: lat(JM25)
 
       integer :: k,p,i,j,m
-      real*4 :: laiin(X1km,Y1km)
-      real*4 :: lcin(X1km,Y1km)
+      real*4 :: laiin(X1km,Y1km),laiinpre(X1km,Y1km)
+      real*4 :: lcin(X1km,Y1km),lcinpre(X1km,Y1km)
       real*4 :: wlaiin(X1km,Y1km)
       
       real*4 :: lclaiprod(X1km,Y1km)
@@ -416,7 +417,6 @@ C****
 
 !     ENTPFTLAIMONTHLY
       do m = 1,12
-
          PathFilepre= '../lc_lai_ent/nc/'
          PathFilepost= 'EntMM_lc_lai_'//trim(MONTH(m))//
      &        '_1kmx1km.nc'
@@ -501,7 +501,13 @@ C****
                count(1) = X1km
                count(2) = Y1km
                err = NF_GET_VARA_REAL(fileidwlc,varidwlc,start,
-     &           count,lcin)
+     &           count,lcinpre)
+    	       do i = 1,longin
+	           do j = 1,latin
+	              lcin(i,j) = lcinpre(i,j+Y1km+1-2*j)
+	           enddo
+	       enddo	
+
                write(*,*) 'get wlc ', err
             
               !* Setup grids
@@ -513,14 +519,6 @@ C****
      *              longout,latout,OFFIB,DLATB, DATMIS)
                write(*,*) 'Finished HNTR40'
             
-               do i=1,longin
-                  do j=1,latin
-                     if (lcin(i,j).eq.0) then
-		         lcin(i,j) = undef
-		     endif
-                  enddo
-               enddo
-
                do i=1,longin
                   do j=1,latin
                      !* Weights, if any
@@ -550,8 +548,13 @@ C****
                count(1) = X1km
                count(2) = Y1km
                err = NF_GET_VARA_REAL(fileidlcin(k-1),varidlcin(k-1),
-     &              start,count,lcin)
-               
+     &              start,count,lcinpre)
+               do i = 1,longin
+	          do j = 1,latin
+	             lcin(i,j) = lcinpre(i,j+Y1km+1-2*j)
+	          enddo
+	       enddo	
+
                !* Setup grids
                write(*,*) longin,latin,OFFIA,DLATA,
      &              longout,latout,OFFIB,DLATB,DATMIS
@@ -561,14 +564,6 @@ C****
      *              longout,latout,OFFIB,DLATB, DATMIS)
                write(*,*) 'Finished HNTR40'
             
-               do i=1,longin
-                  do j=1,latin
-                     if (lcin(i,j).eq.0) then
-	  	         lcin(i,j) = undef
-		     endif
-                  enddo
-               enddo
-
                do i=1,longin
                   do j=1,latin
                      !* Weights, if any
@@ -606,23 +601,20 @@ C****
                count3d(3) = Y1km
             
                err = NF_GET_VARA_REAL(fileidlaimin(m),
-     &              varidlaimin(m),start3d,count3d,laiin)
+     &              varidlaimin(m),start3d,count3d,laiinpre)
+	       do i = 1,longin
+	           do j = 1,latin
+	              laiin(i,j) = laiinpre(i,j+Y1km+1-2*j)
+	           enddo
+	       enddo	
 
-               err = NF_GET_VARA_REAL(fileidwlc,varidwlc,start,
-     &              count,lcin)
-               
-               do i = 1,X1km
-                  do j = 1,Y1km
-                     lclaiprod(i,j) = lcin(i,j)*laiin(i,j)
-                  enddo
-               enddo
-               do i = 1,X1km
-                  do j = 1,Y1km
-	             if (lclaiprod(i,j).eq.0) then
-		 	 lclaiprod(i,j) = undef
-		     endif
-                  enddo
-               enddo
+               do i=1,longin
+                  do j=1,latin
+                     if (laiin(i,j).eq.0) then
+                        laiin(i,j) = undef
+                     endif
+                  end do
+               end do
 
                !* Setup grids
                write(*,*) longin,latin,OFFIA,DLATA,
@@ -637,55 +629,21 @@ C****
                   do j=1,latin
                      !* Weights, if any
                      WTIN(i,j) = 1.
-                     if (lclaiprod(i,j).lt.0) WTIN(i,j) = 0.
+                     if (laiin(i,j).eq.undef) WTIN(i,j) = 0.
                   end do
                end do
                
                write(*,*) 'Calling HNTR40'
-               call HNTR4P(WTIN, lclaiprod, lclaiprodout)
-               write(*,*) 'Finished HNTR40'
-             
-               !* Setup grids
-               write(*,*) longin,latin,OFFIA,DLATA,
-     &              longout,latout,OFFIB,DLATB,DATMIS
-            
-               write(*,*) 'Calling HNTR40'
-               call HNTR40(longin,latin,OFFIA,DLATA,
-     *              longout,latout,OFFIB,DLATB, DATMIS)
-               write(*,*) 'Finished HNTR40'
-  
-               do i=1,longin
-                  do j=1,latin
-                     if (lcin(i,j).eq.0) then
-	   	         lcin(i,j) = undef
-	 	     endif
-                  enddo
-               enddo
-
-               do i=1,longin
-                  do j=1,latin
-                     !* Weights, if any
-                     WTIN(i,j) = 1.
-                     if (lcin(i,j).lt.0) WTIN(i,j) = 0.
-                  enddo
-               enddo
-               
-               write(*,*) 'Calling HNTR40'
-               call HNTR4P(WTIN, lcin,lcout)
+               call HNTR4P(WTIN, laiin,laimout)
                write(*,*) 'Finished HNTR40'
                
-               do i = 1,IM25
-                  do j = 1,JM25
-                     if (lcout(i,j).eq.undef) then
-                        laimout(i,j) = undef
-		     elseif (lclaiprodout(i,j).eq.undef) then
-			     laimout(i,j) = undef
-                     else
-                        laimout(i,j) = lclaiprodout(i,j)/lcout(i,j)
+	       do i=1,longout
+                  do j=1,latout
+                     if (laimout(i,j).eq.undef) then
+                        laimout(i,j) = 0
                      endif
-!		     write(*,*) lclaiprodout(i,j),lcout(i,j),laimouth(i,j)
-                  enddo
-               enddo
+                  end do
+               end do
 
                start(1) = 1
                start(2) = 1
@@ -712,20 +670,17 @@ C****
                count3d(3) = Y1km
                
                err = NF_GET_VARA_REAL(fileidlaimin(m),
-     &              varidlaimin(m),start3d,count3d,laiin)
-
-               err = NF_GET_VARA_REAL(fileidlcin(k-21),
-     &              varidlcin(k-21),start,count,lcin)
+     &              varidlaimin(m),start3d,count3d,laiinpre)
+	       do i = 1,longin
+	           do j = 1,latin
+	              laiin(i,j) = laiinpre(i,j+Y1km+1-2*j)
+	           enddo
+	       enddo	
 
                do i = 1,X1km
                   do j = 1,Y1km
-                     lclaiprod(i,j) = lcin(i,j)*laiin(i,j)
-                  enddo
-               enddo
-               do i = 1,X1km
-                  do j = 1,Y1km
-	             if (lclaiprod(i,j).eq.0) then
-		 	 lclaiprod(i,j) = undef
+	             if (laiin(i,j).eq.0) then
+		 	 laiin(i,j) = undef
 		     endif
                   enddo
                enddo
@@ -743,56 +698,22 @@ C****
                   do j=1,latin
                      !* Weights, if any
                      WTIN(i,j) = 1.
-                     if (lclaiprod(i,j).lt.0) WTIN(i,j) = 0.
+                     if (laiin(i,j).eq.undef) WTIN(i,j) = 0.
                   end do
                end do
                
                write(*,*) 'Calling HNTR40'
-               call HNTR4P(WTIN, lclaiprod, lclaiprodout)
+               call HNTR4P(WTIN, laiin, laimout)
                write(*,*) 'Finished HNTR40'
-             
-               !* Setup grids
-               write(*,*) longin,latin,OFFIA,DLATA,
-     &              longout,latout,OFFIB,DLATB,DATMIS
-            
-               write(*,*) 'Calling HNTR40'
-               call HNTR40(longin,latin,OFFIA,DLATA,
-     *              longout,latout,OFFIB,DLATB, DATMIS)
-               write(*,*) 'Finished HNTR40'
-  
-               do i=1,longin
-                  do j=1,latin
-                     if (lcin(i,j).eq.0) then
-	   	         lcin(i,j) = undef
-	 	     endif
-                  enddo
-               enddo
-
-               do i=1,longin
-                  do j=1,latin
-                     !* Weights, if any
-                     WTIN(i,j) = 1.
-                     if (lcin(i,j).lt.0) WTIN(i,j) = 0.
-                  enddo
-               enddo
-               
-               write(*,*) 'Calling HNTR40'
-               call HNTR4P(WTIN, lcin,lcout)
-               write(*,*) 'Finished HNTR40'
-               
-               do i = 1,IM25
-                  do j = 1,JM25
-                     if (lcout(i,j).eq.undef) then
-                        laimout(i,j) = undef
-		     elseif (lclaiprodout(i,j).eq.undef) then
-			     laimout(i,j) = undef
-                     else
-                        laimout(i,j) = lclaiprodout(i,j)/lcout(i,j)
+              
+               do i=1,longout
+                  do j=1,latout
+                     if (laimout(i,j).eq.undef) then
+                        laimout(i,j) = 0
                      endif
-!		     write(*,*) lclaiprodout(i,j),lcout(i,j),laimouth(i,j)
-                  enddo
-               enddo
-               
+                  end do
+               end do
+
                start(1) = 1
                start(2) = 1
                count(1) = IM25
