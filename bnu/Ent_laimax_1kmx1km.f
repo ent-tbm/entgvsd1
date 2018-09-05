@@ -118,7 +118,7 @@
      
 !------------------------------------------------------------------------
 
-      PathFilepre= '../lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
+      PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
       PathFilepost= 'Ent_laimax_1kmx1km.nc'
       fileout  =  trim(PathFilepre)//trim(PathFilepost)
       status = nf_open(fileout,nf_write,idhout)
