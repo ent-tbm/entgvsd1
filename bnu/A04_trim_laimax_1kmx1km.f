@@ -1182,34 +1182,35 @@
       enddo
 
       !------------------------------------------------------------------------
+      !------------------------------------------------------------------------
       ! CREATE OUTPUT NETCDF FILES
-      !  lai_max_pure
+      ! laimax_pure
       PathFilepre= '../lc_lai_ent16/nc/'
       PathFilepost= 'V1km_EntGVSDv1.1_BNU16_laimax_pure.nc'
       fileinnc = trim(PathFilepre)//trim(PathFilepost)
-      err = NF_CREATE(fileinnc,NF_64BIT_OFFSET,fidlaimaxpure)
+      err = NF_CREATE(fileinnc,NF_64BIT_OFFSET,fidlaiout)
       write(*,*) err, 'nf_create out ',trim(fileinnc)
-      err=NF_DEF_DIM(fidlaimaxpure,'lon',IM1km,dimidx)
+      err=NF_DEF_DIM(fidlaiout,'lon',IM1km,dimidx)
       write(*,*) err
-      err=NF_DEF_DIM(fidlaimaxpure,'lat',JM1km,dimidy)
-      write(*,*) err
-
-      err=NF_DEF_VAR(fidlaimaxpure,'lon',NF_FLOAT,1,dimidx,
-     &     varidxlai)
-      write(*,*) err
-      err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidxlai,
-     &     'long_name',9,"longitude")
-      write(*,*) err
-      err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidxlai,
-     &        'units',14,"degrees east")
+      err=NF_DEF_DIM(fidlaiout,'lat',JM1km,dimidy)
       write(*,*) err
       
-      err=NF_DEF_VAR(fidlaimaxpure,'lat',NF_FLOAT,1,dimidy,
-     &     varidylai)
-      err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidylai,
+      err=NF_DEF_VAR(fidlaiout,'lon',NF_FLOAT,1,dimidx
+     &     ,varidx)
+      write(*,*) err
+      err=NF_PUT_ATT_TEXT(fidlaiout,varidx,
+     &     'long_name',9,"longitude")
+      write(*,*) err
+      err=NF_PUT_ATT_TEXT(fidlaiout,varidx,
+     &        'units',12,"degrees east")
+      write(*,*) err
+      
+      err=NF_DEF_VAR(fidlaiout,'lat',NF_FLOAT,1,dimidy,
+     &     varidy)
+      err=NF_PUT_ATT_TEXT(fidlaiout,varidy,
      &     'long_name',8,"latitude")
       write(*,*) err
-      err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidylai,
+      err=NF_PUT_ATT_TEXT(fidlaiout,varidy,
      &        'units',13,"degrees north")
       write(*,*) err
 
@@ -1217,29 +1218,30 @@
       dd(2)=dimidy
       do k=1,18
          inqvarout = 'lai_'//EntPFT_shorttitle(k)
-         err=NF_DEF_VAR(fidlaimaxpure,inqvarout,NF_FLOAT,2,dd,
-     &       varidlaimaxpure(k))
+         err=NF_DEF_VAR(fidlaiout,inqvarout,NF_FLOAT,2,dd,
+     &        varidlaiout(k))
          write(*,*) err,inqvarout
-         err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidlaimaxpure(k),
+         err=NF_PUT_ATT_TEXT(fidlaiout,varidlaiout(k),
      &        'long_name',45,EntPFT_title(k)//"- LAI")
          write(*,*) err
-         err=NF_PUT_ATT_TEXT(fidlaimaxpure,varidlaimaxpure(k),
+         err=NF_PUT_ATT_TEXT(fidlaiout,varidlaiout(k),
      &        'units',5,"m2/m2")
-	 write(*,*) err
-         err=NF_PUT_ATT_REAL(fidlaimaxpure, varidlaimaxpure(k), 
+         write(*,*) err
+         err=NF_PUT_ATT_REAL(fidlaiout, varidlaiout(k), 
      &          '_FillValue',NF_FLOAT, 1, undef)
          write(*,*) err
       enddo
-      err=NF_ENDDEF(fidlaimaxpure)
+      err=NF_ENDDEF(fidlaiout)
       write(*,*) err
-      err=NF_PUT_VARA_REAL(fidlaimaxpure,varidxlai,1,IM1km,long)
+      err=NF_PUT_VARA_REAL(fidlaiout,varidx,1,IM1km,long)
       write(*,*) err
-      err=NF_PUT_VARA_REAL(fidlaimaxpure,varidylai,1,JM1km,lati)
+      err=NF_PUT_VARA_REAL(fidlaiout,varidy,1,JM1km,lati)
       write(*,*) err
-      
+
+
       !  checksum land  laimax
       PathFilepre= '../lc_lai_ent16/nc/'
-      PathFilepost= 'V1km_EntGVSDv1.1_BNU16_laimax_pure'//
+      PathFilepost= 'V1km_EntGVSDv1.1_LAI3g16_laimax_pure'//
      &     '_checksum.nc'
       fileinnc = trim(PathFilepre)//trim(PathFilepost)
       err = NF_CREATE(fileinnc,NF_64BIT_OFFSET,fidsum)
@@ -1280,14 +1282,6 @@
       write(*,*) err
 
       
-      err=NF_ENDDEF(fidsum)
-      write(*,*) err
-      err=NF_PUT_VARA_REAL(fidsum,varidxsum,1,IM1km,long)
-      write(*,*) err
-      err=NF_PUT_VARA_REAL(fidsum,varidysum,1,JM1km,lati)
-      write(*,*) err
-
-      
       
       do j = 1,JM1km
          
@@ -1305,13 +1299,13 @@
             do k = 1,KM
                
 	       ! get lc max
-               err = NF_GET_VARA_REAL(fileidlcmax(k),varidlcmax(k),
+               err = NF_GET_VARA_REAL(fidlcin(k),varidlcin(k),
      &              start2d,count2d,lcin)
 !               write(*,*) err, 'lc max input',k,start2d(i),start2d(j)
                vfn(k)=lcin
                
                ! get lai max
-               err = NF_GET_VARA_REAL(fileidlaimax(k),varidlaimax(k),
+               err = NF_GET_VARA_REAL(fidlaiin(k),varidlaiin(k),
      &              start2d,count2d,laiin)
 !               write(*,*) err, 'lai max input'
                lain(k)=laiin
@@ -1603,7 +1597,7 @@
                   laic(k) = undef
                endif
             enddo
-            
+
             ! correct height=undef when land cover>0            
             do k=1,KM
                if (vfc(k).gt.0.and.laic(k).eq.undef) then
@@ -1612,16 +1606,15 @@
 	           laic(k) = laic(k)
                endif
             enddo
-            
+
             do k=1,KM
                laicnc(i,j,k) = laic(k)
             enddo
 
-            
            ! checksum lc & laimax
-            foolai(i,j) = 0.
+            foolc(i,j) = 0.
             do k=1,KM
-               foolai(i,j) = foolai(i,j) + vfc(k)*laic(k)
+               foolc(i,j) = foolc(i,j) + laic(k)
             enddo
 
             
@@ -1636,18 +1629,17 @@
       countB(1)=IM1km
       countB(2)=JM1km
          
-      ! save netcdf lai_max_pure
+      ! save netcdf lc_max_pure
       do k=1,18
          laicncout(:,:) = laicnc(:,:,k)
-         err=NF_PUT_VARA_REAL(fidlaimaxpure,varidlaimaxpure(k),
+         err=NF_PUT_VARA_REAL(fidlaiout,varidlaiout(k),
      &        startB,countB,laicncout)
          write(*,*) err, 'put'
       enddo
-      err = NF_CLOSE(fidlaimaxpure)
+      err = NF_CLOSE(fidlaiout)
       write(*,*) err, 'nf_close out'
 
-
-      ! laimax checksum
+    ! laimax checksum
       err=NF_PUT_VARA_REAL(fidsum,varidlaisum,startB,countB,foolai)
       err = NF_CLOSE(fidsum)
       write(*,*) err, 'nf_close checksum'

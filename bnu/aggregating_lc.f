@@ -1,4 +1,4 @@
-!* PROGRAM TO AGGREGATE VEGETATION DATA from 1kmx1km to 0.25x0.25
+!* PROGRAM TO AGGREGATE VEGETATION DATA from 1kmx1km to coarser resolution
 !* Author: Carlo Montes: carlo.montes@nasa.gov
      
 !* GFORTRAN COMPILATION ON DISCOVER-SP3

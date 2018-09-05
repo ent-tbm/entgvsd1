@@ -1,10 +1,4 @@
 ! This program converts EntMM 17 PFTs to Ent 16 PFTs + bright + dark.
-! Converts lc, laimax, monthly lc and lai, and Simard heights.
-! Original from trim_EntMM_monthly_noht.f, which did not do heights.
-! It does NOT interpolate from fine to coarse grid -- this should be done
-!  prior to using this program, so input and output are the same resolution.
-! To change input/output resolution edit lines below 
-! "define input file resolution" and "new (interpolated) values"
 ! To combine C3 and C4 crops: #define COMBINE_CROPS_C3_C4
 ! 9/12/13 Fixed bright/dark soil:  need to do partitioning after
 !         each step of trim/scale/no crops to account for new
@@ -1605,6 +1599,12 @@
 !     enddo
 !     enddo
 
+               do k=1,18
+                  if (laic(k).le.0.) then
+                     laic(k) = undef
+                  endif
+               enddo
+               
                ! correct height=undef when land cover>0            
                do k=1,KM
                   if (vfc(k).gt.0.and.laic(k).eq.undef) then
@@ -1615,9 +1615,6 @@
                enddo
 
                do k=1,18
-                  if (laic(k).le.0.) then
-                     laic(k) = undef
-                  endif
                   laicnc(i,j,k) = laic(k)
                enddo
                

@@ -1597,6 +1597,12 @@
 !     write(*,*) trim(titlem(m,k))
 !     enddo
 !     enddo
+
+               do k=1,18
+                  if (laic(k).le.0.) then
+                     laic(k) = undef
+                  endif
+               enddo
                
                ! correct height=undef when land cover>0            
                do k=1,KM
@@ -1608,9 +1614,6 @@
                enddo
 
                do k=1,18
-                  if (laic(k).le.0.) then
-                     laic(k) = undef
-                  endif
                   laicnc(i,j,k) = laic(k)
                enddo
                

@@ -497,35 +497,30 @@
 
                if (lc(i,j).gt.0.and.laijul(i,j).lt.0) then
                   laijulout(i,j) = 0.
-		  write(*,*) lc(i,j), laijul(i,j)
                else
                   laijulout(i,j) = laijul(i,j)
                endif
 
                if (lc(i,j).gt.0.and.laijan(i,j).lt.0) then
                   laijanout(i,j) = 0.
-		  write(*,*) lc(i,j), laijan(i,j)
                else
                   laijanout(i,j) = laijan(i,j)
                endif
 
                if (lc(i,j).gt.0.and.laimax(i,j).lt.0) then
                   laimaxout(i,j) = 0.
-		  write(*,*) lc(i,j), laimax(i,j)
                else
                   laimaxout(i,j) = laimax(i,j)
                endif
                
                if (lc(i,j).gt.0.and.lai017(i,j).lt.0) then
                   lai017out(i,j) = 0.
-		  write(*,*) lc(i,j), lai017(i,j)
                else
                   lai017out(i,j) = lai017(i,j)
                endif
                
                if (lc(i,j).gt.0.and.lai201(i,j).lt.0) then
                   lai201out(i,j) = 0.
-		  write(*,*) lc(i,j), lai201(i,j)
                else
                   lai201out(i,j) = lai201(i,j)
                endif

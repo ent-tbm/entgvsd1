@@ -10,7 +10,7 @@
 
 ! gfortran -c -cpp -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -I/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/include A01_lc_laimax.f
 
-! gfortran -o myExe arrayutil.o A02_lc_laimax.o -L/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/lib -lnetcdf
+! gfortran -o myExe arrayutil.o A01_lc_laimax.o -L/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/lib -lnetcdf
 
 ! ./myExe
       

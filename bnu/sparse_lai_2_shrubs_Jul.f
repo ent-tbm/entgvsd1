@@ -49,8 +49,8 @@
       count2D(1)=IM
       count2D(2)=JM
 
-      PathFilepre= '../lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
-      PathFilepost= 'Ent_laimax_1kmx1km.nc'
+      PathFilepre= '../lc_lai_ent/nc/'
+      PathFilepost= 'Ent_lai_Jul_1kmx1km.nc'
       file  =  trim(PathFilepre)//trim(PathFilepost)
       status = nf_open(file,nf_write,fileid)
       write(*,*) status, 'nf_open in ', file

@@ -1,4 +1,4 @@
-!  Program to assign 1kmx1km BNU LAI of selecter DOY to EntPFTs
+!  Program to assign 1kmx1km BNU LAI of selected DOY to EntPFTs
 
 ! GFORTRAN COMPILATION:
 ! ulimit -s unlimited
