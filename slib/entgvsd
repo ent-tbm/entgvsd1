@@ -1,0 +1,18 @@
+#!/bin/sh -
+#
+
+a_out=$(mktemp)
+
+fortran_source=$1
+shift
+
+# http://redsymbol.net/articles/bash-exit-traps/
+function finish {
+    rm "$a_out"
+}
+trap finish EXIT
+
+gfortran -cpp -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
+if [ $? -eq 0 ]; then
+    $a_out "$@"
+fi
