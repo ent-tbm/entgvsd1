@@ -770,7 +770,7 @@
       write(*,*) 'LAI file ', fileinlai
 
 !     Opening file
-      err = NF_OPEN(fileinlai,NF_WRITE,fileid_lai)
+      err = NF_OPEN(fileinlai,NF_NOWRITE,fileid_lai)
       write(*,*) err, 'opening ', fileinlai
       err = NF_INQ_VARID(fileid_lai,'laimax',varid_lai)
       write(*,*) err, varid_lai,fileinlai,'variables IDs'
@@ -784,81 +784,83 @@
 
       filein = DATA_DIR//'crops/04_Monfreda_herb_crops_1kmx1km.nc'
       write(*,*) 'CROPSHERBNORM ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_04crops)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_04crops)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_04crops,'crops',varid_04crops)
       write(*,*) err
 
       filein = DATA_DIR//'crops/05_Monfreda_shrub_crops_1kmx1km.nc'
       write(*,*) 'CROPSSHRUBNORM ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_05crops)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_05crops)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_05crops,'crops',varid_05crops)
       write(*,*) err
 
       filein = DATA_DIR//'crops/06_Monfreda_tree_crops_1kmx1km.nc'
       write(*,*) 'CROPSTREENORM ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_06crops)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_06crops)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_06crops,'crops',varid_06crops)
       write(*,*) err
       
       filein = DATA_DIR//'crops/08_Monfreda_c4_crops_multi1_1kmx1km.nc'
       write(*,*) 'CROPSC4HERBFRAC ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_04cropsm)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_04cropsm)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_04cropsm,'crops',varid_04cropsm)
       write(*,*) err
       
 !     CLIMSTATS
       
-      filein = DATA_DIR//'climstats/CRU_GPCC_C4norm_1981-2010_1kmx1km.nc'
+      filein = DATA_DIR//'climstats/'//
+     &     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc'
       write(*,*) 'C4CLIMFRAC ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_C4norm)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_C4norm)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_C4norm,'C4climate',varid_C4norm)
       write(*,*) err
 
       filein = DATA_DIR//'climstats/Tcold.nc'
       write(*,*) 'Tcold ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_Tcold)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_Tcold)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_Tcold,'Tcold',varid_Tcold)
       write(*,*) err
       
       filein = DATA_DIR//'climstats/Pdry.nc'
       write(*,*) 'Pdry ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_Pdry)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_Pdry)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_Pdry,'Pdry',varid_Pdry)
       write(*,*) err
            
       filein = DATA_DIR//'climstats/Pmave.nc'
       write(*,*) 'Pmave ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_Pmave)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_Pmave)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_Pmave,'Pmave',varid_Pmave)
       write(*,*) err
       
       filein = DATA_DIR//'climstats/TCinave.nc'
       write(*,*) 'TCinave ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_TCinave)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_TCinave)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_TCinave,'TCinave',varid_TCinave)
       write(*,*) err
       
       filein = DATA_DIR//'climstats/ClimMedit.nc'
       write(*,*) 'ClimMedit ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_CMedit)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_CMedit)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_CMedit,'ClimMedit',varid_CMedit)
       write(*,*) err
       
 !     WATERLC MODIS PARTITION
       filein= LC_LAI_FOR_1KM1KM_DIR//
-     &     'lc_lai_for_1kmx1km/2004/PART_SUB_1km_2004_geo.PARTITION_00.nc'
+     &     'lc_lai_for_1kmx1km/2004/'//
+     &     'PART_SUB_1km_2004_geo.PARTITION_00.nc'
       write(*,*) 'PARTITION_0 ', filein
-      err = NF_OPEN(filein,NF_WRITE,fileid_waterpart)
+      err = NF_OPEN(filein,NF_NOWRITE,fileid_waterpart)
       write(*,*) err, 'opening ', filein
       err = NF_INQ_VARID(fileid_waterpart,'PARTITION_0',
      &     varid_waterpart)
@@ -906,7 +908,8 @@
       write(*,*) err
 
 !     CHECKSUM
-      fileout= LC_LAI_ENT_DIR//'checksum/EntLAI_check_sum_Jun_1kmx1km.nc'
+      fileout= LC_LAI_ENT_DIR//
+     &    'checksum/EntLAI_check_sum_Jun_1kmx1km.nc'
       err = NF_OPEN(fileout,NF_WRITE,fileid_checksum3)
       write(*,*) err, 'opening ', fileout
       err = NF_INQ_VARID(fileid_checksum3,
@@ -914,7 +917,8 @@
       write(*,*) err
 
 !     NPFTGRID
-      fileout= LC_LAI_ENT_DIR//'checksum/EntPFTs_percell_check_sum_Jun_1kmx1km.nc'
+      fileout= LC_LAI_ENT_DIR//
+     &    'checksum/EntPFTs_percell_check_sum_Jun_1kmx1km.nc'
       err = NF_OPEN(fileout,NF_WRITE,fileid_npftgrid)
       write(*,*) err, 'opening ', fileout
       err = NF_INQ_VARID(fileid_npftgrid,
@@ -922,7 +926,8 @@
       write(*,*) err
 
 !     DOMPFTLC
-      fileout= LC_LAI_ENT_DIR//'checksum/EntdominantPFT_LC_check_sum_Jun_1kmx1km.nc'
+      fileout= LC_LAI_ENT_DIR//
+     &    'checksum/EntdominantPFT_LC_check_sum_Jun_1kmx1km.nc'
       err = NF_OPEN(fileout,NF_WRITE,fileid_dompftlc)
       write(*,*) err, 'opening ', fileout
       err = NF_INQ_VARID(fileid_dompftlc,
@@ -931,7 +936,8 @@
       write(*,*) err
 
 !     DOMPFT
-      fileout= LC_LAI_ENT_DIR//'checksum/EntdominantPFT_check_sum_Jun_1kmx1km.nc'
+      fileout= LC_LAI_ENT_DIR//
+     &    'checksum/EntdominantPFT_check_sum_Jun_1kmx1km.nc'
       err = NF_OPEN(fileout,NF_WRITE,fileid_dompft)
       write(*,*) err, 'opening ', fileout
       err = NF_INQ_VARID(fileid_dompft,
@@ -940,10 +946,11 @@
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
-         filein = LC_LAI_FOR_1KM1KM_DIR//'2004/PART_SUB_1km_2004_geo.PARTITION'//
+         filein = LC_LAI_FOR_1KM1KM_DIR//
+     &        '2004/PART_SUB_1km_2004_geo.PARTITION'//
      &        trim(partit_num(k))//'.nc'
          inqvarin = 'PARTITION'//trim(partit(k))
-         err = NF_OPEN(filein,NF_WRITE,partit_fileid(k))
+         err = NF_OPEN(filein,NF_NOWRITE,partit_fileid(k))
          write(*,*) err
          err = NF_INQ_VARID(partit_fileid(k),inqvarin,
      &        partit_varid(k))
@@ -953,7 +960,7 @@
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
          fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/'//
-     &            trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
          err = NF_OPEN(fileout,NF_WRITE,entpft_fileid(k))
       write(*,*) err, 'opening ', fileout
          inqvarin = trim(EntPFT_files2(k))
@@ -964,7 +971,7 @@
 !     ENTPFTLC
       do k = 1,ENTPFTNUM
          fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1kmA/'//
-     &            trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
          err = NF_OPEN(fileout,NF_WRITE,entpftlc_fileid(k))
       write(*,*) err, 'opening ', fileout
          inqvarin = trim(EntPFT_files2(k))
@@ -977,7 +984,7 @@
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
          fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/'//
-     &            trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
          err = NF_OPEN(fileout,NF_WRITE,entpftlaimax_fileid(k))
       write(*,*) err, 'opening ', fileout
          inqvarin = trim(EntPFT_files2(k))
@@ -990,7 +997,7 @@
 !     ENTPFTLAIMAXA
       do k =1,ENTPFTNUM
          fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1kmA/'//
-     &            trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
          err = NF_OPEN(fileout,NF_WRITE,entpftlaimaxA_fileid(k))
       write(*,*) err, 'opening ', fileout
          inqvarin = trim(EntPFT_files2(k))
@@ -1002,9 +1009,8 @@
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
          fileout = LC_LAI_ENT_DIR//'checksum/'//
-     &             trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'.nc'
-         err = NF_OPEN(fileout,NF_WRITE,
-     &        entpftlaimaxcheck_fileid(k))
+     &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'.nc'
+         err = NF_OPEN(fileout,NF_WRITE,entpftlaimaxcheck_fileid(k))
       write(*,*) err, 'opening ', fileout
          inqvarin = trim(EntPFT_files2(k))
          err = NF_INQ_VARID(entpftlaimaxcheck_fileid(k)
