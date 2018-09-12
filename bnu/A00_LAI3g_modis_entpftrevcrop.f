@@ -867,14 +867,17 @@
       write(*,*) err
 
 !     CHECKSUM
-      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
-      fileout = LC_LAI_ENT_DIR//'checksum/EntMM29lc_lai_for_1kmx1km.nc'
-      write(*,*) fileout
-      err = NF_OPEN(fileout,NF_WRITE,fileid_checksum)
-      write(*,*) err, 'opening ', fileout
-      err = NF_INQ_VARID(fileid_checksum,'EntMM29lc_lai_for_1kmx1km',
-     &     varid_checksum)
-      write(*,*) err
+      fileid_checksum = create_nc(
+     &    'checksum', 'EntMM29lc_lai_for_1kmx1km')
+
+!      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
+!      fileout = LC_LAI_ENT_DIR//'checksum/EntMM29lc_lai_for_1kmx1km.nc'
+!      write(*,*) fileout
+!      err = NF_OPEN(fileout,NF_WRITE,fileid_checksum)
+!      write(*,*) err, 'opening ', fileout
+!      err = NF_INQ_VARID(fileid_checksum,'EntMM29lc_lai_for_1kmx1km',
+!     &     varid_checksum)
+!      write(*,*) err
 
 !     WATERLC OUTPUT
       fileout=LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/water_lc.nc'
