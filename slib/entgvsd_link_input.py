@@ -14,6 +14,14 @@ JM_CHUNK=15
 
 def copy_recompress(iroot, oroot, dir, leaf):
 
+    print('BEGIN copy_recompress')
+    print('iroot',iroot)
+    print('oroot',oroot)
+    print('dir',dir)
+    print('leaf',leaf)
+
+    os.makedirs(os.path.join(oroot,dir), exist_ok=True)
+
     # Find the least-compressed version of this file
     iname = os.path.join(iroot, dir, leaf)
     ngz = 0
@@ -22,6 +30,8 @@ def copy_recompress(iroot, oroot, dir, leaf):
             break
         iname += '.gz'
         ngz += 1
+        if ngz > 2:
+            raise IOError('Cannot find input file {}'.format(os.path.join(iroot,dir,leaf)))
 
     oname = os.path.join(oroot, dir, leaf)
     if os.path.exists(oname):
@@ -102,7 +112,6 @@ def copy_recompress(iroot, oroot, dir, leaf):
 #            return
 
     # Move to final location
-    os.makedirs(os.path.join(oroot,dir), exist_ok=True)
     os.rename(
         os.path.join(oroot, '_TMP_{}'.format(step-1)),
         oname)

@@ -34,6 +34,6 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/slib/ DESTINATION include
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh DESTINATION bin RENAME entgvsd)
 install(PROGRAMS entgvsd_create_nc.sh DESTINATION bin RENAME entgvsd_create_nc)
-install(PROGRAMS entgvsd_link_input.sh DESTINATION bin RENAME entgvsd_link_input)
+install(PROGRAMS entgvsd_link_input.py DESTINATION bin RENAME entgvsd_link_input)
 install(PROGRAMS cdlparser.py DESTINATION bin)
 
