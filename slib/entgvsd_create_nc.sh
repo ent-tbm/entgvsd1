@@ -6,10 +6,16 @@ set -e     # Quit on error
 BASEDIR=$(dirname "$0")
 
 OROOT=$1
-OROOT_ORIG=$2
-TROOT=$3        # Template directory
-DIR=$4          # Directory of the file (after the root)
-LEAF=$5         # Leaf name (without the .nc)
+shift
+OROOT_ORIG=$1
+shift
+TROOT=$1        # Template directory
+shift
+DIR=$1          # Directory of the file (after the root)
+shift
+LEAF=$1         # Leaf name (without the .nc)
+shift
+
 
 TMP=./tmp
 
@@ -43,5 +49,6 @@ fi
 # Create the output file from the template
 # Use our ncgen replacement that compresses every variable
 # ncgen -o $OROOT/$DIR/$LEAF.nc $TROOT/$DIR/$LEAF.cdl
-python3 $BASEDIR/cdlparser.py $TROOT/$DIR/$LEAF.cdl $OROOT/$DIR/$LEAF.nc
+echo python3 $BASEDIR/cdlparser.py $TROOT/$DIR/$LEAF.cdl $OROOT/$DIR/$LEAF.nc "$@"
+python3 $BASEDIR/cdlparser.py $TROOT/$DIR/$LEAF.cdl $OROOT/$DIR/$LEAF.nc "$@"
 

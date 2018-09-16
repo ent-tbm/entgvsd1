@@ -2,10 +2,10 @@ module chunker_mod
 
 implicit none
 private
-    public :: Chunker_t
+    public :: Chunker_t,chunk_rank,nchunk
 
     integer, parameter :: chunk_rank=2
-    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (IM, JM) for chunks
+    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
 
 type Chunker_t
     integer :: ngrid(chunk_rank)   ! Size of fine grid. (IM,JM) for grid
@@ -57,6 +57,7 @@ module ioutil_mod
 use entgvsd_config_mod
 use, intrinsic :: iso_fortran_env
 use netcdf
+use chunker_mod
 
 implicit none
 
@@ -134,17 +135,24 @@ function create_nc(dir,leaf)
         NETCDF4_C_BINARY_DIR//'/ncgen'
     integer :: ncid,err
     character(4192) :: cmd
-
+    character(10) :: lon_s, lat_s,fmt
 
     create_nc = -1
 
     ! ------- Create the file from a template
+    write(lon_s, '(I10)') nchunk(1)
+    write(lat_s, '(I10)') nchunk(2)
 
     ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
     ! cmd = NCGEN//' -k nc4 -o '//ofname//' '//trim(cdl)
-    cmd = 'entgvsd_create_nc '//LC_LAI_ENT_DIR//' '//LC_LAI_ENT_ORIG//' '//TEMPLATE_DIR// &
-          ' '//trim(dir)//' '//trim(leaf)
-
+    cmd = 'entgvsd_create_nc '// &
+          LC_LAI_ENT_DIR//' '// &
+          LC_LAI_ENT_ORIG//' '// &
+          TEMPLATE_DIR//' '//trim(dir)//' '//trim(leaf)// &
+          ' nchunkspec=lon/'//trim(adjustl(lon_s))//',lat/'//trim(adjustl(lat_s))
+          
+    print *,'----------------------------'
+    print *,trim(cmd)
     call execute_command_line(cmd, .true., err)
 
     if (err /= 0) then

@@ -110,6 +110,7 @@ class CDLParser(object) :
    precedence = []
 
    def __init__(self, close_on_completion=False, file_format='NETCDF3_CLASSIC', log_level=None,
+      nchunkspec=None,    # See `man nccopy` for format
       **kwargs) :
       """
       The currently supported keyword arguments, with their default values, are described below. Any
@@ -129,6 +130,17 @@ class CDLParser(object) :
       self.close_on_completion = close_on_completion
       self.file_format = file_format
       self.log_level = DEFAULT_LOG_LEVEL if log_level is None else log_level
+
+
+      # Parse the chunk spec
+      self.nchunkspec = dict()
+      if nchunkspec is not None:
+          for spec in nchunkspec.split(','):
+              kv = spec.split('/')
+              if len(kv) != 2:
+                  raise ValueError('Illegal nchunkspec', nchunkspec)
+              self.nchunkspec[kv[0]] = int(kv[1])
+
       self.cdlfile = None
       self.ncdataset = None
       #self.dryrun = kwargs.pop('dryrun', False)   # TODO: enable dry-run option
@@ -510,8 +522,18 @@ class CDL3Parser(CDLParser) :
       if p[1] in self.ncdataset.variables :
          raise CDLContentError("Duplicate declaration of variable %s." % p[1])
       dims = len(p)==3 and p[2] or ()
+      kwargs = dict()
+      chunksizes = []
+      if len(dims) > 1:
+          for dim in dims:
+              try:
+                  dimsize = len(self.ncdataset.dimensions[dim])
+                  chunksizes.append(dimsize // self.nchunkspec[dim])
+              except KeyError:
+                  chunksizes.append(1)
+          kwargs['chunksizes'] = chunksizes
       self.curr_var = self.ncdataset.createVariable(p[1], self.datatype, dimensions=dims,
-         complevel=4,shuffle=True)
+         zlib=True,complevel=4,shuffle=True,**kwargs)
       self.logger.info("Created variable %s with data type '%s' and dimensions %s" \
          % (p[1], self.datatype, dims))
 
@@ -913,8 +935,9 @@ def main() :
    kwargs = {}
    if len(sys.argv) > 3 :
       keys = [x.split('=')[0] for x in sys.argv[3:]]
-      vals = [eval(x.split('=')[1]) for x in sys.argv[3:]]
+      vals = [x.split('=')[1] for x in sys.argv[3:]]
       kwargs = dict(zip(keys,vals))
+   print('kkkkkkkkkkkwargs', kwargs)
    cdlparser = CDL3Parser(**kwargs)
    ncdataset = cdlparser.parse_file(cdlfile, ncfile=ncfile)
    try :

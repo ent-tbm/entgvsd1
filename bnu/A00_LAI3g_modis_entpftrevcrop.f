@@ -770,7 +770,7 @@
      &    'LAI3gMax_1kmx1km.nc')
 
       err = NF90_INQ_VARID(fileid_lai,'laimax',varid_lai)
-      write(*,*) err, varid_lai,fileinlai,'variables IDs'
+      write(*,*) err, varid_lai,'variables IDs'
 
 !     Get variable IDs
       err = NF90_INQ_VARID(fileid_lai,'lon',varidx)
@@ -844,8 +844,6 @@
       err = NF90_INQ_VARID(fileid_waterpart,'PARTITION_0',
      &     varid_waterpart)
       write(*,*) err
-
-      call exit(0)
 
 !     CHECKSUM
       fileid_checksum = create_nc(
