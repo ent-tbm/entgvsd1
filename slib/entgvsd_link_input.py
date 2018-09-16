@@ -5,7 +5,6 @@ import netCDF4
 import os
 import sys
 import subprocess
-import zlib
 import time
 import traceback
 
@@ -68,44 +67,6 @@ def copy_recompress(iroot, oroot, dir, leaf):
     step=0
     decompress_gzz(iname, ngz, os.path.join(oroot, '_TMP_{}'.format(step)))
     step += 1
-
-
-#    # Decompress the .gz file
-#    step = 0
-#    dcs = []
-#    for x in range(0,ngz):
-#        dcs.append(zlib.decompressobj(32 + zlib.MAX_WBITS))
-#
-#    zlib_chunk_size = 8*1024   # Too large doesn't work
-#    sizemb = os.path.getsize(iname) / float(zlib_chunk_size)
-#    sys.stdout.write('    ...unzipping ({:0.1f} Mb)'.format(sizemb))
-#    sys.stdout.flush()
-#    t0 = time.time()
-#    with open(iname, 'rb') as zin:
-#        with open(os.path.join(oroot, '_TMP_{}'.format(step)), 'wb') as fout:
-#            step += 1
-#            while True:
-#                data = zin.read(zlib_chunk_size)   # Too big causes segfault
-#                if len(data) == 0:
-#                    break
-#
-#                # Decompress chunk in stages
-#                for i in range(0,ngz):
-#                    data1 = dcs[i].decompress(data)
-#                    data = data1
-#
-#                fout.write(data)
-#                sys.stdout.write('.')
-#                sys.stdout.flush()
-#
-#            # https://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
-#            fout.flush()
-#            os.fsync(fout.fileno())
-#
-#            t1 = time.time()
-#            print(' [{:0.0f}s]'.format(t1-t0))
-#
-
 
 
 # Don't recompress.  It's slow, and nccopy doesn't really work
