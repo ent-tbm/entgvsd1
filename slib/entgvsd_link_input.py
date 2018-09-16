@@ -7,14 +7,31 @@ import sys
 import subprocess
 import zlib
 import time
+import traceback
 
 # Size of our Chunk grid
 IM_CHUNK=18
 JM_CHUNK=15
 
+def decompress_gzz(iname, ngz, oname):
+
+    pipeline = []
+    pipeline.append(('zcat', iname))
+    for i in range(0,ngz-1):
+        pipeline.append(('zcat'))
+
+    with open(oname, 'wb') as out:
+        procs = []
+        procs.append(subprocess.Popen(pipeline[0], stdout=subprocess.PIPE))
+        for cmd in pipeline[1:-1]:
+            procs.append(subprocess.Popen(cmd, stdin=procs[-1].stdout, stdout=subprocess.PIPE))
+        procs.append(subprocess.Popen(pipeline[-1], stdin=procs[-1].stdout, stdout=out))
+        procs[-1].communicate()
+
+
 def copy_recompress(iroot, oroot, dir, leaf):
 
-    print('BEGIN copy_recompress')
+    print('=============================')
     print('iroot',iroot)
     print('oroot',oroot)
     print('dir',dir)
@@ -47,40 +64,49 @@ def copy_recompress(iroot, oroot, dir, leaf):
         os.symlink(iname, oname)
         return
 
-    # Decompress the .gz file
-    step = 0
-    dcs = []
-    for x in range(0,ngz):
-        dcs.append(zlib.decompressobj(32 + zlib.MAX_WBITS))
 
-    zlib_chunk_size = 1024*1024
-    sizemb = os.path.getsize(iname) / float(zlib_chunk_size)
-    sys.stdout.write('    ...unzipping ({:0.1f} Mb)'.format(sizemb))
-    sys.stdout.flush()
-    t0 = time.time()
-    with open(iname, 'rb') as zin:
-        with open(os.path.join(oroot, '_TMP_{}'.format(step)), 'wb') as fout:
-            step += 1
-            while True:
-                data = zin.read(zlib_chunk_size)   # Too big causes segfault
-                if len(data) == 0:
-                    break
+    step=0
+    decompress_gzz(iname, ngz, os.path.join(oroot, '_TMP_{}'.format(step)))
+    step += 1
 
-                # Decompress chunk in stages
-                for i in range(0,ngz):
-                    data1 = dcs[i].decompress(data)
-                    data = data1
 
-                fout.write(data)
-                sys.stdout.write('.')
-                sys.stdout.flush()
+#    # Decompress the .gz file
+#    step = 0
+#    dcs = []
+#    for x in range(0,ngz):
+#        dcs.append(zlib.decompressobj(32 + zlib.MAX_WBITS))
+#
+#    zlib_chunk_size = 8*1024   # Too large doesn't work
+#    sizemb = os.path.getsize(iname) / float(zlib_chunk_size)
+#    sys.stdout.write('    ...unzipping ({:0.1f} Mb)'.format(sizemb))
+#    sys.stdout.flush()
+#    t0 = time.time()
+#    with open(iname, 'rb') as zin:
+#        with open(os.path.join(oroot, '_TMP_{}'.format(step)), 'wb') as fout:
+#            step += 1
+#            while True:
+#                data = zin.read(zlib_chunk_size)   # Too big causes segfault
+#                if len(data) == 0:
+#                    break
+#
+#                # Decompress chunk in stages
+#                for i in range(0,ngz):
+#                    data1 = dcs[i].decompress(data)
+#                    data = data1
+#
+#                fout.write(data)
+#                sys.stdout.write('.')
+#                sys.stdout.flush()
+#
+#            # https://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
+#            fout.flush()
+#            os.fsync(fout.fileno())
+#
+#            t1 = time.time()
+#            print(' [{:0.0f}s]'.format(t1-t0))
+#
 
-            # https://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
-            fout.flush()
-            os.fsync(fout.fileno())
 
-            t1 = time.time()
-            print(' [{:0.0f}s]'.format(t1-t0))
 
 # Don't recompress.  It's slow, and nccopy doesn't really work
 # Need to make a Python program that recompresses.
