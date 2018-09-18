@@ -659,15 +659,11 @@
       character*256 :: file_modis_sfx !Suffix for monthy MODIS files
       character*256 :: file_modis
 
-      character*256 :: fileout_modis0, fileout_modisA !Non-land 0, Non-veg undef
       character*256 :: file_EntMM, file_EntMMA
-      character*256 :: fileout, filecheck
-      character*256 :: fileina, fileinb, filein
-      character*256 :: fileoutnc, fileinlai
+      character*256 :: filecheck
       character*256 :: PathMonfreda, PathCropFile
       character*10 :: RESOUT
       character*50 :: PATHEnt, PATHfile
-      character*256 :: fileinnc, fileinnc_pre, fileinnc_sfx
 
       real*4 :: MODIS29(1+LCLASS) !WATER + 28 LCLASS
 
@@ -847,7 +843,7 @@
 
 !     CHECKSUM
       fileid_checksum = create_nc(
-     &    'checksum', 'EntMM29lc_lai_for_1kmx1km')
+     &    'checksum/', 'EntMM29lc_lai_for_1kmx1km')
 
 !      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
 !      fileout = LC_LAI_ENT_DIR//'checksum/EntMM29lc_lai_for_1kmx1km.nc'
@@ -859,69 +855,56 @@
 !      write(*,*) err
 
 !     WATERLC OUTPUT
-      fileout=LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/water_lc.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_waterout)
-      write(*,*) err, 'opening ', fileout
+      fileid_waterout=create_nc(
+     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc')
       err = NF90_INQ_VARID(fileid_waterout,'water_lc',varid_waterout)
       write(*,*) err
 
-      fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1kmA/water_lc.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_wateroutA)
-      write(*,*) err, 'opening ', fileout
+      fileid_wateroutA=create_nc(
+     &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc')
       err = NF90_INQ_VARID(fileid_wateroutA,'water_lc',
      &     varid_wateroutA)
       write(*,*) err
       
 !     CHECKSUM
-      fileout= LC_LAI_ENT_DIR//
-     &         'checksum/EntLandcover_check_sum_Jun_1kmx1km.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_checksum2)
-      write(*,*) err, 'opening ', fileout
+      fileid_checksum2=create_nc(
+     &         'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(fileid_checksum2,
      &     'EntLandcover_check_sum_Jun_1kmx1km',varid_checksum2)
       write(*,*) err
 
 !     WATER LAI
-      fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/water_lai.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_waterlai)
-      write(*,*) err, 'opening ', fileout
+      fileid_waterlai=create_nc(
+     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai')
       err = NF90_INQ_VARID(fileid_waterlai,'water_lai',
      &     varid_waterlai)
       write(*,*) err
 
 !     CHECKSUM
-      fileout= LC_LAI_ENT_DIR//
-     &    'checksum/EntLAI_check_sum_Jun_1kmx1km.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_checksum3)
-      write(*,*) err, 'opening ', fileout
+      fileid_checksum3=create_nc(
+     &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(fileid_checksum3,
      &     'EntLAI_check_sum_Jun_1kmx1km',varid_checksum3)
       write(*,*) err
 
 !     NPFTGRID
-      fileout= LC_LAI_ENT_DIR//
-     &    'checksum/EntPFTs_percell_check_sum_Jun_1kmx1km.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_npftgrid)
-      write(*,*) err, 'opening ', fileout
+      fileid_npftgrid=create_nc(
+     &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(fileid_npftgrid,
      &     'EntPFTs_percell_check_sum_Jun_1kmx1km',varid_npftgrid)
       write(*,*) err
 
 !     DOMPFTLC
-      fileout= LC_LAI_ENT_DIR//
-     &    'checksum/EntdominantPFT_LC_check_sum_Jun_1kmx1km.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_dompftlc)
-      write(*,*) err, 'opening ', fileout
+      fileid_dompftlc=create_nc(
+     &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(fileid_dompftlc,
      &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
      &     varid_dompftlc)
       write(*,*) err
 
 !     DOMPFT
-      fileout= LC_LAI_ENT_DIR//
-     &    'checksum/EntdominantPFT_check_sum_Jun_1kmx1km.nc'
-      err = NF90_OPEN(fileout,NF90_WRITE,fileid_dompft)
-      write(*,*) err, 'opening ', fileout
+      fileid_dompft=create_nc(
+     &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(fileid_dompft,
      &     'EntdominantPFT_check_sum_Jun_1kmx1km',varid_dompft)
       write(*,*) err
@@ -943,10 +926,9 @@
 
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
-         fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/'//
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
-         err = NF90_OPEN(fileout,NF90_WRITE,entpft_fileid(k))
-      write(*,*) err, 'opening ', fileout
+         entpft_fileid(k)=create_nc(
+     &        'EntMM_lc_laimax_1kmx1km/',
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
          err = NF90_INQ_VARID(entpft_fileid(k),inqvarin,entpft_varid(k))
       write(*,*) inqvarin, err
@@ -954,10 +936,9 @@
       
 !     ENTPFTLC
       do k = 1,ENTPFTNUM
-         fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1kmA/'//
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc'
-         err = NF90_OPEN(fileout,NF90_WRITE,entpftlc_fileid(k))
-      write(*,*) err, 'opening ', fileout
+         entpftlc_fileid(k)=create_nc(
+     &        'EntMM_lc_laimax_1kmx1kmA/',
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
          err = NF90_INQ_VARID(entpftlc_fileid(k),inqvarin,
      &        entpftlc_varid(k))
@@ -967,10 +948,9 @@
 
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
-         fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1km/'//
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
-         err = NF90_OPEN(fileout,NF90_WRITE,entpftlaimax_fileid(k))
-      write(*,*) err, 'opening ', fileout
+         entpftlaimax_fileid(k)=create_nc(
+     &       'EntMM_lc_laimax_1kmx1km/',
+     &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
          err = NF90_INQ_VARID(entpftlaimax_fileid(k),inqvarin,
      &        entpftlaimax_varid(k))
@@ -980,10 +960,9 @@
 
 !     ENTPFTLAIMAXA
       do k =1,ENTPFTNUM
-         fileout= LC_LAI_ENT_DIR//'EntMM_lc_laimax_1kmx1kmA/'//
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai.nc'
-         err = NF90_OPEN(fileout,NF90_WRITE,entpftlaimaxA_fileid(k))
-      write(*,*) err, 'opening ', fileout
+         entpftlaimaxA_fileid(k)=create_nc(
+     &        'EntMM_lc_laimax_1kmx1kmA/',
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
          err = NF90_INQ_VARID(entpftlaimaxA_fileid(k),inqvarin,
      &        entpftlaimaxA_varid(k))
@@ -992,17 +971,17 @@
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
-         fileout = LC_LAI_ENT_DIR//'checksum/'//
-     &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'.nc'
-         err = NF90_OPEN(fileout,NF90_WRITE,entpftlaimaxcheck_fileid(k))
-      write(*,*) err, 'opening ', fileout
+         entpftlaimaxcheck_fileid(k)=create_nc(
+     &         'checksum/',
+     &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)))
          inqvarin = trim(EntPFT_files2(k))
          err = NF90_INQ_VARID(entpftlaimaxcheck_fileid(k)
      &        ,inqvarin,entpftlaimaxcheck_varid(k))
       write(*,*) inqvarin, err
       enddo
 
-
+      ! Quit if we had any problems opening files
+      call check_nf_open_errors
 
 !-----------------------------------------------------------------
 !     Loop for every grid point
