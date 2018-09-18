@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float ever_nd_early(lat, lon) ;
+		ever_nd_early:long_name = "3 - evergreen needleleaf early successional" ;
+}

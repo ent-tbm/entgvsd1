@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float arid_shrub(lat, lon) ;
+		arid_shrub:long_name = "10 - arid adapted shrub" ;
+}

@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float c4_grass(lat, lon) ;
+		c4_grass:long_name = "12 - C4 grass EntMM LAI max 1kmx1km" ;
+}

@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float water_lai(lat, lon) ;
+		water_lai:long_name = "WATER (LAI)" ;
+}

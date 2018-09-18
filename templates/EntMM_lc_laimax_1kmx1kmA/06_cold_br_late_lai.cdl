@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float cold_br_late(lat, lon) ;
+		cold_br_late:long_name = "6 - cold deciduous broadleaf late successional" ;
+}

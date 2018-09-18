@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float c3_grass_per(lat, lon) ;
+		c3_grass_per:long_name = "11 - C3 grass perennial EntMM LAI max 1kmx1km" ;
+}

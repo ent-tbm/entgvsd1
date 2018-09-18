@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float c3_grass_arct(lat, lon) ;
+		c3_grass_arct:long_name = "14 - arctic C3 grass" ;
+}

@@ -1,0 +1,10 @@
+netcdf x {
+dimensions:
+	lon = 43200 ;
+	lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float cold_shrub(lat, lon) ;
+		cold_shrub:long_name = "9 - cold adapted shrub" ;
+}
