@@ -1,0 +1,11 @@
+#ifndef ENTGVSD_CONFIG_HPP
+#define ENTGVSD_CONFIG HPP
+
+#include <string>
+
+namespace entgvsd {
+    std::string const NETCDF4_C_BINARY_DIR = "@NETCDF4_C_BINARY_DIR@";
+    std::string const PROJECT_SOURCE_DIR = "@PROJECT_SOURCE_DIR@"
+}
+
+#endif
