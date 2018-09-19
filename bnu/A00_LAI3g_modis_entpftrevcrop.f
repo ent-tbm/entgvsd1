@@ -1123,11 +1123,7 @@
             CHECKSUM = 0.0
 
 !     WATERLC
-
-            err = NF90_GET_VAR(io_waterpart,varid_waterpart,inbuf,
-     &            startB,countB)
-            WATERLC=inbuf(1,1)
-
+            WATERLC = io_waterpart%buf(ic,jc)
 !            write(*,*) 'WATERLC ',shape(WATERLC)
 
             MODIS29(1) = WATERLC
