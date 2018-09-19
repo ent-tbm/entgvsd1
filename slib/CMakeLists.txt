@@ -4,7 +4,7 @@ include_directories(
 
 set(entgvsd_SOURCES
     arrayutil.f
-    ioutil_mod.f90
+    chunker_mod.f90
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config_mod.f90
 )
 
