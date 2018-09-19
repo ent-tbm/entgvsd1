@@ -984,9 +984,17 @@
                   err = NF90_PUT_VAR(entpftlc_io(k),varidy,lat,
      &                 startY,countY)
                end do
+               err = NF90_PUT_VAR(io_checksum,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(io_checksum,varidy,lat,
+     &             startY,countY)
                err = NF90_PUT_VAR(io_checksum2,varidx,lon,
      &              startX,countX)
                err = NF90_PUT_VAR(io_checksum2,varidy,lat,
+     &             startY,countY)
+               err = NF90_PUT_VAR(io_checksum3,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(io_checksum3,varidy,lat,
      &             startY,countY)
                err = NF90_PUT_VAR(io_waterlai,varidx,lon,
      &              startX,countX)
@@ -1139,10 +1147,7 @@
 
 !     Input file for land cover data
 !     MODIS PARTITION FILES
-               err = NF90_GET_VAR(
-     &              partit_io(k),partit_varid(k),inbuf,
-     &              startB,countB)
-               LIN=inbuf(1,1)
+               LIN = partit_io(k)%buf(ic,jc)
 !              if (LIN.gt.0.) write(*,*) LIN,k,'kkkk'
 
                MODIS29(k+1) = LIN
@@ -1270,18 +1275,7 @@
 !     * does his smearing.
 
 !     !This confirms that the modis_c2_gissfortran output does not sum to 1.
-
-            inbuf(1,1)=CHECKSUM
-            err = NF90_PUT_VAR(io_checksum,varid_checksum,inbuf,
-     &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(io_checksum,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(io_checksum,varidy,lat,
-     &              startY,countY)
-            endif
+            io_checksum%buf(ic,jc)=CHECKSUM
              
             
 !     write(*,*) err, 'Wrote CHECKSUM on EntMM 29 cover layers'
@@ -1354,9 +1348,7 @@
 
 !     * Write Ent PFT land cover layers
 !     write(*,*) "WATER (cover fraction)"
-            inbuf(1,1)=WATERLC
-            err=NF90_PUT_VAR(io_waterout,varid_waterout,inbuf,
-     &           startB,countB)
+            io_waterout%buf(ic,jc)=WATERLC
 
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
 
@@ -1364,9 +1356,7 @@
             call Set_val(LAYEROUT,longout,latout,0.,undef)
 
 !     write(*,*) "WATER (cover fraction)"
-            inbuf(1,1)=WATERLC
-            err=NF90_PUT_VAR(io_wateroutA,varid_wateroutA,inbuf,
-     &           startB,countB)
+            io_wateroutA%buf(ic,jc)=WATERLC
 
 !            write(*,*) err, 'Wrote WATER (cover fraction)'
             
@@ -1377,18 +1367,14 @@
                CHECKSUM = CHECKSUM + ENTPFTLC(k)
                
 !     Output file for land cover
-               inbuf(1,1)=ENTPFTLC(k)
-               err=NF90_PUT_VAR(entpft_io(k),entpft_varid(k),inbuf,
-     &              startB,countB)
+               entpft_io(k)%buf(ic,jc) = ENTPFTLC(k)
 
 !     write(*,*) err, 'Wrote ENTPFTLC'
             
                LAYEROUT = ENTPFTLC(k)
                call Set_val(LAYEROUT,longout,latout,0.,undef)
 !     write(*,*) inqvarin
-               inbuf(1,1)=LAYEROUT
-               err=NF90_PUT_VAR(entpftlc_io(k),entpftlc_varid(k),
-     &              inbuf,startB,countB)
+               entpftlc_io(k)%buf(ic,jc)=LAYEROUT
 
 !     write(*,*) err, 'Wrote LAYEROUT'
 
@@ -1398,9 +1384,7 @@
             TITLECHECK = 'Ent Land cover check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            inbuf(1,1)=CHECKSUM
-            err=NF90_PUT_VAR(io_checksum2,varid_checksum2,inbuf,
-     &           startB,countB)
+            io_checksum2%buf(ic,jc)=CHECKSUM
 
 !     write(*,*) err, 'Wrote TITLECHECK'
 
@@ -1415,9 +1399,7 @@
             CHECKSUM=0.0
             TITLE = "WATER (LAI)"
 !     write(*,*) TITLE
-            inbuf(1,1)=WATERLAI
-            err=NF90_PUT_VAR(io_waterlai,varid_waterlai,inbuf,
-     &           startB,countB)
+            io_waterlai%buf(ic,jc)=WATERLAI
 
 !     write(*,*) err, 'Wrote WATERLAI'
 
@@ -1425,18 +1407,12 @@
             do k=1,ENTPFTNUM
                CHECKSUM = CHECKSUM +
      &              ENTPFTLC(k)*ENTPFTLAIMAX(k)
-               inbuf(1,1)=ENTPFTLAIMAX(k)
-               err=NF90_PUT_VAR(entpftlaimax_io(k),
-     &              entpftlaimax_varid(k),inbuf,
-     &              startB,countB)
+               entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX',ENTPFTLAIMAX(k,:,:)
 
                LAYEROUT = ENTPFTLAIMAX(k)
                call Set_val(LAYEROUT,longout,latout,0.,undef)
-               inbuf(1,1)=LAYEROUT
-               err=NF90_PUT_VAR(entpftlaimaxA_io(k),
-     &              entpftlaimaxA_varid(k),inbuf,
-     &              startB,countB)
+               entpftlaimaxA_io(k)%buf(ic,jc)=LAYEROUT
 !               write(*,*) err, 'Wrote LAYEROUT'
 
             enddo
@@ -1444,45 +1420,34 @@
             TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            inbuf(1,1)=CHECKSUM
-            err=NF90_PUT_VAR(io_checksum3,varid_checksum3,inbuf,
-     &           startB,countB)
+            io_checksum3%buf(ic,jc)=CHECKSUM
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent PFTs per cell check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            inbuf(1,1)=NPFTGRID
-            err=NF90_PUT_VAR(io_npftgrid,varid_npftgrid,inbuf,
-     &           startB,countB)
+            io_npftgrid%buf(ic,jc)=NPFTGRID
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent dominant PFT LC check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            inbuf(1,1)=DOMPFTLC
-            err=NF90_PUT_VAR(io_dompftlc,varid_dompftlc,inbuf,
-     &           startB,countB)
-
+            io_dompftlc%buf(ic,jc)=DOMPFTLC
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent dominant PFT check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            inbuf(1,1)=DOMPFT
-            err=NF90_PUT_VAR(io_dompft,varid_dompft,inbuf,
-     &           startB,countB)
-
+            io_dompft%buf(ic,jc)=DOMPFT
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
 
             do k=1,ENTPFTNUM
                TITLECHECK = EntPFT_title(k)//
      &              'EntMM LAI max '//trim(RESOUT)
-               inbuf(1,1)=ENTPFTLAIMAX(k)
-               err=NF90_PUT_VAR(entpftlaimaxcheck_io(k),
-     &              entpftlaimaxcheck_varid(k),inbuf,startB,countB)
+               entpftlai
+               entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
 !     write(*,*) TITLECHECK
@@ -1520,94 +1485,65 @@
 
       enddo
 
-      err = NF90_CLOSE(io_04crops)
-!     write(*,*) err
-      err = NF90_CLOSE(io_06crops)
-      err = NF90_CLOSE(io_06crops)
-      err = NF90_CLOSE(io_04cropsm)
-      err = NF90_CLOSE(io_C4norm)
-      err = NF90_CLOSE(io_Tcold)
-      err = NF90_CLOSE(io_Pdry)
-      err = NF90_CLOSE(io_Pmave)
-      err = NF90_CLOSE(io_TCinave)
-      err = NF90_CLOSE(io_CMedit)
-      err = NF90_CLOSE(io_waterpart)  
-      err = NF90_CLOSE(io_checksum)
-      err = NF90_CLOSE(io_waterout)
-      err = NF90_CLOSE(io_wateroutA)
-      err = NF90_CLOSE(io_checksum2)
-      err = NF90_CLOSE(io_waterlai)
-      err = NF90_CLOSE(io_checksum3)
-      err = NF90_CLOSE(io_npftgrid)
-      err = NF90_CLOSE(io_dompftlc)
-      err = NF90_CLOSE(io_dompft)
-     
       do k=1,ENTPFTNUM
          
-         err = NF90_CLOSE(partit_io(k))
-
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'long_name',EntPFT_title(k))
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,'history',
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,'history',
      &        'June 2017: C. Montes, N.Y. Kiang')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'title', 'Ent PFT 1 km land cover fraction')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'creator_name', 'NASA GISS')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'creator_email',
      &        'elizabeth.fischer@columbia.edu,'//
      &        'carlo.montes@nasa.gov'//
      &        'nancy.y.kiang@nasa.gov')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lat_min', '-90')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lat_max', '90')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lon_min', '-180')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lon_max', '180')
-         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
-         err = NF90_CLOSE(entpft_io(k))
 
-         err = NF90_CLOSE(entpftlc_io(k))
-         
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'long_name',EntPFT_title(k))
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &         'history', 'June 2017: C. Montes, N.Y. Kiang,'//
      &         'downscaled from 1/12 degree to 1km resolution')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'institution', 'Original data:  LAI3g,'//
      &        'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'//
      &        'Scaling: NASA Goddard Institute for Space Studies')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &         'title', 'Maximum annual LAI (m2/m2) 2004'//
      &         'downscaled from 1/12 degrees')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'creator_name', 'NASA GISS')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'creator_email',
      &        'elizabeth.fischer@columbia.edu,'//
      &        'carlo.montes@nasa.gov,'//
      &        'nancy.y.kiang@nasa.gov')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lat_min', '-90')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lat_max', '90')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lon_min', '-180')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'geospatial_lon_max', '180')
-         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
-         err = NF90_CLOSE(entpftlaimax_io(k))
 
-         err = NF90_CLOSE(entpftlaimaxA_io(k))
-         err = NF90_CLOSE(entpftlaimaxcheck_io(k))
       enddo
 
+      call chunker%close
 
 
       end program modis_ent
