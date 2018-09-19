@@ -712,14 +712,14 @@
 
 !      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
 
-      type(ChunkIO_t) :: fileid_lai, fileid_04crops, fileid_05crops
-      type(ChunkIO_t) :: fileid_06crops, fileid_04cropsm, fileid_C4norm
-      type(ChunkIO_t) :: fileid_Tcold, fileid_Pdry, fileid_Pmave, fileid_TCinave
-      type(ChunkIO_t) :: fileid_CMedit
-      type(ChunkIO_t) :: fileid_waterpart,fileid_checksum,fileid_waterout
-      type(ChunkIO_t) :: fileid_wateroutA,fileid_checksum2,fileid_waterlai
-      type(ChunkIO_t) :: fileid_checksum3,fileid_npftgrid,fileid_dompftlc
-      type(ChunkIO_t) :: fileid_dompft
+      type(ChunkIO_t) :: io_lai, io_04crops, io_05crops
+      type(ChunkIO_t) :: io_06crops, io_04cropsm, io_C4norm
+      type(ChunkIO_t) :: io_Tcold, io_Pdry, io_Pmave, io_TCinave
+      type(ChunkIO_t) :: io_CMedit
+      type(ChunkIO_t) :: io_waterpart,io_checksum,io_waterout
+      type(ChunkIO_t) :: io_wateroutA,io_checksum2,io_waterlai
+      type(ChunkIO_t) :: io_checksum3,io_npftgrid,io_dompftlc
+      type(ChunkIO_t) :: io_dompft
 
       real*4 :: WATERLAI
 
@@ -739,149 +739,149 @@
       chunker%init(IM1km, JM1km)
 
 !     LAI
-      call chunker%nc_open(fileid_lai,
-     &    DATA_DIR, DATA_INPUT, fileid_lai,
+      call chunker%nc_open(io_lai,
+     &    DATA_DIR, DATA_INPUT, io_lai,
      &    'LAI/',
      &    'LAI3gMax_1kmx1km.nc', 'laimax')
 
 !     Get variable IDs
-      err = NF90_INQ_VARID(fileid_lai%fileid,'lon',varidx)
-      err = NF90_INQ_VARID(fileid_lai%fileid,'lat',varidy)
+      err = NF90_INQ_VARID(io_lai%fileid,'lon',varidx)
+      err = NF90_INQ_VARID(io_lai%fileid,'lat',varidy)
       write(*,*) err, 'variables IDs'
 
 !     CROPS
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_04crops,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_04crops,
      &    'crops/',
      &    '04_Monfreda_herb_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(fileid_04crops,'crops',varid_04crops)
+      err = NF90_INQ_VARID(io_04crops,'crops',varid_04crops)
       write(*,*) err
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_05crops,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_05crops,
      &    'crops/',
      &    '05_Monfreda_shrub_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(fileid_05crops,'crops',varid_05crops)
+      err = NF90_INQ_VARID(io_05crops,'crops',varid_05crops)
       write(*,*) err
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_06crops,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_06crops,
      &    'crops/',
      &    '06_Monfreda_tree_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(fileid_06crops,'crops',varid_06crops)
+      err = NF90_INQ_VARID(io_06crops,'crops',varid_06crops)
       write(*,*) err
       
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_04cropsm,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_04cropsm,
      &    'crops/',
      &    '08_Monfreda_c4_crops_multi1_1kmx1km.nc')
-      err = NF90_INQ_VARID(fileid_04cropsm,'crops',varid_04cropsm)
+      err = NF90_INQ_VARID(io_04cropsm,'crops',varid_04cropsm)
       write(*,*) err
       
 !     CLIMSTATS
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_C4norm,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_C4norm,
      &     'climstats/',
      &     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc')
-      err = NF90_INQ_VARID(fileid_C4norm,'C4climate',varid_C4norm)
+      err = NF90_INQ_VARID(io_C4norm,'C4climate',varid_C4norm)
       write(*,*) err
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_Tcold,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_Tcold,
      &     'climstats/', 'Tcold.nc')
-      err = NF90_INQ_VARID(fileid_Tcold,'Tcold',varid_Tcold)
+      err = NF90_INQ_VARID(io_Tcold,'Tcold',varid_Tcold)
       write(*,*) err
       
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_Pdry,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_Pdry,
      &     'climstats/', 'Pdry.nc')
-      err = NF90_INQ_VARID(fileid_Pdry,'Pdry',varid_Pdry)
+      err = NF90_INQ_VARID(io_Pdry,'Pdry',varid_Pdry)
       write(*,*) err
            
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_Pmave,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_Pmave,
      &     'climstats/', 'Pmave.nc')
-      err = NF90_INQ_VARID(fileid_Pmave,'Pmave',varid_Pmave)
+      err = NF90_INQ_VARID(io_Pmave,'Pmave',varid_Pmave)
       write(*,*) err
       
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_TCinave,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_TCinave,
      &      'climstats/', 'TCinave.nc')
-      err = NF90_INQ_VARID(fileid_TCinave,'TCinave',varid_TCinave)
+      err = NF90_INQ_VARID(io_TCinave,'TCinave',varid_TCinave)
       write(*,*) err
       
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_CMedit,
+      call open_input_nc(DATA_DIR, DATA_INPUT, io_CMedit,
      &     'climstats/', 'ClimMedit.nc')
-      err = NF90_INQ_VARID(fileid_CMedit,'ClimMedit',varid_CMedit)
+      err = NF90_INQ_VARID(io_CMedit,'ClimMedit',varid_CMedit)
       write(*,*) err
       
 !     WATERLC MODIS PARTITION
       call open_input_nc(LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
-     &     fileid_waterpart,
+     &     io_waterpart,
      &     '2004/',
      &     'PART_SUB_1km_2004_geo.PARTITION_00.nc')
-      err = NF90_INQ_VARID(fileid_waterpart,'PARTITION_0',
+      err = NF90_INQ_VARID(io_waterpart,'PARTITION_0',
      &     varid_waterpart)
       write(*,*) err
 
 !     CHECKSUM
-      fileid_checksum = create_nc(
+      io_checksum = create_nc(
      &    'checksum/', 'EntMM29lc_lai_for_1kmx1km')
 
 !      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
 !      fileout = LC_LAI_ENT_DIR//'checksum/EntMM29lc_lai_for_1kmx1km.nc'
 !      write(*,*) fileout
-!      err = NF90_OPEN(fileout,NF90_WRITE,fileid_checksum)
+!      err = NF90_OPEN(fileout,NF90_WRITE,io_checksum)
 !      write(*,*) err, 'opening ', fileout
-!      err = NF90_INQ_VARID(fileid_checksum,'EntMM29lc_lai_for_1kmx1km',
+!      err = NF90_INQ_VARID(io_checksum,'EntMM29lc_lai_for_1kmx1km',
 !     &     varid_checksum)
 !      write(*,*) err
 
 !     WATERLC OUTPUT
-      fileid_waterout=create_nc(
+      io_waterout=create_nc(
      &    'EntMM_lc_laimax_1kmx1km/', 'water_lc')
-      err = NF90_INQ_VARID(fileid_waterout,'water_lc',varid_waterout)
+      err = NF90_INQ_VARID(io_waterout,'water_lc',varid_waterout)
       write(*,*) err
 
-      fileid_wateroutA=create_nc(
+      io_wateroutA=create_nc(
      &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc')
-      err = NF90_INQ_VARID(fileid_wateroutA,'water_lc',
+      err = NF90_INQ_VARID(io_wateroutA,'water_lc',
      &     varid_wateroutA)
       write(*,*) err
       
 !     CHECKSUM
-      fileid_checksum2=create_nc(
+      io_checksum2=create_nc(
      &         'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(fileid_checksum2,
+      err = NF90_INQ_VARID(io_checksum2,
      &     'EntLandcover_check_sum_Jun_1kmx1km',varid_checksum2)
       write(*,*) err
 
 !     WATER LAI
-      fileid_waterlai=create_nc(
+      io_waterlai=create_nc(
      &      'EntMM_lc_laimax_1kmx1km/', 'water_lai')
-      err = NF90_INQ_VARID(fileid_waterlai,'water_lai',
+      err = NF90_INQ_VARID(io_waterlai,'water_lai',
      &     varid_waterlai)
       write(*,*) err
 
 !     CHECKSUM
-      fileid_checksum3=create_nc(
+      io_checksum3=create_nc(
      &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(fileid_checksum3,
+      err = NF90_INQ_VARID(io_checksum3,
      &     'EntLAI_check_sum_Jun_1kmx1km',varid_checksum3)
       write(*,*) err
 
 !     NPFTGRID
-      fileid_npftgrid=create_nc(
+      io_npftgrid=create_nc(
      &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(fileid_npftgrid,
+      err = NF90_INQ_VARID(io_npftgrid,
      &     'EntPFTs_percell_check_sum_Jun_1kmx1km',varid_npftgrid)
       write(*,*) err
 
 !     DOMPFTLC
-      fileid_dompftlc=create_nc(
+      io_dompftlc=create_nc(
      &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(fileid_dompftlc,
+      err = NF90_INQ_VARID(io_dompftlc,
      &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
      &     varid_dompftlc)
       write(*,*) err
 
 !     DOMPFT
-      fileid_dompft=create_nc(
+      io_dompft=create_nc(
      &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(fileid_dompft,
+      err = NF90_INQ_VARID(io_dompft,
      &     'EntdominantPFT_check_sum_Jun_1kmx1km',varid_dompft)
       write(*,*) err
    
@@ -964,11 +964,11 @@
 !     Read lat and lon values
       startY(1)=1
       countY(1)=JM1km
-      nf90_get_var(fileid_lai, varidy, lat, startY, countY)
+      nf90_get_var(io_lai, varidy, lat, startY, countY)
 
       startX(1)=1
       countX(1)=IM1km
-      nf90_get_var(fileid_lai, varidx, lat, startX, countX)
+      nf90_get_var(io_lai, varidx, lat, startX, countX)
 
 !     Write lat and lon values to appropriate files
                do k=1,LCLASS
@@ -984,13 +984,13 @@
                   err = NF90_PUT_VAR(entpftlc_fileid(k),varidy,lat,
      &                 startY,countY)
                end do
-               err = NF90_PUT_VAR(fileid_checksum2,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum2,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_checksum2,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum2,varidy,lat,
      &             startY,countY)
-               err = NF90_PUT_VAR(fileid_waterlai,varidx,lon,
+               err = NF90_PUT_VAR(io_waterlai,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_waterlai,varidy,lat,
+               err = NF90_PUT_VAR(io_waterlai,varidy,lat,
      &              startY,countY)
                do k=1,LCLASS
                   err = NF90_PUT_VAR(
@@ -1006,33 +1006,33 @@
      &                 entpftlaimaxA_fileid(k),varidy,lat,
      &                 startY,countY)
                end do
-               err = NF90_PUT_VAR(fileid_wateroutA,varidx,lon,
+               err = NF90_PUT_VAR(io_wateroutA,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_wateroutA,varidy,lat,
+               err = NF90_PUT_VAR(io_wateroutA,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_waterout,varidx,
+               err = NF90_PUT_VAR(io_waterout,varidx,
      &              lon,startX,countX)
-               err = NF90_PUT_VAR(fileid_waterout,varidy,lat,
+               err = NF90_PUT_VAR(io_waterout,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_checksum,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_checksum,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_checksum3,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum3,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_checksum3,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum3,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_npftgrid,varidx,lon,
+               err = NF90_PUT_VAR(io_npftgrid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_npftgrid,varidy,lat,
+               err = NF90_PUT_VAR(io_npftgrid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_dompftlc,varidx,lon,
+               err = NF90_PUT_VAR(io_dompftlc,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_dompftlc,varidy,lat,
+               err = NF90_PUT_VAR(io_dompftlc,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(fileid_dompft,varidx,lon,
+               err = NF90_PUT_VAR(io_dompft,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(fileid_dompft,varidy,lat,
+               err = NF90_PUT_VAR(io_dompft,varidy,lat,
      &              startY,countY)
                do k=1,LCLASS
                   err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
@@ -1124,7 +1124,7 @@
 
 !     WATERLC
 
-            err = NF90_GET_VAR(fileid_waterpart,varid_waterpart,inbuf,
+            err = NF90_GET_VAR(io_waterpart,varid_waterpart,inbuf,
      &            startB,countB)
             WATERLC=inbuf(1,1)
 
@@ -1276,14 +1276,14 @@
 !     !This confirms that the modis_c2_gissfortran output does not sum to 1.
 
             inbuf(1,1)=CHECKSUM
-            err = NF90_PUT_VAR(fileid_checksum,varid_checksum,inbuf,
+            err = NF90_PUT_VAR(io_checksum,varid_checksum,inbuf,
      &           startB,countB)
             if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum,varidx,lon,
      &              startX,countX)
             endif
             if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum,varidy,lat,
      &              startY,countY)
             endif
              
@@ -1359,7 +1359,7 @@
 !     * Write Ent PFT land cover layers
 !     write(*,*) "WATER (cover fraction)"
             inbuf(1,1)=WATERLC
-            err=NF90_PUT_VAR(fileid_waterout,varid_waterout,inbuf,
+            err=NF90_PUT_VAR(io_waterout,varid_waterout,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
@@ -1369,7 +1369,7 @@
 
 !     write(*,*) "WATER (cover fraction)"
             inbuf(1,1)=WATERLC
-            err=NF90_PUT_VAR(fileid_wateroutA,varid_wateroutA,inbuf,
+            err=NF90_PUT_VAR(io_wateroutA,varid_wateroutA,inbuf,
      &           startB,countB)
 
 !            write(*,*) err, 'Wrote WATER (cover fraction)'
@@ -1403,7 +1403,7 @@
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
             inbuf(1,1)=CHECKSUM
-            err=NF90_PUT_VAR(fileid_checksum2,varid_checksum2,inbuf,
+            err=NF90_PUT_VAR(io_checksum2,varid_checksum2,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote TITLECHECK'
@@ -1420,7 +1420,7 @@
             TITLE = "WATER (LAI)"
 !     write(*,*) TITLE
             inbuf(1,1)=WATERLAI
-            err=NF90_PUT_VAR(fileid_waterlai,varid_waterlai,inbuf,
+            err=NF90_PUT_VAR(io_waterlai,varid_waterlai,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote WATERLAI'
@@ -1449,7 +1449,7 @@
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
             inbuf(1,1)=CHECKSUM
-            err=NF90_PUT_VAR(fileid_checksum3,varid_checksum3,inbuf,
+            err=NF90_PUT_VAR(io_checksum3,varid_checksum3,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
@@ -1458,7 +1458,7 @@
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
             inbuf(1,1)=NPFTGRID
-            err=NF90_PUT_VAR(fileid_npftgrid,varid_npftgrid,inbuf,
+            err=NF90_PUT_VAR(io_npftgrid,varid_npftgrid,inbuf,
      &           startB,countB)
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
@@ -1466,7 +1466,7 @@
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
             inbuf(1,1)=DOMPFTLC
-            err=NF90_PUT_VAR(fileid_dompftlc,varid_dompftlc,inbuf,
+            err=NF90_PUT_VAR(io_dompftlc,varid_dompftlc,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
@@ -1475,7 +1475,7 @@
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
             inbuf(1,1)=DOMPFT
-            err=NF90_PUT_VAR(fileid_dompft,varid_dompft,inbuf,
+            err=NF90_PUT_VAR(io_dompft,varid_dompft,inbuf,
      &           startB,countB)
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
@@ -1524,27 +1524,27 @@
 
       enddo
 
-      err = NF90_CLOSE(fileid_04crops)
+      err = NF90_CLOSE(io_04crops)
 !     write(*,*) err
-      err = NF90_CLOSE(fileid_06crops)
-      err = NF90_CLOSE(fileid_06crops)
-      err = NF90_CLOSE(fileid_04cropsm)
-      err = NF90_CLOSE(fileid_C4norm)
-      err = NF90_CLOSE(fileid_Tcold)
-      err = NF90_CLOSE(fileid_Pdry)
-      err = NF90_CLOSE(fileid_Pmave)
-      err = NF90_CLOSE(fileid_TCinave)
-      err = NF90_CLOSE(fileid_CMedit)
-      err = NF90_CLOSE(fileid_waterpart)  
-      err = NF90_CLOSE(fileid_checksum)
-      err = NF90_CLOSE(fileid_waterout)
-      err = NF90_CLOSE(fileid_wateroutA)
-      err = NF90_CLOSE(fileid_checksum2)
-      err = NF90_CLOSE(fileid_waterlai)
-      err = NF90_CLOSE(fileid_checksum3)
-      err = NF90_CLOSE(fileid_npftgrid)
-      err = NF90_CLOSE(fileid_dompftlc)
-      err = NF90_CLOSE(fileid_dompft)
+      err = NF90_CLOSE(io_06crops)
+      err = NF90_CLOSE(io_06crops)
+      err = NF90_CLOSE(io_04cropsm)
+      err = NF90_CLOSE(io_C4norm)
+      err = NF90_CLOSE(io_Tcold)
+      err = NF90_CLOSE(io_Pdry)
+      err = NF90_CLOSE(io_Pmave)
+      err = NF90_CLOSE(io_TCinave)
+      err = NF90_CLOSE(io_CMedit)
+      err = NF90_CLOSE(io_waterpart)  
+      err = NF90_CLOSE(io_checksum)
+      err = NF90_CLOSE(io_waterout)
+      err = NF90_CLOSE(io_wateroutA)
+      err = NF90_CLOSE(io_checksum2)
+      err = NF90_CLOSE(io_waterlai)
+      err = NF90_CLOSE(io_checksum3)
+      err = NF90_CLOSE(io_npftgrid)
+      err = NF90_CLOSE(io_dompftlc)
+      err = NF90_CLOSE(io_dompft)
      
       do k=1,ENTPFTNUM
          
