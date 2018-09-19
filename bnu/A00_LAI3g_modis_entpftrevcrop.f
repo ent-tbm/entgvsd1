@@ -712,56 +712,41 @@
 
 !      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
 
-      integer :: fileid_lai, fileid_04crops, fileid_05crops
-      integer :: fileid_06crops, fileid_04cropsm, fileid_C4norm
-      integer :: fileid_Tcold, fileid_Pdry, fileid_Pmave, fileid_TCinave
-      integer :: fileid_CMedit
-      integer :: fileid_waterpart,fileid_checksum,fileid_waterout
-      integer :: fileid_wateroutA,fileid_checksum2,fileid_waterlai
-      integer :: fileid_checksum3,fileid_npftgrid,fileid_dompftlc
-      integer :: fileid_dompft
-      
-      integer :: varid_lai, varid_04crops, varid_05crops
-      integer :: varid_06crops, varid_04cropsm, varid_C4norm
-      integer :: varid_Tcold, varid_Pdry, varid_Pmave, varid_TCinave
-      integer :: varid_CMedit
-      integer :: varid_waterpart,varid_checksum,varid_waterout
-      integer :: varid_wateroutA,varid_checksum2,varid_waterlai
-      integer :: varid_checksum3,varid_npftgrid,varid_dompftlc
-      integer :: varid_dompft
+      type(ChunkIO_t) :: fileid_lai, fileid_04crops, fileid_05crops
+      type(ChunkIO_t) :: fileid_06crops, fileid_04cropsm, fileid_C4norm
+      type(ChunkIO_t) :: fileid_Tcold, fileid_Pdry, fileid_Pmave, fileid_TCinave
+      type(ChunkIO_t) :: fileid_CMedit
+      type(ChunkIO_t) :: fileid_waterpart,fileid_checksum,fileid_waterout
+      type(ChunkIO_t) :: fileid_wateroutA,fileid_checksum2,fileid_waterlai
+      type(ChunkIO_t) :: fileid_checksum3,fileid_npftgrid,fileid_dompftlc
+      type(ChunkIO_t) :: fileid_dompft
 
       real*4 :: WATERLAI
 
-      integer :: partit_varid(28)
-      integer :: partit_fileid(28)
-      integer :: entpft_varid(19)
-      integer :: entpft_fileid(19)
-      integer :: entpftlc_varid(19)
-      integer :: entpftlc_fileid(19)
-      integer :: entpftlaimax_varid(19)
-      integer :: entpftlaimax_fileid(19)
-      integer :: entpftlaimaxA_varid(19)
-      integer :: entpftlaimaxA_fileid(19)
-      integer :: entpftlaimaxcheck_varid(19)
-      integer :: entpftlaimaxcheck_fileid(19)
+      type(ChunkIO_t) :: partit_fileid(28)
+      type(ChunkIO_t) :: entpft_fileid(19)
+      type(ChunkIO_t) :: entpftlc_fileid(19)
+      type(ChunkIO_t) :: entpftlaimax_fileid(19)
+      type(ChunkIO_t) :: entpftlaimaxA_fileid(19)
+      type(ChunkIO_t) :: entpftlaimaxcheck_fileid(19)
 
       RESOUT = '1kmx1km'
 
 ! ----------------------------------------------------------------------
 !     GET FILES AND VARS IDs
 
+!**   INPUT Files at 1km x 1km 
+      chunker%init(IM1km, JM1km)
 
 !     LAI
-      call open_input_nc(DATA_DIR, DATA_INPUT, fileid_lai,
+      call chunker%nc_open(fileid_lai,
+     &    DATA_DIR, DATA_INPUT, fileid_lai,
      &    'LAI/',
-     &    'LAI3gMax_1kmx1km.nc')
-
-      err = NF90_INQ_VARID(fileid_lai,'laimax',varid_lai)
-      write(*,*) err, varid_lai,'variables IDs'
+     &    'LAI3gMax_1kmx1km.nc', 'laimax')
 
 !     Get variable IDs
-      err = NF90_INQ_VARID(fileid_lai,'lon',varidx)
-      err = NF90_INQ_VARID(fileid_lai,'lat',varidy)
+      err = NF90_INQ_VARID(fileid_lai%fileid,'lon',varidx)
+      err = NF90_INQ_VARID(fileid_lai%fileid,'lat',varidy)
       write(*,*) err, 'variables IDs'
 
 !     CROPS
@@ -974,8 +959,6 @@
       ! Quit if we had any problems opening files
       call check_nf_open_errors
 
-!**   INPUT Files at 1km x 1km 
-      chunker%init(IM1km, JM1km)
 
 !-----------------------------------------------------------------
 !     Read lat and lon values

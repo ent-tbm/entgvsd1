@@ -241,13 +241,14 @@ subroutine nc_create(this, cio, dir, leaf)
     this%writes(this%nwrites) => cio
 end subroutine nc_create
 
-subroutine nc_open(this, cio, iroot, oroot, dir, leaf)
+subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     class(Chunker_t) :: this
     type(ChunkIO_t) :: cio
     character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
     character*(*), intent(in) :: oroot   ! Write or link to here, then open
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
+    character*(*), intent(in) :: vname
     ! --------- Local vars
     character(4192) :: cmd
     integer :: err
@@ -272,9 +273,16 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf)
     end if
 
     ! ------- Now open the file
-    err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,ncid)
+    err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening',trim(leaf),err
+        entgvsd_errs = entgvsd_errs + 1
+        return
+    end if
+
+    err = NF90_INQ_VARID(fileid_lai,vname,cio%varid)
+    if (err /= NF90_NOERR) then
+        write(ERROR_UNIT,*) 'Error getting varid',trim(leaf),err
         entgvsd_errs = entgvsd_errs + 1
         return
     end if
