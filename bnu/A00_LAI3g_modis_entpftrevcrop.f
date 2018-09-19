@@ -751,71 +751,58 @@
 
 !     CROPS
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_04crops,
+      call chunker%nc_open(io_04crops
+     &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
-     &    '04_Monfreda_herb_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(io_04crops,'crops',varid_04crops)
-      write(*,*) err
+     &    '04_Monfreda_herb_crops_1kmx1km.nc', 'crops')
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_05crops,
+      call chunker%nc_open(io_05crops,
+     &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
-     &    '05_Monfreda_shrub_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(io_05crops,'crops',varid_05crops)
-      write(*,*) err
+     &    '05_Monfreda_shrub_crops_1kmx1km.nc', 'crops')
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_06crops,
+      call chunker%nc_open(io_06crops,
+     &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
-     &    '06_Monfreda_tree_crops_1kmx1km.nc')
-      err = NF90_INQ_VARID(io_06crops,'crops',varid_06crops)
-      write(*,*) err
-      
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_04cropsm,
+     &    '06_Monfreda_tree_crops_1kmx1km.nc', 'crops')
+
+      call chunker%nc_open(io_04cropsm,
+     &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
-     &    '08_Monfreda_c4_crops_multi1_1kmx1km.nc')
-      err = NF90_INQ_VARID(io_04cropsm,'crops',varid_04cropsm)
-      write(*,*) err
+     &    '08_Monfreda_c4_crops_multi1_1kmx1km.nc', 'crops')
       
 !     CLIMSTATS
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_C4norm,
+      call chunker%nc_open(io_C4norm,
+     &     DATA_DIR, DATA_INPUT, 
      &     'climstats/',
-     &     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc')
-      err = NF90_INQ_VARID(io_C4norm,'C4climate',varid_C4norm)
-      write(*,*) err
+     &     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc', 'C4climate')
 
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_Tcold,
-     &     'climstats/', 'Tcold.nc')
-      err = NF90_INQ_VARID(io_Tcold,'Tcold',varid_Tcold)
-      write(*,*) err
-      
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_Pdry,
-     &     'climstats/', 'Pdry.nc')
-      err = NF90_INQ_VARID(io_Pdry,'Pdry',varid_Pdry)
-      write(*,*) err
+      call chunker%nc_open(io_Tcold,
+     &     DATA_DIR, DATA_INPUT,
+     &     'climstats/', 'Tcold.nc', 'Tcold')
+
+      call chunker%nc_open(io_Pdry,
+     &     DATA_DIR, DATA_INPUT, 
+     &     'climstats/', 'Pdry.nc', 'Pdry')
            
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_Pmave,
-     &     'climstats/', 'Pmave.nc')
-      err = NF90_INQ_VARID(io_Pmave,'Pmave',varid_Pmave)
-      write(*,*) err
-      
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_TCinave,
-     &      'climstats/', 'TCinave.nc')
-      err = NF90_INQ_VARID(io_TCinave,'TCinave',varid_TCinave)
-      write(*,*) err
-      
-      call open_input_nc(DATA_DIR, DATA_INPUT, io_CMedit,
-     &     'climstats/', 'ClimMedit.nc')
-      err = NF90_INQ_VARID(io_CMedit,'ClimMedit',varid_CMedit)
-      write(*,*) err
+      call chunker%nc_open(io_Pmave,
+     &     DATA_DIR, DATA_INPUT,
+     &     'climstats/', 'Pmave.nc', 'Pmave')
+
+      call chunker%nc_open(io_TCinave,
+     &      DATA_DIR, DATA_INPUT,
+     &      'climstats/', 'TCinave.nc', 'TCinave')
+
+      call chunker%nc_open(io_CMedit,
+     &     DATA_DIR, DATA_INPUT, 
+     &     'climstats/', 'ClimMedit.nc', 'ClimMedi')
       
 !     WATERLC MODIS PARTITION
-      call open_input_nc(LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
-     &     io_waterpart,
+      call chunker%nc_open(io_waterpart,
+     &     LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
      &     '2004/',
-     &     'PART_SUB_1km_2004_geo.PARTITION_00.nc')
-      err = NF90_INQ_VARID(io_waterpart,'PARTITION_0',
-     &     varid_waterpart)
-      write(*,*) err
+     &     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0')
 
 !     CHECKSUM
       io_checksum = create_nc(
@@ -1064,6 +1051,49 @@
              ii = (ichunk-1)*chunker%chunk_size(1)+(xcoord-1)+1
              jj = (jchunk-1)*chunker%chunk_size(2)+(ycoord-1)+1
 
+
+             !**   LAI data
+             LAI=io_lai%buf(ic,jc)
+
+             !**   Crop files
+
+            CROPSHERBNORM=io_04crops%buf(ic,jc)
+!           write(*,*) 'CROPSHERBNORM ',(CROPSHERBNORM)
+            CROPSSHRUBNORM=io_05crops%buf(ic,jc)
+!     write(*,*) 'CROPSSHRUBNORM ',shape(CROPSSHRUBNORM)
+            CROPSTREENORM=io_06crops%buf(ic,jc)
+!     write(*,*) 'CROPSTREENORM ',shape(CROPSTREENORM)
+            CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc)
+            if (CROPSC4HERBFRAC.eq.undef) then
+                CROPSC4HERBFRAC = 0
+            endif
+!     write(*,*) 'CROPSC4HERBFRAC ',shape(CROPSC4HERBFRAC)
+
+             !** Input C4 climate file
+            C4CLIMFRAC=io_C4norm%buf(ic,jc)
+!     write(*,*) 'C4CLIMFRAC ',(C4CLIMFRAC)
+
+             !* Input climate statistics files
+             !###  Now getting MAT from Climstats file.
+             !###  file tas is in K, Climstats is in C.
+            Tcold=io_Tcold%buf(ic,jc)
+!     write(*,*) 'Tcold ',shape(Tcold)
+            Pdry=io_Pdry%buf(ic,jc)
+!     write(*,*) 'Pdry ',shape(Pdry)
+            Pmave=io_Pmave%buf(ic,jc)
+!     write(*,*) 'Pmave ',shape(Pmave)
+
+            TCinave=io_TCinave%buf(ic,jc)
+!     write(*,*) 'TCinave ',shape(TCinave)
+            MAT = TCinave + 273.15 !Convert to Kelvin
+
+            ClimMedit=io_CMedit%buf(ic,jc)
+!     write(*,*) 'ClimMedit ',shape(ClimMedit)
+            
+
+!     * Calculate LAIMAX for each pft. Loop through LCLASS: LAI------------------------
+!     write(*,*) 'Looping through time steps to get max LAI'
+
             LAIMAX = 0.
             !write(*,*) 'LAIMAX ',shape(LAIMAX)
 
@@ -1261,7 +1291,7 @@
                   call Set_pft(19,LIN,LAIMAX)
                endif
 
-            enddo
+            end do   ! k=1,lclass
 
 !     * --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
 !     * After attempting re-scaling with this section, I determined that
@@ -1340,7 +1370,7 @@
                   DOMPFTLC = ENTPFTLC(k)
                   DOMPFT = k
                endif
-            enddo
+            end do   !k=1,ENTPFTNUM
 !---------------------------------------------------------------
 
 !     * Checksumminmax file.
@@ -1378,7 +1408,7 @@
 
 !     write(*,*) err, 'Wrote LAYEROUT'
 
-            enddo
+            end do  ! k=1,ENTPFTNUM
             
             
             TITLECHECK = 'Ent Land cover check sum '//MONTH(6)//' '
@@ -1415,7 +1445,7 @@
                entpftlaimaxA_io(k)%buf(ic,jc)=LAYEROUT
 !               write(*,*) err, 'Wrote LAYEROUT'
 
-            enddo
+            end do  ! k=1,ENTPFTNUM
 
             TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
@@ -1452,7 +1482,7 @@
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
 !     write(*,*) TITLECHECK
 
-            enddo
+            end do  ! k=1,ENTPFTNUM
 
 !--------------Check for LC and LAI consistency    -------------------------
 !     Check that if LAIMAX>0 then LC>0.  Should be okay.
@@ -1481,9 +1511,13 @@
 
             endif
 
-         enddo
+         end do   ! ic=1,chunker%chunk_size(1)
+         end do   ! jc=1,chunker%chunk_size(2)
 
-      enddo
+          call chunker%write_chunks
+
+      end do     ! ichunk=1,nchunk(1)
+      end do     ! jchunk=1,nchunk(2)
 
       do k=1,ENTPFTNUM
          
@@ -1541,7 +1575,7 @@
          err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
 
-      enddo
+      end do
 
       call chunker%close
 

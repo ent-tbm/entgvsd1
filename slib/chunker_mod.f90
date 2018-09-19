@@ -141,13 +141,10 @@ subroutine move_to(this, ci, cj)
     integer ::i
     integer :: startB(2), countB(2)
 
-    ! ---------- Write out old chunks
-    if (cur_start(1) > 0) call this%read_chunks
-
     this%cur(1) = ci
     this%cur(2) = cj
 
-    call this%write_chunks
+    call this%read_chunks
 end subroutine move_to
 
 subroutine close0(this, files, nfiles)
