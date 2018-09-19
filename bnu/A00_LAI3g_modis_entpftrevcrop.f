@@ -805,7 +805,7 @@
      &     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0')
 
 !     CHECKSUM
-      io_checksum = create_nc(
+      call chunker%nc_create(io_checksum,
      &    'checksum/', 'EntMM29lc_lai_for_1kmx1km')
 
 !      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
@@ -818,47 +818,47 @@
 !      write(*,*) err
 
 !     WATERLC OUTPUT
-      io_waterout=create_nc(
+      call chunker%nc_create(io_waterout,
      &    'EntMM_lc_laimax_1kmx1km/', 'water_lc')
       err = NF90_INQ_VARID(io_waterout,'water_lc',varid_waterout)
       write(*,*) err
 
-      io_wateroutA=create_nc(
+      call chunker%nc_create(io_wateroutA,
      &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc')
       err = NF90_INQ_VARID(io_wateroutA,'water_lc',
      &     varid_wateroutA)
       write(*,*) err
       
 !     CHECKSUM
-      io_checksum2=create_nc(
+      call chunker%nc_create(io_checksum2,
      &         'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(io_checksum2,
      &     'EntLandcover_check_sum_Jun_1kmx1km',varid_checksum2)
       write(*,*) err
 
 !     WATER LAI
-      io_waterlai=create_nc(
+      call chunker%nc_create(io_waterlai,
      &      'EntMM_lc_laimax_1kmx1km/', 'water_lai')
       err = NF90_INQ_VARID(io_waterlai,'water_lai',
      &     varid_waterlai)
       write(*,*) err
 
 !     CHECKSUM
-      io_checksum3=create_nc(
+      call chunker%nc_create(io_checksum3,
      &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(io_checksum3,
      &     'EntLAI_check_sum_Jun_1kmx1km',varid_checksum3)
       write(*,*) err
 
 !     NPFTGRID
-      io_npftgrid=create_nc(
+      call chunker%nc_create(io_npftgrid,
      &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(io_npftgrid,
      &     'EntPFTs_percell_check_sum_Jun_1kmx1km',varid_npftgrid)
       write(*,*) err
 
 !     DOMPFTLC
-      io_dompftlc=create_nc(
+      call chunker%nc_create(io_dompftlc,
      &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(io_dompftlc,
      &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
@@ -866,7 +866,7 @@
       write(*,*) err
 
 !     DOMPFT
-      io_dompft=create_nc(
+      call chunker%nc_create(io_dompft,
      &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km')
       err = NF90_INQ_VARID(io_dompft,
      &     'EntdominantPFT_check_sum_Jun_1kmx1km',varid_dompft)
@@ -889,7 +889,7 @@
 
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
-         entpft_io(k)=create_nc(
+         call chunker%nc_create(entpft_io(k),
      &        'EntMM_lc_laimax_1kmx1km/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
@@ -899,7 +899,7 @@
       
 !     ENTPFTLC
       do k = 1,ENTPFTNUM
-         entpftlc_io(k)=create_nc(
+         call chunker%nc_create(entpftlc_io(k),
      &        'EntMM_lc_laimax_1kmx1kmA/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
@@ -911,7 +911,7 @@
 
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
-         entpftlaimax_io(k)=create_nc(
+         call chunker%nc_create(entpftlaimax_io(k),
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
@@ -923,7 +923,7 @@
 
 !     ENTPFTLAIMAXA
       do k =1,ENTPFTNUM
-         entpftlaimaxA_io(k)=create_nc(
+         call chunker%nc_create(entpftlaimaxA_io(k),
      &        'EntMM_lc_laimax_1kmx1kmA/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
@@ -934,7 +934,7 @@
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
-         entpftlaimaxcheck_io(k)=create_nc(
+         call chunker%nc_create(entpftlaimaxcheck_io(k),
      &         'checksum/',
      &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)))
          inqvarin = trim(EntPFT_files2(k))
