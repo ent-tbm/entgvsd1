@@ -723,12 +723,12 @@
 
       real*4 :: WATERLAI
 
-      type(ChunkIO_t) :: partit_fileid(28)
-      type(ChunkIO_t) :: entpft_fileid(19)
-      type(ChunkIO_t) :: entpftlc_fileid(19)
-      type(ChunkIO_t) :: entpftlaimax_fileid(19)
-      type(ChunkIO_t) :: entpftlaimaxA_fileid(19)
-      type(ChunkIO_t) :: entpftlaimaxcheck_fileid(19)
+      type(ChunkIO_t) :: partit_io(28)
+      type(ChunkIO_t) :: entpft_io(19)
+      type(ChunkIO_t) :: entpftlc_io(19)
+      type(ChunkIO_t) :: entpftlaimax_io(19)
+      type(ChunkIO_t) :: entpftlaimaxA_io(19)
+      type(ChunkIO_t) :: entpftlaimaxcheck_io(19)
 
       RESOUT = '1kmx1km'
 
@@ -890,33 +890,33 @@
          inqvarin = 'PARTITION'//trim(partit(k))
          call open_input_nc(
      &        LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
-     &        partit_fileid(k),
+     &        partit_io(k),
      &        '2004/', 
      &        'PART_SUB_1km_2004_geo.PARTITION'//
      &            trim(partit_num(k))//'.nc')
 
-         err = NF90_INQ_VARID(partit_fileid(k),inqvarin,
+         err = NF90_INQ_VARID(partit_io(k),inqvarin,
      &        partit_varid(k))
          write(*,*) err
       enddo
 
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
-         entpft_fileid(k)=create_nc(
+         entpft_io(k)=create_nc(
      &        'EntMM_lc_laimax_1kmx1km/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpft_fileid(k),inqvarin,entpft_varid(k))
+         err = NF90_INQ_VARID(entpft_io(k),inqvarin,entpft_varid(k))
       write(*,*) inqvarin, err
       enddo
       
 !     ENTPFTLC
       do k = 1,ENTPFTNUM
-         entpftlc_fileid(k)=create_nc(
+         entpftlc_io(k)=create_nc(
      &        'EntMM_lc_laimax_1kmx1kmA/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
          inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlc_fileid(k),inqvarin,
+         err = NF90_INQ_VARID(entpftlc_io(k),inqvarin,
      &        entpftlc_varid(k))
       write(*,*) inqvarin, err
       enddo
@@ -924,11 +924,11 @@
 
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
-         entpftlaimax_fileid(k)=create_nc(
+         entpftlaimax_io(k)=create_nc(
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimax_fileid(k),inqvarin,
+         err = NF90_INQ_VARID(entpftlaimax_io(k),inqvarin,
      &        entpftlaimax_varid(k))
       write(*,*) inqvarin, err
       enddo
@@ -936,22 +936,22 @@
 
 !     ENTPFTLAIMAXA
       do k =1,ENTPFTNUM
-         entpftlaimaxA_fileid(k)=create_nc(
+         entpftlaimaxA_io(k)=create_nc(
      &        'EntMM_lc_laimax_1kmx1kmA/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
          inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimaxA_fileid(k),inqvarin,
+         err = NF90_INQ_VARID(entpftlaimaxA_io(k),inqvarin,
      &        entpftlaimaxA_varid(k))
       write(*,*) inqvarin, err
       enddo
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
-         entpftlaimaxcheck_fileid(k)=create_nc(
+         entpftlaimaxcheck_io(k)=create_nc(
      &         'checksum/',
      &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)))
          inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimaxcheck_fileid(k)
+         err = NF90_INQ_VARID(entpftlaimaxcheck_io(k)
      &        ,inqvarin,entpftlaimaxcheck_varid(k))
       write(*,*) inqvarin, err
       enddo
@@ -973,15 +973,15 @@
 !     Write lat and lon values to appropriate files
                do k=1,LCLASS
                   err = NF90_PUT_VAR(
-     &                 entpft_fileid(k),varidx,lon,
+     &                 entpft_io(k),varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpft_fileid(k),varidy,lat,
+     &                 entpft_io(k),varidy,lat,
      &                 startY,countY)
 
-                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidx,lon,
+                  err = NF90_PUT_VAR(entpftlc_io(k),varidx,lon,
      &                 startX,countX)
-                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidy,lat,
+                  err = NF90_PUT_VAR(entpftlc_io(k),varidy,lat,
      &                 startY,countY)
                end do
                err = NF90_PUT_VAR(io_checksum2,varidx,lon,
@@ -994,16 +994,16 @@
      &              startY,countY)
                do k=1,LCLASS
                   err = NF90_PUT_VAR(
-     &                 entpftlaimax_fileid(k),varidx,lon,
+     &                 entpftlaimax_io(k),varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimax_fileid(k),varidy,lat,
+     &                 entpftlaimax_io(k),varidy,lat,
      &                 startY,countY)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_fileid(k),varidx,lon,
+     &                 entpftlaimaxA_io(k),varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_fileid(k),varidy,lat,
+     &                 entpftlaimaxA_io(k),varidy,lat,
      &                 startY,countY)
                end do
                err = NF90_PUT_VAR(io_wateroutA,varidx,lon,
@@ -1035,9 +1035,9 @@
                err = NF90_PUT_VAR(io_dompft,varidy,lat,
      &              startY,countY)
                do k=1,LCLASS
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k),
      &                 varidx,lon,startX,countX)
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k),
      &                 varidy,lat,startY,countY)
                end do
 !-----------------------------------------------------------------
@@ -1140,7 +1140,7 @@
 !     Input file for land cover data
 !     MODIS PARTITION FILES
                err = NF90_GET_VAR(
-     &              partit_fileid(k),partit_varid(k),inbuf,
+     &              partit_io(k),partit_varid(k),inbuf,
      &              startB,countB)
                LIN=inbuf(1,1)
 !              if (LIN.gt.0.) write(*,*) LIN,k,'kkkk'
@@ -1378,7 +1378,7 @@
                
 !     Output file for land cover
                inbuf(1,1)=ENTPFTLC(k)
-               err=NF90_PUT_VAR(entpft_fileid(k),entpft_varid(k),inbuf,
+               err=NF90_PUT_VAR(entpft_io(k),entpft_varid(k),inbuf,
      &              startB,countB)
 
 !     write(*,*) err, 'Wrote ENTPFTLC'
@@ -1387,7 +1387,7 @@
                call Set_val(LAYEROUT,longout,latout,0.,undef)
 !     write(*,*) inqvarin
                inbuf(1,1)=LAYEROUT
-               err=NF90_PUT_VAR(entpftlc_fileid(k),entpftlc_varid(k),
+               err=NF90_PUT_VAR(entpftlc_io(k),entpftlc_varid(k),
      &              inbuf,startB,countB)
 
 !     write(*,*) err, 'Wrote LAYEROUT'
@@ -1426,7 +1426,7 @@
                CHECKSUM = CHECKSUM +
      &              ENTPFTLC(k)*ENTPFTLAIMAX(k)
                inbuf(1,1)=ENTPFTLAIMAX(k)
-               err=NF90_PUT_VAR(entpftlaimax_fileid(k),
+               err=NF90_PUT_VAR(entpftlaimax_io(k),
      &              entpftlaimax_varid(k),inbuf,
      &              startB,countB)
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX',ENTPFTLAIMAX(k,:,:)
@@ -1434,7 +1434,7 @@
                LAYEROUT = ENTPFTLAIMAX(k)
                call Set_val(LAYEROUT,longout,latout,0.,undef)
                inbuf(1,1)=LAYEROUT
-               err=NF90_PUT_VAR(entpftlaimaxA_fileid(k),
+               err=NF90_PUT_VAR(entpftlaimaxA_io(k),
      &              entpftlaimaxA_varid(k),inbuf,
      &              startB,countB)
 !               write(*,*) err, 'Wrote LAYEROUT'
@@ -1481,7 +1481,7 @@
                TITLECHECK = EntPFT_title(k)//
      &              'EntMM LAI max '//trim(RESOUT)
                inbuf(1,1)=ENTPFTLAIMAX(k)
-               err=NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
+               err=NF90_PUT_VAR(entpftlaimaxcheck_io(k),
      &              entpftlaimaxcheck_varid(k),inbuf,startB,countB)
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
@@ -1544,68 +1544,68 @@
      
       do k=1,ENTPFTNUM
          
-         err = NF90_CLOSE(partit_fileid(k))
+         err = NF90_CLOSE(partit_io(k))
 
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'long_name',EntPFT_title(k))
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,'history',
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,'history',
      &        'June 2017: C. Montes, N.Y. Kiang')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'title', 'Ent PFT 1 km land cover fraction')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'creator_name', 'NASA GISS')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'creator_email',
      &        'elizabeth.fischer@columbia.edu,'//
      &        'carlo.montes@nasa.gov'//
      &        'nancy.y.kiang@nasa.gov')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'geospatial_lat_min', '-90')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'geospatial_lat_max', '90')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'geospatial_lon_min', '-180')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'geospatial_lon_max', '180')
-         err = NF90_PUT_ATT(entpft_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpft_io(k),NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
-         err = NF90_CLOSE(entpft_fileid(k))
+         err = NF90_CLOSE(entpft_io(k))
 
-         err = NF90_CLOSE(entpftlc_fileid(k))
+         err = NF90_CLOSE(entpftlc_io(k))
          
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'long_name',EntPFT_title(k))
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &         'history', 'June 2017: C. Montes, N.Y. Kiang,'//
      &         'downscaled from 1/12 degree to 1km resolution')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'institution', 'Original data:  LAI3g,'//
      &        'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'//
      &        'Scaling: NASA Goddard Institute for Space Studies')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &         'title', 'Maximum annual LAI (m2/m2) 2004'//
      &         'downscaled from 1/12 degrees')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'creator_name', 'NASA GISS')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'creator_email',
      &        'elizabeth.fischer@columbia.edu,'//
      &        'carlo.montes@nasa.gov,'//
      &        'nancy.y.kiang@nasa.gov')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'geospatial_lat_min', '-90')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'geospatial_lat_max', '90')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'geospatial_lon_min', '-180')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'geospatial_lon_max', '180')
-         err = NF90_PUT_ATT(entpftlaimax_fileid(k),NF90_GLOBAL,
+         err = NF90_PUT_ATT(entpftlaimax_io(k),NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
-         err = NF90_CLOSE(entpftlaimax_fileid(k))
+         err = NF90_CLOSE(entpftlaimax_io(k))
 
-         err = NF90_CLOSE(entpftlaimaxA_fileid(k))
-         err = NF90_CLOSE(entpftlaimaxcheck_fileid(k))
+         err = NF90_CLOSE(entpftlaimaxA_io(k))
+         err = NF90_CLOSE(entpftlaimaxcheck_io(k))
       enddo
 
 
