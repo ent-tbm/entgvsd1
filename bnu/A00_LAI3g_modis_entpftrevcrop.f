@@ -874,17 +874,13 @@
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
-         inqvarin = 'PARTITION'//trim(partit(k))
          call open_input_nc(
      &        LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
      &        partit_io(k),
      &        '2004/', 
      &        'PART_SUB_1km_2004_geo.PARTITION'//
-     &            trim(partit_num(k))//'.nc')
-
-         err = NF90_INQ_VARID(partit_io(k),inqvarin,
-     &        partit_varid(k))
-         write(*,*) err
+     &            trim(partit_num(k))//'.nc',
+     &        'PARTITION'//trim(partit(k)))    ! var name
       enddo
 
 !      ENTPFTLC
@@ -1476,7 +1472,6 @@
             do k=1,ENTPFTNUM
                TITLECHECK = EntPFT_title(k)//
      &              'EntMM LAI max '//trim(RESOUT)
-               entpftlai
                entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
