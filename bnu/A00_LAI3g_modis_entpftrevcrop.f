@@ -60,11 +60,6 @@
       integer, parameter :: IM4X5 = 72 !long at 5 degrees
       integer, parameter :: JM4X5 = 46 !lat at 4 degrees
       
-      integer, parameter :: longin = 1
-      integer, parameter :: latin = 1
-      integer, parameter :: longout = 1 !Should be same at longin
-      integer, parameter :: latout = 1
-
       integer :: im, jm
 
       integer, parameter :: ENTPFTNUM = 19 !17 Ent PFTs + barren + ice
@@ -693,14 +688,8 @@
       real*4 :: NPFTGRID  
       real*4 :: DOMPFTLC  
       real*4 :: DOMPFT
-     
 
-      real*4 :: lon(longout),lat(latout)
-!     real*4 :: lai(longin,latin)
-
-!     real*4, ALLOCATABLE :: LCin(:,:)
-!     real*4, ALLOCATABLE :: LCout(:,:)
-!     real*4, ALLOCATABLE:: WATERLAI(:,:)
+      real*4 :: lon(IM1km),lat(JM1km)
 
       integer :: i, j, k, f, m, p
       real*4 :: diff
@@ -712,14 +701,16 @@
       integer :: err,fileid,fileidin,fileidout,dimidx,dimidy,dimidz
       integer :: dd(4),varidx
       integer :: varidy,varidz,myvar
-      integer :: startA(1),startB(2),countA(1),countB(2)
+      integer :: startB(2),countB(2)
       integer :: startX(1),startY(1),countX(1),countY(1)
       integer :: lenx,leny,lenz
-      real*4 :: xvals,yvals,zvals
+      type(Chunker_t) :: chunker
+      integer :: jchunk, ichunk    ! Index of current chunk
+      integer :: jc, ic    ! Index WITHIN current chunk
+      integer :: jj, ii            ! Index in full space
       real*4 :: LAI
-      integer :: ycoord, xcoord
 
-      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
+!      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
 
       integer :: fileid_lai, fileid_04crops, fileid_05crops
       integer :: fileid_06crops, fileid_04cropsm, fileid_C4norm
@@ -983,125 +974,105 @@
       ! Quit if we had any problems opening files
       call check_nf_open_errors
 
-!-----------------------------------------------------------------
-!     Loop for every grid point
-      
-      do ycoord = 1,JM1km
-
-         do xcoord = 1,IM1km
-
-            if (xcoord.eq.1) then
-               startY(1) = ycoord
-               countY(1) = 1
-               err = NF90_GET_VAR(
-     &              fileid_lai,varidy,lat,
-     &              startY,countY)
-            endif
-           
 !**   INPUT Files at 1km x 1km 
-            
-            startB(1)=xcoord
-            startB(2)=ycoord
-            countB(1)=1
-            countB(2)=1
-            
-!**   lon lat from LAI file -----------------------------------------------------------------
+      chunker%init(IM1km, JM1km)
 
-            if (ycoord.eq.1) then
-               startX(1) = xcoord
-               countX(1) = 1
-               err = NF90_GET_VAR(fileid_lai,varidx,lon,
+!-----------------------------------------------------------------
+!     Read lat and lon values
+      startY(1)=1
+      countY(1)=JM1km
+      nf90_get_var(fileid_lai, varidy, lat, startY, countY)
+
+      startX(1)=1
+      countX(1)=IM1km
+      nf90_get_var(fileid_lai, varidx, lat, startX, countX)
+
+!     Write lat and lon values to appropriate files
+               do k=1,LCLASS
+                  err = NF90_PUT_VAR(
+     &                 entpft_fileid(k),varidx,lon,
+     &                 startX,countX)
+                  err = NF90_PUT_VAR(
+     &                 entpft_fileid(k),varidy,lat,
+     &                 startY,countY)
+
+                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidx,lon,
+     &                 startX,countX)
+                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidy,lat,
+     &                 startY,countY)
+               end do
+               err = NF90_PUT_VAR(fileid_checksum2,varidx,lon,
      &              startX,countX)
-            endif
-            
-            if (xcoord.eq.1) then
-!   write(*,*) 'xcoord', xcoord, 'lon', lon
-               write(*,*) 'ycoord', ycoord, 'lat', lat
-            endif
-               
-            
-!**   LAI data ------------------------------------------------------------------------------
-            err = NF90_GET_VAR(fileid_lai,varid_lai,inbuf,
-     &            startB,countB)
-            LAI = inbuf(1,1)
-!           write(*,*) 'LAI ',err,shape(LAI)
+               err = NF90_PUT_VAR(fileid_checksum2,varidy,lat,
+     &             startY,countY)
+               err = NF90_PUT_VAR(fileid_waterlai,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_waterlai,varidy,lat,
+     &              startY,countY)
+               do k=1,LCLASS
+                  err = NF90_PUT_VAR(
+     &                 entpftlaimax_fileid(k),varidx,lon,
+     &                 startX,countX)
+                  err = NF90_PUT_VAR(
+     &                 entpftlaimax_fileid(k),varidy,lat,
+     &                 startY,countY)
+                  err = NF90_PUT_VAR(
+     &                 entpftlaimaxA_fileid(k),varidx,lon,
+     &                 startX,countX)
+                  err = NF90_PUT_VAR(
+     &                 entpftlaimaxA_fileid(k),varidy,lat,
+     &                 startY,countY)
+               end do
+               err = NF90_PUT_VAR(fileid_wateroutA,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_wateroutA,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_waterout,varidx,
+     &              lon,startX,countX)
+               err = NF90_PUT_VAR(fileid_waterout,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_checksum,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_checksum,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_checksum3,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_checksum3,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_npftgrid,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_npftgrid,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_dompftlc,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_dompftlc,varidy,lat,
+     &              startY,countY)
+               err = NF90_PUT_VAR(fileid_dompft,varidx,lon,
+     &              startX,countX)
+               err = NF90_PUT_VAR(fileid_dompft,varidy,lat,
+     &              startY,countY)
+               do k=1,LCLASS
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
+     &                 varidx,lon,startX,countX)
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
+     &                 varidy,lat,startY,countY)
+               end do
+!-----------------------------------------------------------------
 
-!**   Crop files---------------------------------------------------------------------------
+!-----------------------------------------------------------------
+      do jchunk = 1,nchunk(2)
+      do ichunk = 1,nchunk(1)
 
-!            write(*,*) 'Opening crop files' 
+         call chunk%move_to(ichunk,jchunk)
+         write(*,*) 'chunk',ichunk,jchunk
 
-            err = NF90_GET_VAR(
-     &           fileid_04crops,varid_04crops,inbuf,
-     &           startB,countB)
-            CROPSHERBNORM=inbuf(1,1)
-!           write(*,*) 'CROPSHERBNORM ',(CROPSHERBNORM)
-            
-            err = NF90_GET_VAR(
-     &           fileid_05crops,varid_05crops,inbuf,
-     &           startB,countB)
-            CROPSSHRUBNORM=inbuf(1,1)
-!     write(*,*) 'CROPSSHRUBNORM ',shape(CROPSSHRUBNORM)
+         do jc = 1,chunker%chunk_size(2)
+         do ic = 1,chunker%chunk_size(1)
 
-            err = NF90_GET_VAR(
-     &           fileid_06crops,varid_06crops,inbuf,
-     &           startB,countB)
-            CROPSTREENORM=inbuf(1,1)
-!     write(*,*) 'CROPSTREENORM ',shape(CROPSTREENORM)
+             ! Compute overall NetCDF index of current cell
+             ii = (ichunk-1)*chunker%chunk_size(1)+(xcoord-1)+1
+             jj = (jchunk-1)*chunker%chunk_size(2)+(ycoord-1)+1
 
-            err = NF90_GET_VAR(
-     &           fileid_04cropsm,varid_04cropsm,inbuf,
-     &           startB,countB)
-            CROPSC4HERBFRAC=inbuf(1,1)
-            if (CROPSC4HERBFRAC.eq.undef) then
-                CROPSC4HERBFRAC = 0
-            endif
-!     write(*,*) 'CROPSC4HERBFRAC ',shape(CROPSC4HERBFRAC)
-
-!     * Input C4 climate file ----------------------------------------------------------
-
-!     write(*,*) 'Opening C4 climate file' 
-
-            err = NF90_GET_VAR(fileid_C4norm,varid_C4norm,inbuf,
-     &           startB,countB)
-            C4CLIMFRAC=inbuf(1,1)
-!     write(*,*) 'C4CLIMFRAC ',(C4CLIMFRAC)
-
-!     * Input climate statistics files -------------------------------------------------
-!###  Now getting MAT from Climstats file.
-!###  file tas is in K, Climstats is in C.
-
-            err = NF90_GET_VAR(fileid_Tcold,varid_Tcold,inbuf,
-     &           startB,countB)
-            Tcold=inbuf(1,1)
-!     write(*,*) 'Tcold ',shape(Tcold)
-
-            err = NF90_GET_VAR(fileid_Pdry,varid_Pdry,inbuf,
-     &           startB,countB)
-            Pdry=inbuf(1,1)
-!     write(*,*) 'Pdry ',shape(Pdry)
-
-            err = NF90_GET_VAR(fileid_Pmave,varid_Pmave,inbuf,
-     &           startB,countB)
-            Pmave=inbuf(1,1)
-!     write(*,*) 'Pmave ',shape(Pmave)
-
-            err = NF90_GET_VAR(
-     &           fileid_TCinave,varid_TCinave,inbuf,
-     &           startB,countB)
-            TCinave=inbuf(1,1)
-!     write(*,*) 'TCinave ',shape(TCinave)
-            MAT = TCinave + 273.15 !Convert to Kelvin
-
-            err = NF90_GET_VAR(fileid_CMedit,varid_CMedit,inbuf,
-     &          startB,countB)
-            ClimMedit=inbuf(1,1)
-!     write(*,*) 'ClimMedit ',shape(ClimMedit)
-            
-
-!     * Calculate LAIMAX for each pft. Loop through LCLASS: LAI------------------------
-!     write(*,*) 'Looping through time steps to get max LAI'
-            
-!            LAIMAX(:) = 0.
             LAIMAX = 0.
             !write(*,*) 'LAIMAX ',shape(LAIMAX)
 
@@ -1407,14 +1378,6 @@
             inbuf(1,1)=WATERLC
             err=NF90_PUT_VAR(fileid_waterout,varid_waterout,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_waterout,varidx,
-     &              lon,startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_waterout,varidy,lat,
-     &              startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
 
@@ -1425,14 +1388,6 @@
             inbuf(1,1)=WATERLC
             err=NF90_PUT_VAR(fileid_wateroutA,varid_wateroutA,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_wateroutA,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_wateroutA,varidy,lat,
-     &              startY,countY)
-            endif
 
 !            write(*,*) err, 'Wrote WATER (cover fraction)'
             
@@ -1446,16 +1401,6 @@
                inbuf(1,1)=ENTPFTLC(k)
                err=NF90_PUT_VAR(entpft_fileid(k),entpft_varid(k),inbuf,
      &              startB,countB)
-               if (ycoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpft_fileid(k),varidx,lon,
-     &                 startX,countX)
-               endif
-               if (xcoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpft_fileid(k),varidy,lat,
-     &                 startY,countY)
-               endif
 
 !     write(*,*) err, 'Wrote ENTPFTLC'
             
@@ -1465,14 +1410,6 @@
                inbuf(1,1)=LAYEROUT
                err=NF90_PUT_VAR(entpftlc_fileid(k),entpftlc_varid(k),
      &              inbuf,startB,countB)
-               if (ycoord.eq.1) then
-                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidx,lon,
-     &                 startX,countX)
-               endif
-               if (xcoord.eq.1) then
-                  err = NF90_PUT_VAR(entpftlc_fileid(k),varidy,lat,
-     &                 startY,countY)
-               endif
 
 !     write(*,*) err, 'Wrote LAYEROUT'
 
@@ -1485,14 +1422,6 @@
             inbuf(1,1)=CHECKSUM
             err=NF90_PUT_VAR(fileid_checksum2,varid_checksum2,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum2,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum2,varidy,lat,
-     &             startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote TITLECHECK'
 
@@ -1510,14 +1439,6 @@
             inbuf(1,1)=WATERLAI
             err=NF90_PUT_VAR(fileid_waterlai,varid_waterlai,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_waterlai,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_waterlai,varidy,lat,
-     &              startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote WATERLAI'
 
@@ -1529,16 +1450,6 @@
                err=NF90_PUT_VAR(entpftlaimax_fileid(k),
      &              entpftlaimax_varid(k),inbuf,
      &              startB,countB)
-               if (ycoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimax_fileid(k),varidx,lon,
-     &                 startX,countX)
-               endif
-               if (xcoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimax_fileid(k),varidy,lat,
-     &                 startY,countY)
-               endif
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX',ENTPFTLAIMAX(k,:,:)
 
                LAYEROUT = ENTPFTLAIMAX(k)
@@ -1547,16 +1458,6 @@
                err=NF90_PUT_VAR(entpftlaimaxA_fileid(k),
      &              entpftlaimaxA_varid(k),inbuf,
      &              startB,countB)
-               if (ycoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_fileid(k),varidx,lon,
-     &                 startX,countX)
-               endif
-               if (xcoord.eq.1) then
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_fileid(k),varidy,lat,
-     &                 startY,countY)
-               endif
 !               write(*,*) err, 'Wrote LAYEROUT'
 
             enddo
@@ -1567,14 +1468,6 @@
             inbuf(1,1)=CHECKSUM
             err=NF90_PUT_VAR(fileid_checksum3,varid_checksum3,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum3,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_checksum3,varidy,lat,
-     &              startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
@@ -1584,14 +1477,6 @@
             inbuf(1,1)=NPFTGRID
             err=NF90_PUT_VAR(fileid_npftgrid,varid_npftgrid,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_npftgrid,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_npftgrid,varidy,lat,
-     &              startY,countY)
-            endif
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent dominant PFT LC check sum '//MONTH(6)//' '
@@ -1600,14 +1485,6 @@
             inbuf(1,1)=DOMPFTLC
             err=NF90_PUT_VAR(fileid_dompftlc,varid_dompftlc,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_dompftlc,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_dompftlc,varidy,lat,
-     &              startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
@@ -1617,14 +1494,6 @@
             inbuf(1,1)=DOMPFT
             err=NF90_PUT_VAR(fileid_dompft,varid_dompft,inbuf,
      &           startB,countB)
-            if (ycoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_dompft,varidx,lon,
-     &              startX,countX)
-            endif
-            if (xcoord.eq.1) then
-               err = NF90_PUT_VAR(fileid_dompft,varidy,lat,
-     &              startY,countY)
-            endif
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
@@ -1635,14 +1504,6 @@
                inbuf(1,1)=ENTPFTLAIMAX(k)
                err=NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
      &              entpftlaimaxcheck_varid(k),inbuf,startB,countB)
-               if (ycoord.eq.1) then
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
-     &                 varidx,lon,startX,countX)
-               endif
-               if (xcoord.eq.1) then
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_fileid(k),
-     &                 varidy,lat,startY,countY)
-               endif
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
 !     write(*,*) TITLECHECK
