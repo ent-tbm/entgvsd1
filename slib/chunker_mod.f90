@@ -3,6 +3,7 @@ module chunker_mod
     use entgvsd_config_mod
     use, intrinsic :: iso_fortran_env
     use netcdf
+    use paths_mod
 
 implicit none
 private
@@ -17,9 +18,13 @@ type ChunkIO_t
     character(200) :: leaf    ! Leaf name of file, for identification
     integer :: fileid, varid
     logical :: own_fileid   ! True if we own the fileid
-    float*4, dimension(:,:), allocatable :: buf
+    real*4, dimension(:,:), allocatable :: buf
 
 end type ChunkIO_t
+
+type ChunkIO_ptr
+    type(ChunkIO_t), pointer :: ptr
+end type ChunkIO_ptr
 
 ! ------ All the files, plus chunking info
 type Chunker_t
@@ -31,7 +36,7 @@ type Chunker_t
     integer :: nerr = 0
     integer :: max_reads, max_writes
     integer :: nreads, nwrites
-    type(ChunkerBuf_t), pointer, dimension(:), allocatable :: reads,writes
+    type(ChunkIO_ptr), dimension(:), allocatable :: reads,writes
 contains
     procedure :: init
     procedure :: write_chunks
@@ -63,14 +68,14 @@ subroutine init(this, im, jm, max_reads, max_writes)
 
     ! Allocate space to refer to managed chunk buffers
     this%max_reads = max_reads
-    allocate(reads(this%max_reads))
-    nreads = 0
+    allocate(this%reads(this%max_reads))
+    this%nreads = 0
     this%max_writes = max_writes
-    allocate(writes(this%max_writes))
-    nwrites = 0
+    allocate(this%writes(this%max_writes))
+    this%nwrites = 0
 
     ! Invalid chunk index; means we have nothing to write on move_to()
-    cur_start = (/0,0/)
+    this%cur = (/0,0/)
 
 end subroutine init
 
@@ -82,6 +87,7 @@ subroutine write_chunks(this)
     integer :: i
     integer :: startB(2)
     integer :: nerr
+    integer :: err
 
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
@@ -90,10 +96,10 @@ subroutine write_chunks(this)
     nerr = 0
     do i=1,this%nwrites
         err=NF90_PUT_VAR( &
-           this%writes(i)%fileid, this%writes(i)%varid, &
-           this%writes(i)%buf,startB,this%chunk_size)
+           this%writes(i)%ptr%fileid, this%writes(i)%ptr%varid, &
+           this%writes(i)%ptr%buf,startB,this%chunk_size)
         if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%leaf)
+            write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%ptr%leaf)
             nerr = nerr + 1
         end if
     end do
@@ -110,6 +116,7 @@ subroutine read_chunks(this)
     integer :: i
     integer :: startB(2)
     integer :: nerr
+    integer :: err
 
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
@@ -118,10 +125,10 @@ subroutine read_chunks(this)
     nerr = 0
     do i=1,this%nreads
         err=NF90_GET_VAR( &
-           this%reads(i)%fileid, this%reads(i)%varid, &
-           this%reads(i)%buf,startB,this%chunk_size)
+           this%reads(i)%ptr%fileid, this%reads(i)%ptr%varid, &
+           this%reads(i)%ptr%buf,startB,this%chunk_size)
         if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error reading ',trim(this%reads(i)%leaf)
+            write(ERROR_UNIT,*) 'Error reading ',trim(this%reads(i)%ptr%leaf)
             nerr = nerr + 1
         end if
     end do
@@ -135,7 +142,7 @@ end subroutine read_chunks
 
 ! Sets the NetCDF start and count arrays used to read/write a single chunk
 subroutine move_to(this, ci, cj)
-    class(Chunker_t), target, intent(IN) :: this
+    class(Chunker_t), target :: this
     integer, intent(IN) :: ci,cj    ! Index of chunk
     ! ---------- Locals
     integer ::i
@@ -148,18 +155,20 @@ subroutine move_to(this, ci, cj)
 end subroutine move_to
 
 subroutine close0(this, files, nfiles)
-    type(Chunker_t), target, intent(IN) :: this
-    type(ChunkIO), pointer, dimension(:) :: files
+    type(Chunker_t) :: this
+    type(ChunkIO_ptr), dimension(:) :: files
     integer :: nfiles
     ! ---------------- Locals
     integer :: err
     integer :: nerr
+    integer :: i
+
     nerr = 0
     do i=1,nfiles
-        if (files(i)%own_fileid) then
-            err = nf90_close(files(i)%fileid)
+        if (files(i)%ptr%own_fileid) then
+            err = nf90_close(files(i)%ptr%fileid)
             if (err /= NF90_NOERR) then
-                write(ERROR_UNIT,*) 'Error closing ',trim(this%writes(i)%leaf)
+                write(ERROR_UNIT,*) 'Error closing ',trim(this%writes(i)%ptr%leaf)
                 nerr = nerr + 1
             end if
         end if
@@ -171,17 +180,19 @@ subroutine close0(this, files, nfiles)
     end if
 end subroutine close0
 
-subroutine close0(this)
+subroutine close(this)
+    class(Chunker_t) :: this
+    ! ---------------- Locals
     call close0(this, this%writes, this%nwrites)
-    call close0(this this%reads, this%nreads)
-end subroutine
+    call close0(this, this%reads, this%nreads)
+end subroutine close
 
 ! -------------------------------------------------------------------
 
 ! Creates a NetCDF file for writing (by chunks)
 subroutine nc_create(this, cio, dir, leaf)
     class(Chunker_t) :: this
-    type(ChunkIO_t) :: cio
+    type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
     ! --------- Locals
@@ -227,20 +238,20 @@ subroutine nc_create(this, cio, dir, leaf)
     cio%own_fileid = .true.
 
     ! Allocate write buffer
-    allocate(cio%buf(im,jm))
+    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
 
     ! Store pointer to this cio
     this%nwrites = this%nwrites + 1
     if (this%nwrites > this%max_writes) then
-        write(ERROR_UNIT,*) 'Exceeded maximum number of write handles', this%leaf
+        write(ERROR_UNIT,*) 'Exceeded maximum number of write handles', cio%leaf
         stop -1
     end if
-    this%writes(this%nwrites) => cio
+    this%writes(this%nwrites)%ptr => cio
 end subroutine nc_create
 
 subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     class(Chunker_t) :: this
-    type(ChunkIO_t) :: cio
+    type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
     character*(*), intent(in) :: oroot   ! Write or link to here, then open
     character*(*), intent(in) :: dir
@@ -251,7 +262,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     integer :: err
     logical :: exist
 
-    ncid = -1
+    cio%fileid = -1
 
     ! -------- Decompress / link the file if it doesn't exist
     inquire(FILE=oroot//dir//leaf, EXIST=exist)
@@ -264,7 +275,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
         call execute_command_line(cmd, .true., err)
         if (err /= 0) then
             write(ERROR_UNIT,*) 'Error running entgvsd_link_input',leaf,err
-            entgvsd_errs = entgvsd_errs + 1
+            this%nerr = this%nerr + 1
             return
         end if
     end if
@@ -273,24 +284,28 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening',trim(leaf),err
-        entgvsd_errs = entgvsd_errs + 1
+        this%nerr = this%nerr + 1
         return
     end if
 
-    err = NF90_INQ_VARID(fileid_lai,vname,cio%varid)
+    err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error getting varid',trim(leaf),err
-        entgvsd_errs = entgvsd_errs + 1
+        this%nerr = this%nerr + 1
         return
     end if
 
     ! Store pointer to this cio
     this%nreads = this%nreads + 1
     if (this%nreads > this%max_reads) then
-        write(ERROR_UNIT,*) 'Exceeded maximum number of read handles', this%leaf
+        write(ERROR_UNIT,*) 'Exceeded maximum number of read handles', cio%leaf
         stop -1
     end if
-    this%reads(this%nreads) => cio
+    this%reads(this%nreads)%ptr => cio
+
+    ! Allocate write buffer
+    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+
 end subroutine nc_open
 
 
@@ -306,65 +321,3 @@ end subroutine nc_check
 
 end module chunker_mod
 ! ======================================================
-module paths_mod
-
-
-implicit none
-
-
-! Hardcoded directories for input / output
-
-! ---------- Original values (Carlos on discover)
-!      --- Input (read-only)
-!      CHARACTER (LEN=*), PARAMETER :: DATA_DIR='../../data/'
-!      !CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_DIR='../lc_lai_giss/'
-!      CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_DIR=
-!     &     '../../lc_lai_for_1km1km/'
-!      --- Output
-!      CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_DIR='../lc_lai_ent/'
-
-! Values for Elizabeth's work on gibbs
-!      --- Input (read-only)
-CHARACTER (LEN=*), PARAMETER :: DATA_DIR= &
-   '/home2/rpfische/entgvsd0_orig/discover/Vegcover_1km/data/'
-
-CHARACTER (LEN=*), PARAMETER :: DATA_INPUT= &
-   '/home2/rpfische/git/entgvsd/inputs/data/'
-
-
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_DIR= &
-   '/home2/rpfische/entgvsd0_orig/discover/Vegcover_1km/BNU/'// &
-   'lc_lai_giss'
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_INPUT= &
-   '/home2/rpfische/git/entgvsd/inputs/lc_lai_giss/'
-
-
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_DIR= &
-    '/home2/rpfische/entgvsd0_orig/discover/Vegcover_1km/'// &
-    'lc_lai_for_1kmx1km/'
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_INPUT= &
-   '/home2/rpfische/git/entgvsd/inputs/lc_lai_giss/lc_lai_for_1kmx1km/'
-
-
-
-
-!      --- Output
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_DIR= &
-   '/home2/rpfische/git/entgvsd/bnu/lc_lai_ent/'
-
-CHARACTER (LEN=*), PARAMETER :: TEMPLATE_DIR= &
-   '/home2/rpfische/git/entgvsd/templates/'
-
-
-! Place of output files originally written by carlos
-! Used to create templates.
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_ORIG= &
-   '/home2/rpfische/entgvsd0_orig/discover/Vegcover_1km/BNU/lc_lai_ent'
-
-! ===========================================================
-
-end module paths_mod
