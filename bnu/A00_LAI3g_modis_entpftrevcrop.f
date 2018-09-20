@@ -1191,7 +1191,7 @@
 !     call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX(k,:,:)) !*9,10. Ent cold- and arid-shrub*! 
 !     REVISED 5/24/2013 to correct boreal zone
                   call Set_Woodysavannasshrub_miscat(
-     &                 C4CLIMFRAC,MAT,LIN,LAIMAX,jc)
+     &                 C4CLIMFRAC,MAT,LIN,LAIMAX,jj)
                elseif (k.eq.12) then !*MODIS Woody savannas-->Grass*!
                   call Set_Grasstype(C4CLIMFRAC, MAT,Pdry,ClimMedit
      &                 ,LIN,LAIMAX)
