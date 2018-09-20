@@ -533,7 +533,7 @@ class CDL3Parser(CDLParser) :
                   chunksizes.append(1)
           kwargs['chunksizes'] = chunksizes
       self.curr_var = self.ncdataset.createVariable(p[1], self.datatype, dimensions=dims,
-         zlib=True,complevel=4,shuffle=True,**kwargs)
+         zlib=True,complevel=1,shuffle=True,**kwargs)
       self.logger.info("Created variable %s with data type '%s' and dimensions %s" \
          % (p[1], self.datatype, dims))
 

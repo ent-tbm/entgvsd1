@@ -32,7 +32,6 @@
 !     save
 
       public ENTPFTLC,ENTPFTLAIMAX !, ENTCOVSUM
-      public longin,latin,longout,latout
       public LCLASS, ENTPFTNUM, im,jm
       public Zero_ENTPFT
       public Set_pft, Set_Shrubtype, Set_Grasstype,Set_Broadleaftype
@@ -60,6 +59,11 @@
       integer, parameter :: IM4X5 = 72 !long at 5 degrees
       integer, parameter :: JM4X5 = 46 !lat at 4 degrees
       
+      integer, parameter :: longin = 1
+      integer, parameter :: latin = 1
+      integer, parameter :: longout = 1 !Should be same at longin
+      integer, parameter :: latout = 1
+
       integer :: im, jm
 
       integer, parameter :: ENTPFTNUM = 19 !17 Ent PFTs + barren + ice
@@ -490,7 +494,8 @@
 !     Output is files prefixed "EntMM" for Ent-MODIS-Monfreda.
       use modis_ent_mod
       use netcdf
-      use ioutil_mod
+      use chunker_mod
+      use paths_mod
       implicit none
 !      include 'netcdf.inc'
 
@@ -689,12 +694,11 @@
       real*4 :: DOMPFTLC  
       real*4 :: DOMPFT
 
-      real*4 :: lon(IM1km),lat(JM1km)
+      real*4, allocatable :: lon(:),lat(:)
 
       integer :: i, j, k, f, m, p
       real*4 :: diff
       integer :: ncidin,ncidout,varid,status
-      character*20 :: inqvarin, inqvarout
 
       integer, parameter :: IndX = 1
       integer, parameter :: IndY = 1
@@ -736,11 +740,11 @@
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-      call chunker%init(IM1km, JM1km)
+      call chunker%init(IM1km, JM1km, 100, 120)
 
 !     LAI
       call chunker%nc_open(io_lai,
-     &    DATA_DIR, DATA_INPUT, io_lai,
+     &    DATA_DIR, DATA_INPUT,
      &    'LAI/',
      &    'LAI3gMax_1kmx1km.nc', 'laimax')
 
@@ -751,7 +755,7 @@
 
 !     CROPS
 
-      call chunker%nc_open(io_04crops
+      call chunker%nc_open(io_04crops,
      &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
      &    '04_Monfreda_herb_crops_1kmx1km.nc', 'crops')
@@ -796,7 +800,7 @@
 
       call chunker%nc_open(io_CMedit,
      &     DATA_DIR, DATA_INPUT, 
-     &     'climstats/', 'ClimMedit.nc', 'ClimMedi')
+     &     'climstats/', 'ClimMedit.nc', 'ClimMedit')
       
 !     WATERLC MODIS PARTITION
       call chunker%nc_open(io_waterpart,
@@ -832,10 +836,8 @@
 
 !     NPFTGRID
       call chunker%nc_create(io_npftgrid,
-     &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(io_npftgrid,
-     &     'EntPFTs_percell_check_sum_Jun_1kmx1km',varid_npftgrid)
-      write(*,*) err
+     &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km',
+     &     'EntPFTs_percell_check_sum_Jun_1kmx1km')
 
 !     DOMPFTLC
       call chunker%nc_create(io_dompftlc,
@@ -849,9 +851,8 @@
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
-         call open_input_nc(
+         call chunker%nc_open(partit_io(k),
      &        LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
-     &        partit_io(k),
      &        '2004/', 
      &        'PART_SUB_1km_2004_geo.PARTITION'//
      &            trim(partit_num(k))//'.nc',
@@ -881,7 +882,6 @@
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
      &       trim(EntPFT_files2(k)))
-      write(*,*) inqvarin, err
       enddo
 
 
@@ -902,95 +902,98 @@
       enddo
 
       ! Quit if we had any problems opening files
-      call check_nf_open_errors
+      call chunker%nc_check
 
 
 !-----------------------------------------------------------------
 !     Read lat and lon values
+
       startY(1)=1
       countY(1)=JM1km
-      nf90_get_var(io_lai, varidy, lat, startY, countY)
+      allocate(lat(countY(1)))
+      err=nf90_get_var(io_lai%fileid, varidy, lat, startY, countY)
 
       startX(1)=1
       countX(1)=IM1km
-      nf90_get_var(io_lai, varidx, lat, startX, countX)
+      allocate(lon(countX(1)))
+      err=nf90_get_var(io_lai%fileid, varidx, lon, startX, countX)
 
 !     Write lat and lon values to appropriate files
-               do k=1,LCLASS
+               do k=1,ENTPFTNUM
                   err = NF90_PUT_VAR(
-     &                 entpft_io(k),varidx,lon,
+     &                 entpft_io(k)%fileid,varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpft_io(k),varidy,lat,
+     &                 entpft_io(k)%fileid,varidy,lat,
      &                 startY,countY)
 
-                  err = NF90_PUT_VAR(entpftlc_io(k),varidx,lon,
+                  err = NF90_PUT_VAR(entpftlc_io(k)%fileid,varidx,lon,
      &                 startX,countX)
-                  err = NF90_PUT_VAR(entpftlc_io(k),varidy,lat,
+                  err = NF90_PUT_VAR(entpftlc_io(k)%fileid,varidy,lat,
      &                 startY,countY)
                end do
-               err = NF90_PUT_VAR(io_checksum,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum%fileid,varidy,lat,
      &             startY,countY)
-               err = NF90_PUT_VAR(io_checksum2,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum2%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum2,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum2%fileid,varidy,lat,
      &             startY,countY)
-               err = NF90_PUT_VAR(io_checksum3,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum3%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum3,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum3%fileid,varidy,lat,
      &             startY,countY)
-               err = NF90_PUT_VAR(io_waterlai,varidx,lon,
+               err = NF90_PUT_VAR(io_waterlai%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_waterlai,varidy,lat,
+               err = NF90_PUT_VAR(io_waterlai%fileid,varidy,lat,
      &              startY,countY)
                do k=1,LCLASS
                   err = NF90_PUT_VAR(
-     &                 entpftlaimax_io(k),varidx,lon,
+     &                 entpftlaimax_io(k)%fileid,varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimax_io(k),varidy,lat,
+     &                 entpftlaimax_io(k)%fileid,varidy,lat,
      &                 startY,countY)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_io(k),varidx,lon,
+     &                 entpftlaimaxA_io(k)%fileid,varidx,lon,
      &                 startX,countX)
                   err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_io(k),varidy,lat,
+     &                 entpftlaimaxA_io(k)%fileid,varidy,lat,
      &                 startY,countY)
                end do
-               err = NF90_PUT_VAR(io_wateroutA,varidx,lon,
+               err = NF90_PUT_VAR(io_wateroutA%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_wateroutA,varidy,lat,
+               err = NF90_PUT_VAR(io_wateroutA%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_waterout,varidx,
+               err = NF90_PUT_VAR(io_waterout%fileid,varidx,
      &              lon,startX,countX)
-               err = NF90_PUT_VAR(io_waterout,varidy,lat,
+               err = NF90_PUT_VAR(io_waterout%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_checksum,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_checksum3,varidx,lon,
+               err = NF90_PUT_VAR(io_checksum3%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum3,varidy,lat,
+               err = NF90_PUT_VAR(io_checksum3%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_npftgrid,varidx,lon,
+               err = NF90_PUT_VAR(io_npftgrid%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_npftgrid,varidy,lat,
+               err = NF90_PUT_VAR(io_npftgrid%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_dompftlc,varidx,lon,
+               err = NF90_PUT_VAR(io_dompftlc%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_dompftlc,varidy,lat,
+               err = NF90_PUT_VAR(io_dompftlc%fileid,varidy,lat,
      &              startY,countY)
-               err = NF90_PUT_VAR(io_dompft,varidx,lon,
+               err = NF90_PUT_VAR(io_dompft%fileid,varidx,lon,
      &              startX,countX)
-               err = NF90_PUT_VAR(io_dompft,varidy,lat,
+               err = NF90_PUT_VAR(io_dompft%fileid,varidy,lat,
      &              startY,countY)
                do k=1,LCLASS
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k),
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k)%fileid,
      &                 varidx,lon,startX,countX)
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k),
+                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k)%fileid,
      &                 varidy,lat,startY,countY)
                end do
 !-----------------------------------------------------------------
@@ -999,16 +1002,14 @@
       do jchunk = 1,nchunk(2)
       do ichunk = 1,nchunk(1)
 
-         call chunk%move_to(ichunk,jchunk)
-         write(*,*) 'chunk',ichunk,jchunk
+         call chunker%move_to(ichunk,jchunk)
 
          do jc = 1,chunker%chunk_size(2)
          do ic = 1,chunker%chunk_size(1)
 
              ! Compute overall NetCDF index of current cell
-             ii = (ichunk-1)*chunker%chunk_size(1)+(xcoord-1)+1
-             jj = (jchunk-1)*chunker%chunk_size(2)+(ycoord-1)+1
-
+             ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
+             jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
              !**   LAI data
              LAI=io_lai%buf(ic,jc)
@@ -1190,7 +1191,7 @@
 !     call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX(k,:,:)) !*9,10. Ent cold- and arid-shrub*! 
 !     REVISED 5/24/2013 to correct boreal zone
                   call Set_Woodysavannasshrub_miscat(
-     &                 C4CLIMFRAC,MAT,LIN,LAIMAX,ycoord)
+     &                 C4CLIMFRAC,MAT,LIN,LAIMAX,jc)
                elseif (k.eq.12) then !*MODIS Woody savannas-->Grass*!
                   call Set_Grasstype(C4CLIMFRAC, MAT,Pdry,ClimMedit
      &                 ,LIN,LAIMAX)
@@ -1281,7 +1282,7 @@
             if (CHECKSUM.ne.1.0) then
                f = f + 1
 !              write(*,*) 'ENTPFTLC<>1.0: ',
-!     &              CHECKSUM,WATERLC,ENTPFTLC(:),ycoord,xcoord
+!     &              CHECKSUM,WATERLC,ENTPFTLC(:),jc,ic
 !     * Rescale all cover to sum to 1.
                WATERLC = WATERLC/CHECKSUM
                do k=1,ENTPFTNUM
@@ -1361,7 +1362,6 @@
             
                LAYEROUT = ENTPFTLC(k)
                call Set_val(LAYEROUT,longout,latout,0.,undef)
-!     write(*,*) inqvarin
                entpftlc_io(k)%buf(ic,jc)=LAYEROUT
 
 !     write(*,*) err, 'Wrote LAYEROUT'

@@ -92,17 +92,20 @@ subroutine write_chunks(this)
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
         (this%cur(2)-1) * this%chunk_size(2) + 1/)
+    write(*, '(A I3 I3)', advance="no") 'Writing Chunk',this%cur
 
     nerr = 0
     do i=1,this%nwrites
         err=NF90_PUT_VAR( &
            this%writes(i)%ptr%fileid, this%writes(i)%ptr%varid, &
            this%writes(i)%ptr%buf,startB,this%chunk_size)
+        write(*,'(A)',advance="no") '.'
         if (err /= NF90_NOERR) then
             write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%ptr%leaf)
             nerr = nerr + 1
         end if
     end do
+    write(*,*)
 
     if (nerr > 0) then
         write(ERROR_UNIT,*) 'Errors encountered writing chunks, exiting'
@@ -121,20 +124,20 @@ subroutine read_chunks(this)
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
         (this%cur(2)-1) * this%chunk_size(2) + 1/)
-print *,'cur',this%cur
-print *,'   startB',startB
-print *,'   chunk_size',this%chunk_size
+    write(*, '(A I3 I3)', advance="no") 'Reading Chunk',this%cur
 
     nerr = 0
     do i=1,this%nreads
         err=NF90_GET_VAR( &
            this%reads(i)%ptr%fileid, this%reads(i)%ptr%varid, &
            this%reads(i)%ptr%buf,startB,this%chunk_size)
+        write(*,'(A)',advance="no") '.'
         if (err /= NF90_NOERR) then
             write(ERROR_UNIT,*) 'Error reading ',trim(this%reads(i)%ptr%leaf)
             nerr = nerr + 1
         end if
     end do
+    write(*,*)
 
     if (nerr > 0) then
         write(ERROR_UNIT,*) 'Errors encountered reading chunks, exiting'
@@ -201,41 +204,48 @@ subroutine nc_create(this, cio, dir, leaf, vname)
     character*(*), intent(in) :: vname
     ! --------- Locals
     integer :: err
+    character(2048) :: path_name
     character(4192) :: cmd
     character(10) :: lon_s, lat_s,fmt
+    logical :: exist
 
     cio%leaf = leaf
     cio%own_fileid = .false.
     cio%fileid = -1
 
-    ! ------- Create the file from a template
-    write(lon_s, '(I10)') nchunk(1)
-    write(lat_s, '(I10)') nchunk(2)
 
-    ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
-    cmd = 'entgvsd_create_nc '// &
-          LC_LAI_ENT_DIR//' '// &
-          LC_LAI_ENT_ORIG//' '// &
-          TEMPLATE_DIR//' '//trim(dir)//' '//trim(leaf)// &
-          ' nchunkspec=lon/'//trim(adjustl(lon_s))//',lat/'//trim(adjustl(lat_s))
-          
-    print *,'----------------------------'
-    print *,trim(cmd)
-    call execute_command_line(cmd, .true., err)
+    path_name = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
+    print *,'Opening ',trim(path_name)
+    inquire(FILE=trim(path_name), EXIST=exist)
+    if (.not.exist) then
+        ! ------- Create the file from a template
+        write(lon_s, '(I10)') nchunk(1)
+        write(lat_s, '(I10)') nchunk(2)
 
-    if (err /= 0) then
-        write(ERROR_UNIT,*) 'Error running command to create', &
-            LC_LAI_ENT_DIR//'/'//LC_LAI_ENT_ORIG//'/'//TEMPLATE_DIR// &
-            '/'//trim(dir)//'/'//trim(leaf)
+        ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
+        cmd = 'entgvsd_create_nc '// &
+              LC_LAI_ENT_DIR//' '// &
+              LC_LAI_ENT_ORIG//' '// &
+              TEMPLATE_DIR//' '//trim(dir)//' '//trim(leaf)// &
+              ' nchunkspec=lon/'//trim(adjustl(lon_s))//',lat/'//trim(adjustl(lat_s))
+              
+        print *,'----------------------------'
+        print *,trim(cmd)
+        call execute_command_line(cmd, .true., err)
 
-        this%nerr = this%nerr + 1
-        return
+        if (err /= 0) then
+            write(ERROR_UNIT,*) 'Error running command to create', &
+                LC_LAI_ENT_DIR//'/'//LC_LAI_ENT_ORIG//'/'//TEMPLATE_DIR// &
+                '/'//trim(dir)//'/'//trim(leaf)
+            this%nerr = this%nerr + 1
+            return
+        end if
     end if
 
     ! ------- Open the file we just created
-    err = NF90_OPEN(LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc', NF90_WRITE, cio%fileid)
+    err = NF90_OPEN(path_name, NF90_WRITE, cio%fileid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error opening after create',LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc',err
+        write(ERROR_UNIT,*) 'Error opening after create',trim(path_name),err
         this%nerr = this%nerr + 1
         return
     end if
@@ -247,7 +257,7 @@ subroutine nc_create(this, cio, dir, leaf, vname)
     ! Open NetCDF array
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error getting varid',trim(leaf),err
+        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
         this%nerr = this%nerr + 1
         return
     end if
@@ -302,7 +312,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
 
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error getting varid',trim(leaf),err
+        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
         this%nerr = this%nerr + 1
         return
     end if
