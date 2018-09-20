@@ -42,7 +42,7 @@ contains
     procedure :: write_chunks
     procedure :: read_chunks
     procedure :: move_to
-    procedure :: close
+    procedure :: close_chunks
     procedure :: nc_create
     procedure :: nc_open
     procedure :: nc_check
@@ -186,12 +186,12 @@ subroutine close0(this, files, nfiles)
     end if
 end subroutine close0
 
-subroutine close(this)
+subroutine close_chunks(this)
     class(Chunker_t) :: this
     ! ---------------- Locals
     call close0(this, this%writes, this%nwrites)
     call close0(this, this%reads, this%nreads)
-end subroutine close
+end subroutine close_chunks
 
 ! -------------------------------------------------------------------
 

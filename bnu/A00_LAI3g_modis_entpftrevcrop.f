@@ -1534,7 +1534,7 @@
 
       end do
 
-      call chunker%close
+      call chunker%close_chunks
 
 
       end program modis_ent
