@@ -736,7 +736,7 @@
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-      chunker%init(IM1km, JM1km)
+      call chunker%init(IM1km, JM1km)
 
 !     LAI
       call chunker%nc_open(io_lai,
@@ -806,49 +806,29 @@
 
 !     CHECKSUM
       call chunker%nc_create(io_checksum,
-     &    'checksum/', 'EntMM29lc_lai_for_1kmx1km')
-
-!      TITLE = 'EntMM 29 lc_lai_for_1kmx1km check sum cover'
-!      fileout = LC_LAI_ENT_DIR//'checksum/EntMM29lc_lai_for_1kmx1km.nc'
-!      write(*,*) fileout
-!      err = NF90_OPEN(fileout,NF90_WRITE,io_checksum)
-!      write(*,*) err, 'opening ', fileout
-!      err = NF90_INQ_VARID(io_checksum,'EntMM29lc_lai_for_1kmx1km',
-!     &     varid_checksum)
-!      write(*,*) err
+     &    'checksum/', 'EntMM29lc_lai_for_1kmx1km',
+     &    'EntMM29lc_lai_for_1kmx1km')
 
 !     WATERLC OUTPUT
       call chunker%nc_create(io_waterout,
-     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc')
-      err = NF90_INQ_VARID(io_waterout,'water_lc',varid_waterout)
-      write(*,*) err
+     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water_lc')
 
       call chunker%nc_create(io_wateroutA,
-     &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc')
-      err = NF90_INQ_VARID(io_wateroutA,'water_lc',
-     &     varid_wateroutA)
-      write(*,*) err
+     &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc', 'water_lc')
       
 !     CHECKSUM
       call chunker%nc_create(io_checksum2,
-     &         'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(io_checksum2,
-     &     'EntLandcover_check_sum_Jun_1kmx1km',varid_checksum2)
-      write(*,*) err
+     &     'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km',
+     &     'EntLandcover_check_sum_Jun_1kmx1km')
 
 !     WATER LAI
       call chunker%nc_create(io_waterlai,
-     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai')
-      err = NF90_INQ_VARID(io_waterlai,'water_lai',
-     &     varid_waterlai)
-      write(*,*) err
+     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water_lai')
 
 !     CHECKSUM
       call chunker%nc_create(io_checksum3,
-     &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(io_checksum3,
-     &     'EntLAI_check_sum_Jun_1kmx1km',varid_checksum3)
-      write(*,*) err
+     &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km',
+     &    'EntLAI_check_sum_Jun_1kmx1km')
 
 !     NPFTGRID
       call chunker%nc_create(io_npftgrid,
@@ -859,18 +839,13 @@
 
 !     DOMPFTLC
       call chunker%nc_create(io_dompftlc,
-     &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(io_dompftlc,
-     &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
-     &     varid_dompftlc)
-      write(*,*) err
+     &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
+     &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
 
 !     DOMPFT
       call chunker%nc_create(io_dompft,
-     &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km')
-      err = NF90_INQ_VARID(io_dompft,
-     &     'EntdominantPFT_check_sum_Jun_1kmx1km',varid_dompft)
-      write(*,*) err
+     &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km',
+     &     'EntdominantPFT_check_sum_Jun_1kmx1km')
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
@@ -887,21 +862,16 @@
       do k = 1,ENTPFTNUM
          call chunker%nc_create(entpft_io(k),
      &        'EntMM_lc_laimax_1kmx1km/',
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
-         inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpft_io(k),inqvarin,entpft_varid(k))
-      write(*,*) inqvarin, err
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
+     &        trim(EntPFT_files2(k)))
       enddo
       
 !     ENTPFTLC
       do k = 1,ENTPFTNUM
          call chunker%nc_create(entpftlc_io(k),
      &        'EntMM_lc_laimax_1kmx1kmA/',
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc')
-         inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlc_io(k),inqvarin,
-     &        entpftlc_varid(k))
-      write(*,*) inqvarin, err
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
+     &        trim(EntPFT_files2(k)))
       enddo
 
 
@@ -909,10 +879,8 @@
       do k=1,ENTPFTNUM
          call chunker%nc_create(entpftlaimax_io(k),
      &       'EntMM_lc_laimax_1kmx1km/',
-     &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
-         inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimax_io(k),inqvarin,
-     &        entpftlaimax_varid(k))
+     &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
+     &       trim(EntPFT_files2(k)))
       write(*,*) inqvarin, err
       enddo
 
@@ -921,22 +889,16 @@
       do k =1,ENTPFTNUM
          call chunker%nc_create(entpftlaimaxA_io(k),
      &        'EntMM_lc_laimax_1kmx1kmA/',
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai')
-         inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimaxA_io(k),inqvarin,
-     &        entpftlaimaxA_varid(k))
-      write(*,*) inqvarin, err
+     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
+     &        trim(EntPFT_files2(k)))
       enddo
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
          call chunker%nc_create(entpftlaimaxcheck_io(k),
      &         'checksum/',
-     &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)))
-         inqvarin = trim(EntPFT_files2(k))
-         err = NF90_INQ_VARID(entpftlaimaxcheck_io(k)
-     &        ,inqvarin,entpftlaimaxcheck_varid(k))
-      write(*,*) inqvarin, err
+     &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)),
+     &         trim(EntPFT_files2(k)))
       enddo
 
       ! Quit if we had any problems opening files

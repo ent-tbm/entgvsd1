@@ -121,6 +121,9 @@ subroutine read_chunks(this)
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
         (this%cur(2)-1) * this%chunk_size(2) + 1/)
+print *,'cur',this%cur
+print *,'   startB',startB
+print *,'   chunk_size',this%chunk_size
 
     nerr = 0
     do i=1,this%nreads
@@ -190,11 +193,12 @@ end subroutine close
 ! -------------------------------------------------------------------
 
 ! Creates a NetCDF file for writing (by chunks)
-subroutine nc_create(this, cio, dir, leaf)
+subroutine nc_create(this, cio, dir, leaf, vname)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
+    character*(*), intent(in) :: vname
     ! --------- Locals
     integer :: err
     character(4192) :: cmd
@@ -239,6 +243,14 @@ subroutine nc_create(this, cio, dir, leaf)
 
     ! Allocate write buffer
     allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+
+    ! Open NetCDF array
+    err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
+    if (err /= NF90_NOERR) then
+        write(ERROR_UNIT,*) 'Error getting varid',trim(leaf),err
+        this%nerr = this%nerr + 1
+        return
+    end if
 
     ! Store pointer to this cio
     this%nwrites = this%nwrites + 1
