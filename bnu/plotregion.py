@@ -8,6 +8,8 @@ import sys
 import numpy as np
 import os
 import collections
+import psutil
+import fcntl
 
 Region = collections.namedtuple('Region',
     ('name',        # Descriptive name of the region
@@ -75,25 +77,25 @@ def plot_file(ifname, ofname, region):
 
 
         # Use a custom basemap
-            #resolution='l',
+        #resolution='l',
         basemap = mpl_toolkits.basemap.Basemap(
             projection='laea',\
             lat_0=region.center_ll[0], lon_0=region.center_ll[1],
             llcrnrlon=lonb[0], llcrnrlat=latb[0],
             urcrnrlon=lonb[-1], urcrnrlat=latb[-1])
 
-        # Plot multiple plots on one page
-        # (figsize must be in inches)
+        # One plot per page (figsize must be in inches)
         figure = matplotlib.pyplot.figure(figsize=(screenres[1]*dotpitch, screenres[0]*dotpitch))
 
         ax = figure.add_subplot(111)
 
-
         cb_args=dict()
         if ifname.endswith('_lc.nc'):
             plot_args=dict(vmin=0.,vmax=1.0)
+
         elif ifname.endswith('_lai.nc'):
             plot_args=dict(vmin=0.,vmax=7.0)
+            plot_args['cmap'] = giss.plot.read_cpt('NYT_drought14b.cpt').cmap
         else:
             raise ValueError('Unknown plot type (lc vs lai)')
 
@@ -118,8 +120,8 @@ def plot_file(ifname, ofname, region):
         # Save to a file as png
         figure.tight_layout(pad=2.0)  # https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
         print('    Writing {}'.format(ofname))
-        figure.savefig(ofname, dpi=1./dotpitch, transparent=False)
-
+        figure.savefig('_tmp.png', dpi=1./dotpitch, transparent=False)
+        os.rename('_tmp.png', ofname)   # Write atomically
 
 # Convert (deg,min,sec) into decimal lat/lon
 def _N(deg,min,sec):
@@ -138,16 +140,43 @@ regions = (
     Region('Brazil crops/shrubland', 'bra', (_S(17,25,34.2), _W(53,0,40.5))),
 )
 
-for path,dirnames,filenames in os.walk('lc_lai_ent'):
-    for fname in sorted(filenames):
-        if fname.endswith('.nc'):
-            for region in regions:
-                ifname = os.path.join(path,fname)
-                ofname = '{}_{}.png'.format(os.path.splitext(ifname)[0], region.shortname)
-                if (not os.path.exists(ofname)) or (os.path.getmtime(ifname) > os.path.getmtime(ofname)):
-                    plot_file(ifname, ofname, region)
+
+def plot_all():
+    for path,dirnames,filenames in os.walk('lc_lai_ent'):
+        for fname in sorted(filenames):
+            if fname.endswith('.nc'):
+                for region in regions:
+                    ifname = os.path.join(path,fname)
+                    ofname = '{}_{}.png'.format(os.path.splitext(ifname)[0], region.shortname)
+                    if (not os.path.exists(ofname)) or (os.path.getmtime(ifname) > os.path.getmtime(ofname)):
+                        # Check for ourselves if we are runnig low on memory.
+                        # If it's this low, probably another plotregion is running.
+                        # Exit with no error, so our caller doesn't keep calling us.
+                        avail = psutil.virtual_memory().available
+                        print('********** avail', avail)
+                        if avail < 1000000000:
+                            sys.exit(1)
+
+                        print('mem1', psutil.virtual_memory())
+                        plot_file(ifname, ofname, region)
+                        print('mem2', psutil.virtual_memory())
 
 #for region in regions:
 #
 #plot_file('lc_lai_ent/EntMM_lc_laimax_1kmx1km/11_c3_grass_per_lc.nc')
 #plot_file('lc_lai_ent/EntMM_lc_laimax_1kmx1km/16_crops_c4_herb_lc.nc')
+
+
+lock_fname = 'plotregion.lock'
+try:
+    # http://tilde.town/~cristo/file-locking-in-python.html
+    lock_file = open(lock_fname, 'w+')
+    fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    plot_all()
+except BlockingIOError:
+    sys.stderr.write('Cannot open lockfile {}, quitting!\n'.format(lock_fname))
+    sys.exit(0)    # Tell caller to quit
+finally:
+    fcntl.flock(lock_file, fcntl.LOCK_UN)
+    os.remove(lock_fname)
+
