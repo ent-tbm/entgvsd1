@@ -32,6 +32,12 @@ type Chunker_t
     integer :: chunk_size(chunk_rank)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur(chunk_rank)     ! Index of current chunk
 
+    ! Same of a low-res version of the chunker...
+    integer :: ngrid_lr(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
+    integer :: chunk_size_lr(chunk_rank)    ! Number of fine grid cells in each chunk (im,jm)
+    integer :: cur_lr(chunk_rank)     ! Index of current chunk
+
+
     ! Keep track if we've globally seen an error
     integer :: nerr = 0
     integer :: max_reads, max_writes
@@ -52,9 +58,10 @@ CONTAINS
 
 ! @param im,jm Size of overall grid
 ! @param max_reads, max_writes Maximum number of read/write files
-subroutine init(this, im, jm, max_reads, max_writes)
+subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
+    integer, intent(IN) :: im_lr,jm_lr
     integer :: max_reads, max_writes
     ! ------ Locals
     integer :: i
@@ -64,6 +71,13 @@ subroutine init(this, im, jm, max_reads, max_writes)
     this%ngrid(2) = jm
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / nchunk(i)
+    end do
+
+    ! Set up chunk parameters (lr)
+    this%ngrid_lr(1) = im_lr
+    this%ngrid_lr(2) = jm_lr
+    do i=1,chunk_rank
+        this%chunk_size_lr(i) = this%ngrid_lr(i) / nchunk(i)
     end do
 
     ! Allocate space to refer to managed chunk buffers
@@ -88,6 +102,7 @@ subroutine write_chunks(this)
     integer :: startB(2)
     integer :: nerr
     integer :: err
+    real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
 
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
@@ -104,6 +119,10 @@ subroutine write_chunks(this)
             write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%ptr%leaf)
             nerr = nerr + 1
         end if
+
+        ! Regrid chunk to low-res
+
+
     end do
     write(*,*)
 

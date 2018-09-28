@@ -1,5 +1,5 @@
 
-module hntr4_mod
+module hntr_mod
 implicit none
 
     real(8), parameter :: M_PI  = 4 * atan (1d0)
@@ -37,7 +37,7 @@ type HntrCalc_t
 
     contains
 
-    procedure :: regrid
+    procedure :: regrid4
     procedure :: partition_east_west
     procedure :: partition_north_south
 
@@ -213,15 +213,15 @@ end subroutine partition_north_south
 
 
 ! Interpolate the A grid onto the B grid
-subroutine regrid(this, WTA,B,A)
+subroutine regrid4(this, B,A,WTA)
     class(HntrCalc_t) :: this
-    real*4, dimension(:), intent(IN) :: WTA
-    real*4, dimension(:), intent(INOUT) :: B
-    real*4, dimension(:), intent(IN) :: A
+    real*4, dimension(:,:), intent(INOUT) :: B
+    real*4, dimension(:,:), intent(IN) :: A
+    real*4, dimension(:,:), intent(IN) :: WTA
     ! ------- Locals
 
-    integer :: JB,IB,IJB
-    integer :: JA,IA,IJA
+    integer :: JB,IB
+    integer :: JA,IA
     integer :: JAMIN,JAMAX
     real*8 :: WEIGHT, VALUE
     integer :: IAMIN, IAMAX
@@ -232,7 +232,6 @@ subroutine regrid(this, WTA,B,A)
         JAMIN = this%JMIN(JB)
         JAMAX = this%JMAX(JB)
         Do IB=1,this%specB%im
-            IJB  = IB + this%specB%im*(JB-1)
             WEIGHT= 0
             VALUE = 0
             IAMIN = this%IMIN(IB)
@@ -243,21 +242,21 @@ subroutine regrid(this, WTA,B,A)
                 If (JA==JAMAX)  G = G - this%GMAX(JB)
                 Do IAREV=IAMIN,IAMAX
                     IA  = 1 + Mod(IAREV-1,this%specA%im)
-                    IJA = IA + this%specA%im*(JA-1)
                     F = 1d0
                     If (IAREV==IAMIN) F = F - this%FMIN(IB)
                     If (IAREV==IAMAX) F = F - this%FMAX(IB)
-                    WEIGHT = WEIGHT + F*G*WTA(IJA)
-                    VALUE  = VALUE  + F*G*WTA(IJA)*A(IJA)
+                    WEIGHT = WEIGHT + F*G*WTA(IA,JA)
+                    VALUE  = VALUE  + F*G*WTA(IA,JA)*A(IA,JA)
                 end do
             end do
+            print *,ib,jb,weight
             if (WEIGHT == 0) then
-                B(IJB) = this%DATMIS
+                B(IB,JB) = this%DATMIS
             else
-                B(IJB) = VALUE/WEIGHT
+                B(IB,JB) = VALUE/WEIGHT
             end if
         end do
    end do
-end subroutine regrid
+end subroutine regrid4
 
-end module hntr4_mod
+end module hntr_mod
