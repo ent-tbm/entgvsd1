@@ -4,19 +4,18 @@ module chunker_mod
     use, intrinsic :: iso_fortran_env
     use netcdf
     use paths_mod
+    use chunkparams_mod
 
 implicit none
 private
-    public :: Chunker_t,ChunkIO_t,chunk_rank,nchunk
-
-    integer, parameter :: chunk_rank=2
-    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
+    public :: Chunker_t,ChunkIO_t
 
 ! ------ One file
 type ChunkIO_t
     type(Chunker_t), pointer :: chunker
     character(200) :: leaf    ! Leaf name of file, for identification
     integer :: fileid, varid
+    integer :: fileid_lr, varid_lr
     logical :: own_fileid   ! True if we own the fileid
     real*4, dimension(:,:), allocatable :: buf
 
@@ -55,6 +54,53 @@ contains
 end type Chunker_t
 
 CONTAINS
+
+
+!function my_nf_create_ij(dir,vname,fnsuffix,IM,JM,ncid,dimids)  --> returns err
+!implicit none
+!include 'netcdf.inc'
+!character(len=*), intent(in) :: filename
+!integer,intent(in) :: IM,JM
+!integer,intent(out) :: ncid
+!integer,intent(inout) :: dimids(2)
+!integer intent(out) :: err
+!!--- Local ----
+!integer :: status, idlon, idlat, varid
+!real*4 :: lon(IM), lat(JM)
+!
+!    write(0,*) 'Creating ',filename
+!    err=nf90_create(filename, NF90_CLOBBER, ncid)
+!    if (err /= NF90_NOERR) return
+!    err=nf90_def_dim(ncid, 'lon', IM, dimids(1))
+!    err=nf90_def_dim(ncid, 'lat', JM, dimids(2))
+!    err=nf90_def_var(ncid, 'lon', NF90_FLOAT, 1, dimids(1), idlon)
+!    err=nf90_def_var(ncid, 'lat', NF90_FLOAT, 1, dimids(2), idlat)
+!    err=nf90_put_att_text(ncid, idlon, 'long_name', len('longitude'), 'longitude')
+!    err=nf90_put_att_text(ncid, idlat, 'long_name', len('latitude'), 'latitude')
+!    err=nf90_put_att_text(ncid, idlon, 'units', len('degrees east'), 'degrees east')
+!    err=nf90_put_att_text(ncid, idlat, 'units', len('degrees north'), 'degrees north')
+!    err=nf90_put_att_real(ncid, idlon, '_FillValue', NF90_FLOAT, 1, -1.e30)
+!    err=nf90_put_att_real(ncid, idlat, '_FillValue', NF90_FLOAT, 1, -1.e30)
+!
+!    err=nf90_enddef(ncid)
+!    call calc_lon_lat(IM,JM,lon,lat)
+!    !write(*,*) 'lon', lon
+!    !write(*,*) 'lat', lat
+!    err=my_nf90_inq_put_var_real32(ncid,'lon' \
+!         ,varid,lon)
+!    !err=nf90_put_vara_real(ncid,idlon,1,IM,lon)
+!    write(0,*) 'put lon', err, varid, dimids(1), IM
+!    err=my_nf90_inq_put_var_real32(ncid,'lat' \
+!         ,varid,lat)
+!    !err=nf90_put_vara_real(ncid,idlat,1,JM,lat)
+!    write(0,*) 'put lat', err, varid, dimids(2), JM
+!    !err=nf90_enddef(ncid)
+!    err=nf90_close(ncid)
+!    write(0,*) 'Created netcdf ij file'
+!
+!        
+!end subroutine my_nf_create_ij
+
 
 ! @param im,jm Size of overall grid
 ! @param max_reads, max_writes Maximum number of read/write files
@@ -99,29 +145,56 @@ subroutine write_chunks(this)
     character :: rw
     ! ---------- Locals
     integer :: i
-    integer :: startB(2)
+    integer :: startB_hr(2), startB_lr(2)
     integer :: nerr
     integer :: err
+    real*4, dimension(:,:), allocatable :: wta_hr  ! Weights for regridding
     real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
 
-    startB = (/ &
+    ! Hntr stuff
+    spec_hr = hntr_spec(this%chunk_size(0), this%ngrid(1), 0d0, 180d0*60d0 / this%ngrid(1))
+    spec_lr = hntr_spec(this%chunk_size_lr(0), this%ngrid_lr(1), 0d0, 180d0*60d0 / this%ngrid_lr(1))
+    hntr = hntr_calc(spec_lr, spec_hr, 0d0)
+
+    allocate(wta_hr(this%chunk_size(0), this%chunk_size(1)))
+    wta_hr = 1d0
+    allocate(buf_lr(this%chunk_size_lr(0), this%chunk_size_lr(1)))
+
+    startB_lr = (/ &
+        (this%cur(1)-1) * this%chunk_size_lr(1) + 1, &
+        (this%cur(2)-1) * this%chunk_size_lr(2) + 1/)
+
+    startB_hr = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
         (this%cur(2)-1) * this%chunk_size(2) + 1/)
     write(*, '(A I3 I3)', advance="no") 'Writing Chunk',this%cur
 
     nerr = 0
     do i=1,this%nwrites
+        ! Store the hi-res chunk
         err=NF90_PUT_VAR( &
            this%writes(i)%ptr%fileid, this%writes(i)%ptr%varid, &
-           this%writes(i)%ptr%buf,startB,this%chunk_size)
-        write(*,'(A)',advance="no") '.'
+           this%writes(i)%ptr%buf,startB_hr,this%chunk_size)
         if (err /= NF90_NOERR) then
             write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%ptr%leaf)
             nerr = nerr + 1
         end if
 
         ! Regrid chunk to low-res
+        call hntr%regrid(buf_lr, this%writes(i)%ptr%buf, wta_hr,
+            startB_lr(1), this%chunk_size_lr(1))
+        
+        ! Store the lo-res chunk
+        err=NF90_PUT_VAR( &
+           this%writes(i)%ptr%fileid_lr, this%writes(i)%ptr%varid_lr, &
+           buf_lr,startB_lr,this%chunk_size_lr)
+        if (err /= NF90_NOERR) then
+            write(ERROR_UNIT,*) 'Error writing lo-res ',trim(this%writes(i)%ptr%leaf)
+            nerr = nerr + 1
+        end if
 
+        ! Display progress
+        write(*,'(A)',advance="no") '.'
 
     end do
     write(*,*)

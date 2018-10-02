@@ -3,6 +3,7 @@ module EntGVSD_netcdf_util
 
 use netcdf
 use convertnc
+use chunkparams_mod
 
 implicit none
 save
@@ -138,6 +139,8 @@ character(len=19), dimension(6), parameter :: GISSbands = (/ &
 
 contains
 
+
+
 !     Need to move from trim_EntMM_monthly_05x05.f
 subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,ncid)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
@@ -154,18 +157,24 @@ subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,ncid)
     character*1024 :: text
     character(8) :: date
 
-    status = my_nf90_create_ij(trim(file), IM,JM,ncid &
-         , dimlon, dimlat)
+    status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
+print *,'xx0',ncid
     call handle_nf90_error(status, 'nf90_cfeate_ij '//trim(varname))
-    
+
     !Define global attributes - Customize local copies of this routine.
     !call my_nf90_defglobal(file)
 
     !Add the variable and its attributes
     dim(1)=dimlon
     dim(2)=dimlat
+print *,'xx1',dim,make_chunksizes(im,jm)
+
     status=nf90_def_var(ncid, varname, NF90_FLOAT, dim, varid)
     call handle_nf90_error(status, 'nf90_def_var '//trim(varname))
+    status=nf90_def_var_deflate(ncid,varid,1,1,4)
+    status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
+        make_chunksizes(im,jm))
+
     status=nf90_put_att(ncid,varid,"long_name", trim(long_name))
     call handle_nf90_error(status,  'nf90_put_att  long_name')
     status=nf90_put_att(ncid,varid,"short_name", trim(long_name))

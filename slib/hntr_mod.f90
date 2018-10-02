@@ -16,11 +16,6 @@ type HntrSpec_t
     real*8 :: dlat
 end type HntrSpec_t
 
-type HntrGrid_t
-    type(HntrSpec_t) :: spec
-    real*8, dimension(:), allocatable :: dxyp
-end type HntrGrid_t
-
 type HntrCalc_t
     type(HntrSpec_t) :: specA, specB
     real*8, dimension(:), allocatable :: dxypA, dxypB
@@ -213,7 +208,7 @@ end subroutine partition_north_south
 
 
 ! Interpolate the A grid onto the B grid
-subroutine regrid4(this, B,A,WTA)
+subroutine regrid4(this, B,A,WTA,jb0,njb)
     class(HntrCalc_t) :: this
     real*4, dimension(:,:), intent(INOUT) :: B
     real*4, dimension(:,:), intent(IN) :: A
@@ -228,7 +223,9 @@ subroutine regrid4(this, B,A,WTA)
     real*8 :: F,G
     integer :: IAREV
 
-    Do JB=1,this%specB%jm
+!    Do JB=1,this%specB%jm
+    ja0 = this%JMIN(jb0)
+    Do JB=jb0,jbo+njb-1
         JAMIN = this%JMIN(JB)
         JAMAX = this%JMAX(JB)
         Do IB=1,this%specB%im
@@ -246,14 +243,14 @@ subroutine regrid4(this, B,A,WTA)
                     If (IAREV==IAMIN) F = F - this%FMIN(IB)
                     If (IAREV==IAMAX) F = F - this%FMAX(IB)
                     WEIGHT = WEIGHT + F*G*WTA(IA,JA)
-                    VALUE  = VALUE  + F*G*WTA(IA,JA)*A(IA,JA)
+                    VALUE  = VALUE  + F*G*WTA(IA,JA)*A(IA,JA-ja0+1)
                 end do
             end do
             print *,ib,jb,weight
             if (WEIGHT == 0) then
-                B(IB,JB) = this%DATMIS
+                B(IB,JB-jb0+1) = this%DATMIS
             else
-                B(IB,JB) = VALUE/WEIGHT
+                B(IB,JB-jb0+1) = VALUE/WEIGHT
             end if
         end do
    end do

@@ -3,6 +3,7 @@ module convertnc
     implicit none
 !save
 
+    public handle_nf90_error
     public my_nf90_open         !, my_nf90_close
     public my_nf90_inq_varid
     public my_nf90_get_var_real32
@@ -168,6 +169,17 @@ subroutine calc_lon_lat(IM,JM,lon,lat)
     enddo
 end subroutine calc_lon_lat     
 !************************************************************************
+subroutine handle_nf90_error(status, message)
+    integer, intent(in) :: status
+    character*(*) :: message
+  
+    write(*,*) status,message, ' ',trim(nf90_strerror(status))
+    if(status /= nf90_NoErr)  then
+        write(*,*) 'DONT FORGET TO DELETE THE OLD NETCDF FILES FIRST'
+        STOP
+    end if
+end subroutine handle_nf90_error
+
 integer function my_nf90_open(filein,NFRW,ncid)
     character(len=*),intent(in) :: filein
     integer,intent(in) ::NFRW !0=read, NF90_WRITE=write
@@ -420,6 +432,7 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     real*4 :: lon(IM), lat(JM)
     !character*80 :: filenc
     character*10 :: res
+    integer :: dim1(1)
 
     if (IM.eq.72) then
       res = '72X46' !5X4
@@ -440,6 +453,7 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     endif
 
     status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
+    print *,'ncid',ncid,status,NF90_NOERR
     if (status == NF90_NOERR) then
          dimlon=1
          dimlat=2
@@ -449,16 +463,32 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
 
     ! netcdf output file needs to be created
     write(0,*) 'Creating ',filename
-    status=nf90_create(filename, NF90_NOCLOBBER, ncid)
+    status=nf90_create(filename, NF90_NOCLOBBER+NF90_HDF5, ncid)
     if (status /= NF90_NOERR) return
     status=nf90_def_dim(ncid, 'lon', IM, dimlon)
     if (status /= NF90_NOERR) return
     status=nf90_def_dim(ncid, 'lat', JM, dimlat)
     if (status /= NF90_NOERR) return
+
+    ! Create lon
     status=nf90_def_var(ncid, 'lon', NF90_FLOAT, dimlon, idlon)
     if (status /= NF90_NOERR) return
+    status=nf90_def_var_deflate(ncid,idlon,1,1,4)
+    if (status /= NF90_NOERR) return
+    dim1(1) = im
+    status=nf90_def_var_chunking(ncid,idlon,NF90_CHUNKED, dim1)
+    if (status /= NF90_NOERR) return
+
+    ! Create lat
     status=nf90_def_var(ncid, 'lat', NF90_FLOAT, dimlat, idlat)
     if (status /= NF90_NOERR) return
+    status=nf90_def_var_deflate(ncid,idlat,1,1,4)
+    if (status /= NF90_NOERR) return
+    dim1(1) = jm
+    status=nf90_def_var_chunking(ncid,idlat,NF90_CHUNKED, dim1)
+    if (status /= NF90_NOERR) return
+
+
     status=nf90_put_att(ncid, idlon, 'long_name', 'longitude')
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlat, 'long_name', 'latitude')
@@ -478,8 +508,8 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     status=my_nf90_inq_put_var_real32(ncid,'lon',varid,lon)
     if (status /= NF90_NOERR) return
     status=my_nf90_inq_put_var_real32(ncid,'lat',varid,lat)
-    status=nf90_close(ncid)
-    if (status /= NF90_NOERR) return
+!    status=nf90_close(ncid)
+!    if (status /= NF90_NOERR) return
 end function my_nf90_create_ij
 
 !     !------------------------------------------------------------------

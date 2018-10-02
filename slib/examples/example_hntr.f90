@@ -1,0 +1,30 @@
+program example_hntr
+
+use hntr_mod
+implicit none
+
+    type(HntrSpec_t) :: g4,g8
+    type(HntrCalc_t) :: hc
+    real*4 :: B8(16,8), A4(8,4)
+    real*4 :: WTA4(8,4)
+
+    integer :: j
+
+    g4 = hntr_spec(8,3, 0d0, 180d0*60d0/3)
+    g8 = hntr_spec(16, 6, 0d0, 180d0*60d0/6)
+
+    hc = hntr_calc(g8, g4, 0d0)
+
+    WTA4 = 1d0
+    do j=1,g4%im
+        a4(j,:)=j
+    end do
+    b8 = 99d0
+    call hc%regrid4(B8, A4, WTA4)
+
+    do j=1,g8%jm
+        print *,B8(:,j)
+    end do
+
+    print *,'--------------'
+end program example_hntr
