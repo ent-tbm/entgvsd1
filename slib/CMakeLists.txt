@@ -6,11 +6,11 @@ set(entgvsd_SOURCES
     arrayutil.f
     convertnc_util.f90
     entgvsd_util.f90
-    paths_mod.f90
+    paths.f90
     chunkparams.f90
-    #chunker_mod.f90
-    #hntr_mod.f90
-    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config_mod.f90
+    #chunker.f90
+    #hntr.f90
+    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 
 # ----- Write CMake-derived paths into place accessible to C++/Fortran
@@ -19,8 +19,8 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.hpp)
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config_mod.f90.in
-    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config_mod.f90)
+    ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config.f90.in
+    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd.sh.in
