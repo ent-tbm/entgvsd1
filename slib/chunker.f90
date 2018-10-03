@@ -5,10 +5,13 @@ module chunker_mod
     use netcdf
     use paths_mod
     use chunkparams_mod
+    use hntr_mod
+    use entgvsd_netcdf_util
 
 implicit none
 private
     public :: Chunker_t,ChunkIO_t
+    public :: AVG_TYPE_COVER, AVG_TYPE_LAI
 
 ! ------ One file
 type ChunkIO_t
@@ -16,9 +19,9 @@ type ChunkIO_t
     character(200) :: leaf    ! Leaf name of file, for identification
     integer :: fileid, varid
     integer :: fileid_lr, varid_lr
-    logical :: own_fileid   ! True if we own the fileid
+    logical :: own_fileid,own_fileid_lr   ! True if we own the fileid
     real*4, dimension(:,:), allocatable :: buf
-
+    integer :: avg_type  ! When converting to low-res, average zeros along with non-zero cells?
 end type ChunkIO_t
 
 type ChunkIO_ptr
@@ -53,53 +56,11 @@ contains
     procedure :: nc_check
 end type Chunker_t
 
+integer, parameter :: AVG_TYPE_COVER = 1
+integer, parameter :: AVG_TYPE_LAI = 2
+!integer, parameter :: AVG_TYPE_HEIGHT = 3   Same as AVG_TYPE_LAI
+
 CONTAINS
-
-
-!function my_nf_create_ij(dir,vname,fnsuffix,IM,JM,ncid,dimids)  --> returns err
-!implicit none
-!include 'netcdf.inc'
-!character(len=*), intent(in) :: filename
-!integer,intent(in) :: IM,JM
-!integer,intent(out) :: ncid
-!integer,intent(inout) :: dimids(2)
-!integer intent(out) :: err
-!!--- Local ----
-!integer :: status, idlon, idlat, varid
-!real*4 :: lon(IM), lat(JM)
-!
-!    write(0,*) 'Creating ',filename
-!    err=nf90_create(filename, NF90_CLOBBER, ncid)
-!    if (err /= NF90_NOERR) return
-!    err=nf90_def_dim(ncid, 'lon', IM, dimids(1))
-!    err=nf90_def_dim(ncid, 'lat', JM, dimids(2))
-!    err=nf90_def_var(ncid, 'lon', NF90_FLOAT, 1, dimids(1), idlon)
-!    err=nf90_def_var(ncid, 'lat', NF90_FLOAT, 1, dimids(2), idlat)
-!    err=nf90_put_att_text(ncid, idlon, 'long_name', len('longitude'), 'longitude')
-!    err=nf90_put_att_text(ncid, idlat, 'long_name', len('latitude'), 'latitude')
-!    err=nf90_put_att_text(ncid, idlon, 'units', len('degrees east'), 'degrees east')
-!    err=nf90_put_att_text(ncid, idlat, 'units', len('degrees north'), 'degrees north')
-!    err=nf90_put_att_real(ncid, idlon, '_FillValue', NF90_FLOAT, 1, -1.e30)
-!    err=nf90_put_att_real(ncid, idlat, '_FillValue', NF90_FLOAT, 1, -1.e30)
-!
-!    err=nf90_enddef(ncid)
-!    call calc_lon_lat(IM,JM,lon,lat)
-!    !write(*,*) 'lon', lon
-!    !write(*,*) 'lat', lat
-!    err=my_nf90_inq_put_var_real32(ncid,'lon' \
-!         ,varid,lon)
-!    !err=nf90_put_vara_real(ncid,idlon,1,IM,lon)
-!    write(0,*) 'put lon', err, varid, dimids(1), IM
-!    err=my_nf90_inq_put_var_real32(ncid,'lat' \
-!         ,varid,lat)
-!    !err=nf90_put_vara_real(ncid,idlat,1,JM,lat)
-!    write(0,*) 'put lat', err, varid, dimids(2), JM
-!    !err=nf90_enddef(ncid)
-!    err=nf90_close(ncid)
-!    write(0,*) 'Created netcdf ij file'
-!
-!        
-!end subroutine my_nf_create_ij
 
 
 ! @param im,jm Size of overall grid
@@ -150,15 +111,24 @@ subroutine write_chunks(this)
     integer :: err
     real*4, dimension(:,:), allocatable :: wta_hr  ! Weights for regridding
     real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
+    type(HntrSpec_t) :: spec_hr, spec_lr
+    type(HntrCalc_t) :: hntr
+    character(128) :: vname
+    integer :: xtype,ndims
+    integer :: dimids(2)
+    integer :: len
+    type(ChunkIO_t), pointer :: cio
+    integer :: ic,jc
+    real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
 
     ! Hntr stuff
-    spec_hr = hntr_spec(this%chunk_size(0), this%ngrid(1), 0d0, 180d0*60d0 / this%ngrid(1))
-    spec_lr = hntr_spec(this%chunk_size_lr(0), this%ngrid_lr(1), 0d0, 180d0*60d0 / this%ngrid_lr(1))
+    spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
+    spec_lr = hntr_spec(this%chunk_size_lr(1), this%ngrid_lr(2), 0d0, 180d0*60d0 / this%ngrid_lr(2))
     hntr = hntr_calc(spec_lr, spec_hr, 0d0)
 
-    allocate(wta_hr(this%chunk_size(0), this%chunk_size(1)))
-    wta_hr = 1d0
-    allocate(buf_lr(this%chunk_size_lr(0), this%chunk_size_lr(1)))
+    ! Buffers used to write
+    allocate(wta_hr(this%chunk_size(1), this%chunk_size(2)))
+    allocate(buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
 
     startB_lr = (/ &
         (this%cur(1)-1) * this%chunk_size_lr(1) + 1, &
@@ -171,30 +141,68 @@ subroutine write_chunks(this)
 
     nerr = 0
     do i=1,this%nwrites
-        ! Store the hi-res chunk
-        err=NF90_PUT_VAR( &
-           this%writes(i)%ptr%fileid, this%writes(i)%ptr%varid, &
-           this%writes(i)%ptr%buf,startB_hr,this%chunk_size)
-        if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing ',trim(this%writes(i)%ptr%leaf)
-            nerr = nerr + 1
+        cio => this%writes(i)%ptr
+
+        if (cio%avg_type == AVG_TYPE_COVER) then
+            ! TODO: Use land mask to exclude non-land
+            wta_hr = 1d0
+        else
+            ! TODO: Use land mask to exclude non-land
+            ! (non-land is already implicitly excluded here for PFTs that can't grow on water)
+            do jc=1,this%chunk_size(2)
+            do ic=1,this%chunk_size(1)
+                if (cio%buf(ic,jc) == 0) then
+                    wta_hr(ic,jc)=0d0
+                else
+                    wta_hr(ic,jc)=1d0
+                end if
+            end do
+            end do
         end if
 
+        ! Store the hi-res chunk
+        err=NF90_PUT_VAR( &
+           cio%fileid, cio%varid, &
+           cio%buf,startB_hr,this%chunk_size)
+        if (err /= NF90_NOERR) then
+            write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf)
+            nerr = nerr + 1
+        end if
+        err=nf90_sync(cio%fileid)
+
         ! Regrid chunk to low-res
-        call hntr%regrid(buf_lr, this%writes(i)%ptr%buf, wta_hr,
-            startB_lr(1), this%chunk_size_lr(1))
+        call hntr%regrid4(buf_lr, cio%buf, wta_hr, &
+            startB_lr(2), this%chunk_size_lr(2))
+
+        ! Convert zeros to NaN in regridded data (for plotting)
+        do jc=1,this%chunk_size_lr(2)
+        do ic=1,this%chunk_size_lr(1)
+            if (buf_lr(ic,jc) == 0) buf_lr(ic,jc) = undef
+        end do
+        end do
         
         ! Store the lo-res chunk
         err=NF90_PUT_VAR( &
-           this%writes(i)%ptr%fileid_lr, this%writes(i)%ptr%varid_lr, &
-           buf_lr,startB_lr,this%chunk_size_lr)
+           cio%fileid_lr, cio%varid_lr, &
+           buf_lr, startB_lr, this%chunk_size_lr)
         if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing lo-res ',trim(this%writes(i)%ptr%leaf)
+            write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),err
+            err= nf90_inquire_variable( &
+                cio%fileid_lr, &
+                cio%varid_lr, vname, xtype,ndims,dimids)
+            write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
+            write(ERROR_UNIT,*) lbound(buf_lr),ubound(buf_lr),startB_lr,this%chunk_size_lr
+            err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
+            write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
+            err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
+            write(ERROR_UNIT,*) 'dim2 ',trim(vname),len
+            write(ERROR_UNIT,*) 
             nerr = nerr + 1
         end if
+        err=nf90_sync(cio%fileid_lr)
 
         ! Display progress
-        write(*,'(A)',advance="no") '.'
+        write(*,'(A1)',advance="no") '.'
 
     end do
     write(*,*)
@@ -270,6 +278,13 @@ subroutine close0(this, files, nfiles)
                 nerr = nerr + 1
             end if
         end if
+        if (files(i)%ptr%own_fileid_lr) then
+            err = nf90_close(files(i)%ptr%fileid_lr)
+            if (err /= NF90_NOERR) then
+                write(ERROR_UNIT,*) 'Error closing lr ',trim(this%writes(i)%ptr%leaf)
+                nerr = nerr + 1
+            end if
+        end if
     end do
 
     if (nerr > 0) then
@@ -288,66 +303,92 @@ end subroutine close_chunks
 ! -------------------------------------------------------------------
 
 ! Creates a NetCDF file for writing (by chunks)
-subroutine nc_create(this, cio, dir, leaf, vname)
+subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
+    integer :: avg_type
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
     character*(*), intent(in) :: vname
+    character*(*), intent(in) :: long_name,units,title
     ! --------- Locals
     integer :: err
-    character(2048) :: path_name
+    character(2048) :: path_name,path_name_lr
     character(4192) :: cmd
     character(10) :: lon_s, lat_s,fmt
     logical :: exist
-
+    cio%avg_type = avg_type
     cio%leaf = leaf
     cio%own_fileid = .false.
+    cio%own_fileid_lr = .false.
     cio%fileid = -1
 
+    ! ------ Create directory
+    call execute_command_line('mkdir -p '//LC_LAI_ENT_DIR//trim(dir), &
+        .true., err)
 
+    ! ------ Open hi-res file
     path_name = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
     print *,'Opening ',trim(path_name)
     inquire(FILE=trim(path_name), EXIST=exist)
-    if (.not.exist) then
-        ! ------- Create the file from a template
-        write(lon_s, '(I10)') nchunk(1)
-        write(lat_s, '(I10)') nchunk(2)
-
-        ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
-        cmd = 'entgvsd_create_nc '// &
-              LC_LAI_ENT_DIR//' '// &
-              LC_LAI_ENT_ORIG//' '// &
-              TEMPLATE_DIR//' '//trim(dir)//' '//trim(leaf)// &
-              ' nchunkspec=lon/'//trim(adjustl(lon_s))//',lat/'//trim(adjustl(lat_s))
-              
-        print *,'----------------------------'
-        print *,trim(cmd)
-        call execute_command_line(cmd, .true., err)
-
-        if (err /= 0) then
-            write(ERROR_UNIT,*) 'Error running command to create', &
-                LC_LAI_ENT_DIR//'/'//LC_LAI_ENT_ORIG//'/'//TEMPLATE_DIR// &
-                '/'//trim(dir)//'/'//trim(leaf)
+    if (exist) then
+        ! ------- Open existing file
+        err = NF90_OPEN(path_name, NF90_WRITE, cio%fileid)
+        if (err /= NF90_NOERR) then
+            write(ERROR_UNIT,*) 'Error opening after create',trim(path_name),err
             this%nerr = this%nerr + 1
             return
         end if
-    end if
-
-    ! ------- Open the file we just created
-    err = NF90_OPEN(path_name, NF90_WRITE, cio%fileid)
-    if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error opening after create',trim(path_name),err
-        this%nerr = this%nerr + 1
-        return
+    else
+        ! ------- Create new file
+        call my_nf90_create_Ent_single( &
+            this%ngrid(1), this%ngrid(2), &
+            path_name, vname, &
+            long_name, units, title, &
+            cio%fileid)
     end if
     cio%own_fileid = .true.
 
-    ! Allocate write buffer
+
+    ! ---------- Open lo-res file
+    path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
+    print *,'Opening ',trim(path_name_lr)
+    inquire(FILE=trim(path_name_lr), EXIST=exist)
+    if (exist) then
+        ! ------- Open existing file
+        err = NF90_OPEN(path_name_lr, NF90_WRITE, cio%fileid_lr)
+        if (err /= NF90_NOERR) then
+            write(ERROR_UNIT,*) 'Error opening after create',trim(path_name_lr),err
+            this%nerr = this%nerr + 1
+            return
+        end if
+    else
+        ! ------- Create new file
+        call my_nf90_create_Ent_single( &
+            this%ngrid_lr(1), this%ngrid_lr(2), &
+            path_name_lr, vname, &
+            trim(long_name)//' (low-res)', units, title, &
+            cio%fileid_lr)
+    end if
+    cio%own_fileid_lr = .true.
+
+
+
+
+
+    ! Allocate write buffer (Hi res)
     allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
 
     ! Open NetCDF array
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
+    if (err /= NF90_NOERR) then
+        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
+        this%nerr = this%nerr + 1
+        return
+    end if
+
+    ! Open NetCDF array
+    err = NF90_INQ_VARID(cio%fileid_lr,vname,cio%varid_lr)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
         this%nerr = this%nerr + 1
@@ -384,7 +425,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
         ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
         ! cmd = NCGEN//' -k nc4 -o '//ofname//' '//trim(cdl)
         cmd = 'entgvsd_link_input '//trim(iroot)//' '//trim(oroot)//' '//trim(dir)//' '//trim(leaf)
-        print *,cmd
+        print *,trim(cmd)
 
         call execute_command_line(cmd, .true., err)
         if (err /= 0) then

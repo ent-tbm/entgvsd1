@@ -12,6 +12,12 @@ public my_nf90_create_Ent_single, my_nf90_create_Ent
 public my_nf90_create_Ent_vartime
 public N_COVERTYPES17, N_COVERTYPES16
 public cmon, MONTH, GISSbands
+public TITLE_LC, TITLE_LAI
+
+character(*), parameter :: TITLE_LC = 'Ent PFT 1 km land cover fraction'
+character(*), parameter :: TITLE_LAI = &
+    'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
+character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
 !Need to move this from convertnc_util.f
 character*3, parameter :: cmon(12) = &
@@ -142,13 +148,13 @@ contains
 
 
 !     Need to move from trim_EntMM_monthly_05x05.f
-subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,ncid)
+subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,title,ncid)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
     integer, intent(in) :: IM, JM
     character*(*) ::file
     character*(*) :: varname
     character*(*) :: long_name
-    character*(*) :: units
+    character*(*) :: units,title
     integer, intent(out) :: ncid
     !-- Local --
     integer :: k,n
@@ -158,7 +164,6 @@ subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,ncid)
     character(8) :: date
 
     status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
-print *,'xx0',ncid
     call handle_nf90_error(status, 'nf90_cfeate_ij '//trim(varname))
 
     !Define global attributes - Customize local copies of this routine.
@@ -167,21 +172,41 @@ print *,'xx0',ncid
     !Add the variable and its attributes
     dim(1)=dimlon
     dim(2)=dimlat
-print *,'xx1',dim,make_chunksizes(im,jm)
 
     status=nf90_def_var(ncid, varname, NF90_FLOAT, dim, varid)
     call handle_nf90_error(status, 'nf90_def_var '//trim(varname))
-    status=nf90_def_var_deflate(ncid,varid,1,1,4)
+    status=nf90_def_var_deflate(ncid,varid,1,1,1)
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
         make_chunksizes(im,jm))
 
     status=nf90_put_att(ncid,varid,"long_name", trim(long_name))
     call handle_nf90_error(status,  'nf90_put_att  long_name')
-    status=nf90_put_att(ncid,varid,"short_name", trim(long_name))
     status=nf90_put_att(ncid,varid,"units", units)
     status=nf90_put_att(ncid,varid,'_FillValue',-1.e30)
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
          trim(long_name))
+
+
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'long_name', long_name)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'title', title)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'creator_name', 'NASA GISS')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'creator_email', "elizabeth.fischer@columbia.edu,carlo.montes@nasa.gov,nancy.y.kiang@nasa.gov")
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_min', -90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_max', 90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_min', -180d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_max', 180d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'EntTBM', "Ent Terrestrial Biosphere Model")
 
     status=nf90_enddef(ncid)
     call handle_nf90_error(status, 'my_nf90_create_Ent')
@@ -212,17 +237,14 @@ subroutine my_nf90_create_Ent(IM,JM,file,ncov, &
     status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
     call handle_nf90_error(status,  'nf90_create '//file)       
     !call handle_nf90_error(status,  file//' '//dimlon//' '//dimlat)
-    write(0,*) 'ncid', ncid
 
     !Define global attributes - Customize local copies of this routine.
     !call my_nf90_defglobal(file)
 
     !Enter define mode
     status=nf90_open(trim(file), NF90_WRITE, ncid)
-    write(0,*) 'nf90_open ', status, file, ncid
     call handle_nf90_error(status,  'nf90_open '//file)       
     status=nf90_redef(ncid)
-    write(0,*) 'nf90_redef ', status, ncid
 
     !Add variables and their attributes
     dim(1)=dimlon
@@ -273,17 +295,14 @@ subroutine my_nf90_create_Ent_lc_lai_max(IM,JM,file,ncov, ent_names,Ent_title,nc
     call handle_nf90_error(status,  'nf90_open '//file)       
 
     !call handle_nf90_error(status,  file//' '//dimlon//' '//dimlat)
-    write(0,*) 'ncid', ncid
 
     !Define global attributes - Customize local copies of this routine.
     !call my_nf90_defglobal(file)
 
     !Enter define mode
     status=nf90_open(trim(file), NF90_WRITE, ncid)
-    write(0,*) 'nf90_open ', status, file, ncid
     call handle_nf90_error(status,  'nf90_open '//file)       
     status=nf90_redef(ncid)
-    write(0,*) 'nf90_redef ', status, ncid
 
     !Add variables and their attributes
     dim(1)=dimlon
@@ -354,9 +373,7 @@ integer :: time(12)
     call handle_nf90_error(status, 'nf90_redef '//trim(file))
     status=nf90_def_dim(ncid, 'time', NF90_UNLIMITED, dimt)
     call handle_nf90_error(status, 'nf90_def_dim'//' time')
-    write(0,*) 'nf90_def_dim', status, ncid
      status=nf90_enddef(ncid)      
-     write(0,*) 'nf90_enddef', status, ncid
 
     !Add variables and their attributes
     status=nf90_def_var(ncid, 'time', NF90_INT, dimt, varid)
@@ -385,7 +402,6 @@ integer :: time(12)
 
     !Assing values to time variable.
     time(:) = (/ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 /)
-    write(*,*) 'time', time
     status = nf90_inq_varid(ncid, 'time',varid)
     call handle_nf90_error(status, 'nf90_inq_varid time')
     status = nf90_put_var(ncid, varid, time)

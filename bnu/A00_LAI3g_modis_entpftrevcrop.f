@@ -38,7 +38,6 @@
       public Set_Woodysavannasshrub_miscat
       public FIX_MODIS29_NORTHPOLE_BUG
       public FIX_MODIS29_SOUTHPOLE_BUG
-      public Set_val
       public Debug_set_broadleaf
       public IMH,JMH,IM1,JM1,IM2,JM2
 
@@ -364,21 +363,6 @@
 
       end subroutine Set_Broadleaftype
 
-
-      subroutine Set_val(A,im,jm,valin,valout)
-!     @ Set some unknown value in matrix A to valout (e.g. zero, undef).
-      implicit none
-      integer :: im, jm
-      real*4 :: A
-      real*4 :: valin,valout
-!---------
-      integer :: i,j
-
-      if (A.eq.valin) A = valout
-
-      end subroutine Set_val
-
-
       subroutine Debug_set_broadleaf(modispftclass,LC_IN,LAI_IN)
 !     Debug print messages only
       implicit none
@@ -495,7 +479,9 @@
       use modis_ent_mod
       use netcdf
       use chunker_mod
+      use chunkparams_mod
       use paths_mod
+      use entgvsd_netcdf_util
       implicit none
 !      include 'netcdf.inc'
 
@@ -641,11 +627,6 @@
      &     'bare_sparse   '
      &     /)
 
-      character*3, parameter :: MONTH(12) =
-     &     (/
-     &     "Jan","Feb","Mar","Apr","May","Jun",
-     &     "Jul","Aug","Sep","Oct","Nov","Dec"
-     &     /)
 
       character*80 :: LAICASE
 
@@ -729,9 +710,7 @@
 
       type(ChunkIO_t) :: partit_io(28)
       type(ChunkIO_t) :: entpft_io(19)
-      type(ChunkIO_t) :: entpftlc_io(19)
       type(ChunkIO_t) :: entpftlaimax_io(19)
-      type(ChunkIO_t) :: entpftlaimaxA_io(19)
       type(ChunkIO_t) :: entpftlaimaxcheck_io(19)
 
       RESOUT = '1kmx1km'
@@ -740,7 +719,7 @@
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-      call chunker%init(IM1km, JM1km, 100, 120)
+      call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
 !     LAI
       call chunker%nc_open(io_lai,
@@ -809,45 +788,50 @@
      &     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0')
 
 !     CHECKSUM
-      call chunker%nc_create(io_checksum,
+      call chunker%nc_create(io_checksum,AVG_TYPE_COVER,
      &    'checksum/', 'EntMM29lc_lai_for_1kmx1km',
-     &    'EntMM29lc_lai_for_1kmx1km')
+     &    'EntMM29lc_lai_for_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATERLC OUTPUT
-      call chunker%nc_create(io_waterout,
-     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water_lc')
-
-      call chunker%nc_create(io_wateroutA,
-     &    'EntMM_lc_laimax_1kmx1kmA/', 'water_lc', 'water_lc')
+      call chunker%nc_create(io_waterout,AVG_TYPE_COVER,
+     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water_lc',
+     &    '', '', TITLE_LC)
       
 !     CHECKSUM
-      call chunker%nc_create(io_checksum2,
+      call chunker%nc_create(io_checksum2,AVG_TYPE_COVER,
      &     'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km',
-     &     'EntLandcover_check_sum_Jun_1kmx1km')
+     &     'EntLandcover_check_sum_Jun_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATER LAI
-      call chunker%nc_create(io_waterlai,
-     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water_lai')
+      call chunker%nc_create(io_waterlai,AVG_TYPE_LAI,
+     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water_lai',
+     &    'LAI', '1', TITLE_CHECKSUM)
 
 !     CHECKSUM
-      call chunker%nc_create(io_checksum3,
+      call chunker%nc_create(io_checksum3,AVG_TYPE_LAI,
      &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km',
-     &    'EntLAI_check_sum_Jun_1kmx1km')
+     &    'EntLAI_check_sum_Jun_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
 
 !     NPFTGRID
-      call chunker%nc_create(io_npftgrid,
+      call chunker%nc_create(io_npftgrid,AVG_TYPE_COVER,
      &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km',
-     &     'EntPFTs_percell_check_sum_Jun_1kmx1km')
+     &     'EntPFTs_percell_check_sum_Jun_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFTLC
-      call chunker%nc_create(io_dompftlc,
+      call chunker%nc_create(io_dompftlc,AVG_TYPE_COVER,
      &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
-     &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km')
+     &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFT
-      call chunker%nc_create(io_dompft,
+      call chunker%nc_create(io_dompft,AVG_TYPE_COVER,
      &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km',
-     &     'EntdominantPFT_check_sum_Jun_1kmx1km')
+     &     'EntdominantPFT_check_sum_Jun_1kmx1km',
+     &    'checksum', '1', TITLE_CHECKSUM)
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
@@ -861,44 +845,33 @@
 
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
-         call chunker%nc_create(entpft_io(k),
+         call chunker%nc_create(entpft_io(k),AVG_TYPE_COVER,
      &        'EntMM_lc_laimax_1kmx1km/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
-     &        trim(EntPFT_files2(k)))
+     &        trim(EntPFT_files2(k)),
+     &        EntPFT_title(k), '1', TITLE_LC)
+
+
       enddo
       
-!     ENTPFTLC
-      do k = 1,ENTPFTNUM
-         call chunker%nc_create(entpftlc_io(k),
-     &        'EntMM_lc_laimax_1kmx1kmA/',
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
-     &        trim(EntPFT_files2(k)))
-      enddo
-
 
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
-         call chunker%nc_create(entpftlaimax_io(k),
+         call chunker%nc_create(entpftlaimax_io(k),AVG_TYPE_LAI,
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
-     &       trim(EntPFT_files2(k)))
+     &       trim(EntPFT_files2(k)),
+     &       EntPFT_title(k), 'm2 m-2', TITLE_LAI)
       enddo
 
-
-!     ENTPFTLAIMAXA
-      do k =1,ENTPFTNUM
-         call chunker%nc_create(entpftlaimaxA_io(k),
-     &        'EntMM_lc_laimax_1kmx1kmA/',
-     &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
-     &        trim(EntPFT_files2(k)))
-      enddo
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
-         call chunker%nc_create(entpftlaimaxcheck_io(k),
+         call chunker%nc_create(entpftlaimaxcheck_io(k),AVG_TYPE_LAI,
      &         'checksum/',
      &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)),
-     &         trim(EntPFT_files2(k)))
+     &         trim(EntPFT_files2(k)),
+     &       EntPFT_title(k), '1', TITLE_CHECKSUM)
       enddo
 
       ! Quit if we had any problems opening files
@@ -918,87 +891,15 @@
       allocate(lon(countX(1)))
       err=nf90_get_var(io_lai%fileid, varidx, lon, startX, countX)
 
-!     Write lat and lon values to appropriate files
-               do k=1,ENTPFTNUM
-                  err = NF90_PUT_VAR(
-     &                 entpft_io(k)%fileid,varidx,lon,
-     &                 startX,countX)
-                  err = NF90_PUT_VAR(
-     &                 entpft_io(k)%fileid,varidy,lat,
-     &                 startY,countY)
-
-                  err = NF90_PUT_VAR(entpftlc_io(k)%fileid,varidx,lon,
-     &                 startX,countX)
-                  err = NF90_PUT_VAR(entpftlc_io(k)%fileid,varidy,lat,
-     &                 startY,countY)
-               end do
-               err = NF90_PUT_VAR(io_checksum%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum%fileid,varidy,lat,
-     &             startY,countY)
-               err = NF90_PUT_VAR(io_checksum2%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum2%fileid,varidy,lat,
-     &             startY,countY)
-               err = NF90_PUT_VAR(io_checksum3%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum3%fileid,varidy,lat,
-     &             startY,countY)
-               err = NF90_PUT_VAR(io_waterlai%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_waterlai%fileid,varidy,lat,
-     &              startY,countY)
-               do k=1,LCLASS
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimax_io(k)%fileid,varidx,lon,
-     &                 startX,countX)
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimax_io(k)%fileid,varidy,lat,
-     &                 startY,countY)
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_io(k)%fileid,varidx,lon,
-     &                 startX,countX)
-                  err = NF90_PUT_VAR(
-     &                 entpftlaimaxA_io(k)%fileid,varidy,lat,
-     &                 startY,countY)
-               end do
-               err = NF90_PUT_VAR(io_wateroutA%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_wateroutA%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_waterout%fileid,varidx,
-     &              lon,startX,countX)
-               err = NF90_PUT_VAR(io_waterout%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_checksum%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_checksum3%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_checksum3%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_npftgrid%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_npftgrid%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_dompftlc%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_dompftlc%fileid,varidy,lat,
-     &              startY,countY)
-               err = NF90_PUT_VAR(io_dompft%fileid,varidx,lon,
-     &              startX,countX)
-               err = NF90_PUT_VAR(io_dompft%fileid,varidy,lat,
-     &              startY,countY)
-               do k=1,LCLASS
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k)%fileid,
-     &                 varidx,lon,startX,countX)
-                  err = NF90_PUT_VAR(entpftlaimaxcheck_io(k)%fileid,
-     &                 varidy,lat,startY,countY)
-               end do
 !-----------------------------------------------------------------
 
 !-----------------------------------------------------------------
+
+! Use these loop bounds for testing...
+! it chooses a land area in Asia
+!      do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+!      do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+
       do jchunk = 1,nchunk(2)
       do ichunk = 1,nchunk(1)
 
@@ -1072,14 +973,10 @@
 !     LAI MAX FOR MODIS 28 LC
 !     fileout_modis0 = LC_LAI_GISS_DIR//
 !     &     'EntMM_maxlai_1kmx1km.bin'
-!     fileout_modisA = LC_LAI_GISS_DIR//
-!     &     'EntMM_maxlai_1kmx1kmA.bin'
 !     filecheck = LC_LAI_ENT_DIR//
 !     &     'EntMM_checksum_1kmx1km.bin'
 !     file_EntMM = LC_LAI_ENT_DIR//
 !     &     'EntMM_lc_laimax_1kmx1km.bin'
-!     file_EntMMA = LC_LAI_ENT_DIR//
-!     &     'EntMM_lc_laimax_1kmx1kmA.bin'
 
 
 !     fileout = fileout_modis0
@@ -1089,14 +986,10 @@
 !     TITLE = "WATER (LAI)  maximum LAI MODIS"
 !     write(50) TITLE, WATERLAI
 !     LAYEROUT(:,:) = WATERLAI
-!     call Set_val(LAYEROUT,longin,latin,0.,undef_A)
-!     write(60), TITLE, LAYEROUT
 !     do k=1,LCLASS
 !     TITLE = MODISpft(k)
 !     write(50) TITLE, LAIMAX(k,:,:)!*TEMPLC(k,:,:)
 !     LAYEROUT(:,:) = LAIMAX(k,:,:)
-!     call Set_val(LAYEROUT,longin,latin,0.,undef_A)
-!     write(60), TITLE, LAYEROUT
 !     enddo
 !     close(50)
 !     close(60)
@@ -1342,10 +1235,6 @@
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
 
             LAYEROUT=WATERLC
-            call Set_val(LAYEROUT,longout,latout,0.,undef)
-
-!     write(*,*) "WATER (cover fraction)"
-            io_wateroutA%buf(ic,jc)=WATERLC
 
 !            write(*,*) err, 'Wrote WATER (cover fraction)'
             
@@ -1361,8 +1250,6 @@
 !     write(*,*) err, 'Wrote ENTPFTLC'
             
                LAYEROUT = ENTPFTLC(k)
-               call Set_val(LAYEROUT,longout,latout,0.,undef)
-               entpftlc_io(k)%buf(ic,jc)=LAYEROUT
 
 !     write(*,*) err, 'Wrote LAYEROUT'
 
@@ -1399,9 +1286,6 @@
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX',ENTPFTLAIMAX(k,:,:)
 
                LAYEROUT = ENTPFTLAIMAX(k)
-               call Set_val(LAYEROUT,longout,latout,0.,undef)
-               entpftlaimaxA_io(k)%buf(ic,jc)=LAYEROUT
-!               write(*,*) err, 'Wrote LAYEROUT'
 
             end do  ! k=1,ENTPFTNUM
 

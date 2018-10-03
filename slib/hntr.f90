@@ -208,24 +208,34 @@ end subroutine partition_north_south
 
 
 ! Interpolate the A grid onto the B grid
+! Interpolates just a LATITUDE segment of the grid
+! @param B
+!    Destination; must be right size to hold REGRIDDED stuff from A
+! @param A(this%im, jb0:jb0+njb-1)
+!    Source
+! @param jb0 Index of first latitude to start regridding
+! @param njb Number of latitude grid cells to regrid
 subroutine regrid4(this, B,A,WTA,jb0,njb)
     class(HntrCalc_t) :: this
     real*4, dimension(:,:), intent(INOUT) :: B
     real*4, dimension(:,:), intent(IN) :: A
     real*4, dimension(:,:), intent(IN) :: WTA
+    integer, intent(IN) :: jb0,njb
     ! ------- Locals
 
     integer :: JB,IB
+    integer :: jax,jbx   ! Index into local arrays for global JA and JB
     integer :: JA,IA
     integer :: JAMIN,JAMAX
     real*8 :: WEIGHT, VALUE
     integer :: IAMIN, IAMAX
     real*8 :: F,G
     integer :: IAREV
+    integer :: ja0
 
-!    Do JB=1,this%specB%jm
     ja0 = this%JMIN(jb0)
-    Do JB=jb0,jbo+njb-1
+    Do JB=jb0,jb0+njb-1
+        jbx = JB-jb0+1
         JAMIN = this%JMIN(JB)
         JAMAX = this%JMAX(JB)
         Do IB=1,this%specB%im
@@ -234,6 +244,7 @@ subroutine regrid4(this, B,A,WTA,jb0,njb)
             IAMIN = this%IMIN(IB)
             IAMAX = this%IMAX(IB)
             Do JA=JAMIN,JAMAX
+                jax = JA-ja0+1
                 G = this%SINA(JA)-this%SINA(JA-1)
                 If (JA==JAMIN)  G = G - this%GMIN(JB)
                 If (JA==JAMAX)  G = G - this%GMAX(JB)
@@ -242,15 +253,16 @@ subroutine regrid4(this, B,A,WTA,jb0,njb)
                     F = 1d0
                     If (IAREV==IAMIN) F = F - this%FMIN(IB)
                     If (IAREV==IAMAX) F = F - this%FMAX(IB)
-                    WEIGHT = WEIGHT + F*G*WTA(IA,JA)
-                    VALUE  = VALUE  + F*G*WTA(IA,JA)*A(IA,JA-ja0+1)
+                    WEIGHT = WEIGHT + F*G*WTA(IA,jax)
+if (IA<1.or. (IA>size(A,1)) .or. (jax<1) .or. (jax>size(A,2)) ) print *,'out of bounds A',shape(A),IA,jax
+                    VALUE  = VALUE  + F*G*WTA(IA,jax)*A(IA,jax)
                 end do
             end do
-            print *,ib,jb,weight
+if (IB<lbound(B,1).or. (IB>ubound(B,1)) .or. (jbx<lbound(B,2)) .or. (jbx>ubound(B,2)) ) print *,'out of bounds B',shape(B),IB,jbx
             if (WEIGHT == 0) then
-                B(IB,JB-jb0+1) = this%DATMIS
+                B(IB,jbx) = this%DATMIS
             else
-                B(IB,JB-jb0+1) = VALUE/WEIGHT
+                B(IB,jbx) = VALUE/WEIGHT
             end if
         end do
    end do

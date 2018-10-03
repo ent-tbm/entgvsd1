@@ -202,7 +202,6 @@ integer function my_nf90_inq_varid(ncidin,varname,varid)
   integer :: status
   
   status = nf90_inq_varid(ncidin,varname,varid)
-  write(0,*) 'File Inquiry status',status, varname
   my_nf90_inq_varid = status
 end function my_nf90_inq_varid
 
@@ -339,7 +338,6 @@ integer :: status
 
 status = my_nf90_inq_varid(ncidout,trim(varname),varid)
 status = nf90_put_var(ncidout,varid, varint)
-write(0,*) 'File put var status',status,trim(varname),varid
 my_nf90_inq_put_var_int = status
 end function my_nf90_inq_put_var_int
 
@@ -355,7 +353,6 @@ integer :: status
 
 status = my_nf90_inq_varid(ncidout,trim(varname),varid)
 status = nf90_put_var(ncidout,varid, varreal32)
-write(0,*) 'File put var status',status,trim(varname),varid
 my_nf90_inq_put_var_real32 = status
 end function my_nf90_inq_put_var_real32
 
@@ -493,9 +490,9 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlat, 'long_name', 'latitude')
     if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlon, 'units', 'degrees east')
+    status=nf90_put_att(ncid, idlon, 'units', 'degrees_east')
     if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlat, 'units', 'degrees north')
+    status=nf90_put_att(ncid, idlat, 'units', 'degrees_north')
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlon, '_FillValue', -1.e30)
     if (status /= NF90_NOERR) return

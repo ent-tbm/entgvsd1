@@ -8,8 +8,8 @@ set(entgvsd_SOURCES
     entgvsd_util.f90
     paths.f90
     chunkparams.f90
-    #chunker.f90
-    #hntr.f90
+    chunker.f90
+    hntr.f90
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 
