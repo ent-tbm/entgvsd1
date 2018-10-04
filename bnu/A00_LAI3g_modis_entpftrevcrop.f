@@ -134,45 +134,6 @@
 !     deallocate(LC1)
       end subroutine Set_pft
 !------------------------------------------------------------------------------
-
-      subroutine check_lc_lai_mismatch(IX,JX
-     &     ,LC_IN,LAI_IN,label,titlek)
-!###  SOMETHING SCREWY IN LC_IN BEING SHIFTED.
-!###  DELETE OR FIX.
-      implicit none
-      integer, intent(in) :: IX,JX
-      real*4 :: LC_IN,LAI_IN
-      character*3 :: label
-      character*80 :: titlek
-!------
-      integer :: i,j
-      real*4 :: LAYERLC, LAYERLAI
-      character*80 :: TITLE
-
-      LAYERLC = 0.
-      LAYERLAI = 0.
-      if ((LC_IN.eq.0.0).and.(LAI_IN.gt.0.0)) then
-         print *,label,' mismatch,i,j,cov,lai'
-     &        ,i,j,LC_IN,LAI_IN
-         LAYERLAI = LAI_IN
-      elseif ((LC_IN.gt.0.0).and.
-     &        (LAI_IN.eq.0.0)) then
-         print *,label,' mismatch,i,j,cov,lai'
-     &        ,i,j,LC_IN,LAI_IN
-         LAYERLC = LC_IN
-      endif
-      TITLE = label//' lc<>0,lai=0 '//titlek(1:20)
-      write(100) TITLE, LAYERLC
-      TITLE = label//' lc=0,lai<>0 '//titlek(1:20)
-      write(100) TITLE, LAYERLAI
-
-      end subroutine check_lc_lai_mismatch
-
-!------------------------------------------------------------------------------
-
-      subroutine ent17_qualitycheck
-
-      end subroutine ent17_qualitycheck
 !------------------------------------------------------------------------------
 
       subroutine Set_Shrubtype(MATEMP,Pmave,LC_IN,LAI_IN)  
@@ -710,8 +671,10 @@
 
       type(ChunkIO_t) :: partit_io(28)
       type(ChunkIO_t) :: entpft_io(19)
+#ifdef COMPUTE_LAI
       type(ChunkIO_t) :: entpftlaimax_io(19)
       type(ChunkIO_t) :: entpftlaimaxcheck_io(19)
+#endif
 
       RESOUT = '1kmx1km'
 
@@ -722,7 +685,7 @@
       call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
 !     LAI
-      call chunker%nc_open(io_lai,
+      call chunker%nc_open_gz(io_lai,
      &    DATA_DIR, DATA_INPUT,
      &    'LAI/',
      &    'LAI3gMax_1kmx1km.nc', 'laimax')
@@ -734,108 +697,108 @@
 
 !     CROPS
 
-      call chunker%nc_open(io_04crops,
+      call chunker%nc_open_gz(io_04crops,
      &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
      &    '04_Monfreda_herb_crops_1kmx1km.nc', 'crops')
 
-      call chunker%nc_open(io_05crops,
+      call chunker%nc_open_gz(io_05crops,
      &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
      &    '05_Monfreda_shrub_crops_1kmx1km.nc', 'crops')
 
-      call chunker%nc_open(io_06crops,
+      call chunker%nc_open_gz(io_06crops,
      &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
      &    '06_Monfreda_tree_crops_1kmx1km.nc', 'crops')
 
-      call chunker%nc_open(io_04cropsm,
+      call chunker%nc_open_gz(io_04cropsm,
      &    DATA_DIR, DATA_INPUT, 
      &    'crops/',
      &    '08_Monfreda_c4_crops_multi1_1kmx1km.nc', 'crops')
       
 !     CLIMSTATS
 
-      call chunker%nc_open(io_C4norm,
+      call chunker%nc_open_gz(io_C4norm,
      &     DATA_DIR, DATA_INPUT, 
      &     'climstats/',
      &     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc', 'C4climate')
 
-      call chunker%nc_open(io_Tcold,
+      call chunker%nc_open_gz(io_Tcold,
      &     DATA_DIR, DATA_INPUT,
      &     'climstats/', 'Tcold.nc', 'Tcold')
 
-      call chunker%nc_open(io_Pdry,
+      call chunker%nc_open_gz(io_Pdry,
      &     DATA_DIR, DATA_INPUT, 
      &     'climstats/', 'Pdry.nc', 'Pdry')
            
-      call chunker%nc_open(io_Pmave,
+      call chunker%nc_open_gz(io_Pmave,
      &     DATA_DIR, DATA_INPUT,
      &     'climstats/', 'Pmave.nc', 'Pmave')
 
-      call chunker%nc_open(io_TCinave,
+      call chunker%nc_open_gz(io_TCinave,
      &      DATA_DIR, DATA_INPUT,
      &      'climstats/', 'TCinave.nc', 'TCinave')
 
-      call chunker%nc_open(io_CMedit,
+      call chunker%nc_open_gz(io_CMedit,
      &     DATA_DIR, DATA_INPUT, 
      &     'climstats/', 'ClimMedit.nc', 'ClimMedit')
       
 !     WATERLC MODIS PARTITION
-      call chunker%nc_open(io_waterpart,
+      call chunker%nc_open_gz(io_waterpart,
      &     LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
      &     '2004/',
      &     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0')
 
 !     CHECKSUM
-      call chunker%nc_create(io_checksum,AVG_TYPE_COVER,
+      call chunker%nc_create(io_checksum, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntMM29lc_lai_for_1kmx1km',
      &    'EntMM29lc_lai_for_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATERLC OUTPUT
-      call chunker%nc_create(io_waterout,AVG_TYPE_COVER,
-     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water_lc',
+      call chunker%nc_create(io_waterout, chunker%wta1, 1d0,0d0,  ! Use chunker%wta1*1 + 0
+     &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water',
      &    '', '', TITLE_LC)
       
 !     CHECKSUM
-      call chunker%nc_create(io_checksum2,AVG_TYPE_COVER,
+      call chunker%nc_create(io_checksum2, chunker%wta1,1d0,0d0,
      &     'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km',
      &     'EntLandcover_check_sum_Jun_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATER LAI
-      call chunker%nc_create(io_waterlai,AVG_TYPE_LAI,
-     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water_lai',
+      call chunker%nc_create(io_waterlai, io_waterout%buf,1d0,0d0,
+     &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water',
      &    'LAI', '1', TITLE_CHECKSUM)
 
 !     CHECKSUM
-      call chunker%nc_create(io_checksum3,AVG_TYPE_LAI,
+      call chunker%nc_create(io_checksum3, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km',
      &    'EntLAI_check_sum_Jun_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
 
 !     NPFTGRID
-      call chunker%nc_create(io_npftgrid,AVG_TYPE_COVER,
+      call chunker%nc_create(io_npftgrid, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km',
      &     'EntPFTs_percell_check_sum_Jun_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFTLC
-      call chunker%nc_create(io_dompftlc,AVG_TYPE_COVER,
+      call chunker%nc_create(io_dompftlc, io_waterout%buf,-1d0,1d0,  ! LC is Land-weighted
      &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
      &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFT
-      call chunker%nc_create(io_dompft,AVG_TYPE_COVER,
+      call chunker%nc_create(io_dompft, io_dompftlc%buf,1d0,0d0,
      &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km',
      &     'EntdominantPFT_check_sum_Jun_1kmx1km',
      &    'checksum', '1', TITLE_CHECKSUM)
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
-         call chunker%nc_open(partit_io(k),
+         call chunker%nc_open_gz(partit_io(k),
      &        LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT,
      &        '2004/', 
      &        'PART_SUB_1km_2004_geo.PARTITION'//
@@ -845,7 +808,7 @@
 
 !      ENTPFTLC
       do k = 1,ENTPFTNUM
-         call chunker%nc_create(entpft_io(k),AVG_TYPE_COVER,
+         call chunker%nc_create(entpft_io(k), io_waterout%buf,-1d0,1d0,    ! LC land-weighted
      &        'EntMM_lc_laimax_1kmx1km/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
      &        trim(EntPFT_files2(k)),
@@ -855,9 +818,11 @@
       enddo
       
 
+#ifdef COMPUTE_LAI
 !     ENTPFTLAIMAX
       do k=1,ENTPFTNUM
-         call chunker%nc_create(entpftlaimax_io(k),AVG_TYPE_LAI,
+         call chunker%nc_create(entpftlaimax_io(k),
+     &       entpft_io(k)%buf,1d0,0d0,   ! Weight by entpft LC
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
      &       trim(EntPFT_files2(k)),
@@ -867,12 +832,14 @@
 
 !     ENTPFTLAIMAX CHECKSUM
       do k=1,ENTPFTNUM
-         call chunker%nc_create(entpftlaimaxcheck_io(k),AVG_TYPE_LAI,
+         call chunker%nc_create(entpftlaimaxcheck_io(k),
+     &         chunker%wta1,1d0,0d0,
      &         'checksum/',
      &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)),
      &         trim(EntPFT_files2(k)),
      &       EntPFT_title(k), '1', TITLE_CHECKSUM)
       enddo
+#endif
 
       ! Quit if we had any problems opening files
       call chunker%nc_check
@@ -897,11 +864,11 @@
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
-!      do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-!      do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+      do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+      do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
-      do jchunk = 1,nchunk(2)
-      do ichunk = 1,nchunk(1)
+!      do jchunk = 1,nchunk(2)
+!      do ichunk = 1,nchunk(1)
 
          call chunker%move_to(ichunk,jchunk)
 
@@ -1282,8 +1249,9 @@
             do k=1,ENTPFTNUM
                CHECKSUM = CHECKSUM +
      &              ENTPFTLC(k)*ENTPFTLAIMAX(k)
+#ifdef COMPUTE_LAI
                entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
-!     write(*,*) err, 'Wrote ENTPFTLAIMAX',ENTPFTLAIMAX(k,:,:)
+#endif
 
                LAYEROUT = ENTPFTLAIMAX(k)
 
@@ -1318,7 +1286,9 @@
             do k=1,ENTPFTNUM
                TITLECHECK = EntPFT_title(k)//
      &              'EntMM LAI max '//trim(RESOUT)
+#ifdef COMPUTE_LAI
                entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+#endif
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'
 !     write(*,*) TITLECHECK
@@ -1386,6 +1356,7 @@
          err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
 
+#ifdef COMPUTE_LAI
          err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'long_name',EntPFT_title(k))
          err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
@@ -1415,7 +1386,7 @@
      &        'geospatial_lon_max', '180')
          err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL,
      &        'EntTBM', 'Ent Terrestrial Biosphere Model')
-
+#endif
       end do
 
       call chunker%close_chunks

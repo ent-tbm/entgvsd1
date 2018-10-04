@@ -215,11 +215,12 @@ end subroutine partition_north_south
 !    Source
 ! @param jb0 Index of first latitude to start regridding
 ! @param njb Number of latitude grid cells to regrid
-subroutine regrid4(this, B,A,WTA,jb0,njb)
+subroutine regrid4(this, B,A,WTA,MM,BB,jb0,njb)
     class(HntrCalc_t) :: this
     real*4, dimension(:,:), intent(INOUT) :: B
     real*4, dimension(:,:), intent(IN) :: A
     real*4, dimension(:,:), intent(IN) :: WTA
+    real*8, intent(IN) :: MM,BB
     integer, intent(IN) :: jb0,njb
     ! ------- Locals
 
@@ -232,6 +233,7 @@ subroutine regrid4(this, B,A,WTA,jb0,njb)
     real*8 :: F,G
     integer :: IAREV
     integer :: ja0
+    real*4 :: effective_wta
 
     ja0 = this%JMIN(jb0)
     Do JB=jb0,jb0+njb-1
@@ -253,9 +255,10 @@ subroutine regrid4(this, B,A,WTA,jb0,njb)
                     F = 1d0
                     If (IAREV==IAMIN) F = F - this%FMIN(IB)
                     If (IAREV==IAMAX) F = F - this%FMAX(IB)
-                    WEIGHT = WEIGHT + F*G*WTA(IA,jax)
+                    effective_wta = WTA(IA,jax)*MM+BB   ! Effective weight provided by user
+                    WEIGHT = WEIGHT + F*G*effective_wta
 if (IA<1.or. (IA>size(A,1)) .or. (jax<1) .or. (jax>size(A,2)) ) print *,'out of bounds A',shape(A),IA,jax
-                    VALUE  = VALUE  + F*G*WTA(IA,jax)*A(IA,jax)
+                    VALUE  = VALUE  + F*G*effective_wta*A(IA,jax)
                 end do
             end do
 if (IB<lbound(B,1).or. (IB>ubound(B,1)) .or. (jbx<lbound(B,2)) .or. (jbx>ubound(B,2)) ) print *,'out of bounds B',shape(B),IB,jbx

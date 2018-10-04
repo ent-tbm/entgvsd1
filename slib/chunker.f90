@@ -21,7 +21,8 @@ type ChunkIO_t
     integer :: fileid_lr, varid_lr
     logical :: own_fileid,own_fileid_lr   ! True if we own the fileid
     real*4, dimension(:,:), allocatable :: buf
-    integer :: avg_type  ! When converting to low-res, average zeros along with non-zero cells?
+    real*4, dimension(:,:), pointer :: wta
+    real*8 :: MM,BB
 end type ChunkIO_t
 
 type ChunkIO_ptr
@@ -45,6 +46,8 @@ type Chunker_t
     integer :: max_reads, max_writes
     integer :: nreads, nwrites
     type(ChunkIO_ptr), dimension(:), allocatable :: reads,writes
+
+    real*4, dimension(:,:), allocatable :: wta1  ! Default weights
 contains
     procedure :: init
     procedure :: write_chunks
@@ -52,6 +55,7 @@ contains
     procedure :: move_to
     procedure :: close_chunks
     procedure :: nc_create
+    procedure :: nc_open_gz
     procedure :: nc_open
     procedure :: nc_check
 end type Chunker_t
@@ -79,6 +83,10 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / nchunk(i)
     end do
+
+    ! Allocate weight buffer
+    allocate(this%wta1(this%ngrid(1), this%ngrid(2)))
+    this%wta1 = 1.0
 
     ! Set up chunk parameters (lr)
     this%ngrid_lr(1) = im_lr
@@ -109,7 +117,6 @@ subroutine write_chunks(this)
     integer :: startB_hr(2), startB_lr(2)
     integer :: nerr
     integer :: err
-    real*4, dimension(:,:), allocatable :: wta_hr  ! Weights for regridding
     real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
     type(HntrSpec_t) :: spec_hr, spec_lr
     type(HntrCalc_t) :: hntr
@@ -127,7 +134,6 @@ subroutine write_chunks(this)
     hntr = hntr_calc(spec_lr, spec_hr, 0d0)
 
     ! Buffers used to write
-    allocate(wta_hr(this%chunk_size(1), this%chunk_size(2)))
     allocate(buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
 
     startB_lr = (/ &
@@ -143,23 +149,6 @@ subroutine write_chunks(this)
     do i=1,this%nwrites
         cio => this%writes(i)%ptr
 
-        if (cio%avg_type == AVG_TYPE_COVER) then
-            ! TODO: Use land mask to exclude non-land
-            wta_hr = 1d0
-        else
-            ! TODO: Use land mask to exclude non-land
-            ! (non-land is already implicitly excluded here for PFTs that can't grow on water)
-            do jc=1,this%chunk_size(2)
-            do ic=1,this%chunk_size(1)
-                if (cio%buf(ic,jc) == 0) then
-                    wta_hr(ic,jc)=0d0
-                else
-                    wta_hr(ic,jc)=1d0
-                end if
-            end do
-            end do
-        end if
-
         ! Store the hi-res chunk
         err=NF90_PUT_VAR( &
            cio%fileid, cio%varid, &
@@ -171,7 +160,7 @@ subroutine write_chunks(this)
         err=nf90_sync(cio%fileid)
 
         ! Regrid chunk to low-res
-        call hntr%regrid4(buf_lr, cio%buf, wta_hr, &
+        call hntr%regrid4(buf_lr, cio%buf, cio%wta,cio%MM,cio%BB, &
             startB_lr(2), this%chunk_size_lr(2))
 
         ! Convert zeros to NaN in regridded data (for plotting)
@@ -303,10 +292,13 @@ end subroutine close_chunks
 ! -------------------------------------------------------------------
 
 ! Creates a NetCDF file for writing (by chunks)
-subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title)
+subroutine nc_create(this, cio, &
+wta,MM,BB, &   ! Weight by weights(i,j)*MM + BB
+dir, leaf, vname,long_name,units,title)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
-    integer :: avg_type
+    real*4, dimension(:,:), target :: wta
+    real*8 :: MM, BB
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
     character*(*), intent(in) :: vname
@@ -317,7 +309,9 @@ subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title
     character(4192) :: cmd
     character(10) :: lon_s, lat_s,fmt
     logical :: exist
-    cio%avg_type = avg_type
+    cio%wta => wta
+    cio%MM = MM
+    cio%BB = BB
     cio%leaf = leaf
     cio%own_fileid = .false.
     cio%own_fileid_lr = .false.
@@ -329,7 +323,7 @@ subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title
 
     ! ------ Open hi-res file
     path_name = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
-    print *,'Opening ',trim(path_name)
+    print *,'Writing ',trim(path_name)
     inquire(FILE=trim(path_name), EXIST=exist)
     if (exist) then
         ! ------- Open existing file
@@ -352,7 +346,7 @@ subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title
 
     ! ---------- Open lo-res file
     path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
-    print *,'Opening ',trim(path_name_lr)
+    print *,'Writing ',trim(path_name_lr)
     inquire(FILE=trim(path_name_lr), EXIST=exist)
     if (exist) then
         ! ------- Open existing file
@@ -404,7 +398,7 @@ subroutine nc_create(this, cio, avg_type, dir, leaf, vname,long_name,units,title
     this%writes(this%nwrites)%ptr => cio
 end subroutine nc_create
 
-subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
+subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
@@ -436,6 +430,25 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     end if
 
     ! ------- Now open the file
+    call this%nc_open(cio, oroot, dir, leaf, vname)
+
+end subroutine nc_open_gz
+
+subroutine nc_open(this, cio, oroot, dir, leaf, vname)
+    class(Chunker_t) :: this
+    type(ChunkIO_t), target :: cio
+    character*(*), intent(in) :: oroot
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    character*(*), intent(in) :: vname
+    ! --------- Local vars
+    integer :: err
+
+    cio%fileid = -1
+
+    print *,'Reading ', oroot//dir//leaf
+
+    ! ------- Now open the file
     err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening',trim(leaf),err
@@ -445,7 +458,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
 
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
+        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),trim(vname),err
         this%nerr = this%nerr + 1
         return
     end if
@@ -462,6 +475,7 @@ subroutine nc_open(this, cio, iroot, oroot, dir, leaf, vname)
     allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
 
 end subroutine nc_open
+
 
 
 subroutine nc_check(this)
