@@ -25,6 +25,17 @@ CHARACTER (LEN=*), PARAMETER :: DATA_INPUT= &
 
 
 
+
+
+
+CHARACTER (LEN=*), PARAMETER :: LAI3G_DIR= &
+   '/home2/rpfische/entgvsd0/discover/Vegcover_1km/LAI3g/'
+
+CHARACTER (LEN=*), PARAMETER :: LAI3G_INPUT= &
+   '/home2/rpfische/git/entgvsd1/inputs/LAI3g/'
+
+
+
 CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_DIR= &
    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/BNU/'// &
    'lc_lai_giss'
