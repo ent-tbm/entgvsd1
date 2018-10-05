@@ -156,7 +156,7 @@ do k = 1,20
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
         trim(EntPFT_files2(k)), &
-        EntPFT_title(k), 'm2 m-2', TITLE_LAI)
+        EntPFT_title(k), 'm2 m-2', TITLE_LAI, 1)
 enddo
 
 !-----------------------------------------------------------------
@@ -168,11 +168,11 @@ call chunker%nc_check
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
-do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+!do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+!do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
-!do jchunk = 1,nchunk(2)
-!do ichunk = 1,nchunk(1)
+do jchunk = 1,nchunk(2)
+do ichunk = 1,nchunk(1)
 
     call chunker%move_to(ichunk,jchunk)
 
@@ -188,10 +188,13 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
             !**   LAI data, lon lat from LAI file                
 
-            io_out(p)%buf(ic,jc) = io_lc(p)%buf(ic,jc) * io_lai%buf(ic,jc)
+            io_out(p)%buf(ic,jc,1) = io_lc(p)%buf(ic,jc,1) * io_lai%buf(ic,jc,1)
         end do
     end do
     end do
+
+    call chunker%write_chunks
+
 end do
 end do
 

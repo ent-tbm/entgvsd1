@@ -20,8 +20,9 @@ type ChunkIO_t
     integer :: fileid, varid
     integer :: fileid_lr, varid_lr
     logical :: own_fileid,own_fileid_lr   ! True if we own the fileid
-    real*4, dimension(:,:), allocatable :: buf
-    real*4, dimension(:,:), pointer :: wta
+    integer :: nlayers
+    real*4, dimension(:,:,:), allocatable :: buf    ! im,jm,nlayers (1 if just a single value)
+    real*4, dimension(:,:,:), pointer :: wta
     real*8 :: MM,BB
 end type ChunkIO_t
 
@@ -32,12 +33,12 @@ end type ChunkIO_ptr
 ! ------ All the files, plus chunking info
 type Chunker_t
     integer :: ngrid(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
-    integer :: chunk_size(chunk_rank)    ! Number of fine grid cells in each chunk (im,jm)
+    integer :: chunk_size(3)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur(chunk_rank)     ! Index of current chunk
 
     ! Same of a low-res version of the chunker...
     integer :: ngrid_lr(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
-    integer :: chunk_size_lr(chunk_rank)    ! Number of fine grid cells in each chunk (im,jm)
+    integer :: chunk_size_lr(3)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur_lr(chunk_rank)     ! Index of current chunk
 
 
@@ -47,7 +48,7 @@ type Chunker_t
     integer :: nreads, nwrites
     type(ChunkIO_ptr), dimension(:), allocatable :: reads,writes
 
-    real*4, dimension(:,:), allocatable :: wta1  ! Default weights
+    real*4, dimension(:,:,:), allocatable :: wta1  ! Default weights
 contains
     procedure :: init
     procedure :: write_chunks
@@ -83,9 +84,10 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / nchunk(i)
     end do
+    this%chunk_size(3)=1
 
     ! Allocate weight buffer
-    allocate(this%wta1(this%ngrid(1), this%ngrid(2)))
+    allocate(this%wta1(this%ngrid(1), this%ngrid(2),1))
     this%wta1 = 1.0
 
     ! Set up chunk parameters (lr)
@@ -94,6 +96,7 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     do i=1,chunk_rank
         this%chunk_size_lr(i) = this%ngrid_lr(i) / nchunk(i)
     end do
+    this%chunk_size_lr(3)=1
 
     ! Allocate space to refer to managed chunk buffers
     this%max_reads = max_reads
@@ -113,8 +116,8 @@ subroutine write_chunks(this)
     class(Chunker_t), target, intent(IN) :: this
     character :: rw
     ! ---------- Locals
-    integer :: i
-    integer :: startB_hr(2), startB_lr(2)
+    integer :: i,k
+    integer :: startB_hr(3), startB_lr(3)
     integer :: nerr
     integer :: err
     real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
@@ -127,6 +130,7 @@ subroutine write_chunks(this)
     type(ChunkIO_t), pointer :: cio
     integer :: ic,jc
     real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
+    real*4, dimension(:,:), pointer :: my_wta
 
     ! Hntr stuff
     spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
@@ -138,56 +142,70 @@ subroutine write_chunks(this)
 
     startB_lr = (/ &
         (this%cur(1)-1) * this%chunk_size_lr(1) + 1, &
-        (this%cur(2)-1) * this%chunk_size_lr(2) + 1/)
+        (this%cur(2)-1) * this%chunk_size_lr(2) + 1, &
+        1/)
 
     startB_hr = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
-        (this%cur(2)-1) * this%chunk_size(2) + 1/)
+        (this%cur(2)-1) * this%chunk_size(2) + 1, &
+        1/)
     write(*, '(A I3 I3)', advance="no") 'Writing Chunk',this%cur
 
     nerr = 0
     do i=1,this%nwrites
         cio => this%writes(i)%ptr
 
-        ! Store the hi-res chunk
-        err=NF90_PUT_VAR( &
-           cio%fileid, cio%varid, &
-           cio%buf,startB_hr,this%chunk_size)
-        if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf)
-            nerr = nerr + 1
-        end if
-        err=nf90_sync(cio%fileid)
+        do k=1,cio%nlayers
+            startB_lr(3) = k
+            startB_hr(3) = k
 
-        ! Regrid chunk to low-res
-        call hntr%regrid4(buf_lr, cio%buf, cio%wta,cio%MM,cio%BB, &
-            startB_lr(2), this%chunk_size_lr(2))
+            ! Store the hi-res chunk
+            err=NF90_PUT_VAR( &
+               cio%fileid, cio%varid, &
+               cio%buf(:,:,k),startB_hr,this%chunk_size)
+            if (err /= NF90_NOERR) then
+                write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf)
+                nerr = nerr + 1
+            end if
+            err=nf90_sync(cio%fileid)
 
-        ! Convert zeros to NaN in regridded data (for plotting)
-        do jc=1,this%chunk_size_lr(2)
-        do ic=1,this%chunk_size_lr(1)
-            if (buf_lr(ic,jc) == 0) buf_lr(ic,jc) = undef
+            ! Regrid chunk to low-res
+            if (size(cio%wta,3) == 1) then
+                my_wta => cio%wta(:,:,1)
+            else
+                my_wta => cio%wta(:,:,k)
+            end if
+
+            call hntr%regrid4(buf_lr, cio%buf(:,:,k), my_wta,cio%MM,cio%BB, &
+                startB_lr(2), this%chunk_size_lr(2))
+
+            ! Convert zeros to NaN in regridded data (for plotting)
+            do jc=1,this%chunk_size_lr(2)
+            do ic=1,this%chunk_size_lr(1)
+                if (buf_lr(ic,jc) == 0) buf_lr(ic,jc) = undef
+            end do
+            end do
+            
+            ! Store the lo-res chunk
+            err=NF90_PUT_VAR( &
+               cio%fileid_lr, cio%varid_lr, &
+               buf_lr, startB_lr, this%chunk_size_lr)
+            if (err /= NF90_NOERR) then
+                write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),err
+                err= nf90_inquire_variable( &
+                    cio%fileid_lr, &
+                    cio%varid_lr, vname, xtype,ndims,dimids)
+                ! More error output...
+                write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
+                write(ERROR_UNIT,*) lbound(buf_lr),ubound(buf_lr),startB_lr,this%chunk_size_lr
+                err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
+                write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
+                err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
+                write(ERROR_UNIT,*) 'dim2 ',trim(vname),len
+                write(ERROR_UNIT,*) 
+                nerr = nerr + 1
+            end if
         end do
-        end do
-        
-        ! Store the lo-res chunk
-        err=NF90_PUT_VAR( &
-           cio%fileid_lr, cio%varid_lr, &
-           buf_lr, startB_lr, this%chunk_size_lr)
-        if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),err
-            err= nf90_inquire_variable( &
-                cio%fileid_lr, &
-                cio%varid_lr, vname, xtype,ndims,dimids)
-            write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
-            write(ERROR_UNIT,*) lbound(buf_lr),ubound(buf_lr),startB_lr,this%chunk_size_lr
-            err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
-            write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
-            err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
-            write(ERROR_UNIT,*) 'dim2 ',trim(vname),len
-            write(ERROR_UNIT,*) 
-            nerr = nerr + 1
-        end if
         err=nf90_sync(cio%fileid_lr)
 
         ! Display progress
@@ -206,13 +224,14 @@ subroutine read_chunks(this)
     class(Chunker_t), target, intent(IN) :: this
     ! ---------- Locals
     integer :: i
-    integer :: startB(2)
+    integer :: startB(3)
     integer :: nerr
     integer :: err
 
     startB = (/ &
         (this%cur(1)-1) * this%chunk_size(1) + 1, &
-        (this%cur(2)-1) * this%chunk_size(2) + 1/)
+        (this%cur(2)-1) * this%chunk_size(2) + 1, &
+        1/)
     write(*, '(A I3 I3)', advance="no") 'Reading Chunk',this%cur
 
     nerr = 0
@@ -241,7 +260,6 @@ subroutine move_to(this, ci, cj)
     integer, intent(IN) :: ci,cj    ! Index of chunk
     ! ---------- Locals
     integer ::i
-    integer :: startB(2), countB(2)
 
     this%cur(1) = ci
     this%cur(2) = cj
@@ -294,15 +312,20 @@ end subroutine close_chunks
 ! Creates a NetCDF file for writing (by chunks)
 subroutine nc_create(this, cio, &
 wta,MM,BB, &   ! Weight by weights(i,j)*MM + BB
-dir, leaf, vname,long_name,units,title)
+dir, leaf, vname,long_name,units,title, &
+nlayers,layer_indices,layer_names)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
-    real*4, dimension(:,:), target :: wta
+    real*4, dimension(:,:,:), target :: wta
     real*8 :: MM, BB
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
     character*(*), intent(in) :: vname
     character*(*), intent(in) :: long_name,units,title
+    integer :: nlayers
+    integer, dimension(:), OPTIONAL :: layer_indices
+    character(len=*), dimension(:), OPTIONAL :: layer_names
+
     ! --------- Locals
     integer :: err
     character(2048) :: path_name,path_name_lr
@@ -316,6 +339,7 @@ dir, leaf, vname,long_name,units,title)
     cio%own_fileid = .false.
     cio%own_fileid_lr = .false.
     cio%fileid = -1
+    cio%nlayers = nlayers
 
     ! ------ Create directory
     call execute_command_line('mkdir -p '//LC_LAI_ENT_DIR//trim(dir), &
@@ -336,10 +360,11 @@ dir, leaf, vname,long_name,units,title)
     else
         ! ------- Create new file
         call my_nf90_create_Ent_single( &
-            this%ngrid(1), this%ngrid(2), &
+            this%ngrid(1), this%ngrid(2), nlayers, &
             path_name, vname, &
             long_name, units, title, &
-            cio%fileid)
+            cio%fileid, &
+            layer_indices, layer_names)
     end if
     cio%own_fileid = .true.
 
@@ -359,19 +384,18 @@ dir, leaf, vname,long_name,units,title)
     else
         ! ------- Create new file
         call my_nf90_create_Ent_single( &
-            this%ngrid_lr(1), this%ngrid_lr(2), &
+            this%ngrid_lr(1), this%ngrid_lr(2), nlayers,&
             path_name_lr, vname, &
             trim(long_name)//' (low-res)', units, title, &
-            cio%fileid_lr)
+            cio%fileid_lr, &
+            layer_indices, layer_names)
     end if
     cio%own_fileid_lr = .true.
 
 
 
-
-
     ! Allocate write buffer (Hi res)
-    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2),nlayers))
 
     ! Open NetCDF array
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
@@ -443,6 +467,8 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname)
     character*(*), intent(in) :: vname
     ! --------- Local vars
     integer :: err
+    integer :: nlayers_dimid
+    character(len=NF90_MAX_NAME) :: xname
 
     cio%fileid = -1
 
@@ -454,6 +480,14 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname)
         write(ERROR_UNIT,*) 'Error opening',trim(leaf),err
         this%nerr = this%nerr + 1
         return
+    end if
+
+    ! Set cio%nlayers
+    err = nf90_inq_dimid(cio%fileid, 'nlayers', nlayers_dimid)
+    if (err == NF90_NOERR) then
+        err = nf90_inquire_dimension(cio%fileid, nlayers_dimid, xname, cio%nlayers)
+    else
+        cio%nlayers = 1
     end if
 
     err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
@@ -472,7 +506,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname)
     this%reads(this%nreads)%ptr => cio
 
     ! Allocate write buffer
-    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+    allocate(cio%buf(this%chunk_size(1), this%chunk_size(2), cio%nlayers))
 
 end subroutine nc_open
 

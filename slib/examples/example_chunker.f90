@@ -19,12 +19,28 @@ integer :: ncid
     real*4 :: mean
     integer :: ic,jc
     integer :: ichunk,jchunk
+    real*4, dimension(:,:), allocatable :: wta1
 
+character(len=46), dimension(4), parameter :: layer_names = (/ &
+     'evergreen broadleaf early succ               ', &
+     'evergreen broadleaf late succ                ', &
+     'evergreen needleleaf early succ              ', &
+     'evergreen needleleaf late succ               ' &
+    /)
+
+integer :: layer_indices(4) = (/ 1,2,3,4 /)
+integer, parameter :: nlayers = 4
+integer :: k
+
+    allocate(wta1(IM1km,JM1km))
+    wta1 = 1d0
     call chunker%init(IM1km, JM1km, IMH*2, JMH*2, 17, 17)
-    call chunker%nc_open(io_var, &
+    call chunker%nc_open_gz(io_var, &
         DATA_DIR, DATA_INPUT, 'LAI/', 'LAI3gMax_1kmx1km.nc', 'laimax')
     call chunker%nc_create(io_out, &
-        'test_dir/', 'test', 'test')
+        wta1,1d0,0d0, &
+        'test_dir/', 'test', 'test', 'long_name', 'km', 'title', &
+        nlayers, layer_indices, layer_names)
 
 
     call chunker%nc_check
@@ -38,8 +54,10 @@ integer :: ncid
         mean = 0
         do jc = 1,chunker%chunk_size(2)
         do ic = 1,chunker%chunk_size(1)
-            mean = mean + io_var%buf(ic,jc)
-            io_out%buf(ic,jc) = ichunk*100+ic+jc
+            mean = mean + io_var%buf(ic,jc,1)
+            do k=1,nlayers
+                io_out%buf(ic,jc,k) = k*(ichunk*100+ic+jc)
+            end do
         end do
         end do
         call chunker%write_chunks

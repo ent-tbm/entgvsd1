@@ -754,47 +754,47 @@
       call chunker%nc_create(io_checksum, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntMM29lc_lai_for_1kmx1km',
      &    'EntMM29lc_lai_for_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
 
 !     WATERLC OUTPUT
       call chunker%nc_create(io_waterout, chunker%wta1, 1d0,0d0,  ! Use chunker%wta1*1 + 0
      &    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water',
-     &    '', '', TITLE_LC)
+     &    '', '', TITLE_LC, 1)
       
 !     CHECKSUM
       call chunker%nc_create(io_checksum2, chunker%wta1,1d0,0d0,
      &     'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km',
      &     'EntLandcover_check_sum_Jun_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
 
 !     WATER LAI
       call chunker%nc_create(io_waterlai, io_waterout%buf,1d0,0d0,
      &      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water',
-     &    'LAI', '1', TITLE_CHECKSUM)
+     &    'LAI', '1', TITLE_CHECKSUM, 1)
 
 !     CHECKSUM
       call chunker%nc_create(io_checksum3, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km',
      &    'EntLAI_check_sum_Jun_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
 
 !     NPFTGRID
       call chunker%nc_create(io_npftgrid, chunker%wta1,1d0,0d0,
      &    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km',
      &     'EntPFTs_percell_check_sum_Jun_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
 
 !     DOMPFTLC
       call chunker%nc_create(io_dompftlc, io_waterout%buf,-1d0,1d0,  ! LC is Land-weighted
      &    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
      &     'EntdominantPFT_LC_check_sum_Jun_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
 
 !     DOMPFT
       call chunker%nc_create(io_dompft, io_dompftlc%buf,1d0,0d0,
      &    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km',
      &     'EntdominantPFT_check_sum_Jun_1kmx1km',
-     &    'checksum', '1', TITLE_CHECKSUM)
+     &    'checksum', '1', TITLE_CHECKSUM, 1)
    
 !     MODIS PARTITION FILES
       do k = 1,LCLASS
@@ -812,7 +812,7 @@
      &        'EntMM_lc_laimax_1kmx1km/',
      &        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc',
      &        trim(EntPFT_files2(k)),
-     &        EntPFT_title(k), '1', TITLE_LC)
+     &        EntPFT_title(k), '1', TITLE_LC, 1)
 
 
       enddo
@@ -826,7 +826,7 @@
      &       'EntMM_lc_laimax_1kmx1km/',
      &       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai',
      &       trim(EntPFT_files2(k)),
-     &       EntPFT_title(k), 'm2 m-2', TITLE_LAI)
+     &       EntPFT_title(k), 'm2 m-2', TITLE_LAI, 1)
       enddo
 
 
@@ -837,7 +837,7 @@
      &         'checksum/',
      &         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)),
      &         trim(EntPFT_files2(k)),
-     &       EntPFT_title(k), '1', TITLE_CHECKSUM)
+     &       EntPFT_title(k), '1', TITLE_CHECKSUM, 1)
       enddo
 #endif
 
@@ -864,11 +864,11 @@
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
-      do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-      do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+!      do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+!      do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
-!      do jchunk = 1,nchunk(2)
-!      do ichunk = 1,nchunk(1)
+      do jchunk = 1,nchunk(2)
+      do ichunk = 1,nchunk(1)
 
          call chunker%move_to(ichunk,jchunk)
 
@@ -880,41 +880,41 @@
              jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
              !**   LAI data
-             LAI=io_lai%buf(ic,jc)
+             LAI=io_lai%buf(ic,jc,1)
 
              !**   Crop files
 
-            CROPSHERBNORM=io_04crops%buf(ic,jc)
+            CROPSHERBNORM=io_04crops%buf(ic,jc,1)
 !           write(*,*) 'CROPSHERBNORM ',(CROPSHERBNORM)
-            CROPSSHRUBNORM=io_05crops%buf(ic,jc)
+            CROPSSHRUBNORM=io_05crops%buf(ic,jc,1)
 !     write(*,*) 'CROPSSHRUBNORM ',shape(CROPSSHRUBNORM)
-            CROPSTREENORM=io_06crops%buf(ic,jc)
+            CROPSTREENORM=io_06crops%buf(ic,jc,1)
 !     write(*,*) 'CROPSTREENORM ',shape(CROPSTREENORM)
-            CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc)
+            CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc,1)
             if (CROPSC4HERBFRAC.eq.undef) then
                 CROPSC4HERBFRAC = 0
             endif
 !     write(*,*) 'CROPSC4HERBFRAC ',shape(CROPSC4HERBFRAC)
 
              !** Input C4 climate file
-            C4CLIMFRAC=io_C4norm%buf(ic,jc)
+            C4CLIMFRAC=io_C4norm%buf(ic,jc,1)
 !     write(*,*) 'C4CLIMFRAC ',(C4CLIMFRAC)
 
              !* Input climate statistics files
              !###  Now getting MAT from Climstats file.
              !###  file tas is in K, Climstats is in C.
-            Tcold=io_Tcold%buf(ic,jc)
+            Tcold=io_Tcold%buf(ic,jc,1)
 !     write(*,*) 'Tcold ',shape(Tcold)
-            Pdry=io_Pdry%buf(ic,jc)
+            Pdry=io_Pdry%buf(ic,jc,1)
 !     write(*,*) 'Pdry ',shape(Pdry)
-            Pmave=io_Pmave%buf(ic,jc)
+            Pmave=io_Pmave%buf(ic,jc,1)
 !     write(*,*) 'Pmave ',shape(Pmave)
 
-            TCinave=io_TCinave%buf(ic,jc)
+            TCinave=io_TCinave%buf(ic,jc,1)
 !     write(*,*) 'TCinave ',shape(TCinave)
             MAT = TCinave + 273.15 !Convert to Kelvin
 
-            ClimMedit=io_CMedit%buf(ic,jc)
+            ClimMedit=io_CMedit%buf(ic,jc,1)
 !     write(*,*) 'ClimMedit ',shape(ClimMedit)
             
 
@@ -980,7 +980,7 @@
             CHECKSUM = 0.0
 
 !     WATERLC
-            WATERLC = io_waterpart%buf(ic,jc)
+            WATERLC = io_waterpart%buf(ic,jc,1)
 !            write(*,*) 'WATERLC ',shape(WATERLC)
 
             MODIS29(1) = WATERLC
@@ -996,7 +996,7 @@
 
 !     Input file for land cover data
 !     MODIS PARTITION FILES
-               LIN = partit_io(k)%buf(ic,jc)
+               LIN = partit_io(k)%buf(ic,jc,1)
 !              if (LIN.gt.0.) write(*,*) LIN,k,'kkkk'
 
                MODIS29(k+1) = LIN
@@ -1124,7 +1124,7 @@
 !     * does his smearing.
 
 !     !This confirms that the modis_c2_gissfortran output does not sum to 1.
-            io_checksum%buf(ic,jc)=CHECKSUM
+            io_checksum%buf(ic,jc,1)=CHECKSUM
              
             
 !     write(*,*) err, 'Wrote CHECKSUM on EntMM 29 cover layers'
@@ -1197,7 +1197,7 @@
 
 !     * Write Ent PFT land cover layers
 !     write(*,*) "WATER (cover fraction)"
-            io_waterout%buf(ic,jc)=WATERLC
+            io_waterout%buf(ic,jc,1)=WATERLC
 
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
 
@@ -1212,7 +1212,7 @@
                CHECKSUM = CHECKSUM + ENTPFTLC(k)
                
 !     Output file for land cover
-               entpft_io(k)%buf(ic,jc) = ENTPFTLC(k)
+               entpft_io(k)%buf(ic,jc,1) = ENTPFTLC(k)
 
 !     write(*,*) err, 'Wrote ENTPFTLC'
             
@@ -1226,7 +1226,7 @@
             TITLECHECK = 'Ent Land cover check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            io_checksum2%buf(ic,jc)=CHECKSUM
+            io_checksum2%buf(ic,jc,1)=CHECKSUM
 
 !     write(*,*) err, 'Wrote TITLECHECK'
 
@@ -1241,7 +1241,7 @@
             CHECKSUM=0.0
             TITLE = "WATER (LAI)"
 !     write(*,*) TITLE
-            io_waterlai%buf(ic,jc)=WATERLAI
+            io_waterlai%buf(ic,jc,1)=WATERLAI
 
 !     write(*,*) err, 'Wrote WATERLAI'
 
@@ -1250,7 +1250,7 @@
                CHECKSUM = CHECKSUM +
      &              ENTPFTLC(k)*ENTPFTLAIMAX(k)
 #ifdef COMPUTE_LAI
-               entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+               entpftlaimax_io(k)%buf(ic,jc,1)=ENTPFTLAIMAX(k)
 #endif
 
                LAYEROUT = ENTPFTLAIMAX(k)
@@ -1260,26 +1260,26 @@
             TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            io_checksum3%buf(ic,jc)=CHECKSUM
+            io_checksum3%buf(ic,jc,1)=CHECKSUM
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent PFTs per cell check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            io_npftgrid%buf(ic,jc)=NPFTGRID
+            io_npftgrid%buf(ic,jc,1)=NPFTGRID
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent dominant PFT LC check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            io_dompftlc%buf(ic,jc)=DOMPFTLC
+            io_dompftlc%buf(ic,jc,1)=DOMPFTLC
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
             TITLECHECK = 'Ent dominant PFT check sum '//MONTH(6)//' '
      &           //trim(RESOUT)
 !     write(*,*) TITLECHECK
-            io_dompft%buf(ic,jc)=DOMPFT
+            io_dompft%buf(ic,jc,1)=DOMPFT
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
 
@@ -1287,7 +1287,7 @@
                TITLECHECK = EntPFT_title(k)//
      &              'EntMM LAI max '//trim(RESOUT)
 #ifdef COMPUTE_LAI
-               entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+               entpftlaimaxcheck_io(k)%buf(ic,jc,1)=ENTPFTLAIMAX(k)
 #endif
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'

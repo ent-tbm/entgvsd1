@@ -147,33 +147,41 @@ contains
 
 
 
+
 !     Need to move from trim_EntMM_monthly_05x05.f
-subroutine my_nf90_create_Ent_single(IM,JM,file,varname,long_name,units,title,ncid)
+subroutine my_nf90_create_Ent_single(IM,JM,nlayers,file,varname,long_name,units,title,ncid, &
+layer_indices,layer_names)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
     integer, intent(in) :: IM, JM
+    integer, intent(IN) :: nlayers
     character*(*) ::file
     character*(*) :: varname
     character*(*) :: long_name
     character*(*) :: units,title
     integer, intent(out) :: ncid
+    integer, dimension(:), OPTIONAL :: layer_indices
+    character(len=*), dimension(:), OPTIONAL :: layer_names
     !-- Local --
     integer :: k,n
     integer :: status, varid
-    integer :: dimlon, dimlat, dim(2) !dim(1)=lon, dim(2)=lat
+    integer :: dimids(3) !dim(1)=lon, dim(2)=lat
+    integer :: ndim
     character*1024 :: text
     character(8) :: date
 
-    status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
+    if (nlayers == 1) then
+        ndim = 2
+        status = my_nf90_create_ij(trim(file), IM,JM,nlayers,ncid, dimids)
+    else
+        ndim = 3
+        status = my_nf90_create_ij(trim(file), IM,JM,nlayers,ncid, dimids, layer_indices, layer_names)
+    end if
     call handle_nf90_error(status, 'nf90_cfeate_ij '//trim(varname))
 
     !Define global attributes - Customize local copies of this routine.
     !call my_nf90_defglobal(file)
 
-    !Add the variable and its attributes
-    dim(1)=dimlon
-    dim(2)=dimlat
-
-    status=nf90_def_var(ncid, varname, NF90_FLOAT, dim, varid)
+    status=nf90_def_var(ncid, varname, NF90_FLOAT, dimids(1:ndim), varid)
     call handle_nf90_error(status, 'nf90_def_var '//trim(varname))
     status=nf90_def_var_deflate(ncid,varid,1,1,1)
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
@@ -228,13 +236,13 @@ subroutine my_nf90_create_Ent(IM,JM,file,ncov, &
     !-- Local --
     integer :: k,n
     integer :: status, varid
-    integer :: dimlon, dimlat, dim(2) !dim(1)=lon, dim(2)=lat
+    integer :: dimids(2) !dim(1)=lon, dim(2)=lat
     character*1024 :: text
     character(8) :: date
 
     n=ncov
 
-    status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
+    status = my_nf90_create_ij(trim(file), IM,JM,0,ncid, dimids)
     call handle_nf90_error(status,  'nf90_create '//file)       
     !call handle_nf90_error(status,  file//' '//dimlon//' '//dimlat)
 
@@ -247,11 +255,9 @@ subroutine my_nf90_create_Ent(IM,JM,file,ncov, &
     status=nf90_redef(ncid)
 
     !Add variables and their attributes
-    dim(1)=dimlon
-    dim(2)=dimlat
     do k=1,n
        status=nf90_def_var(ncid, trim(ent_names(k)) &
-            , NF90_FLOAT, dim, varid)
+            , NF90_FLOAT, dimids, varid)
        call handle_nf90_error(status, 'nf90_def_var '// &
             trim(ent_names(k)))
        status=nf90_put_att(ncid,varid,"long_name", trim(Ent_title(k)))
@@ -282,7 +288,7 @@ subroutine my_nf90_create_Ent_lc_lai_max(IM,JM,file,ncov, ent_names,Ent_title,nc
     !-- Local --
     integer :: k,n, v
     integer :: status, varid
-    integer :: dimlon, dimlat, dim(2) !dim(1)=lon, dim(2)=lat
+    integer :: dimids(2) !dim(1)=lon, dim(2)=lat
     character*1024 :: text
     character(8) :: date
     character*7 :: pre, prefix(2) = (/ 'lc_    ', 'laimax_' /)
@@ -291,7 +297,7 @@ subroutine my_nf90_create_Ent_lc_lai_max(IM,JM,file,ncov, ent_names,Ent_title,nc
          'm^2 leaf / m^2 ground' /)
     n=ncov
 
-    status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
+    status = my_nf90_create_ij(trim(file), IM,JM,0,ncid, dimids(1:2))
     call handle_nf90_error(status,  'nf90_open '//file)       
 
     !call handle_nf90_error(status,  file//' '//dimlon//' '//dimlat)
@@ -305,14 +311,12 @@ subroutine my_nf90_create_Ent_lc_lai_max(IM,JM,file,ncov, ent_names,Ent_title,nc
     status=nf90_redef(ncid)
 
     !Add variables and their attributes
-    dim(1)=dimlon
-    dim(2)=dimlat
     do v = 1,2
        pre = prefix(v)
        units = unitsarr(v)
     do k=1,n
        status=nf90_def_var(ncid, trim(pre)//trim(ent_names(k)) &
-            , NF90_FLOAT, dim, varid)
+            , NF90_FLOAT, dimids, varid)
        call handle_nf90_error(status, 'nf90_def_var '// &
             trim(pre)//trim(ent_names(k)))
        status=nf90_put_att(ncid,varid,"long_name", &
@@ -353,14 +357,14 @@ integer, intent(out) :: ncid
 !-- Local --
 integer :: k,n
 integer :: status, varid
-integer :: dimlon, dimlat, dimt, dim(3) !dim(1)=lon,dim(2)=lat,dim(3)=time
 character*1024 :: text
 character(8) :: date
 integer :: time(12)
+integer :: dimids(3) !dim(1)=lon,dim(2)=lat,dim(3)=time
 
     n=ncov
 
-    status = my_nf90_create_ij(trim(file), IM,JM,ncid, dimlon, dimlat)
+    status = my_nf90_create_ij(trim(file), IM,JM,0,ncid, dimids(1:2))
     call handle_nf90_error(status, 'nf90_create_ij '//trim(file))
 
     !Define global attributes - Customize local copies of this routine.
@@ -371,21 +375,18 @@ integer :: time(12)
     call handle_nf90_error(status, 'nf90_open '//trim(file))
     status=nf90_redef(ncid)
     call handle_nf90_error(status, 'nf90_redef '//trim(file))
-    status=nf90_def_dim(ncid, 'time', NF90_UNLIMITED, dimt)
+    status=nf90_def_dim(ncid, 'time', NF90_UNLIMITED, dimids(3))
     call handle_nf90_error(status, 'nf90_def_dim'//' time')
      status=nf90_enddef(ncid)      
 
     !Add variables and their attributes
-    status=nf90_def_var(ncid, 'time', NF90_INT, dimt, varid)
+    status=nf90_def_var(ncid, 'time', NF90_INT, dimids(3), varid)
     call handle_nf90_error(status, 'nf90_def_var '//'time')
     status=nf90_put_att(ncid,varid,"units", 'Month Sequence of Climatology')
 
-    dim(1)=dimlon
-    dim(2)=dimlat
-    dim(3)=dimt
     do k=1,n
        status=nf90_def_var(ncid, trim(ent_names(k)) &
-            , NF90_FLOAT, dim, varid)
+            , NF90_FLOAT, dimids, varid)
        call handle_nf90_error(status, 'nf90_def_var '// &
             trim(ent_names(k)))
        status=nf90_put_att(ncid,varid,"long_name", trim(Ent_title(k)))

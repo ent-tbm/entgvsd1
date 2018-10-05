@@ -417,19 +417,24 @@ character*5 function my_int2char(numint)
 end function my_int2char
 
 ! ------------------------------------------------------------------
-function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
+function my_nf90_create_ij(filename,IM,JM, nlayers, ncid,dimids, layer_indices, layer_names) result(status)
 
     character(len=*), intent(in) :: filename
-    integer,intent(in) :: IM,JM
+    integer,intent(in) :: IM,JM,nlayers
     integer,intent(out) :: ncid
-    integer,intent(out) :: dimlon, dimlat
+    integer,intent(inout) :: dimids(:)
     integer :: status    ! Return variable
+    integer, dimension(:), OPTIONAL :: layer_indices
+    character(len=*), dimension(:), OPTIONAL :: layer_names
     !--- Local ----
     integer :: idlon, idlat, varid
+    integer :: idlayer_indices, idlayer_names
     real*4 :: lon(IM), lat(JM)
     !character*80 :: filenc
     character*10 :: res
-    integer :: dim1(1)
+    integer :: len1(1)
+    integer :: strdimids(2)
+    integer :: startS(2), countS(2)
 
     if (IM.eq.72) then
       res = '72X46' !5X4
@@ -452,8 +457,9 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
     print *,'ncid',ncid,status,NF90_NOERR
     if (status == NF90_NOERR) then
-         dimlon=1
-         dimlat=2
+         dimids(1)=1
+         dimids(2)=2
+         if (nlayers > 1) dimids(3)=3    ! layers
          write(0,*) 'Netcdf file was previously created. ',filename
         return
     end if
@@ -462,27 +468,45 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     write(0,*) 'Creating ',filename
     status=nf90_create(filename, NF90_NOCLOBBER+NF90_HDF5, ncid)
     if (status /= NF90_NOERR) return
-    status=nf90_def_dim(ncid, 'lon', IM, dimlon)
+    status=nf90_def_dim(ncid, 'lon', IM, dimids(1))
     if (status /= NF90_NOERR) return
-    status=nf90_def_dim(ncid, 'lat', JM, dimlat)
+    status=nf90_def_dim(ncid, 'lat', JM, dimids(2))
     if (status /= NF90_NOERR) return
+    if (nlayers > 1) then
+        status=nf90_def_dim(ncid, 'layers', nlayers, dimids(3))
+        if (status /= NF90_NOERR) return
+        strdimids(2)=dimids(3)
+
+        status=nf90_def_dim(ncid, 'layer_name_len', len(layer_names(1)), strdimids(1))
+        if (status /= NF90_NOERR) return
+
+        status=nf90_def_var(ncid, 'layer_indices', NF90_INT, idlayer_indices)
+        if (status /= NF90_NOERR) return
+
+!        strdimids(1)=size(layer_names,1)
+!        strdimids(2)=nlayers
+        status=nf90_def_var(ncid, 'layer_names', NF90_CHAR, strdimids, idlayer_names)
+        if (status /= NF90_NOERR) return
+
+    end if
+
 
     ! Create lon
-    status=nf90_def_var(ncid, 'lon', NF90_FLOAT, dimlon, idlon)
+    status=nf90_def_var(ncid, 'lon', NF90_FLOAT, dimids(1), idlon)
     if (status /= NF90_NOERR) return
     status=nf90_def_var_deflate(ncid,idlon,1,1,4)
     if (status /= NF90_NOERR) return
-    dim1(1) = im
-    status=nf90_def_var_chunking(ncid,idlon,NF90_CHUNKED, dim1)
+    len1(1) = im
+    status=nf90_def_var_chunking(ncid,idlon,NF90_CHUNKED, len1)
     if (status /= NF90_NOERR) return
 
     ! Create lat
-    status=nf90_def_var(ncid, 'lat', NF90_FLOAT, dimlat, idlat)
+    status=nf90_def_var(ncid, 'lat', NF90_FLOAT, dimids(2), idlat)
     if (status /= NF90_NOERR) return
     status=nf90_def_var_deflate(ncid,idlat,1,1,4)
     if (status /= NF90_NOERR) return
-    dim1(1) = jm
-    status=nf90_def_var_chunking(ncid,idlat,NF90_CHUNKED, dim1)
+    len1(1) = jm
+    status=nf90_def_var_chunking(ncid,idlat,NF90_CHUNKED, len1)
     if (status /= NF90_NOERR) return
 
 
@@ -505,6 +529,19 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimlon,dimlat) result(status)
     status=my_nf90_inq_put_var_real32(ncid,'lon',varid,lon)
     if (status /= NF90_NOERR) return
     status=my_nf90_inq_put_var_real32(ncid,'lat',varid,lat)
+
+
+    if (nlayers>1) then
+        status=nf90_put_var(ncid,idlayer_indices,layer_indices)
+        if (status /= NF90_NOERR) return
+
+        startS = (/ 1,1 /)
+        countS = (/ len(layer_names(1)), size(layer_names,1) /)
+        status=nf90_put_var(ncid,idlayer_names, layer_names,startS,countS)
+
+        if (status /= NF90_NOERR) return
+    end if
+
 !    status=nf90_close(ncid)
 !    if (status /= NF90_NOERR) return
 end function my_nf90_create_ij
