@@ -128,9 +128,9 @@ type(ChunkIO_t) :: io_out(ndoy)
 integer :: dd(4),varidx(12),varidy(12)
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
+integer :: ichunk,jchunk,ic,jc
 
-
-call chunker%init(IM, JM, IMH*2,JMH*2, 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
 !* Input file.
 
@@ -147,7 +147,7 @@ call chunker%init(IM, JM, IMH*2,JMH*2, 100, 120)
 
 do k = 1,2
     call chunker%nc_open_gz(io_lai(k), DATA_DIR, DATA_INPUT, &
-        'LAI/', 'global_30s_2004_'//DOY(k), 'lai')
+        'LAI/', 'global_30s_2004_'//DOY(k)//'.nc', 'lai')
 enddo
 
 !     Water LC
@@ -155,13 +155,13 @@ enddo
 !call chunker%nc_open_gz(io_water, LAI3G_DIR, LAI3G_INPUT, &
 !    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water_lc')
 call chunker%nc_open(io_water, LC_LAI_ENT_DIR, &
-    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water_lc')
+    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water')
 
 !     ENTPFTLC
 do k = 1,19
     call chunker%nc_open(io_pft(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', &
-        trim(EntPFT_files2(k))//'_lc.nc', &
+        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc', &
         trim(EntPFT_files2(k)))
 end do
 
@@ -175,10 +175,10 @@ end do
 
 !     Fileout
 do k = 1,2
-    chunker%nc_create(io_out(k), &
-        chunker%wta1,1d0,0d0, &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    call chunker%nc_create(io_out(k), &
+        chunker%wta1, 1d0, 0d0, &    ! TODO: Scale by _lc; store an array of 2D array pointers
         'nc/', 'EntMM_lc_lai_'//DOY(k)//'_1kmx1km.nc', 'EntPFT', &
-        'LAI output of A02', 'm2 m-2', 'LAI',
+        'LAI output of A02', 'm2 m-2', 'LAI', &
         20 , layer_indices, layer_names)
 enddo
 
