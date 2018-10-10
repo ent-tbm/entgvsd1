@@ -10,6 +10,7 @@ set(entgvsd_SOURCES
     chunkparams.f90
     chunker.f90
     hntr.f90
+    ent_labels.f90
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 
