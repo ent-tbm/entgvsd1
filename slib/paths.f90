@@ -58,6 +58,9 @@ CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_INPUT= &
 CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_DIR= &
    '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent/'
 
+CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
+   '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent16/'
+
 CHARACTER (LEN=*), PARAMETER :: TEMPLATE_DIR= &
    '/home2/rpfische/git/entgvsd1/templates/'
 
