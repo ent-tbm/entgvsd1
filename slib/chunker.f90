@@ -56,6 +56,7 @@ contains
     procedure :: move_to
     procedure :: close_chunks
     procedure :: nc_create
+    procedure :: gunzip_input_file
     procedure :: nc_open_gz
     procedure :: nc_open
     procedure :: nc_check
@@ -398,9 +399,9 @@ nlayers,layer_indices,layer_names)
     allocate(cio%buf(this%chunk_size(1), this%chunk_size(2),nlayers))
 
     ! Open NetCDF array
-    err = NF90_INQ_VARID(cio%fileid,vname,cio%varid)
+    err = NF90_INQ_VARID(cio%fileid,trim(vname),cio%varid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),err
+        write(ERROR_UNIT,*) 'Error getting varid ',trim(leaf),' ',trim(vname),' ',err
         this%nerr = this%nerr + 1
         return
     end if
@@ -422,20 +423,17 @@ nlayers,layer_indices,layer_names)
     this%writes(this%nwrites)%ptr => cio
 end subroutine nc_create
 
-subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname)
+! Unzips a gzipped file in iroot, and makes it availabe in oroot
+function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
     class(Chunker_t) :: this
-    type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
     character*(*), intent(in) :: oroot   ! Write or link to here, then open
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
-    character*(*), intent(in) :: vname
-    ! --------- Local vars
-    character(4192) :: cmd
     integer :: err
+    ! -------- Locals
+    character(4192) :: cmd
     logical :: exist
-
-    cio%fileid = -1
 
     ! -------- Decompress / link the file if it doesn't exist
     inquire(FILE=oroot//dir//leaf, EXIST=exist)
@@ -449,9 +447,27 @@ subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname)
         if (err /= 0) then
             write(ERROR_UNIT,*) 'Error running entgvsd_link_input',leaf,err
             this%nerr = this%nerr + 1
-            return
+            return 
         end if
     end if
+
+end function gunzip_input_file
+
+subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname)
+    class(Chunker_t) :: this
+    type(ChunkIO_t), target :: cio
+    character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
+    character*(*), intent(in) :: oroot   ! Write or link to here, then open
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    character*(*), intent(in) :: vname
+    ! --------- Local vars
+    integer :: err
+
+    cio%fileid = -1
+
+    err = this%gunzip_input_file(iroot, oroot, dir, leaf)
+    if (err /= 0) return
 
     ! ------- Now open the file
     call this%nc_open(cio, oroot, dir, leaf, vname)
@@ -477,7 +493,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname)
     ! ------- Now open the file
     err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error opening',trim(leaf),err
+        write(ERROR_UNIT,*) 'Error opening ',trim(leaf),err
         this%nerr = this%nerr + 1
         return
     end if
