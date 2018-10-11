@@ -872,8 +872,8 @@ layer_indices, layer_names)
     type(Weighting_t), target :: wta
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
-    character*(*), intent(in) :: vname
-    character*(*), intent(in) :: long_name,units,title
+    character*(*), intent(in), OPTIONAL :: vname
+    character*(*), intent(in), OPTIONAL :: long_name,units,title
     integer, dimension(:), OPTIONAL :: layer_indices
     character(len=*), dimension(:), OPTIONAL :: layer_names
 
@@ -917,8 +917,10 @@ layer_indices, layer_names)
             this%ngrid(1), this%ngrid(2), &
             cio%fileid, dimids)
     end if
-    call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
-        vname, long_name, units, title)
+    if (present(vname)) then
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
+            vname, long_name, units, title)
+    end if
     cio%own_fileid = .true.
 
     ! ---------- Open/Create lo-res file
@@ -937,8 +939,10 @@ layer_indices, layer_names)
         alloc_buf = .true.
     end if
 
-    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
-        vname, long_name, units, title)
+    if (present(vname)) then
+        call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
+            vname, long_name, units, title)
+    end if
     cio%own_fileid_lr = .true.
 
     call finish_cio_init(this, cio, 'w', alloc_buf)
