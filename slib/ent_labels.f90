@@ -13,7 +13,7 @@ type(EntLabel_t) :: ent19(19)   ! Basic Ent categories
 type(EntLabel_t) :: ent20(20)   ! 0=water + Ent categories
 type(EntLabel_t) :: ent18(18)   ! ent categories, crops merged, + bare bright/dark
 
-integer, paramater :: ent20_water = 1
+integer, parameter :: ent20_water = 1
 
 CONTAINS
 
@@ -31,7 +31,7 @@ end function title_array
 
 function index_array(ents) result(indices)
     type(EntLabel_t), dimension(:) :: ents
-    integer1 :: indices(size(ents,1))
+    integer :: indices(size(ents,1))
     ! ------- Locals
     integer :: i
 
