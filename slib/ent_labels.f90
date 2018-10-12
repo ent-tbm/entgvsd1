@@ -15,6 +15,18 @@ type(EntLabel_t) :: ent18(18)   ! ent categories, crops merged, + bare bright/da
 
 integer, parameter :: ent20_water = 1
 
+character*3, parameter :: MONTH(12) = &
+     (/ &
+     "Jan","Feb","Mar","Apr","May","Jun", &
+     "Jul","Aug","Sep","Oct","Nov","Dec" &
+     /)
+
+character*3, parameter :: DOY(2) = &
+     (/ &
+     "017","201" &
+     /)
+      
+
 CONTAINS
 
 function title_array(ents) result(titles)

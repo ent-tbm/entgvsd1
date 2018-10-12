@@ -11,6 +11,7 @@ set(entgvsd_SOURCES
     chunker.f90
     hntr.f90
     ent_labels.f90
+    conversions.f
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 
