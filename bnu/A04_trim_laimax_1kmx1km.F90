@@ -34,6 +34,7 @@ module conversions
 
 implicit none
 
+CONTAINS
 
 ! -----------------------------------------------------------------
 subroutine convert_vf(vf1, lai1, vf2, lai2, laimin)
@@ -149,7 +150,7 @@ subroutine split_bare_soil(N_VEG,KM,N_BARE &
 integer, intent(in) :: N_VEG, KM
 integer, intent(inout) :: N_BARE
 real*4, intent(in) :: bs_brightratio !Fraction of bare that is bright.
-real*4 vfc(:), laic(:) !(KM)
+real*4 vfc(:), laic(:) !(18)
 character*(*) :: res_out
 !-----Local----
 real*4 :: vfc_bare, vf_tot
@@ -258,6 +259,7 @@ use chunker_mod
 use chunkparams_mod
 use paths_mod
 use entgvsd_netcdf_util
+use ent_labels_mod
 
 implicit none
 
@@ -345,11 +347,13 @@ character*(*), parameter :: res_out="1kmx1km"
 integer, parameter :: divx = IM
 integer, parameter :: divy = JM
 
+type(Chunker_t) :: chunker
+integer :: ichunk,jchunk, ic,jc
 ! Input files
-type(ChunkIO_t) : io_lcin(20), io_laiin(20), io_bs
+type(ChunkIO_t) :: io_lcin(KM), io_laiin(KM), io_bs
 ! Output files
-type(ChunkIO_t) : ioall_laiout, io_laiout(18)
-type(ChunkIO_t) : ioall_sum, io_sum_lc, io_sum_lai
+type(ChunkIO_t) :: ioall_laiout, io_laiout(18)
+type(ChunkIO_t) :: ioall_sum, io_sum_lc, io_sum_lai
 
 
 real*4 :: lcin,laiin,hin,hstd
@@ -394,12 +398,16 @@ character*80 :: titlefoo
 ! bs_brightratio = bare soil brightratio
 real*4 :: bs_brightratio, vfc_tmp
 
-integer i, j, k, io, in, jn, maxpft, kx, m
+!integer i, j, 
+integer :: k, io, in, jn, maxpft, kx, m
 real*8 lat
 !real*4 foolc(IM1km,JM1km),foolai(IM1km,JM1km)
 integer N_VEG             ! number of PFTs in output
 integer N_BARE            ! index of bare soil in output
 integer count
+
+call init_ent_labels
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
 !------------------------------------------------------------------------
 ! OPEN INPUT FILES
@@ -410,32 +418,32 @@ do k=1,20
     ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
     call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', &
-        trim(EntPFT_files(k))//'_lc.nc', &
-        trim(EntPFT_lcfields(k)))
+        trim(ent20(k)%file1)//trim(ent20(k)%file2)//'_lc.nc', &
+        trim(ent20(k)%file2), 1)
 end do
 
 ! laimax
 do k=1,20
     call chunker%nc_open(io_laiin(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', &
-        trim(EntPFT_files(k))//'_lc.nc', &
-        trim(EntPFT_laifields(k)))
+        trim(ent20(k)%file1)//trim(ent20(k)%file2)//'_lai.nc', &
+        trim(ent20(k)%file2), 1)
 enddo
 
 
 ! bs ratio
 call chunker%nc_create(io_bs, &
-    chunker%wta1, 1d0, 0d0, &    ! TODO: Scale ???
-    '', 'bs_brightratio.nc', 'bs_brightratio', &
-    'Bare Soil Bright Ratio', '1', 'BrightRatio', 1)
+    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale ???
+    '', 'bs_brightratio', 'bs_brightratio', &
+    'Bare Soil Bright Ratio', '1', 'BrightRatio')
 
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
 ! CREATE OUTPUT NETCDF FILES
 ! laimax_pure
 call chunker%nc_create(ioall_laiout, &
-    chunker%wta1, 1d0, 0d0, &   ! TODO: Scale by _lc
-    'nc/', 'V1km_EntGVSDv1.1_BNU16_laimax_pure')
+    weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
+    '16/nc/', 'V1km_EntGVSDv1.1_BNU16_laimax_pure')
 do k=1,18
     call chunker%nc_reuse_file(ioall_laiout, io_laiout(k), &
         'lai_'//trim(ent18(k)%file2), trim(ent18(k)%title), &
@@ -445,8 +453,8 @@ end do
 
 !  checksum land  laimax
 call chunker%nc_create(ioall_sum, &
-    chunker%wta1, 1d0, 0d0, &   ! TODO: Scale by _lc
-    'nc/', 'V1km_EntGVSDv1.1_LAI3g16_laimax_pure_checksum')
+    weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
+    '16/nc/', 'V1km_EntGVSDv1.1_LAI3g16_laimax_pure_checksum')
 
 call chunker%nc_reuse_file(ioall_sum, io_sum_lc, &
     'lc_checksum', 'Checksum of LC', '1', 'checksum - Land Cover', &
@@ -460,11 +468,11 @@ call chunker%nc_check
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
-do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+!do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+!do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
-!do jchunk = 1,nchunk(2)
-!do ichunk = 1,nchunk(1)
+do jchunk = 1,nchunk(2)
+do ichunk = 1,nchunk(1)
 
     call chunker%move_to(ichunk,jchunk)
 
@@ -472,7 +480,7 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
     do ic = 1,chunker%chunk_size(1)
 
         do k = 1,KM
-            lcin = io_lcein(k)%buf(ic,jc)
+            lcin = io_lcin(k)%buf(ic,jc)
             vfn(k)=lcin
 
             ! get lai max
@@ -484,7 +492,7 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
         ! confusion in numbering with vfc and vfm.
 
         ! get bs bright ratio
-        brightratio = io_bs%buf(ic,jc)
+        bs_brightratio = io_bs%buf(ic,jc)
 
         ! Check if mismatch lc or lai values (one is zero and the other not)
         ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
@@ -773,7 +781,7 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
         end do
 
         ! correct height=undef when land cover>0            
-        do k=1,KM
+        do k=1,18
             if (vfc(k).gt.0.and.laic(k).eq.undef) then
                 laic(k) = 0.
             else
@@ -781,14 +789,14 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
             end if
         end do
 
-        do k=1,KM
-            io_laiout%buf(i,j) = laic(k)
+        do k=1,18
+            io_laiout(k)%buf(ic,jc) = laic(k)
             !laicnc(i,j,k) = laic(k)
         end do
 
         ! checksum lc & laimax
         io_sum_lc%buf(ic,jc) = 0.
-        do k=1,KM
+        do k=1,18
             io_sum_lc%buf(ic,jc) = io_sum_lc%buf(ic,jc) + laic(k)
         end do
     end do  ! ic
