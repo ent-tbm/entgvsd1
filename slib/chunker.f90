@@ -1,5 +1,6 @@
 module chunker_mod
 
+    use iso_c_binding
     use entgvsd_config_mod
     use, intrinsic :: iso_fortran_env
     use netcdf
@@ -95,8 +96,8 @@ subroutine handle_nf90_error(status, message)
     integer, intent(in) :: status
     character*(*) :: message
   
-    write(*,*) status,message, ' ',trim(nf90_strerror(status))
     if(status /= nf90_NoErr)  then
+        write(*,*) status,message, ' ',trim(nf90_strerror(status))
         write(*,*) 'DONT FORGET TO DELETE THE OLD NETCDF FILES FIRST'
         STOP
     end if
@@ -270,11 +271,12 @@ end subroutine init
 ! Helper function
 subroutine setup_startB(this, cio, startB_hr, startB_lr)
     type(Chunker_t) :: this
-    type(ChunkIO_t) :: cio
+    type(ChunkIO_t), target :: cio
     integer, dimension(:), allocatable :: startB_hr
     integer, dimension(:), allocatable, OPTIONAL :: startB_lr
     ! ------- Locals
 
+    if (allocated(startB_hr)) deallocate(startB_hr)
     if (size(cio%base,1) == 3) then
         allocate(startB_hr(3))
         startB_hr(3) = cio%base(3)
@@ -286,6 +288,7 @@ subroutine setup_startB(this, cio, startB_hr, startB_lr)
 
 
     if (present(startB_lr)) then
+        if (allocated(startB_lr)) deallocate(startB_lr)
         if (size(cio%base,1) == 3) then
             allocate(startB_lr(3))
             startB_lr(3) = cio%base(3)
@@ -335,10 +338,7 @@ subroutine write_chunks(this)
         ! Skip ChunkIO_t that are just for keeping a file open
         if (.not.allocated(cio%buf)) cycle
 
-        if (allocated(startB_hr)) then
-            deallocate(startB_hr)
-            deallocate(startB_lr)
-        end if
+        call setup_startB(this, cio, startB_hr, startB_lr)
         call setup_startB(this, cio, startB_hr, startB_lr)
 
         ! Store the hi-res chunk
@@ -346,7 +346,7 @@ subroutine write_chunks(this)
            cio%fileid, cio%varid, &
            cio%buf,startB_hr,this%chunk_size)
         if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf)
+            write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf),cio%varid,err
             nerr = nerr + 1
         end if
         err=nf90_sync(cio%fileid)
@@ -409,8 +409,7 @@ subroutine read_chunks(this)
 
     nerr = 0
     do i=1,this%nreads
-        cio => this%writes(i)%ptr
-
+        cio => this%reads(i)%ptr
         ! Skip ChunkIO_t that are just for keeping a file open
         if (.not.allocated(cio%buf)) cycle
 
@@ -572,7 +571,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimids, layer_indices, layer_nam
 !    if (exist) then
 
     status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
-    print *,'ncid',ncid,status,NF90_NOERR
     if (status == NF90_NOERR) then
          dimids(1)=1
          dimids(2)=2
@@ -931,12 +929,10 @@ layer_indices, layer_names)
             this%ngrid_lr(1), this%ngrid_lr(2), &
             cio%fileid_lr, dimids, &
             layer_indices, layer_names)
-        alloc_buf = .false.
     else
         err = my_nf90_create_ij(path_name, &
             this%ngrid_lr(1), this%ngrid_lr(2), &
             cio%fileid_lr, dimids)
-        alloc_buf = .true.
     end if
 
     if (present(vname)) then
@@ -945,6 +941,7 @@ layer_indices, layer_names)
     end if
     cio%own_fileid_lr = .true.
 
+    alloc_buf = (.not.present(layer_indices)).and.present(vname)
     call finish_cio_init(this, cio, 'w', alloc_buf)
 end subroutine nc_create
 
