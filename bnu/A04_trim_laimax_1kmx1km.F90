@@ -50,62 +50,6 @@ use ent_labels_mod
 
 implicit none
 
-
-
-!***************************************************
-!*      ENT PLANT FUNCTIONAL TYPES - short names   *
-!***************************************************
-character*50, parameter :: EntPFT_shorttitle(18) = &
-     (/ &
-     "ever_br_early   ", &
-     "ever_br_late    ", &
-     "ever_nd_early   ", &
-     "ever_nd_late    ", &
-     "cold_br_early   ", &
-     "cold_br_late    ", &
-     "drought_br      ", &
-     "decid_nd        ", &
-     "cold_shrub      ", &
-     "arid_shrub      ", &
-     "c3_grass_per    ", &
-     "c4_grass        ", &
-     "c3_grass_ann    ", &
-     "c3_grass_arct   ", &
-     "crops_herb      ", &
-     "crops_woody     ", &
-     "bare_bright     ", &
-     "bare_dark       " &
-     /)
-
-
-!***************************************************
-!*      ENT PLANT FUNCTIONAL TYPES                 *
-!***************************************************
-character*40, parameter :: EntPFT_title(18) = &
-     (/ &
-     '1 - Evergreen Broadleaf Early Succ      ', &
-     '2 - Evergreen Broadleaf Late Succ       ', &
-     '3 - Evergreen Needleleaf Early Succ     ', &
-     '4 - Evergreen Needleleaf Late Succ      ', &
-     '5 - Cold Deciduous Broadleaf Early Succ ', &
-     '6 - Cold Deciduous Broadleaf Late Succ  ', &
-     '7 - Drought Deciduous Broadleaf         ', &
-     '8 - Deciduous Needleleaf                ', &
-     '9 - Cold Adapted Shrub                  ', &
-     '10 - Arid Adapted Shrub                 ', &
-     '11 - C3 Grass Perennial                 ', &
-     '12 - C4 Grass                           ', &
-     '13 - C3 Grass Annual                    ', &
-     '14 - Arctic C3 Grass                    ', &
-     '15 - Crops Herb                         ', &
-     '16 - Crops Woody                        ', &
-     '17 - Bright Bare Soil                   ', &
-     '18 - Dark Bare Soil                     ' &
-     /)
-
-
-real*4, parameter :: undef = -1.e30
-
 integer, parameter :: IMH = 720 !long at 0.5 degrees
 integer, parameter :: JMH = 360 !lat at 0.5 degrees
 

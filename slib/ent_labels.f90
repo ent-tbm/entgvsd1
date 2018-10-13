@@ -15,6 +15,7 @@ type(EntLabel_t) :: ent18(18)   ! ent categories, crops merged, + bare bright/da
 
 integer, parameter :: ent20_water = 1
 
+real*4, parameter :: undef = -1.e30
 character*3, parameter :: MONTH(12) = &
      (/ &
      "Jan","Feb","Mar","Apr","May","Jun", &
