@@ -236,7 +236,7 @@ do m = 1,2 ! doy files
 
     ! Use these loop bounds for testing...
     ! it chooses a land area in Asia
-#ifdef ENTGVSD_TEST
+#ifdef ENTGVSD_DEBUG
     do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
     do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 #else
