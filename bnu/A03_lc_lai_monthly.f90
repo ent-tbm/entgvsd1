@@ -23,7 +23,7 @@ use netcdf
 use chunker_mod
 use chunkparams_mod
 use paths_mod
-use entgvsd_netcdf_util
+use ent_labels_mod
 
  ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
  ! interpolate to coarser resolutions.
@@ -96,8 +96,6 @@ integer, parameter :: latin = 1
 integer, parameter :: longout = 1 !Should be same at longin
 integer, parameter :: latout = 1
 
-real*4, parameter :: undef = -1e30 !AViewer undef value      !## UPDATE ME
-
 character*256 :: PathFilepre,PathFilepost
 
 integer, parameter :: NUMLAYERS = 40  !## UPDATE ME
@@ -116,7 +114,7 @@ character*20 :: inqvarin
 real*4 :: LCIN_in, LAI, lai_lc
 real*4 :: lon,lat
 
-integer :: i, j, k, f, p, z
+integer :: i, j, k, m, f, p, z
 
 integer :: err,dimidx,dimidy,dimidz
 
@@ -125,13 +123,13 @@ type(Chunker_t) :: chunker
 type(ChunkIO_t) :: io_lai(12),io_water
 type(ChunkIO_t) :: io_pft(19)
 ! Output files
-type(ChunkIO_t) :: io_out(12)
+type(ChunkIO_t) :: ioall_out(12), io_out(NUMLAYERSLC,12)   ! (PFT, month)
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
 
 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 320)
 
 !* Input file.
 
@@ -147,21 +145,21 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 !     Monthly LAI
 do k = 1,12
     call chunker%nc_open_gz(io_lai(k), DATA_DIR, DATA_INPUT, &
-        'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(k)//'.nc', 'lai')
+        'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(k)//'.nc', 'lai', 1)
 enddo
 
 !     Water LC
 !call chunker%nc_open_gz(io_water, LAI3G_DIR, LAI3G_INPUT, &
 !    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water_lc')
 call chunker%nc_open(io_water, LC_LAI_ENT_DIR, &
-    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water')
+    'EntMM_lc_laimax_1kmx1km/', 'water_lc.nc', 'water', 1)
 
 !     ENTPFTLC
 do k = 1,19
     call chunker%nc_open(io_pft(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc', &
-        trim(EntPFT_files2(k)))
+        trim(EntPFT_files2(k)), 1)
 end do
 
 ! Cons up layer names and indices to write into our output
@@ -174,11 +172,17 @@ end do
 
 !     Fileout
 do k = 1,12
-    call chunker%nc_create(io_out(k), &
-        chunker%wta1, 1d0, 0d0, &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    call chunker%nc_create(ioall_out(k), &
+        weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
         'nc/', 'EntMM_lc_lai_'//MONTH(k)//'_1kmx1km', 'EntPFT', &
         'LAI output of A02', 'm2 m-2', 'LAI', &
-        20 , layer_indices, layer_names)
+        layer_indices, layer_names)
+
+    do p=1,20
+        call chunker%nc_reuse_var(ioall_out(k), io_out(p,k), &
+            (/1,1,p/), 'w', weighting(chunker%wta1,1d0,0d0))
+    end do
+
 enddo
 call chunker%nc_check
 
@@ -203,20 +207,20 @@ do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
         do k = 1,12
 
             !**   lon lat from LAI file                
-            LAI = io_lai(k)%buf(ic,jc,1)
+            LAI = io_lai(k)%buf(ic,jc)
          
             do p = 1,NUMLAYERSLC
 
                 if (p.eq.1) then
-                    LCIN_in = io_water%buf(ic,jc,1)
+                    LCIN_in = io_water%buf(ic,jc)
                 else
-                    LCIN_in = io_pft(p-1)%buf(ic,jc,1)
+                    LCIN_in = io_pft(p-1)%buf(ic,jc)
                 end if
 
                 lai_lc = LCIN_in*LAI
 
                 lai_lc = LCIN_in*LAI
-                io_out(k)%buf(ic,jc,p) = lai_lc
+                io_out(p,k)%buf(ic,jc) = lai_lc
             end do ! p=1,NUMLAYERSLC
         end do   ! k=1,2
     end do    ! ic

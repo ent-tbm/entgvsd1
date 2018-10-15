@@ -66,10 +66,12 @@ use netcdf
 use chunker_mod
 use chunkparams_mod
 use paths_mod
-use entgvsd_netcdf_util
 use ent_labels_mod
     
 implicit none
+
+integer, parameter :: IMH = 720 !long at 0.5 degrees
+integer, parameter :: JMH = 360 !lat at 0.5 degrees
 
 
 ! define input file resolution
@@ -97,30 +99,15 @@ character*(*), parameter :: res_out="1kmx1km"
 integer, parameter :: divx = IM
 integer, parameter :: divy = JM
 
-integer :: fileid,dimidx,dimidy,dimidz,dd(4)
-integer :: varidxlai,varidxlc,varidylai,varidylc
-integer :: startA(1),startB(2),countA(1),countB(2),lenx,leny
+type(Chunker_t), allocatable :: chunker
+integer :: ichunk,jchunk, ic,jc
+! ------ Input Files
+type(ChunkIO_t) :: io_lcin(KM), io_bs
+type(ChunkIO_t) :: ioall_laiin, io_laiin(KM)
+! ------ Output files
+type(ChunkIO_t) :: ioall_laiout, io_laiout(18)
 
-integer :: start2d(2),count2d(2),start3d(4),count3d(4)
 real*4 :: lcin,laiin,hin,hstd
-integer :: fidlc(KM),fileidlaimax(KM)
-integer :: varidlc(KM),varidlaimax(KM)
-integer :: fidlaiin(12),fileidlcm(12)
-integer :: varidlaiin(12),varidlcm(KM)
-integer :: varidlaiout(KM),countvid
-
-character*80 :: fileheight,filestd
-character*80 :: filelaiin,filelcm(12)
-character*80 :: filelc, filelaimax(KM)
-integer :: fileidheight,varidheight
-integer :: fileidstd,varidstd,err
-character*80 :: filebs
-integer :: fileidbs,varidbs
-character*60 :: PathFilepre, PathFilepost
-
-character*80 :: fllaimaxpure,fllcmaxpure
-integer :: fidlaimaxpure,fidlcmaxpure,fidlaiout(12)
-integer :: varidaiimaxpure(18),varidlcmaxpure(18)
 
 integer, parameter :: N_HT = 19 ! number of height layers input
 
@@ -185,514 +172,455 @@ character*256 :: fileoutnc
 real*4, dimension(12) :: time
 time = (/ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 /)
       
-!define Lon and Lat
-call calc_lon_lat(IM1km,JM1km,long,lati)
 
-!------------------------------------------------------------------------
-! OPEN INPUT FILES
-
-! lcmax
-do k=1,20
-    ! TODO: LAI3g????
-    ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
-    call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
-        'EntMM_lc_laimax_1kmx1km/', &
-        trim(ent20(k)%file1)//trim(ent20(k)%file2)//'_lc.nc', &
-        trim(ent20(k)%file2), 1)
-enddo
-
-! bs ratio
-call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, &
-    '', 'bs_brightratio.nc', 'bs_brightratio', 1)
-
-$$$$$$$$$$
-! simard heights titles
-open(1,file='../../'// &
-     'data/height/'// &
-      'EntGVSDmosaic17_height_144x90.ij', &
-     form='unformatted',status="old")
-titlehn(1,1) = 'NO WATER LAYER'
-do k=1,N_HT !height
-   read(1) titlehn(1,k+1)
-   write(*,*) titlehn(1,k+1)
-enddo
-titlehn(2,1) = 'NO WATER LAYER'
-do k=1,N_HT !stdev
-   read(1) titlehn(2,k+1)
-   write(*,*) titlehn(2,k+1)
-enddo
-
-!------------------------------------------------------------------------
+call init_ent_labels
 
 do m = 1,2 ! doy files
+    print *,' ======================= DOY m = ',m
+    allocate(chunker)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
-   ! lai doy
-   PathFilepre= '../lc_lai_ent/nc/'
-   PathFilepost= 'EntMM_lc_lai_'//trim(DOY(m))// &
-        '_1kmx1km.nc'
-   filelaiin = trim(PathFilepre)//trim(PathFilepost)
-   err = NF_OPEN(filelaiin,0,fidlaiin(m))
-	 write(*,*) err, filelaiin
-   inqvarin = 'EntPFT'
-   err = NF_INQ_VARID(fidlaiin(m),inqvarin,varidlaiin(m))
-   write(*,*) err
+    !------------------------------------------------------------------------
+    ! OPEN INPUT FILES
 
-  ! CREATE OUTPUT NETCDF FILES
-   fileoutnc = &
-        '../lc_lai_ent16/nc/V1km_EntGVSDv1.1_BNU16_lai_' &
-        //DOY(m)//'_pure.nc'
-   err = NF_CREATE(fileoutnc,NF_64BIT_OFFSET,fidlaiout(m))
-   write(*,*) err, 'nf_create out ',trim(fileoutnc)
-   err=NF_DEF_DIM(fidlaiout(m),'lon',IM1km,dimidx)
-   err=NF_DEF_DIM(fidlaiout(m),'lat',JM1km,dimidy)
-   err=NF_DEF_VAR(fidlaiout(m),'lon',NF_FLOAT,1,dimidx,varidxlai)
-   err=NF_PUT_ATT_TEXT(fidlaiout(m),varidxlai, &
-        'long_name',9,"longitude")
-   write(*,*) err
-   err=NF_PUT_ATT_TEXT(fidlaiout(m),varidxlai, &
-        'units',12,"degrees east")
-   write(*,*) err
-   err=NF_DEF_VAR(fidlaiout(m),'lat',NF_FLOAT,1,dimidy,varidylai)
-   err=NF_PUT_ATT_TEXT(fidlaiout(m),varidylai, &
-        'long_name',8,"latitude")
-   write(*,*) err
-   err=NF_PUT_ATT_TEXT(fidlaiout(m),varidylai, &
-        'units',13,"degrees north")
-   write(*,*) err
-   dd(1)=dimidx
-   dd(2)=dimidy
-   do k=1,18
-      inqvarout = 'lai_'//EntPFT_shorttitle(k)
-      err=NF_DEF_VAR(fidlaiout(m),inqvarout,NF_FLOAT,2,dd, &
-           varidlaiout(k))
-      write(*,*) err,inqvarout
-      err=NF_PUT_ATT_TEXT(fidlaiout(m),varidlaiout(k), &
-           'long_name',45,EntPFT_title(k)//"- LAI")
-      write(*,*) err
-      err=NF_PUT_ATT_TEXT(fidlaiout(m),varidlaiout(k), &
-           'units',5,"m2/m2")
-      write(*,*) err
-      err=NF_PUT_ATT_REAL(fidlaiout(m),varidlaiout(k),  &
-          '_FillValue',NF_FLOAT, 1, undef)
-      write(*,*) err
-   enddo
-   err=NF_ENDDEF(fidlaiout(m))
-   write(*,*) err
-   err=NF_PUT_VARA_REAL(fidlaiout(m),varidxlai,1,IM1km,long)
-   write(*,*) err
-   err=NF_PUT_VARA_REAL(fidlaiout(m),varidylai,1,JM1km,lati)
-   write(*,*) err
-   
-   
-   
-   do j = 1,JM1km
-      
-      do i = 1,IM1km
-         
-         if (i.eq.1) then
-            write(*,*) 'lat', j
-         endif
-         
-         do k = 1,20
-         
-            start3d(1) = k
-            start3d(2) = i
-            start3d(3) = j
-            count3d(1) = 1
-            count3d(2) = divx
-            count3d(3) = divy
-            
-            ! get lc max
-            err = NF_GET_VARA_REAL(fidlc(k),varidlc(k), &
-                 start2d,count2d,lcin)
-!           write(*,*) err, 'lc max input',k,start2d(i),start2d(j)
-            vfn(k)=lcin
-            
-            err = NF_GET_VARA_REAL(fidlaiin(m),varidlaiin(m), &
-                 start3d,count3d,laiin)
-            lain(k) = laiin
-            
-         enddo
-         
-         start2d(1) = i
-         start2d(2) = j
-         count2d(1) = 1
-         count2d(2) = 1
-         
-      ! get bs bright ratio
-         err = NF_GET_VARA_REAL(fileidbs,varidbs, &
-              start2d,count2d,bs_brightratio)
-!           write(*,*) err, 'bs bright ratio'
-         
-           !Check if mismatch lc or lai values (one is zero and the other not)
-!          call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
-      
+    ! lcmax
+    do k=1,20
+        ! TODO: LAI3g????
+        ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
+        call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
+            'EntMM_lc_laimax_1kmx1km/', &
+            trim(ent20(k)%file1)//trim(ent20(k)%file2)//'_lc.nc', &
+            trim(ent20(k)%file2), 1)
+    enddo
 
-          !* Convert to GISS 16 pfts format
+    ! bs ratio
+    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, &
+        '', 'bs_brightratio.nc', 'bs_brightratio', 1)
+
+
+    titlehn(1,1) = 'NO WATER LAYER'
+    titlehn(2,1) = 'NO WATER LAYER'
+    do k=2,20
+        titlehn(1,k) = trim(ent20(k)%title)//' height'
+        titlehn(2,k) = trim(ent20(k)%title)//' stdev'
+    end do
+
+    !------------------------------------------------------------------------
+    call chunker%nc_open(ioall_laiin, LC_LAI_ENT_DIR, &
+        'nc/', 'EntMM_lc_lai_'//trim(DOY(m))//'_1kmx1km.nc', 'EntPFT', 0)
+
+    do k=1,20
+        call chunker%nc_reuse_var(ioall_laiin, io_laiin(k), &
+            (/1,1,k/), 'r', weighting(chunker%wta1,1d0,0d0))
+    end do
+
+    ! CREATE OUTPUT NETCDF FILES
+    call chunker%nc_create(ioall_laiout, &
+        weighting(chunker%wta1,1d0,0d0), &
+        '16/nc/', 'V1km_EntGVSDv1.1_BNU16_lai_'//DOY(m)//'_pure.nc')
+
+    do k=1,18
+        call chunker%nc_reuse_file(ioall_laiout, io_laiout(k), &
+            'lai_'//trim(ent18(k)%file2), &
+            trim(ent18(k)%title), 'm2 m-2', &
+            trim(ent18(k)%title), &
+            weighting(chunker%wta1,1d0,0d0))
+
+    end do
+
+
+    call chunker%nc_check
+
+    !-----------------------------------------------------------------
+    !     Loop for every grid point
+
+    ! Use these loop bounds for testing...
+    ! it chooses a land area in Asia
+    do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+    do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+
+    !do jchunk = 1,nchunk(2)
+    !do ichunk = 1,nchunk(1)
+
+        call chunker%move_to(ichunk,jchunk)
+
+        do jc = 1,chunker%chunk_size(2)
+        do ic = 1,chunker%chunk_size(1)
+   
+            do k = 1,20
+
+                ! get lc max
+                lcin = io_lcin(k)%buf(ic,jc)
+                vfn(k)=lcin
+
+
+                laiin = io_laiin(k)%buf(ic,jc)
+                lain(k) = laiin
+            
+             end do
+         
+            ! get bs bright ratio
+            bs_brightratio = io_bs%buf(ic,jc)
+         
+            ! Check if mismatch lc or lai values (one is zero and the other not)
+            ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
+     
+            !* Convert to GISS 16 pfts format
 
             ! first 14 pfts though grass are the same, ignore WATER
             !  lc laimax
-         vfc(1:14) = vfn(2:15)
-         laic(1:14) = lain(2:15)
-!     titlec(1:14) = title(2:15)
-            !  lc lai monthly
-!            vfm(:,1:14) = vfnm(:,2:15)
-!            laim(:,1:14) = lainm(:,2:15)
-!           do m=1,12
-!              titlem(m,1:14) = title12(m,2:15)
-!           enddo
-            !  heights
-!           vfh(1:14) = vfn(2:15) !Should be the same cover from MODIS.
-!           hm(1:14) = hmn(2:15) 
-!           hsd(1:14) = hsdn(2:15)
-!           titleh(1,1:14) = titlehn(1,2:15)
-!           titleh(2,1:14) = titlehn(2,2:15)
+            vfc(1:14) = vfn(2:15)
+            laic(1:14) = lain(2:15)
+
+            !     titlec(1:14) = title(2:15)
+                  !  lc lai monthly
+            !      vfm(:,1:14) = vfnm(:,2:15)
+            !      laim(:,1:14) = lainm(:,2:15)
+            !     do m=1,12
+            !        titlem(m,1:14) = title12(m,2:15)
+            !     enddo
+                  !  heights
+            !     vfh(1:14) = vfn(2:15) !Should be the same cover from MODIS.
+            !     hm(1:14) = hmn(2:15) 
+            !     hsd(1:14) = hsdn(2:15)
+            !     titleh(1,1:14) = titlehn(1,2:15)
+            !     titleh(2,1:14) = titlehn(2,2:15)
       
             ! crops
 #     ifdef COMBINE_CROPS_C3_C4
       
-           !lc laimax
-         a = vfn(16) + vfn(17)
+            !lc laimax
+            a = vfn(16) + vfn(17)
          
-         if ( a > 0. ) then
-            laic(15) = (vfn(16)*lain(16) &
-                 + vfn(17)*lain(17)) / a
-            vfc(15) = a
-         else
-            laic(15) = 0.
-            vfc(15) = 0.
-         endif
-            !lc lai monthly
-!            do m=1,12
-!               am = vfnm(m,16) + vfnm(m,17)
-!               if (am > 0. ) then
-!                  laim(m,15) = (vfnm(m,16)*lainm(m,16)
-!     &                       + vfnm(m,17)*lainm(m,17)) / am
-!                  vfm(m,15) = am
-!               else
-!                  laim(m,15) = 0.
-!                  vfm(m,15) = 0.
-!               endif
-!            enddo
-      !heights - DO NOT AVERAGE. PRESERVE HEIGHTS. LAI will scale density
-!      a = vfn(16) + vfn(17) !input cover
-!      if ( a > 0. ) then
-!         hm(i,j,15) = (vfn(i,j,16)*hmn(i,j,16)
-!     &              + vfn(i,j,17)*hmn(i,j,17)) / a
-!         if ((hmn(16)>0.).and.(hmn(17)>0.)) then
-            !average if both exist
-!            hm(15) = (vfn(16)*hmn(16)
-!     &                 + vfn(17)*hmn(17)) / a
-!         else
-            !don't average if only one or none exists
-!            hm(15) = max(hmn(16),hmn(17))
-!         endif
-         !Sum of squares for sd.  Don't weight if only one or less exists
-!         if ((hmn(16)>0.).and.(hmn(17)>0.)) then
-!            hsd(15) = sqrt((vfn(16)*hsdn(16)**2
-!     &                 + vfn(17)*hsdn(17)**2) / a)
-!         else
-!            hsd(15) = max(hsd(16),hsd(17))
-!         endif
-!         vfh(15) = a
-!      else
-!         hm(15) = 0.
-!         hsd(15) = 0.
-!         vfh(15) = 0.
-!      endif
-      
-!      write(*,*) "Re-doing crops.."
-!      titlec(15) = title(16)
-!      titlec(15)(1:18) = "15 - crops herb   "
-!      do m=1,12
-!         titlem(m,15) = title12(m,16)
-!         titlem(m,15)(1:18) = "15 - crops herb   "
-!      enddo
-!      titleh(1,15) = titlehn(1,16)
-!      titleh(2,15) = titlehn(2,16)
-!     titleh(1,15)(1:18) = "15 - crops herb   "
-!      titleh(2,15)(1:18) = "15 - crops herb   "
-      
-!      write(*,*) titlec(15)
-! crops woody
-         vfc(16) = vfn(18)
-         laic(16) = lain(18)
-!      titlec(16) = '16 - '//title(18)(6:80)
-!      write(*,*) "titlec: "
-!      write(*,*) titlec(16)
-!            do m=1,12
-!            vfm(m,16) = vfnm(m,18)
-!            laim(m,16) = lainm(m,18)
-!         titlem(m,16) = '16 - '//title12(m,18)(6:80)
-!         enddo
-!      vfh(16) = vfn(18)
-!      titleh(1,16) = '16 - '//titlehn(1,18)(6:80)
-!      titleh(2,16) = '16 - '//titlehn(2,18)(6:80)
-! bare soil
-         vfc(17) = vfn(20)
-         laic(17) = lain(20)
-!      titlec(17) = title(20)
-!      vfm(:,17) = vfnm(:,20)
-!      laim(:,17) = lainm(:,20)
-!      do m=1,12
-!         titlem(m,17) = title12(m,20)
-!      enddo
-!            vfh(17) = vfn(20)
-!            hm(17) = hmn(20)
-!           hsd(17) = hsdn(20)
-!      titleh(1,17) = titlehn(1,20)
-!      titleh(2,17) = titlehn(2,20)
-         N_VEG = 16
-         N_BARE = 17
-      
-!      titlefoo = 'vfn16'
-!      write(92) titlefoo, vfn(16)
-!      titlefoo = 'vfn17'
-!      write(92) titlefoo, vfn(17)
-!      titlefoo = 'Crops 15 after combining C3 and C4'
-!      write(92) titlefoo, vfc(15)
-         
-#     else
-!crops
-         vfc(15:17) = vfn(16:18)
-         laic(15:17) = lain(16:18)
-      
-!      titlec(15:17) = title(16:18)
-!            do m=1,12
-!               vfm(m,15:17) = vfnm(m,16:18)
-!               laim(m,15:17) = lainm(m,16:18)
-!         titlem(m,15:17) = title12(m,16:18)
-!            enddo
-!            vfh(15:17) = vfn(16:18)
-!            hm(15:17) = hmn(16:18)
-!      titleh(1,15:17) = titlehn(1,16:18)
-!      titleh(2,15:17) = titlehn(2,16:18)
-! bare soil
-         vfc(18) = vfn(20)
-         laic(18) = lain(20)
-!      titlec(18) = title(20)
-!      vfm(:,18) = vfnm(:,20)
-!      laim(:,18) = lainm(:,20)
-!      titlem(:,18) = title12(:,20)
-!      vfh(18) = vfh(20)
-!      hm(18) = hmn(20)
-!      hsd(18) = hsd(20)
-!      titleh(1,18) = titlehn(1,20)
-!      titleh(2,18) = titlehn(2,20)
-         N_VEG = 17
-         N_BARE = 18
-#     endif
-      
- !           do k=1,N_BARE
- !              write(3) titlec(k), vfc(k)
- !           enddo
- !           do k=1,N_BARE
- !              write(3) titlec(k), laic(k)
- !           enddo
-      
-! check if "bare" soil is not bare
-         vf_xx = 0.
-         if( vfc(N_BARE) > .01 .and. laic(N_BARE) > .5 ) then
-            vf_xx = vfc(N_BARE)
-            lai_xx = laic(N_BARE)
-         endif
- !           write(4) title_xx, vf_xx
- !           write(4) title_xx, lai_xx
-      
-         vf_yy = 0.
-         if( vfc(10) > .1 .and. laic(10) < .5 ) then
-            vf_yy = vfc(10)
-            lai_yy = laic(10)
-         endif
-!      write(4) title_yy, vf_yy
-!      write(4) title_yy, lai_yy
-      
-         vf_yy = 0.
-         lai_yy = 0.
-         if( vfc(N_BARE) > .1 .and. laic(10) < .01  &
-              .and. laic(9) < .01 .and. laic(11) < .01  &
-              .and. laic(12) < .01 .and. laic(13) < .01 ) then
-            vf_yy = vfc(N_BARE)
-            lai_yy = laic(N_BARE)
-         endif
-      
-!      write(4) title_yy, vf_yy
-!      write(4) title_yy, lai_yy
-      
-      
-   !!!! do conversions !!!!
-      
-   ! convert sparse veg to cold adapted shrub 9 if present
-         s = sum(vfc(1:N_BARE))
-!            if (s.ne.sum(vfm(1,1:N_BARE))) then !#DEBUG
-!         write(*,*) 'ERROR orig:  max and monthly lc different'
-!     &               ,s,sum(vfm(1,1:N_BARE))
-!         write(*,*) vfc(1:N_BARE)
-!         write(*,*) vfm(j,1:N_BARE)
-!      endif
-         if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-              .and. laic(N_BARE) > .0 &
-              .and. vfc(9) > .0 ) then
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(9), laic(9), laic(9) )
-!     lai >= lai(9)
-!               do m=1,12
-!                  call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
-!     &                       vfm(m,9),vfm(m,9), vfc(9))
-!               enddo
-         
-!               call convert_vfh(
-!     &                    vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
-!     &                    vfh(9),hm(9),hsd(9), vfc(9))
-         endif
-      
-         s = sum(vfc(1:N_BARE))
-!      if (s.ne.sum(vfm(1,1:N_BARE))) then !#DEBUG
-!         write(*,*) 'ERROR sparse:  max and monthly lc different'
-!     &              ,s,sum(vfm(1,1:N_BARE))
-!         write(*,*) vfc(1:N_BARE)
-!         write(*,*) vfm(1,1:N_BARE)
-!      endif
+            if ( a > 0. ) then
+                 laic(15) = (vfn(16)*lain(16) &
+                     + vfn(17)*lain(17)) / a
+                 vfc(15) = a
+            else
+                 laic(15) = 0.
+                 vfc(15) = 0.
+            endif
 
-      ! convert sparse veg to arid adapted shrub 10 if present
-         if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-              .and. laic(N_BARE) > .0 &
-              .and. vfc(10) > .0 ) then
-         
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(10), laic(10), laic(10) )
-                          ! lai >= lai(10)
-!                  do m=1,12
-!                     call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
-!     &                          vfm(m,10),laim(m,10),vfc(10))
-!                  enddo
-         
-!                  call convert_vfh(
-!     &                       vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
-!     &                       vfh(10),hm(10),hsd(10), vfc(10))
-         endif
-               
- ! convert the rest of sparse veg to crop 15 if present
-         if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 &
-              .and. vfc(15) > .0 ) then
-!       print *, 'Converting spare to crop/bare',i,j,
-!     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), vfc(i,j,15)
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(15), laic(15), laic(15))
-!       print *, 'After conversion:            ',i,j,
-!     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), 
-!     &            vfc(i,j,15), laic(i,j,15)
-!                     do m=1,12
-!                        call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
-!     &                             vfm(m,15),laim(m,15),vfc(15))
-!                     enddo
-!                     call convert_vfh(
-!     &                          vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
-!     &                          vfh(15),hm(15),hsd(15), vfc(15))
-         endif
+            !lc lai monthly
+            !            do m=1,12
+            !               am = vfnm(m,16) + vfnm(m,17)
+            !               if (am > 0. ) then
+            !                  laim(m,15) = (vfnm(m,16)*lainm(m,16)
+            !     &                       + vfnm(m,17)*lainm(m,17)) / am
+            !                  vfm(m,15) = am
+            !               else
+            !                  laim(m,15) = 0.
+            !                  vfm(m,15) = 0.
+            !               endif
+            !            enddo
+                  !heights - DO NOT AVERAGE. PRESERVE HEIGHTS. LAI will scale density
+            !      a = vfn(16) + vfn(17) !input cover
+            !      if ( a > 0. ) then
+            !         hm(i,j,15) = (vfn(i,j,16)*hmn(i,j,16)
+            !     &              + vfn(i,j,17)*hmn(i,j,17)) / a
+            !         if ((hmn(16)>0.).and.(hmn(17)>0.)) then
+                        !average if both exist
+            !            hm(15) = (vfn(16)*hmn(16)
+            !     &                 + vfn(17)*hmn(17)) / a
+            !         else
+                        !don't average if only one or none exists
+            !            hm(15) = max(hmn(16),hmn(17))
+            !         endif
+                     !Sum of squares for sd.  Don't weight if only one or less exists
+            !         if ((hmn(16)>0.).and.(hmn(17)>0.)) then
+            !            hsd(15) = sqrt((vfn(16)*hsdn(16)**2
+            !     &                 + vfn(17)*hsdn(17)**2) / a)
+            !         else
+            !            hsd(15) = max(hsd(16),hsd(17))
+            !         endif
+            !         vfh(15) = a
+            !      else
+            !         hm(15) = 0.
+            !         hsd(15) = 0.
+            !         vfh(15) = 0.
+            !      endif
                   
-! convert the rest of sparse veg to pft with biggest fraction
-! (if present)
-         if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-            
-            maxpft = maxloc( vfc(1:16), 1 )
-!         print *, "max pft is ",maxpft
-            if ( vfc(maxpft) < .0001 ) cycle
-            
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(maxpft), laic(maxpft), laic(maxpft))
-!                  do m=1,12
-!                     call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE)
-!     &                          ,vfm(m,maxpft),laim(m,maxpft),vfc(maxpft))
-!                  enddo
+            !      write(*,*) "Re-doing crops.."
+            !      titlec(15) = title(16)
+            !      titlec(15)(1:18) = "15 - crops herb   "
+            !      do m=1,12
+            !         titlem(m,15) = title12(m,16)
+            !         titlem(m,15)(1:18) = "15 - crops herb   "
+            !      enddo
+            !      titleh(1,15) = titlehn(1,16)
+            !      titleh(2,15) = titlehn(2,16)
+            !     titleh(1,15)(1:18) = "15 - crops herb   "
+            !      titleh(2,15)(1:18) = "15 - crops herb   "
                   
-!                  call convert_vfh(
-!     &                       vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
-!     &                       vfh(maxpft),hm(maxpft),hsd(maxpft), 
-!     &                       vfc(maxpft))
-            
-         endif
-! convert the rest of sparse veg to arid adapted shrub 10
-         if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-            
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(10), laic(10), .0 )
-!                  do m=1,12
-!                     call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
-!     &                          vfm(m,10),laim(m,10),vfc(10))
-!                  enddo
-         
-!                  if (vfc(10) > 0.) then
-!                     hm(10) = 2.0 !Check simard.f Set_shrub_height for value!
-!                     hsd(10) = 0.
-!                  endif
-!                  call convert_vfh(
-!     &                       vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
-!     &                       vfh(10),hm(10),hsd(10), vfc(10))
-            
-         endif
-         
+            !      write(*,*) titlec(15)
+            ! crops woody
+            vfc(16) = vfn(18)
+            laic(16) = lain(18)
+            !      titlec(16) = '16 - '//title(18)(6:80)
+            !      write(*,*) "titlec: "
+            !      write(*,*) titlec(16)
+            !            do m=1,12
+            !            vfm(m,16) = vfnm(m,18)
+            !            laim(m,16) = lainm(m,18)
+            !         titlem(m,16) = '16 - '//title12(m,18)(6:80)
+            !         enddo
+            !      vfh(16) = vfn(18)
+            !      titleh(1,16) = '16 - '//titlehn(1,18)(6:80)
+            !      titleh(2,16) = '16 - '//titlehn(2,18)(6:80)
+            ! bare soil
+            vfc(17) = vfn(20)
+            laic(17) = lain(20)
+            !      titlec(17) = title(20)
+            !      vfm(:,17) = vfnm(:,20)
+            !      laim(:,17) = lainm(:,20)
+            !      do m=1,12
+            !         titlem(m,17) = title12(m,20)
+            !      enddo
+            !            vfh(17) = vfn(20)
+            !            hm(17) = hmn(20)
+            !           hsd(17) = hsdn(20)
+            !      titleh(1,17) = titlehn(1,20)
+            !      titleh(2,17) = titlehn(2,20)
+            N_VEG = 16
+            N_BARE = 17
       
+            !      titlefoo = 'vfn16'
+            !      write(92) titlefoo, vfn(16)
+            !      titlefoo = 'vfn17'
+            !      write(92) titlefoo, vfn(17)
+            !      titlefoo = 'Crops 15 after combining C3 and C4'
+            !      write(92) titlefoo, vfc(15)
+
+#     else
+            !crops
+            vfc(15:17) = vfn(16:18)
+            laic(15:17) = lain(16:18)
+
+            !      titlec(15:17) = title(16:18)
+            !            do m=1,12
+            !               vfm(m,15:17) = vfnm(m,16:18)
+            !               laim(m,15:17) = lainm(m,16:18)
+            !         titlem(m,15:17) = title12(m,16:18)
+            !            enddo
+            !            vfh(15:17) = vfn(16:18)
+            !            hm(15:17) = hmn(16:18)
+            !      titleh(1,15:17) = titlehn(1,16:18)
+            !      titleh(2,15:17) = titlehn(2,16:18)
+            ! bare soil
+            vfc(18) = vfn(20)
+            laic(18) = lain(20)
+            !      titlec(18) = title(20)
+            !      vfm(:,18) = vfnm(:,20)
+            !      laim(:,18) = lainm(:,20)
+            !      titlem(:,18) = title12(:,20)
+            !      vfh(18) = vfh(20)
+            !      hm(18) = hmn(20)
+            !      hsd(18) = hsd(20)
+            !      titleh(1,18) = titlehn(1,20)
+            !      titleh(2,18) = titlehn(2,20)
+            N_VEG = 17
+            N_BARE = 18
+#     endif
+            !           do k=1,N_BARE
+            !              write(3) titlec(k), vfc(k)
+            !           enddo
+            !           do k=1,N_BARE
+            !              write(3) titlec(k), laic(k)
+            !           enddo
+          
+            ! check if "bare" soil is not bare
+            vf_xx = 0.
+            if( vfc(N_BARE) > .01 .and. laic(N_BARE) > .5 ) then
+                vf_xx = vfc(N_BARE)
+                lai_xx = laic(N_BARE)
+            endif
+            !           write(4) title_xx, vf_xx
+            !           write(4) title_xx, lai_xx
+          
+            vf_yy = 0.
+            if( vfc(10) > .1 .and. laic(10) < .5 ) then
+                vf_yy = vfc(10)
+                lai_yy = laic(10)
+            endif
+            !      write(4) title_yy, vf_yy
+            !      write(4) title_yy, lai_yy
+          
+            vf_yy = 0.
+            lai_yy = 0.
+            if( vfc(N_BARE) > .1 .and. laic(10) < .01  &
+                  .and. laic(9) < .01 .and. laic(11) < .01  &
+                  .and. laic(12) < .01 .and. laic(13) < .01 ) then
+                vf_yy = vfc(N_BARE)
+                lai_yy = laic(N_BARE)
+            endif
+          
+            !      write(4) title_yy, vf_yy
+            !      write(4) title_yy, lai_yy
+          
+          
+            !!!! do conversions !!!!
+
+            ! convert sparse veg to cold adapted shrub 9 if present
+            s = sum(vfc(1:N_BARE))
+            !            if (s.ne.sum(vfm(1,1:N_BARE))) then !#DEBUG
+            !         write(*,*) 'ERROR orig:  max and monthly lc different'
+            !     &               ,s,sum(vfm(1,1:N_BARE))
+            !         write(*,*) vfc(1:N_BARE)
+            !         write(*,*) vfm(j,1:N_BARE)
+            !      endif
+            if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
+                 .and. laic(N_BARE) > .0 &
+                 .and. vfc(9) > .0 ) then
+               call convert_vf(vfc(N_BARE), laic(N_BARE), &
+                    vfc(9), laic(9), laic(9) )
+                 !     lai >= lai(9)
+                 !               do m=1,12
+                 !                  call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
+                 !     &                       vfm(m,9),vfm(m,9), vfc(9))
+                 !               enddo
+                          
+                 !               call convert_vfh(
+                 !     &                    vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
+                 !     &                    vfh(9),hm(9),hsd(9), vfc(9))
+            end if
+
+      
+            s = sum(vfc(1:N_BARE))
+            !      if (s.ne.sum(vfm(1,1:N_BARE))) then !#DEBUG
+            !         write(*,*) 'ERROR sparse:  max and monthly lc different'
+            !     &              ,s,sum(vfm(1,1:N_BARE))
+            !         write(*,*) vfc(1:N_BARE)
+            !         write(*,*) vfm(1,1:N_BARE)
+            !      endif
+
+            ! convert sparse veg to arid adapted shrub 10 if present
+            if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
+                .and. laic(N_BARE) > .0 &
+                .and. vfc(10) > .0 ) &
+            then
+                call convert_vf(vfc(N_BARE), laic(N_BARE), &
+                     vfc(10), laic(10), laic(10) )
+                          ! lai >= lai(10)
+                !                  do m=1,12
+                !                     call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
+                !     &                          vfm(m,10),laim(m,10),vfc(10))
+                !                  enddo
+                         
+                !                  call convert_vfh(
+                !     &                       vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
+                !     &                       vfh(10),hm(10),hsd(10), vfc(10))
+            end if
+               
+            ! convert the rest of sparse veg to crop 15 if present
+            if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 &
+                .and. vfc(15) > .0 ) &
+            then
+                !       print *, 'Converting spare to crop/bare',i,j,
+                !     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), vfc(i,j,15)
+                            call convert_vf(vfc(N_BARE), laic(N_BARE), &
+                                 vfc(15), laic(15), laic(15))
+                !       print *, 'After conversion:            ',i,j,
+                !     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), 
+                !     &            vfc(i,j,15), laic(i,j,15)
+                !                     do m=1,12
+                !                        call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
+                !     &                             vfm(m,15),laim(m,15),vfc(15))
+                !                     enddo
+                !                     call convert_vfh(
+                !     &                          vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
+                !     &                          vfh(15),hm(15),hsd(15), vfc(15))
+            end if
+
+            ! convert the rest of sparse veg to pft with biggest fraction
+            ! (if present)
+            if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
+            
+                maxpft = maxloc( vfc(1:16), 1 )
+                ! print *, "max pft is ",maxpft
+                if ( vfc(maxpft) < .0001 ) cycle
+
+                call convert_vf(vfc(N_BARE), laic(N_BARE), &
+                    vfc(maxpft), laic(maxpft), laic(maxpft))
+                !    do m=1,12
+                !       call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE) &
+                !                  ,vfm(m,maxpft),laim(m,maxpft),vfc(maxpft))
+                !    enddo
+                    
+                !    call convert_vfh( &
+                !               vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
+                !               vfh(maxpft),hm(maxpft),hsd(maxpft), &
+                !               vfc(maxpft))
+                                                    
+            end if
+
+            ! convert the rest of sparse veg to arid adapted shrub 10
+            if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
+                call convert_vf(vfc(N_BARE), laic(N_BARE), &
+                    vfc(10), laic(10), .0 )
+                !    do m=1,12
+                !       call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE),
+                !                  vfm(m,10),laim(m,10),vfc(10))
+                !    enddo
+                  
+                !    if (vfc(10) > 0.) then
+                !       hm(10) = 2.0 !Check simard.f Set_shrub_height for value!
+                !       hsd(10) = 0.
+                !    endif
+                !    call convert_vfh(
+                !               vfh(N_BARE),hm(N_BARE),hsd(N_BARE),
+                !               vfh(10),hm(10),hsd(10), vfc(10))
+                                            
+            end if
+
 #ifdef SPLIT_BARE_SOIL
-         call split_bare_soil(N_VEG,KM,N_BARE &
-              ,bs_brightratio,vfc,laic,res_out)
+            call split_bare_soil(N_VEG,KM,N_BARE, &
+                bs_brightratio,vfc,laic,res_out)
 #endif
       
-! check titles
-!      write(*,*) 'titlec:'
-!         do k=1,N_BARE
-!         write(*,*) trim(titlec(k))
-!         enddo
-!      write(*,*) 'titlem:'
-!               do m=1,12
-!         write(*,*) MONTH(m)
-!                  do k=1,N_BARE
-!     write(*,*) trim(titlem(m,k))
-!     enddo
-!     enddo
-
-         do k=1,18
-            if (laic(k).le.0.) then
-               laic(k) = undef
-            endif
-         enddo
+            ! check titles
+            !      write(*,*) 'titlec:'
+            !         do k=1,N_BARE
+            !         write(*,*) trim(titlec(k))
+            !         enddo
+            !      write(*,*) 'titlem:'
+            !               do m=1,12
+            !         write(*,*) MONTH(m)
+            !                  do k=1,N_BARE
+            !     write(*,*) trim(titlem(m,k))
+            !     enddo
+            !     enddo
+                        
+           do k=1,18
+               if (laic(k).le.0.) then
+                   laic(k) = undef
+               endif
+           enddo
          
-         ! correct height=undef when land cover>0            
-         do k=1,KM
-            if (vfc(k).gt.0.and.laic(k).eq.undef) then
-   		      laic(k) = 0.
-	          else
+           ! correct height=undef when land cover>0            
+           do k=1,KM
+               if (vfc(k).gt.0.and.laic(k).eq.undef) then
+   		           laic(k) = 0.
+	           else
 	              laic(k) = laic(k)
-            endif
-         enddo
+               endif
+           enddo
 
-         do k=1,18
-            laicnc(i,j,k) = laic(k)
-         enddo
-         
-      enddo
-      
-   enddo
-   
-   startB(1)=1
-   startB(2)=1
-   countB(1)=IM1km
-   countB(2)=JM1km
+           do k=1,18
+               io_laiout(k)%buf(ic,jc) = laic(k)
+               ! laicnc(i,j,k) = laic(k)
+           enddo
 
-! save netcdf lai 
-   do k=1,18
-      laicncout(:,:) = laicnc(:,:,k)
-      err=NF_PUT_VARA_REAL(fidlaiout(m),varidlaiout(k), &
-           startB,countB,laicncout)
-      write(*,*) err, 'put'
-   enddo
-   err = NF_CLOSE(fidlaiout(m))
-   err = NF_CLOSE(fidlaiin(m))
+        end do
+        end do
 
-   write(*,*) err, 'nf_close in ',fidlaiin(m)
-   write(*,*) err, 'nf_close out ',fidlaiin(m)
-   
-enddo
+        call chunker%write_chunks
+
+    end do
+    end do
+
+    call chunker%close_chunks
+    deallocate(chunker)
+end do    ! m=1,2 (for DOY)
 
 
 

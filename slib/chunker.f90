@@ -244,6 +244,7 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     this%chunk_size(3)=1
 
     ! Allocate weight buffer
+    if (allocated(this%wta1)) deallocate(this%wta1)
     allocate(this%wta1(this%chunk_size(1), this%chunk_size(2)))
     this%wta1 = 1.0
 
@@ -257,9 +258,11 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
 
     ! Allocate space to refer to managed chunk buffers
     this%max_reads = max_reads
+    if (allocated(this%reads)) deallocate(this%reads)
     allocate(this%reads(this%max_reads))
     this%nreads = 0
     this%max_writes = max_writes
+    if (allocated(this%writes)) deallocate(this%writes)
     allocate(this%writes(this%max_writes))
     this%nwrites = 0
 
@@ -382,12 +385,18 @@ subroutine write_chunks(this)
             nerr = nerr + 1
         end if
 
-        err=nf90_sync(cio%fileid_lr)
+!        err=nf90_sync(cio%fileid_lr)
 
         ! Display progress
         write(*,'(A1)',advance="no") '.'
 
     end do
+
+    do i=1,this%nwrites
+        cio => this%writes(i)%ptr
+        err=nf90_sync(cio%fileid_lr)
+    end do
+
     write(*,*)
 
     if (nerr > 0) then
@@ -774,8 +783,10 @@ subroutine finish_cio_init(this, cio, rw, alloc)
     cio%chunker => this
 
     ! Allocate write buffer (Hi res)
-    if (alloc) &
+    if (alloc) then
+        if (allocated(cio%buf)) deallocate(cio%buf)
         allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+    end if
 
     ! Store pointer to this cio
     if (rw == 'w') then
@@ -800,11 +811,12 @@ end subroutine finish_cio_init
 ! Opening for writing
 
 ! Point the ChunkIO_t to a single layer of an existing multi-layer file
-subroutine nc_reuse_var(this, cio0, cio, base, wta)
+subroutine nc_reuse_var(this, cio0, cio, base, rw, wta)
     class(Chunker_t) :: this
     type(ChunkIO_t), intent(IN) :: cio0
     type(ChunkIO_t), target :: cio
     integer, dimension(:), intent(IN) :: base
+    character, intent(in) :: rw
     type(Weighting_t), intent(IN) :: wta
 
     ! Where to start other instance, in case it's a multi...
@@ -822,7 +834,7 @@ subroutine nc_reuse_var(this, cio0, cio, base, wta)
     cio%varid_lr = cio0%varid_lr
     cio%own_fileid_lr = .false.
 
-    call finish_cio_init(this, cio, 'w', .true.)
+    call finish_cio_init(this, cio, rw, .true.)
 end subroutine nc_reuse_var
 
 ! Create a new single-layer variable in an existing file
@@ -1034,6 +1046,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
 
     ! Set cio%nlayers
     err = nf90_inq_dimid(cio%fileid, 'nlayers', nlayers_dimid)
+    if (allocated(cio%base)) deallocate(cio%base)
     if (err == NF90_NOERR) then
         err = nf90_inquire_dimension(cio%fileid, nlayers_dimid, xname, nlayers)
         allocate(cio%base(3))
@@ -1052,7 +1065,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
         return
     end if
 
-    call finish_cio_init(this, cio, 'r', .true.)
+    call finish_cio_init(this, cio, 'r', (k>0))
 end subroutine nc_open
 
 

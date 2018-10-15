@@ -45,7 +45,6 @@ use netcdf
 use chunker_mod
 use chunkparams_mod
 use paths_mod
-use entgvsd_netcdf_util
 use ent_labels_mod
 
 implicit none
@@ -199,11 +198,11 @@ call chunker%nc_check
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
-!do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-!do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
+do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
 
-do jchunk = 1,nchunk(2)
-do ichunk = 1,nchunk(1)
+!do jchunk = 1,nchunk(2)
+!do ichunk = 1,nchunk(1)
 
     call chunker%move_to(ichunk,jchunk)
 
