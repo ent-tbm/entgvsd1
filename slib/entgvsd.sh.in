@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+set -e
 
 # https://archive.is/TRzn4
 while getopts ":d" opt; do
