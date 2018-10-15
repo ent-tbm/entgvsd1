@@ -1,9 +1,24 @@
 #!/bin/sh -
 #
 
+# https://archive.is/TRzn4
+while getopts ":d" opt; do
+  case $opt in
+    d)
+      echo "Debug mode set: will run on only small region" >&2
+      ENTGVSD_DEBUG="-DENTGSD_DEBUG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ENTGVSD_DEBUG=""
+      ;;
+  esac
+done
+
+fortran_source=${@AT@:$OPTIND:1}
+
 a_out=$(mktemp)
 
-fortran_source=$1
 shift
 
 # http://redsymbol.net/articles/bash-exit-traps/
@@ -12,7 +27,7 @@ function finish {
 }
 trap finish EXIT
 
-gfortran -cpp -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
+gfortran -cpp $ENTGVSD_DEBUG -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
 if [ $? -eq 0 ]; then
     $a_out "$@"
 fi

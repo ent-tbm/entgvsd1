@@ -15,6 +15,8 @@ set(entgvsd_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 
+set(AT "@")
+
 # ----- Write CMake-derived paths into place accessible to C++/Fortran
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config.hpp.in
@@ -26,7 +28,7 @@ configure_file(
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd.sh.in
-    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh)
+    ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh @ONLY)
 
 
 
