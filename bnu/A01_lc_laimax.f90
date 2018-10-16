@@ -8,7 +8,7 @@ use netcdf
 use chunker_mod
 use chunkparams_mod
 use paths_mod
-use entgvsd_netcdf_util
+use ent_labels_mod
 
  ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
  ! interpolate to coarser resolutions.
@@ -104,8 +104,6 @@ integer, parameter :: JM = YM !lat at 1 km
 integer, parameter :: longi = XM
 integer, parameter :: latin = YM
 
-real*4, parameter :: undef = -1e30 !AViewer undef value      !## UPDATE ME
-
 integer, parameter :: NUMLAYERS = 40  !## UPDATE ME
 
 integer, parameter :: NUMLAYERSLC = 20  ! ONLY LC LAYERS
@@ -140,23 +138,23 @@ call chunker%init(IM, JM, IMH*2,JMH*2, 100, 120)
 
 !      LAI max
 call chunker%nc_open_gz(io_lai, DATA_DIR, DATA_INPUT, &
-    'LAI/', 'global_30s_2004_max.nc', 'lai')
+    'LAI/', 'global_30s_2004_max.nc', 'lai', 1)
 
 
 ! --- ENTPFTLC: Open outputs written by A00
 do k = 1,20
     call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc', &
-        trim(EntPFT_files2(k)))
+        trim(EntPFT_files2(k)), 1)
 enddo
 
 !     Files out
 do k = 1,20
-    call chunker%nc_create(io_out(k),  io_lc(k)%buf,1d0,0d0, &
+    call chunker%nc_create(io_out(k),  weighting(io_lc(k)%buf,1d0,0d0), &
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
         trim(EntPFT_files2(k)), &
-        EntPFT_title(k), 'm2 m-2', TITLE_LAI, 1)
+        EntPFT_title(k), 'm2 m-2', TITLE_LAI)
 enddo
 
 !-----------------------------------------------------------------
@@ -190,7 +188,7 @@ do ichunk = 1,nchunk(1)
 
             !**   LAI data, lon lat from LAI file                
 
-            io_out(p)%buf(ic,jc,1) = io_lc(p)%buf(ic,jc,1) * io_lai%buf(ic,jc,1)
+            io_out(p)%buf(ic,jc) = io_lc(p)%buf(ic,jc) * io_lai%buf(ic,jc)
         end do
     end do
     end do

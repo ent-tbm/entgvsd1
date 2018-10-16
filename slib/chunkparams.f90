@@ -2,6 +2,7 @@ module chunkparams_mod
 implicit none
     integer, parameter :: chunk_rank=2
     integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
+!    integer, parameter :: nchunk(chunk_rank)=(/36,30/)   ! (lon, lat) (IM, JM) for chunks
 
 CONTAINS
 

@@ -442,16 +442,16 @@ use netcdf
 use chunker_mod
 use chunkparams_mod
 use paths_mod
-use entgvsd_netcdf_util
+use ent_labels_mod
+
 implicit none
 !      include 'netcdf.inc'
 
 !***************************************************
 !     !* IGBP MODIS types broken down by Feng Zhao at BU.*
 !***************************************************
-character*71,parameter :: MODISpft(LCLASS) = &
-     (/ &
- "1. Evergreen needleleaf forest                               ", !     &     "0. Water", &
+character*71,parameter :: MODISpft(LCLASS) = (/ &
+ "1. Evergreen needleleaf forest                               ", & !     &     "0. Water",
  "2. Evergreen broadleaf forest                                ", &
  "3. Deciduous needleleaf forest                               ", &
  "4. Deciduous broadleaf forest                                ", &
@@ -591,8 +591,6 @@ character*14, parameter :: EntPFT_files2(19) = &
 
 character*80 :: LAICASE
 
-real*4, parameter :: undef = -1e30 !AViewer undef value
-
 character*80 :: TITLE, TITLECHECK
 character*256 :: file_crops, file_C4clim, file_clim
 character*256 :: file_C4clima, file_C4climb
@@ -688,7 +686,7 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 call chunker%nc_open_gz(io_lai, &
     DATA_DIR, DATA_INPUT, &
     'LAI/', &
-    'LAI3gMax_1kmx1km.nc', 'laimax')
+    'LAI3gMax_1kmx1km.nc', 'laimax', 1)
 
 !     Get variable IDs
 err = NF90_INQ_VARID(io_lai%fileid,'lon',varidx)
@@ -700,101 +698,101 @@ write(*,*) err, 'variables IDs'
 call chunker%nc_open_gz(io_04crops, &
     DATA_DIR, DATA_INPUT,  &
     'crops/', &
-    '04_Monfreda_herb_crops_1kmx1km.nc', 'crops')
+    '04_Monfreda_herb_crops_1kmx1km.nc', 'crops', 1)
 
 call chunker%nc_open_gz(io_05crops, &
     DATA_DIR, DATA_INPUT,  &
     'crops/', &
-    '05_Monfreda_shrub_crops_1kmx1km.nc', 'crops')
+    '05_Monfreda_shrub_crops_1kmx1km.nc', 'crops', 1)
 
 call chunker%nc_open_gz(io_06crops, &
     DATA_DIR, DATA_INPUT,  &
     'crops/', &
-    '06_Monfreda_tree_crops_1kmx1km.nc', 'crops')
+    '06_Monfreda_tree_crops_1kmx1km.nc', 'crops', 1)
 
 call chunker%nc_open_gz(io_04cropsm, &
     DATA_DIR, DATA_INPUT,  &
     'crops/', &
-    '08_Monfreda_c4_crops_multi1_1kmx1km.nc', 'crops')
+    '08_Monfreda_c4_crops_multi1_1kmx1km.nc', 'crops', 1)
 
 !     CLIMSTATS
 
 call chunker%nc_open_gz(io_C4norm, &
      DATA_DIR, DATA_INPUT,  &
      'climstats/', &
-     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc', 'C4climate')
+     'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc', 'C4climate', 1)
 
 call chunker%nc_open_gz(io_Tcold, &
      DATA_DIR, DATA_INPUT, &
-     'climstats/', 'Tcold.nc', 'Tcold')
+     'climstats/', 'Tcold.nc', 'Tcold', 1)
 
 call chunker%nc_open_gz(io_Pdry, &
      DATA_DIR, DATA_INPUT,  &
-     'climstats/', 'Pdry.nc', 'Pdry')
+     'climstats/', 'Pdry.nc', 'Pdry', 1)
      
 call chunker%nc_open_gz(io_Pmave, &
      DATA_DIR, DATA_INPUT, &
-     'climstats/', 'Pmave.nc', 'Pmave')
+     'climstats/', 'Pmave.nc', 'Pmave', 1)
 
 call chunker%nc_open_gz(io_TCinave, &
       DATA_DIR, DATA_INPUT, &
-      'climstats/', 'TCinave.nc', 'TCinave')
+      'climstats/', 'TCinave.nc', 'TCinave', 1)
 
 call chunker%nc_open_gz(io_CMedit, &
      DATA_DIR, DATA_INPUT,  &
-     'climstats/', 'ClimMedit.nc', 'ClimMedit')
+     'climstats/', 'ClimMedit.nc', 'ClimMedit', 1)
 
 !     WATERLC MODIS PARTITION
 call chunker%nc_open_gz(io_waterpart, &
      LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT, &
      '2004/', &
-     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0')
+     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0', 1)
 
 !     CHECKSUM
-call chunker%nc_create(io_checksum, chunker%wta1,1d0,0d0, &
+call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntMM29lc_lai_for_1kmx1km', &
     'EntMM29lc_lai_for_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATERLC OUTPUT
-call chunker%nc_create(io_waterout, chunker%wta1, 1d0,0d0,  ! Use chunker%wta1*1 + 0 &
+call chunker%nc_create(io_waterout, weighting(chunker%wta1, 1d0,0d0), &  ! Use chunker%wta1*1 + 0 &
     'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water', &
-    '', '', TITLE_LC, 1)
+    '', '', TITLE_LC)
 
 !     CHECKSUM
-call chunker%nc_create(io_checksum2, chunker%wta1,1d0,0d0, &
+call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
      'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km', &
      'EntLandcover_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     WATER LAI
-call chunker%nc_create(io_waterlai, io_waterout%buf,1d0,0d0, &
+call chunker%nc_create(io_waterlai, weighting(io_waterout%buf,1d0,0d0), &
       'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water', &
-    'LAI', '1', TITLE_CHECKSUM, 1)
+    'LAI', '1', TITLE_CHECKSUM)
 
 !     CHECKSUM
-call chunker%nc_create(io_checksum3, chunker%wta1,1d0,0d0, &
+call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
     'EntLAI_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     NPFTGRID
-call chunker%nc_create(io_npftgrid, chunker%wta1,1d0,0d0, &
+call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km', &
      'EntPFTs_percell_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFTLC
-call chunker%nc_create(io_dompftlc, io_waterout%buf,-1d0,1d0,  ! LC is Land-weighted &
+call chunker%nc_create(io_dompftlc, weighting(io_waterout%buf,-1d0,1d0), &  ! LC is Land-weighted &
     'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
      'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     DOMPFT
-call chunker%nc_create(io_dompft, io_dompftlc%buf,1d0,0d0, &
+call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km', &
      'EntdominantPFT_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM, 1)
+    'checksum', '1', TITLE_CHECKSUM)
 
 !     MODIS PARTITION FILES
 do k = 1,LCLASS
@@ -803,16 +801,16 @@ do k = 1,LCLASS
         '2004/',  &
         'PART_SUB_1km_2004_geo.PARTITION'// &
             trim(partit_num(k))//'.nc', &
-        'PARTITION'//trim(partit(k)))    ! var name
+        'PARTITION'//trim(partit(k)), 1)    ! var name
 enddo
 
 !      ENTPFTLC
 do k = 1,ENTPFTNUM
-   call chunker%nc_create(entpft_io(k), io_waterout%buf,-1d0,1d0,    ! LC land-weighted &
+   call chunker%nc_create(entpft_io(k), weighting(io_waterout%buf,-1d0,1d0), &    ! LC land-weighted &
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc', &
         trim(EntPFT_files2(k)), &
-        EntPFT_title(k), '1', TITLE_LC, 1)
+        EntPFT_title(k), '1', TITLE_LC)
 
 
 enddo
@@ -822,7 +820,7 @@ enddo
 !     ENTPFTLAIMAX
 do k=1,ENTPFTNUM
    call chunker%nc_create(entpftlaimax_io(k), &
-       entpft_io(k)%buf,1d0,0d0,   ! Weight by entpft LC &
+       weighting(entpft_io(k)%buf,1d0,0d0),   ! Weight by entpft LC &
        'EntMM_lc_laimax_1kmx1km/', &
        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
        trim(EntPFT_files2(k)), &
@@ -833,7 +831,7 @@ enddo
 !     ENTPFTLAIMAX CHECKSUM
 do k=1,ENTPFTNUM
    call chunker%nc_create(entpftlaimaxcheck_io(k), &
-         chunker%wta1,1d0,0d0, &
+         weighting(chunker%wta1,1d0,0d0), &
          'checksum/', &
          trim(EntPFT_files1(k))//trim(EntPFT_files2(k)), &
          trim(EntPFT_files2(k)), &
@@ -883,41 +881,41 @@ do ichunk = 1,nchunk(1)
        jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
        !**   LAI data
-       LAI=io_lai%buf(ic,jc,1)
+       LAI=io_lai%buf(ic,jc)
 
        !**   Crop files
 
-      CROPSHERBNORM=io_04crops%buf(ic,jc,1)
+      CROPSHERBNORM=io_04crops%buf(ic,jc)
 !           write(*,*) 'CROPSHERBNORM ',(CROPSHERBNORM)
-      CROPSSHRUBNORM=io_05crops%buf(ic,jc,1)
+      CROPSSHRUBNORM=io_05crops%buf(ic,jc)
 !     write(*,*) 'CROPSSHRUBNORM ',shape(CROPSSHRUBNORM)
-      CROPSTREENORM=io_06crops%buf(ic,jc,1)
+      CROPSTREENORM=io_06crops%buf(ic,jc)
 !     write(*,*) 'CROPSTREENORM ',shape(CROPSTREENORM)
-      CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc,1)
+      CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc)
       if (CROPSC4HERBFRAC.eq.undef) then
           CROPSC4HERBFRAC = 0
       endif
 !     write(*,*) 'CROPSC4HERBFRAC ',shape(CROPSC4HERBFRAC)
 
        !** Input C4 climate file
-      C4CLIMFRAC=io_C4norm%buf(ic,jc,1)
+      C4CLIMFRAC=io_C4norm%buf(ic,jc)
 !     write(*,*) 'C4CLIMFRAC ',(C4CLIMFRAC)
 
        !* Input climate statistics files
        !###  Now getting MAT from Climstats file.
        !###  file tas is in K, Climstats is in C.
-      Tcold=io_Tcold%buf(ic,jc,1)
+      Tcold=io_Tcold%buf(ic,jc)
 !     write(*,*) 'Tcold ',shape(Tcold)
-      Pdry=io_Pdry%buf(ic,jc,1)
+      Pdry=io_Pdry%buf(ic,jc)
 !     write(*,*) 'Pdry ',shape(Pdry)
-      Pmave=io_Pmave%buf(ic,jc,1)
+      Pmave=io_Pmave%buf(ic,jc)
 !     write(*,*) 'Pmave ',shape(Pmave)
 
-      TCinave=io_TCinave%buf(ic,jc,1)
+      TCinave=io_TCinave%buf(ic,jc)
 !     write(*,*) 'TCinave ',shape(TCinave)
       MAT = TCinave + 273.15 !Convert to Kelvin
 
-      ClimMedit=io_CMedit%buf(ic,jc,1)
+      ClimMedit=io_CMedit%buf(ic,jc)
 !     write(*,*) 'ClimMedit ',shape(ClimMedit)
       
 
@@ -983,7 +981,7 @@ do ichunk = 1,nchunk(1)
       CHECKSUM = 0.0
 
 !     WATERLC
-      WATERLC = io_waterpart%buf(ic,jc,1)
+      WATERLC = io_waterpart%buf(ic,jc)
 !            write(*,*) 'WATERLC ',shape(WATERLC)
 
       MODIS29(1) = WATERLC
@@ -999,7 +997,7 @@ do ichunk = 1,nchunk(1)
 
 !     Input file for land cover data
 !     MODIS PARTITION FILES
-         LIN = partit_io(k)%buf(ic,jc,1)
+         LIN = partit_io(k)%buf(ic,jc)
 !              if (LIN.gt.0.) write(*,*) LIN,k,'kkkk'
 
          MODIS29(k+1) = LIN
@@ -1127,7 +1125,7 @@ do ichunk = 1,nchunk(1)
 !     * does his smearing.
 
 !     !This confirms that the modis_c2_gissfortran output does not sum to 1.
-      io_checksum%buf(ic,jc,1)=CHECKSUM
+      io_checksum%buf(ic,jc)=CHECKSUM
        
       
 !     write(*,*) err, 'Wrote CHECKSUM on EntMM 29 cover layers'
@@ -1200,7 +1198,7 @@ do ichunk = 1,nchunk(1)
 
 !     * Write Ent PFT land cover layers
 !     write(*,*) "WATER (cover fraction)"
-      io_waterout%buf(ic,jc,1)=WATERLC
+      io_waterout%buf(ic,jc)=WATERLC
 
 !     write(*,*) err, 'Wrote WATER (cover fraction)'
 
@@ -1215,7 +1213,7 @@ do ichunk = 1,nchunk(1)
          CHECKSUM = CHECKSUM + ENTPFTLC(k)
          
 !     Output file for land cover
-         entpft_io(k)%buf(ic,jc,1) = ENTPFTLC(k)
+         entpft_io(k)%buf(ic,jc) = ENTPFTLC(k)
 
 !     write(*,*) err, 'Wrote ENTPFTLC'
       
@@ -1229,7 +1227,7 @@ do ichunk = 1,nchunk(1)
       TITLECHECK = 'Ent Land cover check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
-      io_checksum2%buf(ic,jc,1)=CHECKSUM
+      io_checksum2%buf(ic,jc)=CHECKSUM
 
 !     write(*,*) err, 'Wrote TITLECHECK'
 
@@ -1244,7 +1242,7 @@ do ichunk = 1,nchunk(1)
       CHECKSUM=0.0
       TITLE = "WATER (LAI)"
 !     write(*,*) TITLE
-      io_waterlai%buf(ic,jc,1)=WATERLAI
+      io_waterlai%buf(ic,jc)=WATERLAI
 
 !     write(*,*) err, 'Wrote WATERLAI'
 
@@ -1253,7 +1251,7 @@ do ichunk = 1,nchunk(1)
          CHECKSUM = CHECKSUM + &
               ENTPFTLC(k)*ENTPFTLAIMAX(k)
 #ifdef COMPUTE_LAI
-         entpftlaimax_io(k)%buf(ic,jc,1)=ENTPFTLAIMAX(k)
+         entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
 #endif
 
          LAYEROUT = ENTPFTLAIMAX(k)
@@ -1263,26 +1261,26 @@ do ichunk = 1,nchunk(1)
       TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
-      io_checksum3%buf(ic,jc,1)=CHECKSUM
+      io_checksum3%buf(ic,jc)=CHECKSUM
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
       TITLECHECK = 'Ent PFTs per cell check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
-      io_npftgrid%buf(ic,jc,1)=NPFTGRID
+      io_npftgrid%buf(ic,jc)=NPFTGRID
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
       TITLECHECK = 'Ent dominant PFT LC check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
-      io_dompftlc%buf(ic,jc,1)=DOMPFTLC
+      io_dompftlc%buf(ic,jc)=DOMPFTLC
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
       TITLECHECK = 'Ent dominant PFT check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
-      io_dompft%buf(ic,jc,1)=DOMPFT
+      io_dompft%buf(ic,jc)=DOMPFT
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
 
@@ -1290,7 +1288,7 @@ do ichunk = 1,nchunk(1)
          TITLECHECK = EntPFT_title(k)// &
               'EntMM LAI max '//trim(RESOUT)
 #ifdef COMPUTE_LAI
-         entpftlaimaxcheck_io(k)%buf(ic,jc,1)=ENTPFTLAIMAX(k)
+         entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
 #endif
 
 !     write(*,*) err, 'Wrote ENTPFTLAIMAX'

@@ -14,6 +14,10 @@ type(EntLabel_t) :: ent20(20)   ! 0=water + Ent categories
 type(EntLabel_t) :: ent18(18)   ! ent categories, crops merged, + bare bright/dark
 
 integer, parameter :: ent20_water = 1
+character(*), parameter :: TITLE_LC = 'Ent PFT 1 km land cover fraction'
+character(*), parameter :: TITLE_LAI = &
+    'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
+character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
 real*4, parameter :: undef = -1.e30
 character*3, parameter :: MONTH(12) = &

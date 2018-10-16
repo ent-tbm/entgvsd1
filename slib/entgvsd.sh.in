@@ -7,7 +7,7 @@ while getopts ":d" opt; do
   case $opt in
     d)
       echo "Debug mode set: will run on only small region" >&2
-      ENTGVSD_DEBUG="-DENTGSD_DEBUG"
+      ENTGVSD_DEBUG="-DENTGVSD_DEBUG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2

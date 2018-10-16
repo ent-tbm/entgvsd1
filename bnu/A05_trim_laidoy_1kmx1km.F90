@@ -217,7 +217,7 @@ do m = 1,2 ! doy files
     ! CREATE OUTPUT NETCDF FILES
     call chunker%nc_create(ioall_laiout, &
         weighting(chunker%wta1,1d0,0d0), &
-        '16/nc/', 'V1km_EntGVSDv1.1_BNU16_lai_'//DOY(m)//'_pure.nc')
+        '16/nc/', 'V1km_EntGVSDv1.1_BNU16_lai_'//DOY(m)//'_pure')
 
     do k=1,18
         call chunker%nc_reuse_file(ioall_laiout, io_laiout(k), &
