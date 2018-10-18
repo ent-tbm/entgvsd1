@@ -127,7 +127,7 @@ type(ChunkIO_t) :: ioall_out(12), io_out(NUMLAYERSLC,12)   ! (PFT, month)
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
-
+float*4, dimension(:,:), pointer :: wbuf
 
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 320)
 
@@ -179,8 +179,14 @@ do k = 1,12
         layer_indices, layer_names)
 
     do p=1,20
+        if (p==1) then
+            wbuf => io_water%buf
+        else
+            wbuf => io_pft(p-1)%buf
+        end if
+
         call chunker%nc_reuse_var(ioall_out(k), io_out(p,k), &
-            (/1,1,p/), 'w', weighting(chunker%wta1,1d0,0d0))
+            (/1,1,p/), 'w', weighting(wbuf,1d0,0d0))
     end do
 
 enddo

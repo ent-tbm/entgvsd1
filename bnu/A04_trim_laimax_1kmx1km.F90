@@ -161,15 +161,15 @@ do k=1,20
 enddo
 
 
-! bs ratio
-call chunker%nc_create(io_bs, &
-    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale ???
-    '', 'bs_brightratio', 'bs_brightratio', &
-    'Bare Soil Bright Ratio', '1', 'BrightRatio')
-
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
 ! CREATE OUTPUT NETCDF FILES
+! bs ratio
+call chunker%nc_create(io_bs, &
+    weighting(ent20(20)%buf, 1d0, 0d0), &    ! TODO: Scale ???
+    '', 'bs_brightratio', 'bs_brightratio', &
+    'Bare Soil Bright Ratio', '1', 'BrightRatio')
+
 ! laimax_pure
 call chunker%nc_create(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
@@ -178,7 +178,7 @@ do k=1,18
     call chunker%nc_reuse_file(ioall_laiout, io_laiout(k), &
         'lai_'//trim(ent18(k)%file2), trim(ent18(k)%title), &
         'm2 m-2', trim(ent18(k)%title), &
-        weighting(chunker%wta1,1d0,0d0))
+        weighting(chunker%wta1,1d0,0d0))    % TODO: Weighting???
 end do
 
 !  checksum land  laimax
