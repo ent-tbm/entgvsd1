@@ -3,15 +3,18 @@
 set -e
 
 # https://archive.is/TRzn4
-while getopts ":d" opt; do
+while getopts ":pd" opt; do
   case $opt in
     d)
       echo "Debug mode set: will run on only small region" >&2
       ENTGVSD_DEBUG="-DENTGVSD_DEBUG"
       ;;
+    p)
+      echo "Will just write dependencies, will not run" >&2
+      JUST_DEPENDENCIES="-DJUST_DEPENDENCIES"
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
-      ENTGVSD_DEBUG=""
       ;;
   esac
 done
@@ -28,7 +31,7 @@ function finish {
 }
 trap finish EXIT
 
-gfortran -cpp $ENTGVSD_DEBUG -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
+gfortran -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
 if [ $? -eq 0 ]; then
     $a_out "$@"
 fi

@@ -194,7 +194,10 @@ call chunker%nc_reuse_file(ioall_sum, io_sum_lai, &
     'lai_checksum', 'Checksum of LAI', 'm2 m-2', 'checksum - LAI', &
     weighting(chunker%wta1, 1d0, 0d0))
 
-call chunker%nc_check
+call chunker%nc_check('A04_trim_laimax_1kmx1km')
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia

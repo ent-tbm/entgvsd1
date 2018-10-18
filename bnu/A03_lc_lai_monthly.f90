@@ -184,7 +184,10 @@ do k = 1,12
     end do
 
 enddo
-call chunker%nc_check
+call chunker%nc_check('A03_lc_lai_monthly')
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
 
 
 !-----------------------------------------------------------------

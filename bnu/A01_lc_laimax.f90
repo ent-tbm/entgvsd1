@@ -162,7 +162,10 @@ enddo
 
 
 ! Quit if we had any problems opening files
-call chunker%nc_check
+call chunker%nc_check('A01_lc_laimax')
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
 
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia

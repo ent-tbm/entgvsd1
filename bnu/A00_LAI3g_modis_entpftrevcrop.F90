@@ -840,7 +840,10 @@ enddo
 #endif
 
 ! Quit if we had any problems opening files
-call chunker%nc_check
+call chunker%nc_check('A00_LAI3g_modis_entpftrevcrop')
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
 
 
 !-----------------------------------------------------------------

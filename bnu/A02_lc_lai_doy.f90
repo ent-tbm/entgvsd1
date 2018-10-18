@@ -186,7 +186,10 @@ do k = 1,2
 
 enddo
 
-call chunker%nc_check
+call chunker%nc_check('A02_lc_lai_doy')
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
 
 !-----------------------------------------------------------------
 !     Loop for every grid point

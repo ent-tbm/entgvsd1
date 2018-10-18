@@ -229,7 +229,10 @@ do m = 1,12 ! monthly files
     end do
 
 
-    call chunker%nc_check
+    call chunker%nc_check('A06_trim_lc_laimax_laimonth')
+#ifdef JUST_DEPENDENCIES
+    stop 0
+#endif
 
     !-----------------------------------------------------------------
     !     Loop for every grid point

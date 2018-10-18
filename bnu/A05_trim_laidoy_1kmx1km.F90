@@ -229,7 +229,10 @@ do m = 1,2 ! doy files
     end do
 
 
-    call chunker%nc_check
+    call chunker%nc_check('A05_trim_laidoy_1kmx1km')
+#ifdef JUST_DEPENDENCIES
+    stop 0
+#endif
 
     !-----------------------------------------------------------------
     !     Loop for every grid point

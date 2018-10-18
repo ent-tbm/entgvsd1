@@ -44,6 +44,7 @@ end type Weighting_t
 
 type ChunkIO_t
     type(Chunker_t), pointer :: chunker
+    character(1024) :: path
     character(200) :: leaf    ! Leaf name of file, for identification
     integer :: fileid, varid
     integer :: fileid_lr, varid_lr
@@ -889,7 +890,7 @@ layer_indices, layer_names)
 
     ! --------- Locals
     integer :: err
-    character(2048) :: path_name,path_name_lr
+    character(2048) :: path_name_lr
     character(4192) :: cmd
     character(10) :: lon_s, lat_s,fmt
     logical :: exist
@@ -915,15 +916,15 @@ layer_indices, layer_names)
         .true., err)
 
     ! ------ Open/Create hi-res file
-    path_name = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
-    print *,'Writing ',trim(path_name)
+    cio%path = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
+    print *,'Writing ',trim(cio%path)
     if (present(layer_indices)) then
-        err = my_nf90_create_ij(path_name, &
+        err = my_nf90_create_ij(trim(cio%path), &
             this%ngrid(1), this%ngrid(2), &
             cio%fileid, dimids, &
             layer_indices, layer_names)
     else
-        err = my_nf90_create_ij(path_name, &
+        err = my_nf90_create_ij(trim(cio%path), &
             this%ngrid(1), this%ngrid(2), &
             cio%fileid, dimids)
     end if
@@ -934,15 +935,15 @@ layer_indices, layer_names)
     cio%own_fileid = .true.
 
     ! ---------- Open/Create lo-res file
-    path_name = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
-    print *,'Writing ',trim(path_name)
+    cio%path = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
+    print *,'Writing ',trim(cio%path)
     if (present(layer_indices)) then
-        err = my_nf90_create_ij(path_name, &
+        err = my_nf90_create_ij(trim(cio%path), &
             this%ngrid_lr(1), this%ngrid_lr(2), &
             cio%fileid_lr, dimids, &
             layer_indices, layer_names)
     else
-        err = my_nf90_create_ij(path_name, &
+        err = my_nf90_create_ij(trim(cio%path), &
             this%ngrid_lr(1), this%ngrid_lr(2), &
             cio%fileid_lr, dimids)
     end if
@@ -1037,12 +1038,14 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     print *,'Reading ', oroot//dir//leaf
 
     ! ------- Now open the file
-    err = nf90_open(oroot//dir//leaf,NF90_NOWRITE,cio%fileid)
+    cio%path = oroot//dir//leaf
+    err = nf90_open(trim(cio%path),NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening ',trim(leaf),err
         this%nerr = this%nerr + 1
         return
     end if
+    cio%own_fileid = .true.
 
     ! Set cio%nlayers
     err = nf90_inq_dimid(cio%fileid, 'nlayers', nlayers_dimid)
@@ -1070,14 +1073,34 @@ end subroutine nc_open
 
 
 
-subroutine nc_check(this)
+subroutine nc_check(this, exename)
     class(Chunker_t) :: this
+    character(len=*) :: exename
     ! ------ Locals
+    integer :: i
 
     if (this%nerr > 0) then
         write(ERROR_UNIT,*) 'Previous errors encountered creating/opening files'
         stop -1
     end if
+
+    open(17, FILE=trim(exename//'.mk'))
+    write(17,'(AA)') trim(exename),'_INPUTS = \'
+    do i=1,this%nreads
+        if (this%reads(i)%ptr%own_fileid) then
+            write(17,*) '   ',trim(this%reads(i)%ptr%path),' \'
+        end if
+    end do
+    write(17,*)
+    write(17,'(AA)') trim(exename),'_OUTPUTS = \'
+    do i=1,this%nwrites
+        if (this%writes(i)%ptr%own_fileid) then
+            write(17,*) '   ',trim(this%writes(i)%ptr%path),' \'
+        end if
+    end do
+    write(17,*)
+    close(17)
+
 end subroutine nc_check
 
 end module chunker_mod
