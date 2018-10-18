@@ -224,7 +224,7 @@ do m = 1,12 ! monthly files
             'lai_'//trim(ent18(k)%file2), &
             trim(ent18(k)%title), 'm2 m-2', &
             trim(ent18(k)%title), &
-            weighting(chunker%wta1,1d0,0d0))   % TODO: What convert LC to 18-class system for weighting???
+            weighting(chunker%wta1,1d0,0d0))   ! TODO: What convert LC to 18-class system for weighting???
 
     end do
 

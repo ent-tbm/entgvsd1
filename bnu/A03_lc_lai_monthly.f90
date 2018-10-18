@@ -120,14 +120,14 @@ integer :: err,dimidx,dimidy,dimidz
 
 type(Chunker_t) :: chunker
 ! Input files
-type(ChunkIO_t) :: io_lai(12),io_water
-type(ChunkIO_t) :: io_pft(19)
+type(ChunkIO_t), target :: io_lai(12),io_water
+type(ChunkIO_t), target :: io_pft(19)
 ! Output files
 type(ChunkIO_t) :: ioall_out(12), io_out(NUMLAYERSLC,12)   ! (PFT, month)
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
-float*4, dimension(:,:), pointer :: wbuf
+real*4, dimension(:,:), pointer :: wbuf
 
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 320)
 

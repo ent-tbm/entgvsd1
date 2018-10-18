@@ -115,8 +115,8 @@ integer, parameter :: ndoy = 2
 
 type(Chunker_t) :: chunker
 ! Input files
-type(ChunkIO_t) :: io_lai(ndoy),io_water
-type(ChunkIO_t) :: io_pft(19)
+type(ChunkIO_t), target :: io_lai(ndoy),io_water
+type(ChunkIO_t), target :: io_pft(19)
 ! Output files
 type(ChunkIO_t) :: ioall_out(ndoy), io_out(NUMLAYERSLC,ndoy)
 
@@ -128,7 +128,7 @@ integer :: dd(4),varidx(12),varidy(12)
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
-float*4, dimension(:,:), pointer :: wbuf
+real*4, dimension(:,:), pointer :: wbuf
 
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
@@ -188,7 +188,7 @@ do k = 1,2
         end if
 
         call chunker%nc_reuse_var(ioall_out(k), io_out(p,k), &
-            (/1,1,p/), 'w', weighting(wbuf, chunker%wta1,1d0,0d0))
+            (/1,1,p/), 'w', weighting(wbuf, 1d0,0d0))
     end do
 
 enddo
