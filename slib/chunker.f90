@@ -532,12 +532,11 @@ end function my_nf90_inq_put_var_real32
 
 ! Opens/Creates just the file and dimensions
 ! Returns dim IDs
-function my_nf90_create_ij(filename,IM,JM, ncid,dimids, layer_indices, layer_names) result(status)
+function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) result(status)
 
     character(len=*), intent(in) :: filename
     integer,intent(in) :: IM,JM
     integer,intent(out) :: ncid
-    integer,intent(inout) :: dimids(:)
     integer :: status    ! Return variable
     integer, dimension(:), OPTIONAL :: layer_indices
     character(len=*), dimension(:), OPTIONAL :: layer_names
@@ -551,10 +550,13 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimids, layer_indices, layer_nam
     integer :: strdimids(2)
     integer :: startS(2), countS(2)
     integer :: nlayers
+    integer, dimension(:), allocatable :: dimids
 
     if (present(layer_indices)) then
+        allocate(dimids(3))
         nlayers = size(layer_indices,1)
     else
+        allocate(dimids(2))
         nlayers = 1
     end if
 
@@ -580,18 +582,15 @@ function my_nf90_create_ij(filename,IM,JM, ncid,dimids, layer_indices, layer_nam
 !    inquire(FILE=trim(path_name), EXIST=exist)
 !    if (exist) then
 
-    status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
-    if (status == NF90_NOERR) then
-         dimids(1)=1
-         dimids(2)=2
-         if (nlayers > 1) dimids(3)=3    ! layers
-         write(0,*) 'Netcdf file was previously created. ',trim(filename)
-        return
-    end if
+!    status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
+!    if (status == NF90_NOERR) then
+!         write(0,*) 'Netcdf file was previously created. ',trim(filename)
+!        return
+!    end if
 
     ! netcdf output file needs to be created
     write(0,*) 'Creating ',trim(filename)
-    status=nf90_create(filename, NF90_NOCLOBBER+NF90_HDF5, ncid)
+    status=nf90_create(filename, NF90_HDF5, ncid)
     if (status /= NF90_NOERR) return
     status=nf90_def_dim(ncid, 'lon', IM, dimids(1))
     if (status /= NF90_NOERR) return
@@ -918,39 +917,45 @@ layer_indices, layer_names)
     ! ------ Open/Create hi-res file
     cio%path = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
     print *,'Writing ',trim(cio%path)
-    if (present(layer_indices)) then
-        err = my_nf90_create_ij(trim(cio%path), &
-            this%ngrid(1), this%ngrid(2), &
-            cio%fileid, dimids, &
-            layer_indices, layer_names)
-    else
-        err = my_nf90_create_ij(trim(cio%path), &
-            this%ngrid(1), this%ngrid(2), &
-            cio%fileid, dimids)
-    end if
-    if (present(vname)) then
-        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
-            vname, long_name, units, title)
+    err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
+    if (err /= NF90_NOERR) then
+        if (present(layer_indices)) then
+            err = my_nf90_create_ij(trim(cio%path), &
+                this%ngrid(1), this%ngrid(2), &
+                cio%fileid, &
+                layer_indices, layer_names)
+        else
+            err = my_nf90_create_ij(trim(cio%path), &
+                this%ngrid(1), this%ngrid(2), &
+                cio%fileid)
+        end if
+        if (present(vname)) then
+            call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
+                vname, long_name, units, title)
+        end if
     end if
     cio%own_fileid = .true.
 
     ! ---------- Open/Create lo-res file
-    cio%path = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
-    print *,'Writing ',trim(cio%path)
-    if (present(layer_indices)) then
-        err = my_nf90_create_ij(trim(cio%path), &
-            this%ngrid_lr(1), this%ngrid_lr(2), &
-            cio%fileid_lr, dimids, &
-            layer_indices, layer_names)
-    else
-        err = my_nf90_create_ij(trim(cio%path), &
-            this%ngrid_lr(1), this%ngrid_lr(2), &
-            cio%fileid_lr, dimids)
-    end if
+    path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
+    print *,'Writing ',trim(path_name_lr)
+    err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
+    if (err /= NF90_NOERR) then
+        if (present(layer_indices)) then
+            err = my_nf90_create_ij(trim(path_name_lr), &
+                this%ngrid_lr(1), this%ngrid_lr(2), &
+                cio%fileid_lr, &
+                layer_indices, layer_names)
+        else
+            err = my_nf90_create_ij(trim(path_name_lr), &
+                this%ngrid_lr(1), this%ngrid_lr(2), &
+                cio%fileid_lr)
+        end if
 
-    if (present(vname)) then
-        call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
-            vname, long_name, units, title)
+        if (present(vname)) then
+            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
+                vname, long_name, units, title)
+        end if
     end if
     cio%own_fileid_lr = .true.
 
