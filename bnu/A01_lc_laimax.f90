@@ -201,8 +201,6 @@ do ichunk = 1,nchunk(1)
 end do
 end do
 
-end program lc_laimax
-      
-      
-      
+call chunker%close_chunks
 
+end program lc_laimax

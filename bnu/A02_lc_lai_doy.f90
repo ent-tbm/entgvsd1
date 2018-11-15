@@ -243,5 +243,6 @@ do ichunk = 1,nchunk(1)
 enddo    ! ichunk
 enddo    ! jchunk
 
+call chunker%close_chunks
+
 end program lc_lai_doy
-      

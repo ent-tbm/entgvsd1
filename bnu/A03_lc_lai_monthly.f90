@@ -175,7 +175,7 @@ do k = 1,12
     call chunker%nc_create(ioall_out(k), &
         weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
         'nc/', 'EntMM_lc_lai_'//MONTH(k)//'_1kmx1km', 'EntPFT', &
-        'LAI output of A02', 'm2 m-2', 'LAI', &
+        'LAI output of A03', 'm2 m-2', 'LAI', &
         layer_indices, layer_names)
 
     do p=1,20
@@ -241,5 +241,7 @@ do ichunk = 1,nchunk(1)
 
 enddo    ! ichunk
 enddo    ! jchunk
+
+call chunker%close_chunks
 
 end program lc_lai_monthly

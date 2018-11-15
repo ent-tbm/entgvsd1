@@ -80,6 +80,7 @@ type Chunker_t
 contains
     procedure :: init
     procedure :: write_chunks
+    procedure :: clear_writes
     procedure :: read_chunks
     procedure :: move_to
     procedure :: close_chunks
@@ -406,6 +407,19 @@ subroutine write_chunks(this)
     end if
 end subroutine write_chunks
 
+subroutine clear_writes(this)
+    class(Chunker_t), target, intent(IN) :: this
+    character :: rw
+    ! ---------- Locals
+    integer :: i
+    type(ChunkIO_t), pointer :: cio
+
+    do i=1,this%nwrites
+        cio => this%writes(i)%ptr
+        if (allocated(cio%buf)) cio%buf = 0
+    end do
+end subroutine clear_writes
+
 subroutine read_chunks(this)
     class(Chunker_t), target, intent(IN) :: this
     ! ---------- Locals
@@ -454,6 +468,7 @@ subroutine move_to(this, ci, cj)
     this%cur(2) = cj
 
     call this%read_chunks
+    call this%clear_writes
 end subroutine move_to
 
 ! Helper function
@@ -1103,6 +1118,8 @@ subroutine nc_check(this, exename)
             write(17,*) '   ',trim(this%writes(i)%ptr%path),' \'
         end if
     end do
+    write(17,*)
+    write(17,*)
     write(17,*)
     close(17)
 

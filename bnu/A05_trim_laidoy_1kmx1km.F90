@@ -627,7 +627,5 @@ do m = 1,2 ! doy files
     deallocate(chunker)
 end do    ! m=1,2 (for DOY)
 
-
-
 end program convert
 
