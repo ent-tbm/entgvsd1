@@ -12,8 +12,4 @@ find_package(NetCDF4_Fortran REQUIRED)
 include_directories(${NETCDF4_FORTRAN_INCLUDE_DIR})
 list(APPEND EXTERNAL_LIBS ${NETCDF4_FORTRAN_LIBRARY})
 
-find_package(Ncl REQUIRED)
-include_directories(${PATH_INC_NCL})
-list(APPEND EXTERNAL_LIBS ${PATH_LIB_NCL})
-
 add_subdirectory(slib)

@@ -31,7 +31,7 @@ function finish {
 }
 trap finish EXIT
 
-gfortran -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lncl -lentgvsd -lnetcdff
+gfortran -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG -I@CMAKE_INSTALL_PREFIX@/include -I@NETCDF4_FORTRAN_INCLUDE_DIR@ -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source -lentgvsd -lnetcdff
 if [ $? -eq 0 ]; then
     $a_out "$@"
 fi
