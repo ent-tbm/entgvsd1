@@ -13,13 +13,90 @@ implicit none
 private
     public :: Chunker_t,ChunkIO_t,weighting
 
-! Describes how to weight a variable when regridding
+! Controls how variabls are weighted when regridded to low resolution.
+! The variable buf points to a buffer, of same shape as ChunkIO_t
+! buffers, to use for weighting.  The weight used by hntr4 for grid
+! cell (i,j) within the chunk will be:
+!     buf(i,j) * MM + BB
+! This weighting by values not explicitly represented.  For example,
+! suppose a variable needs to be weighted by FLAND (fraction of land),
+! but only FOCEAN (fraction of ocean) is available.  Note that
+! FLAND=1-FOCEAN.  Then the following settings can be used:
+!     buf => FLAND, MM=-1d0, BB=1d0
+! This is conveniently accomplished with the weighting() constructor function:
+!     weighting(FLAND%buf, -1d0, 1d0)
+!
+! In the simplest case, variables are evenly weighted.  This is
+! accomplished by using the %wta1 buffer provided by Chunker_t:
+!     weighting(chunker%wta1, 1d0, 0d0)
+!
+! Frequently, LAI (leaf area index) values are weighted by their
+! corresponding LC (land cover fraction) values.  This pattern
+! is accomplished as follows:
+!    io_var_lc = ...
+!    io_var_lai weighted by:
+!       weighting(io_var_lc%buf, 1d0, 0d0)
+! Unless the LC is computed by the program, weighting in this manner
+! requires that the correct LAI file be opened as an input file.
 type Weighting_t
     real*4, dimension(:,:), pointer :: buf
     real*8 :: MM,BB
 end type Weighting_t
 
 ! ------ One file
+
+! ChunkIO represents a single 2D variable in a NetCDF file; it
+! consists of a NetCDF fileid and varid together, along with a buffer
+! to hold a single chunk of the 2D variable.  In the simple case of
+! one file per variable, this works out "perfectly."  However, EntGVSD
+! writes (and must read) files in three different configurations:
+!
+!   1. One file, one variable.  Typically, the variable will represent
+!      a single plant functional type (PFT), and will be named the same
+!      as the file.
+!   2. One file, many variables.  In this case, each PFT gets its own
+!      variable as before, but they are all stored in a single file.
+!   3. One file, one 3D variable.  All PFTs are stored in a single
+!      file AND in a single variable.  The variable has an extra
+!      dimension, indexed by PFT; eg: MYVAR(i,j,pft) (Fortran-style
+!      indexing).  An additional NetCDF variable is used to associate
+!      PFT indices with PFTs.
+!
+! ChunkIO is able to read/write all three of these formats, using
+! multiple ChunkIO instance.  ChunkIO is flexible in the following
+! ways:
+
+!   * In the simple case, a ChunkIO "owns" a fileid; that is, it
+!     opened the NetCDF file, and it will close it when the ChunkIO
+!     is destroyed.  This is indicated by setting own_fileid=.true.
+!     When a file has more than one 2D variable (case 2 and 3 above),
+!     each ChunkIO representing a 2D variable needs to share the
+!     same fileid, but only one can own it.  If a ChunkIO is using a
+!     NetCDF file opened by another ChunkIO, it is said to "borrow"
+!     that fileid.
+
+!   * The variable *base* indicates the base at which a ChunkIOs
+!     buffer is written into the NetCDF variable on disk.  In cases 1
+!     and 2, this will simply be the (2D) offset of the current chunk
+!     into the larger variable; base will be of length 2,
+!     corresponding with NetCDF variables of rank 2.  In case 3 above,
+!     base will be of length 3, and its third index will be the PFT
+!     index corresponding to the variable represented by the
+!     ChunkIO.
+!
+!   * When multiple 2D variables are contained in a single file (case
+!     2 and 3), it is common to use one ChunkIO to open the file and
+!     own the file handle; and then use one ChunkIO per variable to
+!     provide buffers, etc.  The file-level ChunkIO will does not need
+!     a buffer because it does not correspond to any specific 2D
+!     variable.  In this case, its allocatable variable *buf* will not
+!     be allocated.
+!
+! These principles can be summed up in 5 different types of ChunkIO
+! structures: one for case 1, and two each for cases 2 and 3 (one for
+! the file-level ChunkIO and one for each variable-level ChunkIO).  These
+! cases hold equally whether the files is opened for reading or writing:
+!
 ! Read/Write Cases
 !   1. 1 file, 1 single-layer var, 1 buffer:
 !      => own_fileid=.true.
@@ -40,25 +117,73 @@ end type Weighting_t
 !      => /allocated(buf)
 !   5. 1 file, many single-layer vars, 0 buffers
 !      => own_fileid=.true.
-!      => /allocated(buf)
+!      => .not.allocated(buf)
 
 type ChunkIO_t
     type(Chunker_t), pointer :: chunker
-    character(1024) :: path
+    character(1024) :: path   ! Full pathname of NetCDF file
     character(200) :: leaf    ! Leaf name of file, for identification
+
+    ! NetCDF fileid and varid for the variable to which this ChunkIO corresponds.
+    ! NOTE: varid might be unused if this is a file-level ChunkIO
     integer :: fileid, varid
+
+    ! NetCDF fileid and varid corresponding to the low-resolution
+    ! version of this NetCDF variable.
     integer :: fileid_lr, varid_lr
+
     integer, dimension(:), allocatable :: base   ! Base in NetCDF var where to write our buf
     logical :: own_fileid,own_fileid_lr   ! True if we own the fileid
     real*4, dimension(:,:), allocatable :: buf    ! im,jm,nlayers (1 if just a single value)
-    type(Weighting_t) :: wta
+    type(Weighting_t) :: wta              ! Weighting to use when regridding to low resolution
 end type ChunkIO_t
 
+! Fortran does not allow direct arrays of pointers; so this is how
+! it's done.
 type ChunkIO_ptr
     type(ChunkIO_t), pointer :: ptr
 end type ChunkIO_ptr
 
-! ------ All the files, plus chunking info
+! =========== Chunker_t
+! Container class that keeps track (via ChunkIO pointers) of all files
+! that have been opened for reading or writing.  It uses the following lifecycle:
+
+!   * Initialize via chunker%init()
+!   * Open files for reading and writing via nc_create(), nc_open(), nc_open_gz(), etc.
+!   * Outer loop through chunks:
+!     - move_to() the current chunk.  This loads read buffers with the
+!       given chunk, and clears write buffers.
+!     - Loop through each gridcell, reading/writing in buffers as appropriate.
+!     - write_chunks() to flush write buffers back to NetCDF.
+!   * close_chunks() to close all NetCDF files
+!
+! Different methods are used to open a file, depending on the situation:
+!
+! ======== Reading:
+!
+!    case 1: Open with nc_open() (if the file is the result of a
+!            previous EntGVSD stage); or nc_open_gz() (if the file is
+!            an original gzipped file).
+!
+!    case 2: Open with nc_open().  Don't worry that the same NetCDF
+!            file will be opened multiple times, since they are all
+!            read-only.
+!    case 3: Use one ChunkIO to open the 3D (multi-layer) variable
+!             with nc_open(), setting k=0.  Then use
+!             nc_reuse_var() to associate a ChunkIO and buffer
+!             with each layer.
+!
+! ======== Writing:
+!
+!    case 1: Open with nc_create()
+!
+!    case 2: Open file-level ChunkIO with nc_create(), without setting
+!            the (OPTIONAL) vname parameter.  Then use nc_reuse_file()
+!            to create each variable in that file.
+!
+!    case 3: This format is not preferred; writing it is not currently
+!            supported by EntGVSD.
+!
 type Chunker_t
     integer :: ngrid(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
     integer :: chunk_size(3)    ! Number of fine grid cells in each chunk (im,jm)
@@ -105,6 +230,7 @@ subroutine handle_nf90_error(status, message)
     end if
 end subroutine handle_nf90_error
 
+! Helper for calc_lon_lat()
 subroutine calc_lon_lat_4X5(IM,JM,lon,lat)
     integer,intent(in) :: IM,JM
     real*4,intent(inout) :: lon(IM),lat(JM)
@@ -134,7 +260,7 @@ subroutine calc_lon_lat_4X5(IM,JM,lon,lat)
     END DO
 end subroutine calc_lon_lat_4X5
 
-
+! Helper for calc_lon_lat()
 subroutine calc_lon_lat_2HX2(IM,JM,lon,lat)
     integer,intent(in) :: IM,JM
     real*4,intent(inout) :: lon(IM),lat(JM)
@@ -162,6 +288,14 @@ subroutine calc_lon_lat_2HX2(IM,JM,lon,lat)
 end subroutine calc_lon_lat_2HX2
 
 !************************************************************************
+
+! Calculates the center longitude and latitudes for a grid of a given
+! size.  Used to write appropriate lon and lat NetCDF variables when
+! creating a file.
+! @param IM Number of gridcells in longitude direction
+! @param JM Number of gridcells in latitude direction
+! @param lon (OUT) Longitudinal position of gridcells
+! @param lat (OUT) Latitudinal position of gridcells
 subroutine calc_lon_lat(IM,JM,lon,lat)
     integer,intent(in) :: IM,JM 
     !character(len=*) :: res
@@ -216,7 +350,10 @@ subroutine calc_lon_lat(IM,JM,lon,lat)
 end subroutine calc_lon_lat     
 !************************************************************************
 
-! Constructor for Weighting_t
+! Convenient constructor for Weighting_t
+! The weight for a gridcell will be buf(i,j) * MM + BB
+! @param buf Pointer to chunk-shaped buffer from which weights will be
+!        drawn.
 function weighting(buf,MM,BB) result(wta)
     real*4, dimension(:,:), target :: buf
     real*8 :: MM,BB
@@ -227,8 +364,13 @@ function weighting(buf,MM,BB) result(wta)
     wta%BB = BB
 end function weighting
 
-! @param im,jm Size of overall grid
-! @param max_reads, max_writes Maximum number of read/write files
+! Initializes the Chunker container.
+! @param im,jm Size of high-resolution grid.
+! @param im_lr,jm_lr Size of low-resolution grid
+! @param max_reads Maximum number of read ChunkIOs that can be
+!        associated with this Chunker.
+! @param max_writes Maximum number of write ChunkIOs that can be
+!        associated with this Chunker.
 subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
@@ -273,10 +415,16 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
 
 end subroutine init
 
-! Helper function
+! Helper function: sets startB, the start of the current chunk in the
+! NetCDF file.  This assumes that cur has already been set (by move_to()).
+! It is used from inside read_chunks() and write_chunks().
+! @param cio File for which to set startB.  Uses only cio%base
+! @param startB_hr (OUT) startB for high-resolution file
+! @param start_lr (OUT; OPTIONAL) startB for low-resolution file.
+!        start_lr is not used when called from read_chunks()
 subroutine setup_startB(this, cio, startB_hr, startB_lr)
     type(Chunker_t) :: this
-    type(ChunkIO_t), target :: cio
+    type(ChunkIO_t), intent(IN) :: cio
     integer, dimension(:), allocatable :: startB_hr
     integer, dimension(:), allocatable, OPTIONAL :: startB_lr
     ! ------- Locals
@@ -305,7 +453,9 @@ subroutine setup_startB(this, cio, startB_hr, startB_lr)
     end if
 end subroutine setup_startB
 
-
+! For all files open for writing, writes the buffer to disk.
+! This method writes the main (high-res) file.  It then regrids
+! the chunk to low resolution and writes the low-res file as well.
 subroutine write_chunks(this)
     class(Chunker_t), target, intent(IN) :: this
     character :: rw
@@ -343,7 +493,6 @@ subroutine write_chunks(this)
         ! Skip ChunkIO_t that are just for keeping a file open
         if (.not.allocated(cio%buf)) cycle
 
-        call setup_startB(this, cio, startB_hr, startB_lr)
         call setup_startB(this, cio, startB_hr, startB_lr)
 
         ! Store the hi-res chunk
@@ -407,6 +556,7 @@ subroutine write_chunks(this)
     end if
 end subroutine write_chunks
 
+! Clears (sets to zero) the buffers for the files open for writing
 subroutine clear_writes(this)
     class(Chunker_t), target, intent(IN) :: this
     character :: rw
@@ -420,6 +570,7 @@ subroutine clear_writes(this)
     end do
 end subroutine clear_writes
 
+! Reads the current chunk out of the files open for reading
 subroutine read_chunks(this)
     class(Chunker_t), target, intent(IN) :: this
     ! ---------- Locals
@@ -457,7 +608,9 @@ subroutine read_chunks(this)
 end subroutine read_chunks
 
 
-! Sets the NetCDF start and count arrays used to read/write a single chunk
+! Sets the current chunk; then reads the files open for reading, and
+! clears the buffers of the files open for writing.
+! @param ci,cj Index of the current chunk (1-based indexing)
 subroutine move_to(this, ci, cj)
     class(Chunker_t), target :: this
     integer, intent(IN) :: ci,cj    ! Index of chunk
@@ -471,7 +624,7 @@ subroutine move_to(this, ci, cj)
     call this%clear_writes
 end subroutine move_to
 
-! Helper function
+! Helper function: closes an array of ChunkIOs
 subroutine close0(this, files, nfiles)
     type(Chunker_t) :: this
     type(ChunkIO_ptr), dimension(:) :: files
@@ -505,6 +658,7 @@ subroutine close0(this, files, nfiles)
     end if
 end subroutine close0
 
+! Close all open NetCDF files
 subroutine close_chunks(this)
     class(Chunker_t) :: this
     ! ---------------- Locals
@@ -515,8 +669,9 @@ end subroutine close_chunks
 ! -------------------------------------------------------------------
 
 ! ===========================================================================
-! Helper functions for creating
+! Helper functions for creating NetCDF files
 
+! Do-nothing wrapper around nf90_inq_varid
 integer function my_nf90_inq_varid(ncidin,varname,varid)
   use netcdf
   integer,intent(in) :: ncidin
@@ -529,6 +684,7 @@ integer function my_nf90_inq_varid(ncidin,varname,varid)
   my_nf90_inq_varid = status
 end function my_nf90_inq_varid
 
+! Obtains a varid by name, then stores a value in that NetCDF variable.
 integer function my_nf90_inq_put_var_real32(ncidout, &
      varname,varid,varreal32)
 use netcdf
@@ -546,7 +702,14 @@ end function my_nf90_inq_put_var_real32
 
 
 ! Opens/Creates just the file and dimensions
-! Returns dim IDs
+! Normally sets up for a file with one or more 2D (single layer) variables
+! To create a file that will hold 3D (multi layer) variables, set
+! layer_indices and layer_names.  This will then create additional
+! metadata variables describing the layers in the 3D files.
+! @param IM,JM Resolution of file to create.
+! @param ncid (OUT) Returns the open NetCDF file handle here
+! @param layer_indices (OPTIONAL) The PFT number of each layer
+! @param layer_names (OPTIONAL) The descriptive name of each layer
 function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) result(status)
 
     character(len=*), intent(in) :: filename
@@ -594,15 +757,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
       res = '500m'
     endif
 
-!    inquire(FILE=trim(path_name), EXIST=exist)
-!    if (exist) then
-
-!    status=nf90_open(filename, NF90_WRITE, ncid) !Get ncid if file exists
-!    if (status == NF90_NOERR) then
-!         write(0,*) 'Netcdf file was previously created. ',trim(filename)
-!        return
-!    end if
-
     ! netcdf output file needs to be created
     write(0,*) 'Creating ',trim(filename)
     status=nf90_create(filename, NF90_HDF5, ncid)
@@ -622,8 +776,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
         status=nf90_def_var(ncid, 'layer_indices', NF90_INT, idlayer_indices)
         if (status /= NF90_NOERR) return
 
-!        strdimids(1)=size(layer_names,1)
-!        strdimids(2)=nlayers
         status=nf90_def_var(ncid, 'layer_names', NF90_CHAR, strdimids, idlayer_names)
         if (status /= NF90_NOERR) return
 
@@ -681,11 +833,14 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
         if (status /= NF90_NOERR) return
     end if
 
-!    status=nf90_close(ncid)
-!    if (status /= NF90_NOERR) return
 end function my_nf90_create_ij
 
 ! Lookup dimension IDs and sizes by name
+! @param ncid Open NetCDF file
+! @param dim_names Names of dimensions to look up
+! @param dim_ids OUT: NetCDF dimension IDs of dimensions specified in dim_names
+! @param dim_size OUT: NetCDF length of dimensions specified in dim_names
+! @return NetCDF error code, or NF90_NOERR
 function nc_lookup_dims(ncid, dim_names, dim_ids, dim_sizes) result(err)
     integer, intent(IN) :: ncid
     character(len=*), dimension(:), intent(IN) :: dim_names
@@ -711,6 +866,14 @@ end function nc_lookup_dims
 
 
 ! Creates a variable in an already-open NetCDF file with dimensions defined
+! @param ncid (IN) NetCDF file handle
+! @param varid (OUT) NetCDF handle of new variable
+! @param nlayers (IN) Number of layers in the variable; if 1, then
+!        simple 2D variable will be created.
+! @param varname Name of variable to create
+! @param long_name Metadata
+! @param units Metadata: UDUnits2 unit specification
+! @param title Metadata
 subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, &
     varname,long_name,units,title)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
@@ -788,10 +951,13 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, &
     call handle_nf90_error(status, 'my_nf90_create_Ent')
 end subroutine my_nf90_create_Ent_single
 
-! Helper function
+! Helper function: back-end to top-level functions that create ChunkIOs
+! @param cio The ChunkIO to finish initializing
+! @param rw 'r' if this is a read ChunkIO; 'w' for write
+! @param alloc Should a buffer be allocated?
 subroutine finish_cio_init(this, cio, rw, alloc)
     type(Chunker_t), target :: this
-    type(ChunkIO_t), target :: cio
+    type(ChunkIO_t) :: cio
     character :: rw
     logical :: alloc
 
@@ -826,6 +992,11 @@ end subroutine finish_cio_init
 ! Opening for writing
 
 ! Point the ChunkIO_t to a single layer of an existing multi-layer file
+! @param cio0 The existing open ChunkIO with a multi-layer (3D) variable
+! @param cio ChunkIO to initialize
+! @param base Base index in the 3D variable for this ChunkIO's 2D variable
+! @param rw 'r' for read, 'w' for write
+! @param wta Weighting to use when writing this variable (doesn't matter for read)
 subroutine nc_reuse_var(this, cio0, cio, base, rw, wta)
     class(Chunker_t) :: this
     type(ChunkIO_t), intent(IN) :: cio0
@@ -852,7 +1023,14 @@ subroutine nc_reuse_var(this, cio0, cio, base, rw, wta)
     call finish_cio_init(this, cio, rw, .true.)
 end subroutine nc_reuse_var
 
-! Create a new single-layer variable in an existing file
+! Create a new single-layer variable in an existing file (for writing)
+! @param cio0 Open handle for existing file
+! @param cio ChunkIO to initialize
+! @param vname Name of variable to create
+! @param long_name Metadata
+! @param units Metadata: UDUnits2 unit specification
+! @param title Metadata
+! @param wta Weighting to use when writing this variable
 subroutine nc_reuse_file(this, cio0, cio, &
     vname,long_name,units,title, wta)
 
@@ -886,6 +1064,16 @@ end subroutine nc_reuse_file
 
 ! Creates a NetCDF file with a single variable.
 ! The variable may be single layer or multi-layer.
+! @param cio ChunkIO to initialize
+! @param wta Weighting to use when writing this variable
+! @param Directory in which to create file (relative to LC_LAI_ENT_DIR)
+! @param leaf Filename to create, NOT INCLUDING .nc extension (eg: 'foo')
+! @param (OPTIONAL) vname Name of variable to create
+! @param (OPTIONAL) long_name Metadata
+! @param (OPTIONAL) units Metadata: UDUnits2 unit specification
+! @param (OPTIONAL) title Metadata
+! @param (OPTIONAL) layer_indices (OPTIONAL) The PFT number of each layer
+! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
 subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
@@ -980,7 +1168,12 @@ end subroutine nc_create
 
 
 ! ===========================================================================
-! Unzips a gzipped file in iroot, and makes it availabe in oroot
+! Helper: Unzips a gzipped file in iroot, and makes it availabe in oroot
+! @param iroot Original root dir of (read-only) compressed file
+! @param oroot Destination root dir of uncompressed file
+! @param dir Directory (relative to iroot) to find unzipped file
+! @param leaf Filename to create, INCLUDING .nc extension (eg: 'foo.nc')
+! @return NetCDF error code
 function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
     type(Chunker_t) :: this
     character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
@@ -1013,6 +1206,16 @@ function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
 
 end function gunzip_input_file
 
+! Open a (possibly gzipped) original input file for reading
+! @param cio ChunkIO to initialize
+! @param iroot Original root dir of (read-only) compressed file
+! @param oroot Destination root dir of uncompressed file
+! @param dir Directory (relative to iroot) to find unzipped file
+! @param leaf Filename to create, INCLUDING .nc extension (eg: 'foo.nc')
+! @param vname Name of variable to open within the file
+! @param k Index of layer within variable to associated with this ChunkIO
+!        If the NetCDF variable is 2D, then set k=1
+!        If you don't want a buffer allocated, then set k=0
 subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname, k)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
@@ -1039,6 +1242,16 @@ subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname, k)
 
 end subroutine nc_open_gz
 
+! Open a (possibly gzipped) original input file for reading
+! @param cio ChunkIO to initialize
+! @param iroot Original root dir of (read-only) compressed file
+! @param oroot Destination root dir of uncompressed file
+! @param dir Directory (relative to iroot) to find unzipped file
+! @param leaf Filename to create, INCLUDING .nc extension (eg: 'foo.nc')
+! @param vname Name of variable to open within the file
+! @param k Index of layer within variable to associated with this ChunkIO
+!        If the NetCDF variable is 2D, then set k=1
+!        If you don't want a buffer allocated, then set k=0
 subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
@@ -1093,6 +1306,9 @@ end subroutine nc_open
 
 
 
+! Once all files have been opened, call this function.  If any errors
+! were encountered opening files for reading or writing, nc_check() will
+! indicate so and exit.
 subroutine nc_check(this, exename)
     class(Chunker_t) :: this
     character(len=*) :: exename
