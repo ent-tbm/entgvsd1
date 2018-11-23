@@ -17,6 +17,11 @@ set(entgvsd_SOURCES
 
 set(AT "@")
 
+# ----- Determine lib directories from found libraries
+get_filename_component(NETCDF4_FORTRAN_LIB_DIR ${NETCDF4_FORTRAN_LIBRARY} DIRECTORY)
+get_filename_component(NETCDF4_C_LIB_DIR ${NETCDF4_C_LIBRARY} DIRECTORY)
+
+
 # ----- Write CMake-derived paths into place accessible to C++/Fortran
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config.hpp.in
