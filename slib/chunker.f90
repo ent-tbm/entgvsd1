@@ -957,7 +957,7 @@ end subroutine my_nf90_create_Ent_single
 ! @param alloc Should a buffer be allocated?
 subroutine finish_cio_init(this, cio, rw, alloc)
     type(Chunker_t), target :: this
-    type(ChunkIO_t) :: cio
+    type(ChunkIO_t), target :: cio
     character :: rw
     logical :: alloc
 
@@ -1320,7 +1320,7 @@ subroutine nc_check(this, exename)
         stop -1
     end if
 
-    open(17, FILE=trim(exename//'.mk'))
+    open(17, FILE=trim(LC_LAI_ENT_DIR//exename//'.mk'))
     write(17,'(AA)') trim(exename),'_INPUTS = \'
     do i=1,this%nreads
         if (this%reads(i)%ptr%own_fileid) then
