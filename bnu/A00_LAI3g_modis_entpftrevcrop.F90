@@ -10,19 +10,32 @@
 !     Monfreda to partition MODIS total crop cover into C3, C4, and growth form.
 !     8/26/13 - Added FIX_MODIS29_SOUTHPOLE_BUG to fix error in MODIS29.
 !     9/5/13 - Added FIX_MODIS29_NORTHPOLE_BUG to fix error in MODIS29.
-!     
-!     g95 -fno-second-underscore -O2 -fendian=big -cpp2 modis_entpftrevcrop.f
-!     Optimization -O2 may be screwing up pointer memory management.
+
+! This produces the following checksums:
+!
+!# Checksom on original MODIS LAI??  LC??
+!io_checksum = EntMM29lc_lai_for_1kmx1km
+!   sum_{1...MODIS28 LCLASS} partit_io(k) + io_waterpart
+!    partit_io = 2004/PART_SUB_1km_2004_geo.PARTITION/...
+!    io_waterpart = <same>/water
+!
+!io_checksum2 = EntLandcover_check_sum_Jun_1kmx1km
+!    sum_{1...ENTPFTNUM} ENTPFTLC(k) + WATERLC
+!    NOTE: ENTPFTLC(k) == contents of file entpft_io(k) = EntMM_lc_laimax_1kmx1km/...LAI
+!
+!io_checksum3 = EntLAI_check_sum_Jun_1kmx1km
+!    sum_{1..ENTPFTNUM} ENTPFTLC(k) * ENTPFTLAIMAX(k) + WATERLC*WATERLAI
+!
+!# Number of non-zero PFTs in each gridcell
+!io_npftgrid = EntPFTs_percell_check_sum_Jun_1kmx1km
+!
+!# LC of dominant PFT
+!io_dompftlc = EntdominantPFT_LC_check_sum_Jun_1kmx1km
+!
+!# Index of dominant PFT
+!io_dompft = EntdominantPFT_check_sum_Jun_1kmx1mk
 
 
-!     ulimit -s unlimited
-!     module purge
-!     module load other/comp/gcc-4.9.2-sp3
-!     module load other/ncl-6.3.0
-!     gfortran -c -cpp -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -I/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/include arrayutil.f
-!     gfortran -c -cpp -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -I/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/include A01_modis_entpftrevcrop.f
-!     gfortran -o myExe arrayutil.o A01_modis_entpftrevcrop.o -L/usr/local/other/SLES11.3/netcdf/3.6.3/gcc-4.9.2-sp3/lib -lnetcdf
-!     ./myExe
 
 
 module modis_ent_mod
@@ -764,6 +777,7 @@ call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
      'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km', &
      'EntLandcover_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
+
 
 !     WATER LAI
 call chunker%nc_create(io_waterlai, weighting(io_waterout%buf,1d0,0d0), &
