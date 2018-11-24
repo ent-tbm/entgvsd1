@@ -896,7 +896,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, &
 
     ! Use existing variable if it exists
 
-    status = nf90_redef(ncid)
+    status = nf90_redef(ncid)   ! Put into define mode
     call handle_nf90_error(status, 'nc_redef '//trim(varname))
 
     ! Lookup dimensions by string name
@@ -1132,10 +1132,10 @@ layer_indices, layer_names)
                 this%ngrid(1), this%ngrid(2), &
                 cio%fileid)
         end if
-        if (present(vname)) then
-            call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
-                vname, long_name, units, title)
-        end if
+    end if
+    if (present(vname)) then
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
+            vname, long_name, units, title)
     end if
     cio%own_fileid = .true.
 
@@ -1155,10 +1155,10 @@ layer_indices, layer_names)
                 cio%fileid_lr)
         end if
 
-        if (present(vname)) then
-            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
-                vname, long_name, units, title)
-        end if
+    end if
+    if (present(vname)) then
+        call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
+            vname, long_name, units, title)
     end if
     cio%own_fileid_lr = .true.
 
