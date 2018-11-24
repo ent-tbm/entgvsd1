@@ -1273,12 +1273,6 @@ do ichunk = 1,nchunk(1)
          entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
          LAYEROUT = ENTPFTLAIMAX(k)
       end do  ! k=1,ENTPFTNUM
-#endif
-
-#ifdef COMPUTE_LAI
-      TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' ' &
-           //trim(RESOUT)
-!     write(*,*) TITLECHECK
       io_checksum3%buf(ic,jc)=CHECKSUM
 #endif
 
