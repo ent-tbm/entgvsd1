@@ -74,6 +74,18 @@ Locations can be identified as follows:
    NETCDF4_C_ROOT=$NETCDF4_FORTRAN_ROOT
 
 
+Download EntGVSD Source
+-----------------------
+
+Download the EntGVSD source from the Simplex git server.  One must be
+connected to the NASA network for this to work (replace
+``<ndcusername>`` with your NDC username):
+
+.. code-block:: bash
+
+   git clone <ndcusername>@simplex.giss.nasa.gov:/giss/gitrepo/entgvsd1.git -b develop
+   cd entgvsd1
+
 Run CMake
 ---------
 
