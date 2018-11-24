@@ -675,7 +675,7 @@ type(ChunkIO_t) :: io_Tcold, io_Pdry, io_Pmave, io_TCinave
 type(ChunkIO_t) :: io_CMedit
 type(ChunkIO_t) :: io_waterpart,io_checksum,io_waterout
 type(ChunkIO_t) :: io_wateroutA,io_checksum2,io_waterlai
-type(ChunkIO_t) :: io_checksum3,io_npftgrid,io_dompftlc
+type(ChunkIO_t) :: io_npftgrid,io_dompftlc
 type(ChunkIO_t) :: io_dompft
 
 real*4 :: WATERLAI
@@ -685,6 +685,7 @@ type(ChunkIO_t) :: entpft_io(19)
 #ifdef COMPUTE_LAI
 type(ChunkIO_t) :: entpftlaimax_io(19)
 type(ChunkIO_t) :: entpftlaimaxcheck_io(19)
+type(ChunkIO_t) :: io_checksum3
 #endif
 
 RESOUT = '1kmx1km'
@@ -784,12 +785,6 @@ call chunker%nc_create(io_waterlai, weighting(io_waterout%buf,1d0,0d0), &
       'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water', &
     'LAI', '1', TITLE_CHECKSUM)
 
-!     CHECKSUM
-call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
-    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
-    'EntLAI_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
-
 !     NPFTGRID
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km', &
@@ -851,6 +846,13 @@ do k=1,ENTPFTNUM
          trim(EntPFT_files2(k)), &
        EntPFT_title(k), '1', TITLE_CHECKSUM, 1)
 enddo
+
+!     CHECKSUM
+call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
+    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
+    'EntLAI_check_sum_Jun_1kmx1km', &
+    'checksum', '1', TITLE_CHECKSUM)
+
 #endif
 
 ! Quit if we had any problems opening files
@@ -1263,22 +1265,22 @@ do ichunk = 1,nchunk(1)
 
 !     write(*,*) err, 'Wrote WATERLAI'
 
+#ifdef COMPUTE_LAI
       CHECKSUM = CHECKSUM + WATERLC*WATERLAI
       do k=1,ENTPFTNUM
          CHECKSUM = CHECKSUM + &
               ENTPFTLC(k)*ENTPFTLAIMAX(k)
-#ifdef COMPUTE_LAI
          entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+         LAYEROUT = ENTPFTLAIMAX(k)
+      end do  ! k=1,ENTPFTNUM
 #endif
 
-         LAYEROUT = ENTPFTLAIMAX(k)
-
-      end do  ! k=1,ENTPFTNUM
-
+#ifdef COMPUTE_LAI
       TITLECHECK = 'Ent LAI check sum '//MONTH(6)//' ' &
            //trim(RESOUT)
 !     write(*,*) TITLECHECK
       io_checksum3%buf(ic,jc)=CHECKSUM
+#endif
 
 !     write(*,*) err, 'Wrote ', TITLECHECK
 
