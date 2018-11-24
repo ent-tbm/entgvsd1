@@ -33,7 +33,7 @@ trap finish EXIT
 
 export LD_LIBRARY_PATH=
 
-gfortran -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG \
+@CMAKE_Fortran_COMPILER@ -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG \
     -I@CMAKE_INSTALL_PREFIX@/include \
     -I@NETCDF4_FORTRAN_INCLUDE_DIR@ \
     -mcmodel=medium -fconvert=big-endian -O2 -fno-range-check -o $a_out $fortran_source \

@@ -128,12 +128,20 @@ find, this needs to be addressed by telling CMake where to find them
 
 .. code-block:: bash
 
-   cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
-   FC=`which gfortran` cmake .. -DCMAKE_INSTALL_PREFIX:PATH=. -DNETCDF4_C_ROOT=<...> -DNETCDF4_FORTRAN_ROOT=<...>
+   FC=`which gfortran` cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd` -DNETCDF4_C_ROOT=<...> -DNETCDF4_FORTRAN_ROOT=<...>
 
 CMake is a standard and widely-used system, with abundant on-line
 documentation and help, and every CMake-based package works about the
 same.  See `here <https://cmake.org>`_ for more information.
+
+.. note::
+
+   The following command worked when using MacPorts and GCC 7:
+
+   .. code-block:: bash
+
+      FC=gfortran-mp-7 cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
+
 
 Build And Install
 -----------------
