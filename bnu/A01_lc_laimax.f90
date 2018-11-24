@@ -129,13 +129,15 @@ type(Chunker_t) :: chunker
 type(ChunkIO_t) :: io_lai
 type(ChunkIO_t) :: io_lc(20)
 ! Output files
-type(ChunkIO_t) :: io_out(20)
+type(ChunkIO_t) :: io_laiout(20), io_err(20)
+type(ChunkIO_t) :: io_checksum_lclai
 
 integer :: start2d(2),count2d(2)
 integer :: startX(1),startY(1),countX(1),countY(1)
 
 call chunker%init(IM, JM, IMH*2,JMH*2, 100, 120)
 
+! ================= Input Files
 !      LAI max
 call chunker%nc_open_gz(io_lai, DATA_DIR, DATA_INPUT, &
     'LAI/', 'global_30s_2004_max.nc', 'lai', 1)
@@ -148,14 +150,27 @@ do k = 1,20
         trim(EntPFT_files2(k)), 1)
 enddo
 
-!     Files out
+! ================= Output Files
 do k = 1,20
-    call chunker%nc_create(io_out(k),  weighting(io_lc(k)%buf,1d0,0d0), &
+    call chunker%nc_create(io_laiout(k),  weighting(io_lc(k)%buf,1d0,0d0), &
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
         trim(EntPFT_files2(k)), &
         EntPFT_title(k), 'm2 m-2', TITLE_LAI)
+
+    call chunker%nc_create(io_err(k),  weighting(io_lc(k)%buf,1d0,0d0), &
+        'EntMM_lc_laimax_1kmx1km/', &
+        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_err', &
+        trim(EntPFT_files2(k)), &
+        EntPFT_title(k), 'm2 m-2', TITLE_LAI)
 enddo
+
+call chunker%nc_create(io_checksum_lclai,  weighting(chunker%wta1,1d0,0d0), &
+    'EntMM_lc_laimax_1kmx1km/checksum_lclai', &
+    'lclai', &
+    'Sum of LC*LAI', 'm2 m-2', 'Sum of LC*LAI')
+
+
 
 !-----------------------------------------------------------------
 !     Loop for every pft and  grid point
@@ -186,12 +201,19 @@ do ichunk = 1,nchunk(1)
         ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
         jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
+        ! Compute <original lai> - sum(LC*LAI), should equal 0
+        io_checksum_lclai%buf(ic,jc) = io_lai%buf(ic,jc)
+
         do p = 1,NUMLAYERSLC
-            !write(*,*) 'processing ',EntPFT_files2(p), p
-
             !**   LAI data, lon lat from LAI file                
+            if ((io_lc(p)%buf(ic,jc) <= 0).or.(io_lc(p)%buf(ic,jc) == undef)) then
+                io_laiout(p)%buf(ic,jc) = 0d0
+            else
+                io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
+            end if
 
-            io_out(p)%buf(ic,jc) = io_lc(p)%buf(ic,jc) * io_lai%buf(ic,jc)
+            io_checksum_lclai%buf(ic,jc) = io_checksum_lclai%buf(ic,jc) - &
+                io_lc(p)%buf(ic,jc) * io_laiout(p)%buf(ic,jc)
         end do
     end do
     end do
@@ -204,3 +226,8 @@ end do
 call chunker%close_chunks
 
 end program lc_laimax
+
+Checksums: sum weighted LAI compare to total LAI, should compare to original LAI file.
+Checksums:
+ (b) checksum LAI * LC should equal original LAI
+
