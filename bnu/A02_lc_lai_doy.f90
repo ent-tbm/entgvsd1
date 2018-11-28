@@ -104,7 +104,8 @@ real*4 :: OFFIA, DLATAH, DLATA, OFFIB, DLATB, DATMIS
 character*256 :: filelai,fileout,filepft,filewater
 character*20 :: inqvarin
 
-real*4 :: LCIN_in, LAI, lai_lc
+real*4 :: LCIN_in, LAI, laiout
+real*8 :: CHECKSUM
 
 integer :: i, j, k, f, p, z
 
@@ -119,7 +120,7 @@ type(ChunkIO_t), target :: io_lai(ndoy),io_water
 type(ChunkIO_t), target :: io_pft(19)
 ! Output files
 type(ChunkIO_t) :: ioall_out(ndoy), io_out(NUMLAYERSLC,ndoy)
-
+type(ChunkIO_t) :: io_checksum_lclai(2)
 
 !integer :: startA(1),startB(2),countA(1),countB(2)
 !integer :: startX(1),startY(1),countX(1),countY(1)
@@ -130,7 +131,7 @@ character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
 real*4, dimension(:,:), pointer :: wbuf
 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
 !* Input file.
 
@@ -165,6 +166,7 @@ do k = 1,19
         trim(EntPFT_files2(k)),1)
 end do
 
+
 ! Cons up layer names and indices to write into our output
 layer_indices(1) = 0
 layer_names(1) = '0_water'
@@ -191,6 +193,11 @@ do k = 1,2
             (/1,1,p/), 'w', weighting(wbuf, 1d0,0d0))
     end do
 
+    call chunker%nc_create(io_checksum_lclai(k), &
+        weighting(chunker%wta1,1d0,0d0), &
+        'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
+        'lclai_'//DOY(k), &
+        'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
 enddo
 
 call chunker%nc_check('A02_lc_lai_doy')
@@ -220,8 +227,9 @@ do ichunk = 1,nchunk(1)
 !**   LAI data ------------------------------------------------------------------------------
 
         do k = 1,2
-        LAI = io_lai(k)%buf(ic,jc)
-        
+            LAI = io_lai(k)%buf(ic,jc)
+
+            CHECKSUM = 0d0        
             do p = 1,NUMLAYERSLC
 
 
@@ -231,9 +239,18 @@ do ichunk = 1,nchunk(1)
                     LCIN_in = io_pft(p-1)%buf(ic,jc)
                 end if
 
-                lai_lc = LCIN_in*LAI
-                io_out(p,k)%buf(ic,jc) = lai_lc
+                if ((LCIN_in <= 0).or.(LCIN_in == undef)) then
+                    laiout = 0d0
+                else
+                    laiout = LAI
+                end if
+
+                CHECKSUM = CHECKSUM + LCIN_in * laiout
+                io_out(p,k)%buf(ic,jc) = laiout
             end do ! p=1,NUMLAYERSLC
+            CHECKSUM = CHECKSUM - LAI
+
+            io_checksum_lclai(k)%buf(ic,jc) = CHECKSUM
         end do   ! k=1,2
     end do    ! ic
     end do    !jc

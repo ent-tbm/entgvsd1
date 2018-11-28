@@ -111,8 +111,9 @@ real*4 :: OFFIA, DLATAH, DLATA, OFFIB, DLATB, DATMIS
 character*256 :: filelai,fileout,filepft,filewater
 character*20 :: inqvarin
 
-real*4 :: LCIN_in, LAI, lai_lc
+real*4 :: LCIN_in, LAI, lai_lc, laiout
 real*4 :: lon,lat
+real*8 :: CHECKSUM
 
 integer :: i, j, k, m, f, p, z
 
@@ -124,12 +125,14 @@ type(ChunkIO_t), target :: io_lai(12),io_water
 type(ChunkIO_t), target :: io_pft(19)
 ! Output files
 type(ChunkIO_t) :: ioall_out(12), io_out(NUMLAYERSLC,12)   ! (PFT, month)
+type(ChunkIO_t) :: io_checksum_lclai(12),io_checksum_lclai_allmonths
+
 integer :: layer_indices(20)
 character*17 :: layer_names(20)
 integer :: ichunk,jchunk,ic,jc
 real*4, dimension(:,:), pointer :: wbuf
 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 320)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 320)
 
 !* Input file.
 
@@ -142,6 +145,7 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 320)
 !      err = NF_INQ_VARID(laifileid,'lon',varidx)
 !      err = NF_INQ_VARID(laifileid,'lat',varidy)
 
+! ===================== Input Files
 !     Monthly LAI
 do k = 1,12
     call chunker%nc_open_gz(io_lai(k), DATA_DIR, DATA_INPUT, &
@@ -170,7 +174,7 @@ do k=1,19
     layer_names(k+1) = EntPFT_files1(k) // EntPFT_files2(k)
 end do
 
-!     Fileout
+! =================== Output Files
 do k = 1,12
     call chunker%nc_create(ioall_out(k), &
         weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
@@ -189,7 +193,23 @@ do k = 1,12
             (/1,1,p/), 'w', weighting(wbuf,1d0,0d0))
     end do
 
+    call chunker%nc_create(io_checksum_lclai(k), &
+        weighting(chunker%wta1,1d0,0d0), &
+        'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
+        'lclai_'//MONTH(k), &
+        'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
+
 enddo
+
+call chunker%nc_create(io_checksum_lclai_allmonths, &
+    weighting(chunker%wta1,1d0,0d0), &
+    'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
+    'lclai_allmonths', &
+    'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
+
+
+
+
 call chunker%nc_check('A03_lc_lai_monthly')
 #ifdef JUST_DEPENDENCIES
 stop 0
@@ -215,11 +235,12 @@ do ichunk = 1,nchunk(1)
     do ic = 1,chunker%chunk_size(1)
 
         !**   LAI data --------------------------------
+        io_checksum_lclai_allmonths%buf(ic,jc) = 0.0
         do k = 1,12
 
             !**   lon lat from LAI file                
             LAI = io_lai(k)%buf(ic,jc)
-         
+            CHECKSUM = 0d0
             do p = 1,NUMLAYERSLC
 
                 if (p.eq.1) then
@@ -228,11 +249,21 @@ do ichunk = 1,nchunk(1)
                     LCIN_in = io_pft(p-1)%buf(ic,jc)
                 end if
 
-                lai_lc = LCIN_in*LAI
+                if ((LCIN_in <= 0).or.(LCIN_in == undef)) then
+                    laiout = 0d0
+                else
+                    laiout = LAI
+                end if
 
-                lai_lc = LCIN_in*LAI
-                io_out(p,k)%buf(ic,jc) = lai_lc
+                CHECKSUM = CHECKSUM + LCIN_in * laiout
+                io_out(p,k)%buf(ic,jc) = laiout
             end do ! p=1,NUMLAYERSLC
+
+            CHECKSUM = CHECKSUM - LAI
+
+            io_checksum_lclai(k)%buf(ic,jc) = CHECKSUM
+            io_checksum_lclai_allmonths%buf(ic,jc) = &
+                io_checksum_lclai_allmonths%buf(ic,jc) + CHECKSUM
         end do   ! k=1,2
     end do    ! ic
     end do    !jc
