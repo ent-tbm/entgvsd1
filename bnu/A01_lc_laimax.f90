@@ -120,6 +120,9 @@ character*20 :: inqvarin
 real*4 :: LC(IM,JM), LAI(IM,JM), lailc(IM,JM)
 real*4 :: lon(IM),lat(JM)
 
+
+real*8 :: CHECKSUM
+
 integer :: ichunk,jchunk,ic,jc,ii,jj,k, f, p, z
 
 integer :: err,dimidx,dimidy
@@ -135,7 +138,7 @@ type(ChunkIO_t) :: io_checksum_lclai
 integer :: start2d(2),count2d(2)
 integer :: startX(1),startY(1),countX(1),countY(1)
 
-call chunker%init(IM, JM, IMH*2,JMH*2, 100, 120)
+call chunker%init(IM, JM, IMH*2,JMH*2, 'qxq', 100, 120)
 
 ! ================= Input Files
 !      LAI max
@@ -166,9 +169,9 @@ do k = 1,20
 enddo
 
 call chunker%nc_create(io_checksum_lclai,  weighting(chunker%wta1,1d0,0d0), &
-    'EntMM_lc_laimax_1kmx1km/checksum_lclai', &
+    'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
     'lclai', &
-    'Sum of LC*LAI', 'm2 m-2', 'Sum of LC*LAI')
+    'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
 
 
 
@@ -202,8 +205,7 @@ do ichunk = 1,nchunk(1)
         jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
         ! Compute <original lai> - sum(LC*LAI), should equal 0
-        io_checksum_lclai%buf(ic,jc) = io_lai%buf(ic,jc)
-
+        CHECKSUM = 0d0
         do p = 1,NUMLAYERSLC
             !**   LAI data, lon lat from LAI file                
             if ((io_lc(p)%buf(ic,jc) <= 0).or.(io_lc(p)%buf(ic,jc) == undef)) then
@@ -212,9 +214,12 @@ do ichunk = 1,nchunk(1)
                 io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
             end if
 
-            io_checksum_lclai%buf(ic,jc) = io_checksum_lclai%buf(ic,jc) - &
+            CHECKSUM = CHECKSUM + &
                 io_lc(p)%buf(ic,jc) * io_laiout(p)%buf(ic,jc)
         end do
+        CHECKSUM = CHECKSUM - io_lai%buf(ic,jc)
+        io_checksum_lclai%buf(ic,jc) = CHECKSUM
+
     end do
     end do
 
@@ -226,8 +231,3 @@ end do
 call chunker%close_chunks
 
 end program lc_laimax
-
-Checksums: sum weighted LAI compare to total LAI, should compare to original LAI file.
-Checksums:
- (b) checksum LAI * LC should equal original LAI
-
