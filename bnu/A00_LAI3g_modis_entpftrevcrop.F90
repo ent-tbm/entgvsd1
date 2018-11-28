@@ -694,7 +694,7 @@ RESOUT = '1kmx1km'
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
 !     LAI
 call chunker%nc_open_gz(io_lai, &
@@ -785,23 +785,38 @@ call chunker%nc_create(io_waterlai, weighting(io_waterout%buf,1d0,0d0), &
       'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water', &
     'LAI', '1', TITLE_CHECKSUM)
 
+!      ENTPFTLC
+do k = 1,ENTPFTNUM
+   call chunker%nc_create(entpft_io(k), weighting(io_waterout%buf,-1d0,1d0), &    ! LC land-weighted &
+        'EntMM_lc_laimax_1kmx1km/', &
+        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc', &
+        trim(EntPFT_files2(k)), &
+        EntPFT_title(k), '1', TITLE_LC)
+enddo
+
+! ------------------------------------------------------------
+! Low-res version computed specially for these
 !     NPFTGRID
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km', &
      'EntPFTs_percell_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
+io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC
 call chunker%nc_create(io_dompftlc, weighting(io_waterout%buf,-1d0,1d0), &  ! LC is Land-weighted &
     'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
      'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
+io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km', &
      'EntdominantPFT_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
+io_dompft%regrid_lr => nop_regrid_lr
+! ------------------------------------------------------------
 
 !     MODIS PARTITION FILES
 do k = 1,LCLASS
@@ -812,18 +827,6 @@ do k = 1,LCLASS
             trim(partit_num(k))//'.nc', &
         'PARTITION'//trim(partit(k)), 1)    ! var name
 enddo
-
-!      ENTPFTLC
-do k = 1,ENTPFTNUM
-   call chunker%nc_create(entpft_io(k), weighting(io_waterout%buf,-1d0,1d0), &    ! LC land-weighted &
-        'EntMM_lc_laimax_1kmx1km/', &
-        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc', &
-        trim(EntPFT_files2(k)), &
-        EntPFT_title(k), '1', TITLE_LC)
-
-
-enddo
-
 
 #ifdef COMPUTE_LAI
 !     ENTPFTLAIMAX
@@ -1405,5 +1408,48 @@ end do
 
 call chunker%close_chunks
 
+
+! ----------------------- Functions inside the program
+CONTAINS
+
+! Accumulate stats on low-res variables
+subroutine accum_lr_stats(this, startB, startB_lr)
+    class(ChunkIO_t), intent(INOUT) :: this
+    integer, dimension(:), intent(IN) :: startB, startB_lr
+    ! -------- Locals
+    integer :: jc, ic    ! Index WITHIN current chunk (LR)
+    integer :: k
+    real*4 :: lc
+    integer :: NPFTGRID, DOMPFT
+    real*4 :: DOMPFTLC
+
+    ! Loop through low-res chunk
+    do jc = 1,this%chunker%chunk_size_lr(2)
+    do ic = 1,this%chunker%chunk_size_lr(1)
+
+        NPFTGRID = 0
+        DOMPFT = 0
+        DOMPFTLC = 0.0
+        do k=1,ENTPFTNUM
+            lc = entpft_io(k)%buf_lr(ic,jc) 
+            if ((lc == 0).or.(lc==undef)) cycle
+
+            ! Count number of PFTs in the gridcell
+            NPFTGRID = NPFTGRID + 1.
+
+            !     Update dominant pft LC and number.
+            if (lc.gt.DOMPFTLC) then
+                DOMPFTLC = lc
+                DOMPFT = k
+            endif
+        end do   !k=1,ENTPFTNUM
+
+        io_npftgrid%buf_lr(ic,jc) = NPFTGRID
+        io_dompft%buf_lr(ic,jc) = DOMPFT
+        io_dompftlc%buf_lr(ic,jc) = DOMPFTLC
+
+    end do
+    end do
+end subroutine accum_lr_stats
 
 end program modis_ent
