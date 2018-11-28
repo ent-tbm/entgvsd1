@@ -2,6 +2,7 @@ module chunker_mod
 
     use iso_c_binding
     use entgvsd_config_mod
+    use ent_labels_mod
     use, intrinsic :: iso_fortran_env
     use netcdf
     use paths_mod
@@ -12,6 +13,7 @@ module chunker_mod
 implicit none
 private
     public :: Chunker_t,ChunkIO_t,weighting
+    public :: nop_regrid_lr, default_regrid_lr
 
 ! Controls how variabls are weighted when regridded to low resolution.
 ! The variable buf points to a buffer, of same shape as ChunkIO_t
@@ -119,7 +121,7 @@ end type Weighting_t
 !      => own_fileid=.true.
 !      => .not.allocated(buf)
 
-type ChunkIO_t
+type :: ChunkIO_t
     type(Chunker_t), pointer :: chunker
     character(1024) :: path   ! Full pathname of NetCDF file
     character(200) :: leaf    ! Leaf name of file, for identification
@@ -131,12 +133,27 @@ type ChunkIO_t
     ! NetCDF fileid and varid corresponding to the low-resolution
     ! version of this NetCDF variable.
     integer :: fileid_lr, varid_lr
+    procedure(RegridLR_fn), pointer :: regrid_lr
 
     integer, dimension(:), allocatable :: base   ! Base in NetCDF var where to write our buf
     logical :: own_fileid,own_fileid_lr   ! True if we own the fileid
-    real*4, dimension(:,:), allocatable :: buf    ! im,jm,nlayers (1 if just a single value)
+    real*4, dimension(:,:), allocatable :: buf    ! im,jm
+    real*4, dimension(:,:), allocatable :: buf_lr  ! low-res version of buf
     type(Weighting_t) :: wta              ! Weighting to use when regridding to low resolution
+
 end type ChunkIO_t
+
+! Function pointer type used in ChunkIO_t (most go after ChunkIO_t)
+abstract interface
+    subroutine RegridLR_fn(this, startB, startB_lr)
+        import :: ChunkIO_t
+        class(ChunkIO_t), intent(INOUT) :: this
+        integer, dimension(:), intent(IN) :: startB, startB_lr
+    end subroutine RegridLR_fn
+end interface
+
+
+
 
 ! Fortran does not allow direct arrays of pointers; so this is how
 ! it's done.
@@ -191,6 +208,8 @@ type Chunker_t
 
     ! Same of a low-res version of the chunker...
     integer :: ngrid_lr(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
+    type(HntrCalc_t) :: hntr_lr    ! Preparation to regrid
+    character(20) :: lr_suffix     ! Suffix to add to lr filenames (eg: 1x1, hxh, etc)
     integer :: chunk_size_lr(3)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur_lr(chunk_rank)     ! Index of current chunk
 
@@ -371,13 +390,15 @@ end function weighting
 !        associated with this Chunker.
 ! @param max_writes Maximum number of write ChunkIOs that can be
 !        associated with this Chunker.
-subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
+subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
     integer, intent(IN) :: im_lr,jm_lr
+    character(*) :: lr_suffix     ! Suffix to add to lr filenames (eg: 1x1, hxh, etc)
     integer :: max_reads, max_writes
     ! ------ Locals
     integer :: i
+    type(HntrSpec_t) :: spec_hr, spec_lr
 
     ! Set up chunk parameters
     this%ngrid(1) = im
@@ -395,10 +416,16 @@ subroutine init(this, im, jm, im_lr, jm_lr, max_reads, max_writes)
     ! Set up chunk parameters (lr)
     this%ngrid_lr(1) = im_lr
     this%ngrid_lr(2) = jm_lr
+    this%lr_suffix = lr_suffix
     do i=1,chunk_rank
         this%chunk_size_lr(i) = this%ngrid_lr(i) / nchunk(i)
     end do
     this%chunk_size_lr(3)=1
+
+    ! Hntr stuff
+    spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
+    spec_lr = hntr_spec(this%chunk_size_lr(1), this%ngrid_lr(2), 0d0, 180d0*60d0 / this%ngrid_lr(2))
+    this%hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)
 
     ! Allocate space to refer to managed chunk buffers
     this%max_reads = max_reads
@@ -453,6 +480,30 @@ subroutine setup_startB(this, cio, startB_hr, startB_lr)
     end if
 end subroutine setup_startB
 
+
+subroutine nop_regrid_lr(this, startB, startB_lr)
+    class(ChunkIO_t), intent(INOUT) :: this
+    integer, dimension(:), intent(IN) :: startB, startB_lr
+end subroutine nop_regrid_lr
+
+subroutine default_regrid_lr(this, startB, startB_lr)
+    class(ChunkIO_t), intent(INOUT) :: this
+    integer, dimension(:), intent(IN) :: startB, startB_lr
+    ! -------- Locals
+    integer :: ic,jc
+
+    call this%chunker%hntr_lr%regrid4(this%buf_lr, this%buf, this%wta%buf,this%wta%MM,this%wta%BB, &
+        startB_lr(2), this%chunker%chunk_size_lr(2))
+
+    ! Convert zeros to NaN in regridded data (for plotting)
+    do jc=1,this%chunker%chunk_size_lr(2)
+    do ic=1,this%chunker%chunk_size_lr(1)
+        if (this%buf_lr(ic,jc) == 0) this%buf_lr(ic,jc) = undef
+    end do
+    end do
+
+end subroutine default_regrid_lr
+
 ! For all files open for writing, writes the buffer to disk.
 ! This method writes the main (high-res) file.  It then regrids
 ! the chunk to low resolution and writes the low-res file as well.
@@ -464,25 +515,12 @@ subroutine write_chunks(this)
     integer, allocatable :: startB_hr(:), startB_lr(:)
     integer :: nerr
     integer :: err
-    real*4, dimension(:,:), allocatable :: buf_lr  ! Buffer for lo-res version of chunk
-    type(HntrSpec_t) :: spec_hr, spec_lr
-    type(HntrCalc_t) :: hntr
     character(128) :: vname
     integer :: xtype,ndims
     integer :: dimids(3)
     integer :: len
     type(ChunkIO_t), pointer :: cio
-    integer :: ic,jc
-    real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
     real*4, dimension(:,:), pointer :: my_wta
-
-    ! Hntr stuff
-    spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
-    spec_lr = hntr_spec(this%chunk_size_lr(1), this%ngrid_lr(2), 0d0, 180d0*60d0 / this%ngrid_lr(2))
-    hntr = hntr_calc(spec_lr, spec_hr, 0d0)
-
-    ! Buffers used to write
-    allocate(buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
 
     write(*, '(A I3 I3)', advance="no") 'Writing Chunk',this%cur
 
@@ -506,20 +544,12 @@ subroutine write_chunks(this)
         err=nf90_sync(cio%fileid)
 
         ! Regrid chunk to low-res
-        call hntr%regrid4(buf_lr, cio%buf, cio%wta%buf,cio%wta%MM,cio%wta%BB, &
-            startB_lr(2), this%chunk_size_lr(2))
-
-        ! Convert zeros to NaN in regridded data (for plotting)
-        do jc=1,this%chunk_size_lr(2)
-        do ic=1,this%chunk_size_lr(1)
-            if (buf_lr(ic,jc) == 0) buf_lr(ic,jc) = undef
-        end do
-        end do
+        call cio%regrid_lr(startB_hr, startB_lr)
         
         ! Store the lo-res chunk
         err=NF90_PUT_VAR( &
            cio%fileid_lr, cio%varid_lr, &
-           buf_lr, startB_lr, this%chunk_size_lr)
+           cio%buf_lr, startB_lr, this%chunk_size_lr)
         if (err /= NF90_NOERR) then
             write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),cio%varid_lr,err
             err= nf90_inquire_variable( &
@@ -527,7 +557,7 @@ subroutine write_chunks(this)
                 cio%varid_lr, vname, xtype,ndims,dimids)
             ! More error output...
             write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
-            write(ERROR_UNIT,*) lbound(buf_lr),ubound(buf_lr),startB_lr,this%chunk_size_lr
+            write(ERROR_UNIT,*) lbound(cio%buf_lr),ubound(cio%buf_lr),startB_lr,this%chunk_size_lr
             err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
             write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
             err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
@@ -536,7 +566,7 @@ subroutine write_chunks(this)
             nerr = nerr + 1
         end if
 
-!        err=nf90_sync(cio%fileid_lr)
+        ! err=nf90_sync(cio%fileid_lr)
 
         ! Display progress
         write(*,'(A1)',advance="no") '.'
@@ -962,11 +992,14 @@ subroutine finish_cio_init(this, cio, rw, alloc)
     logical :: alloc
 
     cio%chunker => this
+    cio%regrid_lr => default_regrid_lr
 
     ! Allocate write buffer (Hi res)
     if (alloc) then
         if (allocated(cio%buf)) deallocate(cio%buf)
         allocate(cio%buf(this%chunk_size(1), this%chunk_size(2)))
+        if (allocated(cio%buf_lr)) deallocate(cio%buf_lr)
+        allocate(cio%buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
     end if
 
     ! Store pointer to this cio
@@ -1140,7 +1173,7 @@ layer_indices, layer_names)
     cio%own_fileid = .true.
 
     ! ---------- Open/Create lo-res file
-    path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_lr.nc'
+    path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
     print *,'Writing ',trim(path_name_lr)
     err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
     if (err /= NF90_NOERR) then

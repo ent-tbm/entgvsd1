@@ -19,7 +19,7 @@ character(*), parameter :: TITLE_LAI = &
     'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
 character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
-real*4, parameter :: undef = -1.e30
+real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
 character*3, parameter :: MONTH(12) = &
      (/ &
      "Jan","Feb","Mar","Apr","May","Jun", &
