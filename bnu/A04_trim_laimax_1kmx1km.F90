@@ -1,3 +1,7 @@
+Trims off tiny fractions and preserves total LAI for the gridcell.
+Alters the cover amount if the LAI is smaller than the main one.
+If LAI is a little biger, might increase.
+
 
 ! This program converts EntMM 17 PFTs to Ent 16 PFTs + bright + dark.
 ! Converts lc, laimax, monthly lc and lai, and Simard heights.
@@ -52,25 +56,8 @@ implicit none
 integer, parameter :: IMH = 720 !long at 0.5 degrees
 integer, parameter :: JMH = 360 !lat at 0.5 degrees
 
-! define input file resolution
-!* .5x.5
-!integer, parameter :: IM=720, JM=360, KM=20
-!character*(*), parameter :: res_in="05x05"
-!character*(*), parameter :: res_in_int="720x360"
-!* 1x1
-!integer, parameter :: IM=360, JM=180, KM=20
-!character*(*), parameter :: res_in="1x1"
-!character*(*), parameter :: res_in_int="360x180"
-!* 2.5x2
 integer, parameter :: IM1km=43200, JM1km=21600
 integer, parameter :: IM=1, JM=1, KM=20
-!      integer, parameter :: IM=1440, JM=720, KM=20
-!      integer, parameter :: IM=144, JM=90, KM=20
-!      character*(*), parameter :: res_in="2.5x2"
-!      character*(*), parameter :: res_in="144x90"
-!      character*(*), parameter :: res_in_int="144x90"
-!      character*(*), parameter :: res_in="1440x720"
-!      character*(*), parameter :: res_in_int="1440x720"
 character*(*), parameter :: res_in="1kmx1km"
 character*(*), parameter :: res_out="1kmx1km"
 
@@ -95,13 +82,24 @@ character*80 :: title_tmp,title12(12,KM),titlehn(2,KM)
 integer, parameter :: IMn=IM, JMn=JM
 
 ! Input values, max, monthly
-real*4 vfn(KM), lain(KM), area
+real*4 vfn(KM)    ! io_lcin
+real*4 lain(KM)   ! io_laiin
+real*4 hmn(KM)     ! io_simard
+real*4 :: bs_brightratio   !are soil brightratio
+! Renumbered input values
+real*4 vfc(KM)    ! = vfn = io_lcin
+real*4 laic(KM)   ! = lain = io_lcaiin
+real*4 hm(KM)     ! = hmn = io_simard
+
+
+
+real*4 area
 real*4 a
 real*4 vfnm(12,KM),lainm(12,KM),aream
 real*4 am
-real*4 hmn(KM),hsdn(KM)
+real*4 hsdn(KM)
 ! Converted values
-real*4 vfc(KM), laic(KM), dvf, s
+real*4 dvf, s
 character*80 :: titlec(18)
 ! Converted values - monthly
 real*4 vfm(12,KM), laim(12,KM)
@@ -109,7 +107,7 @@ real*4 laimnc(KM), vfmnc(KM),laicropnc(12)
 
 character*80 :: titlem(12,18)
 ! Converted values - heights
-real*4 vfh(KM),hm(KM), hsd(KM)
+real*4 vfh(KM), hsd(KM)
 
 character*80 :: titleh(2,18) !1-h, 2-hsd
 ! Converted values - crop ext 
@@ -125,10 +123,10 @@ character*80 :: title_xx="xx"
 character*80 :: title_yy="yy"
 character*80 :: titlefoo
 
-! bs_brightratio = bare soil brightratio
-real*4 :: bs_brightratio, vfc_tmp
+real*4 :: vfc_tmp
 
 !integer i, j, 
+integer :: ii,jj   ! Position in overall NetCDF variable
 integer :: k, io, in, jn, maxpft, kx, m
 real*8 lat
 !real*4 foolc(IM1km,JM1km),foolai(IM1km,JM1km)
@@ -145,7 +143,7 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
 
 ! lcmax
 do k=1,20
-USE the land cover we computed in a previous step!!!!!!
+    ! USE the land cover we computed in a previous step!!!!!!
     ! TODO: LAI3g????
     ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
     call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
@@ -165,6 +163,14 @@ enddo
 ! Bare Soil Brightness Ratio
 call chunker%nc_open_gz(io_bs, LAI3G_DIR, LAI3G_INPUT, &
     'lc_lai_ent/', 'bs_brightratio.nc', 'bs_brightratio', 1)
+
+! Our processed Simard heights
+call chunker%nc_open(ioall_simard, LC_LAI_ENT_DIR, &
+    'height/', 'EntGVSDmosaic17_height_1kmx1km_lai3g.nc', &
+    'SimardHeights', 0)
+do k=1,19
+    call chunker%nc_reuse_var(ioall_simard, io_simard(k), (/1,1,k/), 'r')
+end do
 
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
@@ -214,24 +220,28 @@ do ichunk = 1,nchunk(1)
     do jc = 1,chunker%chunk_size(2)
     do ic = 1,chunker%chunk_size(1)
 
-        do k = 1,KM
-            lcin = io_lcin(k)%buf(ic,jc)
-            vfn(k)=lcin
+       ! Compute overall NetCDF index of current cell
+       ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
+       jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
-            ! get lai max
-            laiin = io_laiin(k)%buf(ic,jc)
-            lain(k) = laiin         
+        do k = 1,KM   ! KM=20
+            vfn(k) = io_lcin(k)%buf(ic,jc)   ! LC
+            lain(k) = io_laiin(k)%buf(ic,jc)   ! LAImax
         end do
 
-        ! height file - insert dummy WATER layer at beginning toi avoid
+        ! height file - insert dummy WATER layer at beginning to avoid
         ! confusion in numbering with vfc and vfm.
+        hmn(1) = 0
+        do k=1,19
+            hmn(k+1) = io_simard(k)%buf(ic,jc)
+        end do
 
         ! get bs bright ratio
         bs_brightratio = io_bs%buf(ic,jc)
 
         ! Check if mismatch lc or lai values (one is zero and the other not)
         ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
-      
+
 
         !* Convert to GISS 16 pfts format
 
@@ -239,17 +249,7 @@ do ichunk = 1,nchunk(1)
         !  lc laimax
         vfc(1:14) = vfn(2:15)
         laic(1:14) = lain(2:15)
-        ! titlec(1:14) = title(2:15)
-        !  lc lai monthly
-        !            do m=1,12
-        !               titlem(m,1:14) = title12(m,2:15)
-        !            enddo
-        !  heights
-        !            vfh(1:14) = vfn(2:15) !Should be the same cover from MODIS.
-        !            hm(1:14) = hmn(2:15) 
-        !            hsd(1:14) = hsdn(2:15)
-        !            titleh(1,1:14) = titlehn(1,2:15)
-        !            titleh(2,1:14) = titlehn(2,2:15)
+        hm(1:14) = hmn(2:15) 
       
         ! crops
 
@@ -266,45 +266,39 @@ do ichunk = 1,nchunk(1)
             vfc(15) = 0.
         endif
         !heights - DO NOT AVERAGE. PRESERVE HEIGHTS. LAI will scale density
-        !            a = vfn(16) + vfn(17) !input cover
-        !            if ( a > 0. ) then
-        !               hm(i,j,15) = (vfn(i,j,16)*hmn(i,j,16)
-        !     &              + vfn(i,j,17)*hmn(i,j,17)) / a
-        !               if ((hmn(16)>0.).and.(hmn(17)>0.)) then
-                    !average if both exist
-        !                  hm(15) = (vfn(16)*hmn(16)
-        !     &                 + vfn(17)*hmn(17)) / a
-        !               else
-                    !don't average if only one or none exists
-        !                  hm(15) = max(hmn(16),hmn(17))
-        !               endif
-                 !Sum of squares for sd.  Don't weight if only one or less exists
-        !               if ((hmn(16)>0.).and.(hmn(17)>0.)) then
-        !                  hsd(15) = sqrt((vfn(16)*hsdn(16)**2
-        !     &                 + vfn(17)*hsdn(17)**2) / a)
-        !               else
-        !                  hsd(15) = max(hsd(16),hsd(17))
-        !               endif
-        !               vfh(15) = a
-        !            else
-        !               hm(15) = 0.
-        !               hsd(15) = 0.
-        !               vfh(15) = 0.
-        !            endif
-              
-        !            write(*,*) "Re-doing crops.."
-        !            titlec(15) = title(16)
-        !            titlec(15)(1:18) = "15 - crops herb   "
-        !            do m=1,12
-        !               titlem(m,15) = title12(m,16)
-        !               titlem(m,15)(1:18) = "15 - crops herb   "
-        !            enddo
-        !            titleh(1,15) = titlehn(1,16)
-        !            titleh(2,15) = titlehn(2,16)
-        !           titleh(1,15)(1:18) = "15 - crops herb   "
-        !            titleh(2,15)(1:18) = "15 - crops herb   "
-              
-        !            write(*,*) titlec(15)
+        a = vfn(16) + vfn(17) !input cover
+        if ( a > 0. ) then
+            hm(i,j,15) = (vfn(i,j,16)*hmn(i,j,16) + vfn(i,j,17)*hmn(i,j,17)) / a
+        
+            if ((hmn(16)>0.).and.(hmn(17)>0.)) then
+                !average if both exist
+                hm(15) = (vfn(16)*hmn(16) + vfn(17)*hmn(17)) / a
+            else
+                !don't average if only one or none exists
+                hm(15) = max(hmn(16),hmn(17))
+            endif
+
+            vfh(15) = a
+        else
+            hm(15) = 0.
+            hsd(15) = 0.
+            vfh(15) = 0.
+        endif
+
+        !write(*,*) "Re-doing crops.."
+        !titlec(15) = title(16)
+        !titlec(15)(1:18) = "15 - crops herb   "
+        !do m=1,12
+        !   titlem(m,15) = title12(m,16)
+        !   titlem(m,15)(1:18) = "15 - crops herb   "
+        !enddo
+        !titleh(1,15) = titlehn(1,16)
+        !titleh(2,15) = titlehn(2,16)
+        !titleh(1,15)(1:18) = "15 - crops herb   "
+        !titleh(2,15)(1:18) = "15 - crops herb   "
+
+             
+        ! write(*,*) titlec(15)
         ! crops woody
         vfc(16) = vfn(18)
         laic(16) = lain(18)
@@ -322,7 +316,7 @@ do ichunk = 1,nchunk(1)
         !               titlem(m,17) = title12(m,20)
         !            enddo
         !            vfh(17) = vfn(20)
-        !            hm(17) = hmn(20)
+        hm(17) = hmn(20)
         !            hsd(17) = hsdn(20)
         !            titleh(1,17) = titlehn(1,20)
         !            titleh(2,17) = titlehn(2,20)
@@ -343,7 +337,7 @@ do ichunk = 1,nchunk(1)
 
         !            titlec(15:17) = title(16:18)
         !            vfh(15:17) = vfn(16:18)
-        !            hm(15:17) = hmn(16:18)
+        hm(15:17) = hmn(16:18)
         !            titleh(1,15:17) = titlehn(1,16:18)
         !            titleh(2,15:17) = titlehn(2,16:18)
         ! bare soil
@@ -352,7 +346,7 @@ do ichunk = 1,nchunk(1)
         !            titlec(18) = title(20)
         !            titlem(:,18) = title12(:,20)
         !            vfh(18) = vfh(20)
-        !            hm(18) = hmn(20)
+        hm(18) = hmn(20)
         !            hsd(18) = hsd(20)
         !            titleh(1,18) = titlehn(1,20)
         !            titleh(2,18) = titlehn(2,20)
@@ -508,6 +502,7 @@ do ichunk = 1,nchunk(1)
         !            enddo
         !            write(*,*) 'titlem:'
 
+#if 0
 do k=1,18
 val = laic(k)
 if ((val /= 0) .and. (abs(val) > 1e27)) then
@@ -521,6 +516,7 @@ This is getting set to 0 or undef; which is then averaged down.
 !Logic should be: if maximum LAI doesn't exist but there's a land cover type there, then that's a problem.  Should spit out an error message.  I've got this type of vegetation here but it never has any leaves.  That means classification inconsistency between MODIS LAI and cover products.  We should really spit out an error map (by PFT)... these are all the grid cells where there is no LAI but there is this vegetation type.  Thing to do would be to set it to 0.  It's this cover that never has an LAI.  But accumulate a map for all points for each PFT where cover and LAI are inconsistent.
 
 laic is max. LAI.  This cover only does MAX LAI and cover.  It takes cover and max LAI, and assigns LAI to the cover.  Before this program, laimax is generated by cover type.  (It was done in A01... that program should have produced the error maps and checked for inconsistencies).
+#endif
 
         do k=1,18
             if (laic(k).le.0.) then

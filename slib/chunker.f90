@@ -1036,11 +1036,11 @@ subroutine nc_reuse_var(this, cio0, cio, base, rw, wta)
     type(ChunkIO_t), target :: cio
     integer, dimension(:), intent(IN) :: base
     character, intent(in) :: rw
-    type(Weighting_t), intent(IN) :: wta
+    type(Weighting_t), intent(IN), OPTIONAL :: wta
 
     ! Where to start other instance, in case it's a multi...
     cio%base = base
-    cio%wta = wta
+    if present(wta) cio%wta = wta
 
     ! ---- Re-use fileIDs from another instance
     cio%leaf = cio0%leaf
@@ -1227,7 +1227,7 @@ function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
 
     ! cdl = ENTGVSD_PROJECT_SOURCE_DIR//"/templates/"//cdl_leaf
     ! cmd = NCGEN//' -k nc4 -o '//ofname//' '//trim(cdl)
-    cmd = ENTGVSD_INSTALL_PREFIX//'/entgvsd_link_input '//trim(iroot)//' '//trim(oroot)//' '//trim(dir)//' '//trim(leaf)
+    cmd = ENTGVSD_INSTALL_PREFIX//'/bin/entgvsd_link_input '//trim(iroot)//' '//trim(oroot)//' '//trim(dir)//' '//trim(leaf)
     print *,trim(cmd)
 
     call execute_command_line(cmd, .true., err)
