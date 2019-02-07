@@ -113,7 +113,7 @@ do p = 1,ENTPFTNUM
 end do
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A03_veg_heights')
+call chunker%nc_check('A01b_veg_heights')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif
