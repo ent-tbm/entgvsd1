@@ -17,7 +17,8 @@ implicit none
 !***************************************************
 !*      PREFIX OF ENTPFTS FILES FOR LC AND LAI     *
 !***************************************************
-character*3, parameter :: EntPFT_files1(20) = &
+integer, parameter :: NUMLAYERSLC = 20  ! ONLY LC LAYERS
+character*3, parameter :: EntPFT_files1(NUMLAYERSLC) = &
      (/ &
      '   ', &
      '01_', &
@@ -44,7 +45,7 @@ character*3, parameter :: EntPFT_files1(20) = &
 !***************************************************
 !*      SUFIX OF ENTPFTS FILES FOR LC AND LAI     *
 !***************************************************
-character*14, parameter :: EntPFT_files2(20) = &
+character*14, parameter :: EntPFT_files2(NUMLAYERSLC) = &
      (/ &
      'water         ', &
      'ever_br_early ', &
@@ -68,7 +69,7 @@ character*14, parameter :: EntPFT_files2(20) = &
      'bare_sparse   ' &
      /)
 
-    character*50, parameter :: EntPFT_title(20) = &
+    character*50, parameter :: EntPFT_title(NUMLAYERSLC) = &
          (/ &
          '0 - water                                       ', &
          '1 - evergreen broadleaf early successional      ', &
@@ -106,7 +107,6 @@ integer, parameter :: latin = YM
 
 integer, parameter :: NUMLAYERS = 40  !## UPDATE ME
 
-integer, parameter :: NUMLAYERSLC = 20  ! ONLY LC LAYERS
 integer, parameter :: NUMTITLES = 40  ! ALL LC AND LAI TITLES
 
 character*50 :: PATHin, PATHout
@@ -130,9 +130,9 @@ integer :: err,dimidx,dimidy
 type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t) :: io_lai
-type(ChunkIO_t) :: io_lc(20)
+type(ChunkIO_t) :: io_lc(NUMLAYERSLC)
 ! Output files
-type(ChunkIO_t) :: io_laiout(20), io_err(20)
+type(ChunkIO_t) :: io_laiout(NUMLAYERSLC), io_err(NUMLAYERSLC)
 type(ChunkIO_t) :: io_checksum_lclai
 
 integer :: start2d(2),count2d(2)
@@ -147,14 +147,14 @@ call chunker%nc_open_gz(io_lai, DATA_DIR, DATA_INPUT, &
 
 
 ! --- ENTPFTLC: Open outputs written by A00
-do k = 1,20
+do k = 1,NUMLAYERSLC
     call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc.nc', &
         trim(EntPFT_files2(k)), 1)
 enddo
 
 ! ================= Output Files
-do k = 1,20
+do k = 1,NUMLAYERSLC
     call chunker%nc_create(io_laiout(k),  weighting(io_lc(k)%buf,1d0,0d0), &
         'EntMM_lc_laimax_1kmx1km/', &
         trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
@@ -207,11 +207,22 @@ do ichunk = 1,nchunk(1)
         ! Compute <original lai> - sum(LC*LAI), should equal 0
         CHECKSUM = 0d0
         do p = 1,NUMLAYERSLC
-            !**   LAI data, lon lat from LAI file                
-            if ((io_lc(p)%buf(ic,jc) <= 0).or.(io_lc(p)%buf(ic,jc) == undef)) then
+
+            io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
+
+            ! ------ INVARIANT: Ensure that (laimax==0) == (lc==0)
+            if ((io_lc(p)%buf(ic,jc) <= 0d0).or.(io_lc(p)%buf(ic,jc) == undef)) then
+                ! If lc==0, fix LAImax=0 (enforce the invariant)
                 io_laiout(p)%buf(ic,jc) = 0d0
             else
-                io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
+                ! Problem if lc>0 bu LAImax==0
+                if (io_laiout%buf(ic,jc)==0) then
+                    if (io_laiout(p)%buf(ic,jc) > 0d0) then
+                        io_err(p) = io_lc(p)%buf(ic,jc)
+                        ! Enforce the invariant, after reporting error
+                        io_lc(p)%buf(ic,jc) = 0d0
+                    end if
+                end if
             end if
 
             CHECKSUM = CHECKSUM + &
