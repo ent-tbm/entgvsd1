@@ -1,46 +1,15 @@
-Trims off tiny fractions and preserves total LAI for the gridcell.
-Alters the cover amount if the LAI is smaller than the main one.
-If LAI is a little biger, might increase.
-
-
-! This program converts EntMM 17 PFTs to Ent 16 PFTs + bright + dark.
-! Converts lc, laimax, monthly lc and lai, and Simard heights.
-! Original from trim_EntMM_monthly_noht.f, which did not do heights.
-! It does NOT interpolate from fine to coarse grid -- this should be done
-!  prior to using this program, so input and output are the same resolution.
-! To change input/output resolution edit lines below 
-! "define input file resolution" and "new (interpolated) values"
-! To combine C3 and C4 crops: #define COMBINE_CROPS_C3_C4
-! 9/12/13 Fixed bright/dark soil:  need to do partitioning after
-!         each step of trim/scale/no crops to account for new
-!         bare soil cover added, especially in crop grid cells.
-! 1/16/13 Added subroutine replace_crops for nocrops to replace cover and LAI 
-!         of crops with dominant natural veg in grid cell. If no natural veg,
-!         then searches adjacent grid cells.
-!         Added subroutine fill_crops for _ext version of crop LAI, to fill
-!         in crop LAI in some grid cells that have no crops in MODIS cover
-!         but may have crop cover in Pongratz historical cover.  Called once
-!         for single grid extension.  Can be called again for further filling.
-! 3/17/14 Added ext1 files at end for lai max, lai monthly, and height, by
-!         replacing 15-crops in laic, laim, hm, and hsd with the ext values for
-!         crops.
-! Compile the program with:
+! Trims off tiny fractions and preserves total LAI for the gridcell.
+! Alters the cover amount if the LAI is smaller than the main one.
+! If LAI is a little biger, might increase.
 !
-! ifort -cpp convert_VEG5.f -convert big_endian
-!
+! I don't see where the program is doing that.
+
+! A04 only creates the pure dataset.  It does NOT trim.
 
 #define COMBINE_CROPS_C3_C4
+
+! 
 #define SPLIT_BARE_SOIL
-
-
-
-!------------------------------------------------------------------------
-!------------------------------------------------------------------------
-
-!      subroutine omp_set_num_threads(num_threads)
-!      integer, intent(in) :: num_threads
-
-!------------------------------------------------------------------------
 
 program convert
 
@@ -88,7 +57,7 @@ real*4 hmn(KM)     ! io_simard
 real*4 :: bs_brightratio   !are soil brightratio
 ! Renumbered input values
 real*4 vfc(KM)    ! = vfn = io_lcin
-real*4 laic(KM)   ! = lain = io_lcaiin
+real*4 laic(18)   ! = lain = io_lcaiin
 real*4 hm(KM)     ! = hmn = io_simard
 
 
@@ -243,6 +212,7 @@ do ichunk = 1,nchunk(1)
         ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
 
 
+! =============== Convert to GISS 16 pfts format
         !* Convert to GISS 16 pfts format
 
         ! first 14 pfts though grass are the same, ignore WATER
@@ -293,6 +263,9 @@ do ichunk = 1,nchunk(1)
         N_VEG = 17
         N_BARE = 18
 #endif
+
+
+! =========== Data inspection (debugging printout)
       
         ! check if "bare" soil is not bare
         vf_xx = 0.
@@ -300,13 +273,15 @@ do ichunk = 1,nchunk(1)
             vf_xx = vfc(N_BARE)
             lai_xx = laic(N_BARE)
         endif
-      
+
         vf_yy = 0.
         if( vfc(10) > .1 .and. laic(10) < .5 ) then
             vf_yy = vfc(10)
             lai_yy = laic(10)
         endif
-      
+
+
+     
         vf_yy = 0.
         lai_yy = 0.
         if( vfc(N_BARE) > .1 .and. laic(10) < .01  &
@@ -318,19 +293,29 @@ do ichunk = 1,nchunk(1)
             lai_yy = laic(N_BARE)
         end if
 
+! =========== Partition bare/sparse LAI to actual LC types.
+! Bare sparse has no vegetation type assigned to it; but it has
+! non-zero LAI that must be treated.  So we take that non-zero LAI
+! over sparse veg, assign it to the most likely vegetation type.  Then
+! we have to assign a cover fraction for the type, and updated cover
+! fraction for now completely bare soil.
+
         !!!! do conversions !!!!
-      
+
         ! convert sparse veg to cold adapted shrub 9 if present
         if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
            .and. laic(N_BARE) > .0 &
            .and. vfc(9) > .0 ) &
         then
+            ! Preserve total LAI, but put it all in that vegetation
+            ! type.
             call convert_vf(vfc(N_BARE), laic(N_BARE), &
                 vfc(9), laic(9), laic(9) )
         endif
       
         s = sum(vfc(1:N_BARE))
 
+! Same kind of conversion for arid shrub
         ! convert sparse veg to arid adapted shrub 10 if present
         if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
            .and. laic(N_BARE) > .0 &
@@ -365,6 +350,9 @@ do ichunk = 1,nchunk(1)
                 vfc(10), laic(10), .0 )
         end if
 
+! Takes bare soil that's now created to bare soil.
+! Splits it into bright and dark fractions, so we get the
+! proper albedo.
 #ifdef SPLIT_BARE_SOIL
         call split_bare_soil(N_VEG,KM,N_BARE &
             ,bs_brightratio,vfc,laic, &
@@ -387,6 +375,7 @@ This is getting set to 0 or undef; which is then averaged down.
         do k=1,18
             if (laic(k).le.0.) then
                 laic(k) = undef
+Is this needed, with chunker???
             end if
         end do
 

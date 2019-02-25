@@ -146,6 +146,11 @@ do ichunk = 1,nchunk(1)
                 ! Lookup what the height should be
                 SHEIGHT = io_sim%buf(ic,jc)
                 OHEIGHT = SHEIGHT * heights_form(1,p) + heights_form(2,p)
+
+                ! TODO: Better way: inverse weighted average of
+                ! gridcell height, so tree heights are taller.  So
+                ! average gridcell height (averaging over non-zero
+                ! LC's) is same as the Simard height.
             end if
 
             io_out(p)%buf(ic,jc) = OHEIGHT
@@ -153,6 +158,7 @@ do ichunk = 1,nchunk(1)
 
     end do    ! ic
     end do    ! jc
+
 
     
     call chunker%write_chunks

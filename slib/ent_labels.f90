@@ -118,8 +118,3 @@ end subroutine init_ent_labels
 
 
 end module ent_labels_mod
-
-
-
-
-

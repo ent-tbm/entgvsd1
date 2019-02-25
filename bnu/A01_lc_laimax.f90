@@ -208,20 +208,18 @@ do ichunk = 1,nchunk(1)
         CHECKSUM = 0d0
         do p = 1,NUMLAYERSLC
 
-            io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
-
-            ! ------ INVARIANT: Ensure that (laimax==0) == (lc==0)
+            ! If this LC type does NOT participate in this 1km grid cell,
+            ! then LAI needs to be zero.
             if ((io_lc(p)%buf(ic,jc) <= 0d0).or.(io_lc(p)%buf(ic,jc) == undef)) then
                 ! If lc==0, fix LAImax=0 (enforce the invariant)
                 io_laiout(p)%buf(ic,jc) = 0d0
-            else
-                ! Problem if lc>0 bu LAImax==0
+            else    ! non-zero LC type
+                ! Use the single LAI for all LC types in this gridcell.
+                io_laiout(p)%buf(ic,jc) = io_lai%buf(ic,jc)
+
+                ! Problem if lc>0 but LAImax==0
                 if (io_laiout%buf(ic,jc)==0) then
-                    if (io_laiout(p)%buf(ic,jc) > 0d0) then
-                        io_err(p) = io_lc(p)%buf(ic,jc)
-                        ! Enforce the invariant, after reporting error
-                        io_lc(p)%buf(ic,jc) = 0d0
-                    end if
+                    io_err(p) = io_lc(p)%buf(ic,jc)
                 end if
             end if
 
