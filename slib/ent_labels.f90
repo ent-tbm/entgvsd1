@@ -328,8 +328,6 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
         call esub%sub_covertype(ent20, BARE_SPARSE)
     end if
 
-    call esub%sub_covertype(ent20, CV_WATER)
-
     ! Use remap to pull out EntLabels
 
 end function make_ent_gcm_subset
