@@ -18,13 +18,14 @@ type EntSet_t
     integer :: ncover    ! Total number of cover types
 
     ! Set of master indexes to be remapped
-    integer, dimension(:), allocatable :: remap
+    integer, dimension(:,:), allocatable :: remap
     integer :: nremap
 contains
     procedure :: allocate => EntSet_allocate
     procedure :: layer_names
 !    generic, public :: allocate => EntSet_allocate
     procedure :: add_covertype
+    procedure :: add_remap
     procedure :: sub_covertype
 end type
 
@@ -53,6 +54,10 @@ integer, parameter :: CROPS_WOODY   = 17
 integer, parameter :: SNOW_ICE      = 18
 integer, parameter :: BARE_SPARSE   = 19
 integer, parameter :: CV_WATER      = 20
+
+integer, parameter :: NENT19 = NENT20-1
+type(EntSet_t) :: ent19
+
 
 
 character(*), parameter :: TITLE_LC = 'Ent PFT 1 km land cover fraction'
@@ -91,7 +96,7 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
     if (present(ncover_master)) then
         allocate(ents%mvs(maxcover))
         allocate(ents%svm(ncover_master))
-        allocate(ents%remap(ncover_master))
+        allocate(ents%remap(2,ncover_master))
 
         ! Initialize an identity remap
         do i=1,maxcover
@@ -99,7 +104,8 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
         end do
         do i=1,ncover_master
             ents%svm(i)=i
-            ents%remap(i)=i
+            ents%remap(1,i)=i
+            ents%remap(2,i)=i
         end do
     end if
 end subroutine EntSet_allocate
@@ -125,7 +131,7 @@ function layer_names(ents)
     ! ----- Locals
     integer :: k
 
-    do k=1,19
+    do k=1,ents%ncover
         layer_names(k) = trim(itoa2(ents%mvs(k)))//'_'//trim(ents%abbrev(k))
     end do
 end function layer_names
@@ -145,18 +151,37 @@ subroutine add_covertype(ents, abbrev,title)
     ents%title(ents%ncover) = title
 end subroutine add_covertype
 
+subroutine add_remap(ents, index20)
+    class(EntSet_t) :: ents
+    integer:: index20
+
+    ents%svm(index20) = ents%ncover
+    ents%mvs(ents%ncover) = index20
+
+    ! Add a remap entry
+    if (ents%nremap >= size(ents%remap,2)) then
+        write(ERROR_UNIT,*) 'remap array too small',size(ents%remap,2)
+        stop -1
+    end if
+    ents%nremap = ents%nremap + 1
+
+    ents%remap(1,ents%nremap) = ents%ncover
+    ents%remap(2,ents%nremap) = index20
+end subroutine add_remap
+
 subroutine sub_covertype(ents, ent20, index20)
     class(EntSet_t) :: ents
     type(EntSet_t), intent(IN) :: ent20
     integer, intent(IN) :: index20
 
     call ents%add_covertype(ent20%abbrev(index20), ent20%title(index20))
-    ents%svm(index20) = ents%ncover
-    ents%mvs(ents%ncover) = index20
-end subroutine
+    call ents%add_remap(index20)
+end subroutine sub_covertype
 
 
 subroutine init_ent_labels
+    integer :: k
+
     call ent20%allocate(20,20)
     call ent20%add_covertype('ever_br_early ', 'evergreen broadleaf early successional      ')
     call ent20%add_covertype('ever_br_late  ', 'evergreen broadleaf late successional       ')
@@ -178,6 +203,16 @@ subroutine init_ent_labels
     call ent20%add_covertype('snow_ice      ', 'Permanent snow/ice                         ')
     call ent20%add_covertype('bare_sparse   ', 'Bare or sparsely vegetated, urban          ')
     call ent20%add_covertype('water         ', 'water                                      ')
+
+
+    ! Set up ent19 = ent20 without water
+    ! (indices will be the same, but only if water is at the end)
+    call ent19%allocate(NENT20-1, NENT20)
+    do k=1,NENT20
+        if (k == CV_WATER) cycle
+        call ent19%sub_covertype(ent20, k)
+    end do
+
 
     call modis28%allocate(28,28)
     call modis28%add_covertype('ever_needle',         "Evergreen needleleaf forest                               ")
@@ -222,7 +257,7 @@ type, extends(EntSet_t) :: GcmEntSet_t
 
     ! Indices of non-standard cover types
     integer :: crops_herb
-    integer :: bare_sparse
+    integer :: last_pft
     integer :: bare_bright
     integer :: bare_dark
 contains
@@ -240,18 +275,16 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
     call EntSet_allocate(ents, maxcover, ncover_master)
 
     ents%crops_herb = -1
-    ents%bare_sparse = -1
     ents%bare_bright = -1
     ents%bare_dark = -1
 end subroutine GcmEntSet_allocate
 
-function make_ent_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
+function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
     logical, intent(IN) :: combine_crops_c3_c4
     logical, intent(IN) :: split_bare_soil
     type(GcmEntSet_t) :: esub
 
     ! ---------- Locals
-    integer :: nremaps
     integer :: i
 
     ! ------- Set up the remap
@@ -281,28 +314,27 @@ function make_ent_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
         call esub%sub_covertype(ent20, CROPS_C4_HERB)        ! 16
     end if
     call esub%sub_covertype(ent20, CROPS_WOODY)          ! 16/17
+    esub%last_pft = esub%ncover
 
     if (split_bare_soil) then
         ! Change bare_spares to bare-bright
         call esub%add_covertype('bare_bright', 'Bare or sparsely vegated, urban, bright')
         esub%bare_bright = esub%ncover
-        esub%bare_sparse = esub%ncover
+        call esub%add_remap(BARE_SPARSE)
 
         call esub%add_covertype('bare_dark', 'Bare or sparsely vegated, urban, dark')
         esub%bare_dark = esub%ncover
     else
         call esub%sub_covertype(ent20, BARE_SPARSE)
-        esub%bare_sparse = esub%ncover
     end if
 
     call esub%sub_covertype(ent20, CV_WATER)
 
     ! Use remap to pull out EntLabels
 
-end function make_ent_subset
+end function make_ent_gcm_subset
 
 end module gcm_labels_mod
-
 ! ==========================================================================
 
 module geom_mod
