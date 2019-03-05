@@ -667,14 +667,14 @@ subroutine close0(this, files, nfiles)
         if (files(i)%ptr%own_fileid) then
             err = nf90_close(files(i)%ptr%fileid)
             if (err /= NF90_NOERR) then
-                write(ERROR_UNIT,*) 'Error closing ',trim(this%writes(i)%ptr%leaf)
+                write(ERROR_UNIT,*) 'Error closing ',trim(files(i)%ptr%leaf),files(i)%ptr%fileid_lr,err
                 nerr = nerr + 1
             end if
         end if
         if (files(i)%ptr%own_fileid_lr) then
             err = nf90_close(files(i)%ptr%fileid_lr)
             if (err /= NF90_NOERR) then
-                write(ERROR_UNIT,*) 'Error closing lr ',trim(this%writes(i)%ptr%leaf)
+                write(ERROR_UNIT,*) 'Error closing lr ',trim(files(i)%ptr%leaf),files(i)%ptr%fileid_lr,err
                 nerr = nerr + 1
             end if
         end if
@@ -1298,6 +1298,9 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     integer :: nlayers
 
     cio%fileid = -1
+    cio%leaf = leaf
+    cio%own_fileid_lr = .false.
+    cio%fileid_lr = 0
 
     print *,'Reading ', oroot//dir//leaf
 
