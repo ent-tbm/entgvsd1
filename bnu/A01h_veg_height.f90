@@ -27,9 +27,6 @@ implicit none
     integer :: jc, ic    ! Index WITHIN current chunk
     integer :: jj, ii            ! Index in full space
 
-    integer, parameter :: NENT19 = NENT20-1
-    type(EntSet_t) :: ent19
-
     ! ------ Inputs
     type(ChunkIO_t) :: io_sim    ! Simard heights
     type(ChunkIO_t) :: ioall_lc    ! Simard heights
@@ -73,13 +70,6 @@ real*8, parameter :: heights_form(2,NENT19) = RESHAPE( (/ &
 call init_ent_labels
 
 ! -----------------------------------------------------
-! Set up ent19 = ent20 without water
-! (indices will be the same, but only if water is at the end)
-call ent19%allocate(NENT20-1, NENT20)
-do k=1,NENT20
-    if (k == CV_WATER) cycle
-    call ent19%sub_covertype(ent20, k)
-end do
 ! -----------------------------------------------------
 
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
