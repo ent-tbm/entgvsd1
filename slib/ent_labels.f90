@@ -61,13 +61,15 @@ character(*), parameter :: TITLE_LAI = &
 character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
 real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
-character*3, parameter :: MONTH(12) = &
+integer, parameter :: nmonth = 12
+character*3, parameter :: MONTH(nmonth) = &
      (/ &
      "Jan","Feb","Mar","Apr","May","Jun", &
      "Jul","Aug","Sep","Oct","Nov","Dec" &
      /)
 
-character*3, parameter :: DOY(2) = &
+integer, parameter :: ndoy = 2
+character*3, parameter :: DOY(ndoy) = &
      (/ &
      "017","201" &
      /)
@@ -79,6 +81,7 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
     class(EntSet_t) :: ents
     integer :: maxcover
     integer, OPTIONAL :: ncover_master
+    integer :: i
 
     ents%ncover = 0
     allocate(ents%abbrev(maxcover))
@@ -89,6 +92,15 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
         allocate(ents%mvs(maxcover))
         allocate(ents%svm(ncover_master))
         allocate(ents%remap(ncover_master))
+
+        ! Initialize an identity remap
+        do i=1,maxcover
+            ents%mvs(i)=i
+        end do
+        do i=1,ncover_master
+            ents%svm(i)=i
+            ents%remap(i)=i
+        end do
     end if
 end subroutine EntSet_allocate
 
@@ -145,8 +157,7 @@ end subroutine
 
 
 subroutine init_ent_labels
-    call ent20%allocate(20)
-
+    call ent20%allocate(20,20)
     call ent20%add_covertype('ever_br_early ', 'evergreen broadleaf early successional      ')
     call ent20%add_covertype('ever_br_late  ', 'evergreen broadleaf late successional       ')
     call ent20%add_covertype('ever_nd_early ', 'evergreen needleleaf early successional     ')
@@ -168,7 +179,7 @@ subroutine init_ent_labels
     call ent20%add_covertype('bare_sparse   ', 'Bare or sparsely vegetated, urban          ')
     call ent20%add_covertype('water         ', 'water                                      ')
 
-    call modis28%allocate(28)
+    call modis28%allocate(28,28)
     call modis28%add_covertype('ever_needle',         "Evergreen needleleaf forest                               ")
     call modis28%add_covertype('ever_broad',          "Evergreen broadleaf forest                                ")
     call modis28%add_covertype('dec_needle',          "Deciduous needleleaf forest                               ")
