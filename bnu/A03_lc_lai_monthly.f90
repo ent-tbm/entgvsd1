@@ -249,12 +249,19 @@ do ichunk = 1,nchunk(1)
                     LCIN_in = io_pft(p-1)%buf(ic,jc)
                 end if
 
+                ! If this LC type does NOT participate in this 1km grid cell,
+                ! then LAI needs to be zero.
                 if ((LCIN_in <= 0).or.(LCIN_in == undef)) then
                     laiout = 0d0
-                else
+                else    ! non-zero LC type
+                    ! Use the single LAI for all LC types in this gridcell.
                     laiout = LAI
                 end if
 
+                ! A02 and A03 will probably have same error cells at
+                ! A01.  No need to do discrepancy file for them.
+
+                ! Compute checksum
                 CHECKSUM = CHECKSUM + LCIN_in * laiout
                 io_out(p,k)%buf(ic,jc) = laiout
             end do ! p=1,NUMLAYERSLC

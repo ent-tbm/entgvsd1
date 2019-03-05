@@ -6,9 +6,10 @@
 
 ! A04 only creates the pure dataset.  It does NOT trim.
 
+! Combine C3 and C4 crops into one PFT, for ModelE
 #define COMBINE_CROPS_C3_C4
 
-! 
+! Split the bare soil into dark and light, to get the right albedo
 #define SPLIT_BARE_SOIL
 
 program convert
@@ -21,6 +22,84 @@ use paths_mod
 use ent_labels_mod
 
 implicit none
+
+! -------------------------------------------------------
+#ifdef COMBINE_CROPS_C3_C4
+integer, parameter :: NREMAPS = 16   ! Size of the remap array for automated index remaping
+#else
+integer, parameter :: NREMAPS = 18
+#endif
+
+
+! Table remaps input PFTs to output PFTs
+! ouptut_c[remap[1]] = input_n[remap[2]]
+! Column 1 = index in output arrays for 16 or 17 PFTs
+! Column 2 = index in input arrays (water + 17 PFTs + permanent ice + bare/sparse)
+real*8, parameter :: remap(2,NREMAPS) = RESHAPE( (/ &
+     1,2   & ! -> 1 - evergreen broadleaf early successional       
+    ,2,3   & ! -> 2 - evergreen broadleaf late successional        
+    ,3,4   & ! -> 3 - evergreen needleleaf early successional      
+    ,4,5   & ! -> 4 - evergreen needleleaf late successional       
+    ,5,6   & ! -> 5 - cold deciduous broadleaf early successional  
+    ,6,7   & ! -> 6 - cold deciduous broadleaf late successional   
+    ,7,8   & ! -> 7 - drought deciduous broadleaf                  
+    ,8,9   & ! -> 8 - deciduous needleleaf                         
+    ,9,10  & ! -> 9 - cold adapted shrub                           
+    ,10,11  & ! -> 10 - arid adapted shrub                          
+    ,11,12  & ! -> 11 - C3 grass perennial                          
+    ,12,13  & ! -> 12 - C4 grass                                    
+    ,13,14  & ! -> 13 - C3 grass - annual                           
+    ,14,15  & ! -> 14 - arctic C3 grass                             
+#ifdef COMBINE_CROPS_C3_C4
+     ! 16 PFTs
+              ! -> 15 - crops C3+C4 
+    ,16,18  & ! -> 16 - crops woody
+    ,17,20  & ! -> 17 - bare sparse (bare bright after split)
+              ! -> 18 - bare dark (if SPLIT_BARE_SOIL)
+#else
+     ! 17 PFTs
+    ,15,16  & ! -> 15 - crops C3
+    ,16,17  & ! -> 16 - crops C4
+    ,17,18  & ! -> 17 - crops woody
+    ,18,20  & ! -> 18 - bare_sparse (bare bright after split)
+              ! -> 19 - bare dark (if SPLIT_BARE_SOIL)
+#endif
+/), (/ 2,ENTPFTNUM /))
+
+! ------- Specific indices in orginal indexing scheme
+integer, parameter :: crops_c3_herb_n = 16
+integer, parameter :: crops_c4_herb_n = 17
+
+! ------- Specific indices in destination indexing scheme
+integer, parameter :: cold_adapted_shrub_c = 9
+integer, parameter :: arid_adapted_shrub_c = 10
+#ifdef COMBINE_CROPS_C3_C4
+integer, parameter :: crops_herb_c = 15
+integer, parameter :: crops_woody_c = 16
+integer, parameter:: bare_sparse_c = 17
+#    ifdef SPLIT_BARE_SOIL
+     integer, parameter :: bare_bright_c = 17
+     integer, parameter :: bare_dark_c = 18
+#    endif
+#else
+integer, parameter :: crops_woody_c = 17
+integer, parameter:: bare_sparse_c = 18
+#    ifdef SPLIT_BARE_SOIL
+     integer, parameter :: bare_bright_c = 18
+     integer, parameter :: bare_dark_c = 19
+#    endif
+#endif
+
+integer, parameter :: last_pft_c = crops_woody_c
+#ifdef SPLIT_BARE_SOIL
+integer, parameter :: ncover_c = bare_dark_c
+#else
+integer, parameter :: ncover_c = bare_sparse_c
+#endif
+
+! Labels of our output covers
+type(EntLabel_t), dimension(ncover_c) :: ent_c
+! -------------------------------------------------------
 
 integer, parameter :: IMH = 720 !long at 0.5 degrees
 integer, parameter :: JMH = 360 !lat at 0.5 degrees
@@ -68,7 +147,6 @@ real*4 vfnm(12,KM),lainm(12,KM),aream
 real*4 am
 real*4 hsdn(KM)
 ! Converted values
-real*4 dvf, s
 character*80 :: titlec(18)
 ! Converted values - monthly
 real*4 vfm(12,KM), laim(12,KM)
@@ -105,7 +183,10 @@ integer count
 real*4 :: val
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 100, 120)
+
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, &
+    100, &   ! # files to >= (N_VEG + N_BARE)*(LC + LAI) + BARE_BRIGHTRATIO + SIMARD = 42
+    120)     ! # files to write >= N_LAIMAX + 3*CHECKSUMS
 
 !------------------------------------------------------------------------
 ! OPEN INPUT FILES
@@ -174,6 +255,11 @@ call chunker%nc_check('A04_trim_laimax_1kmx1km')
 stop 0
 #endif
 
+! Get our Ent labels
+do ri=1,NREMAPS
+    ent_c(remaps(1,ri)) = ent20(remaps(2,ri))
+
+
 ! Use these loop bounds for testing...
 ! it chooses a land area in Asia
 #ifdef ENTGVSD_DEBUG
@@ -212,190 +298,125 @@ do ichunk = 1,nchunk(1)
         ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
 
 
-! =============== Convert to GISS 16 pfts format
+        ! =============== Convert to GISS 16 pfts format
         !* Convert to GISS 16 pfts format
 
-        ! first 14 pfts though grass are the same, ignore WATER
-        !  lc laimax
-        vfc(1:14) = vfn(2:15)
-        laic(1:14) = lain(2:15)
-        hm(1:14) = hmn(2:15) 
-      
-        ! crops
+        do ri=1,NREMAPS
+            vfc(remaps(1,ri)) = vfn(remaps(2,ri))
+            laic(remaps(1,ri)) = lain(remaps(2,ri))
+            hm(remaps(1,ri)) = hmn(remaps(2,ri))
+        end do
+! TODO: rename hm -> hmc
+
 
 #ifdef COMBINE_CROPS_C3_C4
         !lc laimax
-        a = vfn(16) + vfn(17)
-      
+        a = vfn(crops_c3_herb_n) + vfn(crops_c4_herb_n)
         if ( a > 0. ) then
-            laic(15) = (vfn(16)*lain(16) &
-              + vfn(17)*lain(17)) / a
-            vfc(15) = a
+            laic(crops_herb_c) = (vfn(crops_c3_herb_n)*lain(crops_c3_herb_n) &
+              + vfn(crops_c4_herb_n)*lain(crops_c4_herb_n)) / a
+            vfc(crops_herb_c) = a
         else
-            laic(15) = 0.
-            vfc(15) = 0.
+            laic(crops_herb_c) = 0.
+            vfc(crops_herb_c) = 0.
         endif
-
-        ! crops woody
-        vfc(16) = vfn(18)
-        laic(16) = lain(18)
-
-        ! bare soil
-        vfc(17) = vfn(20)
-        laic(17) = lain(20)
-        hm(17) = hmn(20)
-
-        N_VEG = 16
-        N_BARE = 17
-     
-#else
-        !crops
-        vfc(15:17) = vfn(16:18)
-        laic(15:17) = lain(16:18)
-
-        hm(15:17) = hmn(16:18)
-
-        ! bare soil
-        vfc(18) = vfn(20)
-        laic(18) = lain(20)
-        hm(18) = hmn(20)
-
-        N_VEG = 17
-        N_BARE = 18
 #endif
 
 
-! =========== Data inspection (debugging printout)
-      
-        ! check if "bare" soil is not bare
-        vf_xx = 0.
-        if( vfc(N_BARE) > .01 .and. laic(N_BARE) > .5 ) then
-            vf_xx = vfc(N_BARE)
-            lai_xx = laic(N_BARE)
-        endif
-
-        vf_yy = 0.
-        if( vfc(10) > .1 .and. laic(10) < .5 ) then
-            vf_yy = vfc(10)
-            lai_yy = laic(10)
-        endif
-
-
-     
-        vf_yy = 0.
-        lai_yy = 0.
-        if( vfc(N_BARE) > .1 .and. laic(10) < .01  &
-            .and. laic(9) < .01 .and. laic(11) < .01  &
-            .and. laic(12) < .01 .and. laic(13) < .01 ) &
-        then
-
-            vf_yy = vfc(N_BARE)
-            lai_yy = laic(N_BARE)
-        end if
-
-! =========== Partition bare/sparse LAI to actual LC types.
-! Bare sparse has no vegetation type assigned to it; but it has
-! non-zero LAI that must be treated.  So we take that non-zero LAI
-! over sparse veg, assign it to the most likely vegetation type.  Then
-! we have to assign a cover fraction for the type, and updated cover
-! fraction for now completely bare soil.
+        ! =========== Partition bare/sparse LAI to actual LC types.
+        ! Bare sparse has no vegetation type assigned to it; but it
+        ! has non-zero LAI that must be treated.  So we take that
+        ! non-zero LAI over sparse veg, assign it to the most likely
+        ! vegetation type.  Then we have to assign a cover fraction
+        ! for the type, and updated cover fraction for now completely
+        ! bare soil.
 
         !!!! do conversions !!!!
 
-        ! convert sparse veg to cold adapted shrub 9 if present
-        if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-           .and. laic(N_BARE) > .0 &
-           .and. vfc(9) > .0 ) &
+        ! ----------- The conditionals below are mutually exclusive.
+        ! convert_vf(), when run, sets laic(bare_sparse_c), which will
+        ! cause all subsequent conditional blocks to not run.
+
+        ! --------------
+        ! Convert to shrub if there's a small fraction and the shrubs already exist
+        ! convert sparse veg to cold adapted shrub (9) if present
+        if( vfc(bare_sparse_c) > 0e0 .and. vfc(bare_sparse_c) < .15 &
+           .and. laic(bare_sparse_c) > 0e0 &
+           .and. vfc(cold_adapted_shrub_c) > 0e0 ) &
         then
             ! Preserve total LAI, but put it all in that vegetation
             ! type.
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(9), laic(9), laic(9) )
+            call convert_vf( &
+                vfc(bare_sparse_c), laic(bare_sparse_c), &
+                vfc(cold_adapted_shrub_c), laic(cold_adapted_shrub_c), &
+                laic(cold_adapted_shrub_c) )
         endif
-      
-        s = sum(vfc(1:N_BARE))
 
-! Same kind of conversion for arid shrub
         ! convert sparse veg to arid adapted shrub 10 if present
-        if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-           .and. laic(N_BARE) > .0 &
-           .and. vfc(10) > .0 ) &
+        if( vfc(bare_sparse_c) > 0e0 .and. vfc(bare_sparse_c) < .15 &
+           .and. laic(bare_sparse_c) > 0e0 &
+           .and. vfc(arid_adapted_shrub_c) > 0e0 ) &
         then
          
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(10), laic(10), laic(10) )
+            call convert_vf( &
+                vfc(bare_sparse_c), laic(bare_sparse_c), &
+                vfc(arid_adapted_shrub_c), laic(arid_adapted_shrub_c), &
+                laic(arid_adapted_shrub_c) )
         end if
-         
-        ! convert the rest of sparse veg to crop 15 if present
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 &
-              .and. vfc(15) > .0 ) &
+        ! --------------
+
+        ! Convert to crops if they exist (any size fraction)
+        ! convert sparse veg to crop 15 if present
+        if( vfc(bare_sparse_c) > 0e0 .and. laic(bare_sparse_c) > 0e0 &
+              .and. vfc(crops_herb_c) > 0e0 ) &
         then
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(15), laic(15), laic(15))
+            call convert_vf( &
+                vfc(bare_sparse_c), laic(bare_sparse_c), &
+                vfc(crops_herb_c), laic(crops_herb_c), &
+                laic(crops_herb_c))
         end if
       
-        ! convert the rest of sparse veg to pft with biggest fraction
+        ! Else... Convert to largest existing PFT
+        ! convert sparse veg to pft with biggest fraction
         ! (if present)
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-            maxpft = maxloc( vfc(1:16), 1 )
-            if ( vfc(maxpft) < .0001 ) cycle
-            
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
+        if( vfc(bare_sparse_c) > 0e0 .and. laic(bare_sparse_c) > 0e0 ) then
+            maxpft = maxloc( vfc(1:last_pft_c), 1 )
+            ! TODO: Why is cycle here?  Check Nancy's original code
+            ! if ( vfc(maxpft) < .0001 ) cycle
+
+            call convert_vf(vfc(bare_sparse_c), laic(bare_sparse_c), &
                 vfc(maxpft), laic(maxpft), laic(maxpft))
         end if
 
-        ! convert the rest of sparse veg to arid adapted shrub 10
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(10), laic(10), .0 )
+        ! If none of the above was true, then:
+        !  a) It's not a smal lfraction
+        !  b) There's no arid shrubs or cold shrubs
+        !  c) No crops
+        !  d) No clear categorization of other vegetation types in the grid cell
+        ! ...so just assign it to arid shrub.
+        !
+        ! convert sparse veg to arid adapted shrub 10
+        if( vfc(bare_sparse_c) > 0e0 .and. laic(bare_sparse_c) > 0e0 ) then
+            call convert_vf(vfc(bare_sparse_c), laic(bare_sparse_c), &
+                vfc(arid_adapted_shrub_c), laic(arid_adapted_shrub_c), 0e0 )
         end if
+        ! -----------------------------------------------------------------
 
-! Takes bare soil that's now created to bare soil.
-! Splits it into bright and dark fractions, so we get the
-! proper albedo.
+        ! Splits bare soil into bright and dark fractions, so we get
+        ! the proper albedo in the GCM
 #ifdef SPLIT_BARE_SOIL
-        call split_bare_soil(N_VEG,KM,N_BARE &
-            ,bs_brightratio,vfc,laic, &
-            res_out)
+        call split_bare_soil(N_VEG,KM,bare_sparse_c, &
+            bs_brightratio,vfc,laic, res_out)
 #endif
 
-#if 0
-do k=1,18
-val = laic(k)
-if ((val /= 0) .and. (abs(val) > 1e27)) then
-!if ((val /= 0)) then
-    print *,'cell',ic,jc,k,val
-end if
-end do
-This is getting set to 0 or undef; which is then averaged down.
 
-! A01 enforces the invariant (LC==0) == (LAI==0)
-#endif
-
-        do k=1,18
-            if (laic(k).le.0.) then
-                laic(k) = undef
-Is this needed, with chunker???
-            end if
-        end do
-
-        ! correct LAI=undef when land cover>0            
-        do k=1,18
-            if (vfc(k).gt.0.and.laic(k).eq.undef) then
-                laic(k) = 0.
-            else
-                laic(k) = laic(k)
-            end if
-        end do
-
-        do k=1,18
+        do k=1,ncover_c
             io_laiout(k)%buf(ic,jc) = laic(k)
-            !laicnc(i,j,k) = laic(k)
         end do
 
         ! checksum lc & laimax
         io_sum_lc%buf(ic,jc) = 0.
-        do k=1,18
+        do k=1,ncover_c
             io_sum_lc%buf(ic,jc) = io_sum_lc%buf(ic,jc) + laic(k)
         end do
     end do  ! ic

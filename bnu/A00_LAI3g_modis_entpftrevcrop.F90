@@ -21,7 +21,7 @@
 !
 !io_checksum2 = EntLandcover_check_sum_Jun_1kmx1km
 !    sum_{1...ENTPFTNUM} ENTPFTLC(k) + WATERLC
-!    NOTE: ENTPFTLC(k) == contents of file entpft_io(k) = EntMM_lc_laimax_1kmx1km/...LAI
+!    NOTE: ENTPFTLC(k) == contents of file io_entpft(k) = EntMM_lc_laimax_1kmx1km/...LAI
 !
 !io_checksum3 = EntLAI_check_sum_Jun_1kmx1km
 !    sum_{1..ENTPFTNUM} ENTPFTLC(k) * ENTPFTLAIMAX(k) + WATERLC*WATERLAI
@@ -39,56 +39,31 @@
 
 
 module modis_ent_mod
+    use ent_labels_mod
+    use geom_mod
 
 implicit none
 !     private
 !     save
 
 public ENTPFTLC,ENTPFTLAIMAX !, ENTCOVSUM
-public LCLASS, ENTPFTNUM, im,jm
 public Zero_ENTPFT
 public Set_pft, Set_Shrubtype, Set_Grasstype,Set_Broadleaftype
 public Set_Woodysavannasshrub_miscat
 public FIX_MODIS29_NORTHPOLE_BUG
 public FIX_MODIS29_SOUTHPOLE_BUG
 public Debug_set_broadleaf
-public IMH,JMH,IM1,JM1,IM2,JM2
 
 !     real*4, parameter :: undef = -1e30
 
-integer, parameter :: X1km = 43200 !long at 1 km
-integer, parameter :: Y1km = 21600 !lat at 1 km
-
-integer, parameter :: IM1km = X1km !long at 1 km
-integer, parameter :: JM1km = Y1km !lat at 1 km
-
-integer, parameter :: IMH = 720 !long at 0.5 degrees
-integer, parameter :: JMH = 360 !lat at 0.5 degrees
-integer, parameter :: IM1 = 360 !long at 1 degrees
-integer, parameter :: JM1 = 180 !lat at 1 degrees
-integer, parameter :: IM2 = 144 !long at 2.5 degrees
-integer, parameter :: JM2 = 90 !lat at 2 degrees
-integer, parameter :: IM4X5 = 72 !long at 5 degrees
-integer, parameter :: JM4X5 = 46 !lat at 4 degrees
-
-integer, parameter :: longin = 1
-integer, parameter :: latin = 1
-integer, parameter :: longout = 1 !Should be same at longin
 integer, parameter :: latout = 1
-
 integer :: im, jm
 
-integer, parameter :: ENTPFTNUM = 19 !17 Ent PFTs + barren + ice
 integer, parameter :: LCLASS = 28 !Excludes WATER in 29 MODIS layers.
-!     integer, parameter :: LCLASSNATURAL = 17  !1-17.  NOTE: WATER is 0.
-!     integer, parameter :: LCLASSCROPS = 18    !18-19, 24-25
-!     integer, parameter :: LCLASSSPARSE = 27
-real*4 :: ENTPFTLC(ENTPFTNUM)
-real*4 :: ENTPFTLAIMAX(ENTPFTNUM)
-!     real*4 :: ENTCOVSUM(ENTPFTNUM,longout,latout)
-
-real*4 :: ENTPFTLC_NC(ENTPFTNUM)
-real*4 :: ENTPFTLAIMAX_NC(ENTPFTNUM)
+real*4 :: ENTPFTLC(NENT20)
+real*4 :: ENTPFTLAIMAX(NENT20)
+real*4 :: ENTPFTLC_NC(NENT20)
+real*4 :: ENTPFTLAIMAX_NC(NENT20)
 
 contains
 
@@ -458,149 +433,6 @@ use paths_mod
 use ent_labels_mod
 
 implicit none
-!      include 'netcdf.inc'
-
-!***************************************************
-!     !* IGBP MODIS types broken down by Feng Zhao at BU.*
-!***************************************************
-character*71,parameter :: MODISpft(LCLASS) = (/ &
- "1. Evergreen needleleaf forest                               ", & !     &     "0. Water",
- "2. Evergreen broadleaf forest                                ", &
- "3. Deciduous needleleaf forest                               ", &
- "4. Deciduous broadleaf forest                                ", &
- "5. Mixed forest-->Evergreen needleleaf forest                ", &
- "6. Mixed forest-->Deciduous broadleaf forest                 ", &
- "7. Closed shrublands                                         ", &
- "8. Open shrublands                                           ", &
- "9. Woody savannas-->Evergreen needleleaf forest              ", &
- "10. Woody savannas_ Deciduous broadleaf forest               ", &
- "11. Woody savannas-->shrub                                   ", &
- "12. Woody savannas-->Grass                                   ", &
- "13. Savannas-->Grass                                         ", &
- "14. Savannas-->Shrub                                         ", &
- "15. Grassland                                                ", &
- "16. Permanent wetlands-->Evergreen needleforest              ", &
- "17. Permanent wetlands-->Shrub                               ", &
- "18. Croplands-->Cereal crop                                  ", &
- "19. Croplands-->Broadleaf crop                               ", &
- "20. Urban and built up                                       ", &
- "21. Cropland/natural vegetation-->Evergreen needleleaf forest", &
- "22. Cropland/natural vegetation-->Deciduous broadleaf forest ", &
- "23. Cropland/natural vegetation-->Shrub                      ", &
- "24. Cropland/natural vegetation-->Grass                      ", &
- "25. Cropland/natural vegetation-->Cereal crop                ", &
- "26. Cropland/natural vegetation-->Broadleaf crop             ", &
- "27. Permanent snow/ice                                       ", &
- "28. Barren or sparsely vegetated                             " &
-     /)
-
-
-!***************************************************
-!*      ENT PLANT FUNCTIONAL TYPES                 *
-!***************************************************
-character*50, parameter :: EntPFT_title(19) = &
-     (/ &
-     '1 - evergreen broadleaf early successional      ', &
-     '2 - evergreen broadleaf late successional       ', &
-     '3 - evergreen needleleaf early successional     ', &
-     '4 - evergreen needleleaf late successional      ', &
-     '5 - cold deciduous broadleaf early successional ', &
-     '6 - cold deciduous broadleaf late successional  ', &
-     '7 - drought deciduous broadleaf                 ', &
-     '8 - deciduous needleleaf                        ', &
-     '9 - cold adapted shrub                          ', &
-     '10 - arid adapted shrub                         ', &
-     '11 - C3 grass perennial                         ', &
-     '12 - C4 grass                                   ', &
-     '13 - C3 grass - annual                          ', &
-     '14 - arctic C3 grass                            ', &
-     '15 - crops C3 herb                              ', &
-     '16 - crops C4 herb                              ', &
-     '17 - crops woody                                ', &
-     '18 - Permanent snow/ice                         ', &
-     '19 - Bare or sparsely vegetated, urban          ' &
-     /)
-
-
-!***************************************************
-!*      MODIS PARTITION PREFIX OF FILES            *
-!***************************************************
-character*3, parameter :: partit_num(28) = &
-     (/ &
-     "_01","_02","_03","_04","_05", &
-     "_06","_07","_08","_09","_10","_11", &
-     "_12","_13","_14","_15","_16","_17", &
-     "_18","_19","_20","_21","_22","_23", &
-     "_24","_25","_26","_27","_28" &
-     /)
-
-    
-     
-!***************************************************
-!*      MODIS PARTITION OF DATA TO READ            *
-!***************************************************
-character*3, parameter :: partit(28) = &
-     (/ &
-     "_1 ","_2 ","_3 ","_4 ","_5 ", &
-     "_6 ","_7 ","_8 ","_9 ","_10","_11", &
-     "_12","_13","_14","_15","_16","_17", &
-     "_18","_19","_20","_21","_22","_23", &
-     "_24","_25","_26","_27","_28" &
-     /)
-
-
-!***************************************************
-!*      PREFIX OF ENTPFTS FILES FOR LC AND LAI     *
-!***************************************************
-character*3, parameter :: EntPFT_files1(19) = &
-     (/ &
-     '01_', &
-     '02_', &
-     '03_', &
-     '04_', &
-     '05_', &
-     '06_', &
-     '07_', &
-     '08_', &
-     '09_', &
-     '10_', &
-     '11_', &
-     '12_', &
-     '13_', &
-     '14_', &
-     '15_', &
-     '16_', &
-     '17_', &
-     '18_', &
-     '19_' &
-     /)
-
-!***************************************************
-!*      SUFIX OF ENTPFTS FILES FOR LC AND LAI     *
-!***************************************************
-character*14, parameter :: EntPFT_files2(19) = &
-     (/ &
-     'ever_br_early ', &
-     'ever_br_late  ', &
-     'ever_nd_early ', &
-     'ever_nd_late  ', &
-     'cold_br_early ', &
-     'cold_br_late  ', &
-     'drought_br    ', &
-     'decid_nd      ', &
-     'cold_shrub    ', &
-     'arid_shrub    ', &
-     'c3_grass_per  ', &
-     'c4_grass      ', &
-     'c3_grass_ann  ', &
-     'c3_grass_arct ', &
-     'crops_c3_herb ', &
-     'crops_c4_herb ', &
-     'crops_woody   ', &
-     'snow_ice      ', &
-     'bare_sparse   ' &
-     /)
-
 
 character*80 :: LAICASE
 
@@ -620,11 +452,9 @@ character*50 :: PATHEnt, PATHfile
 
 real*4 :: MODIS29(1+LCLASS) !WATER + 28 LCLASS
 
-!      real*4 :: LAIMAX(LCLASS)
 real*4 :: LAIMAX
 
 real*4 :: LIN
-real*4 :: LAYEROUT
 
 !To avoid confusion in array indexing, water is read as separate layer
 real*4 :: WATERLC
@@ -653,8 +483,6 @@ integer :: i, j, k, f, m, p
 real*4 :: diff
 integer :: ncidin,ncidout,varid,status
 
-integer, parameter :: IndX = 1
-integer, parameter :: IndY = 1
 integer :: err,fileid,fileidin,fileidout,dimidx,dimidy,dimidz
 integer :: dd(4),varidx
 integer :: varidy,varidz,myvar
@@ -665,7 +493,6 @@ type(Chunker_t) :: chunker
 integer :: jchunk, ichunk    ! Index of current chunk
 integer :: jc, ic    ! Index WITHIN current chunk
 integer :: jj, ii            ! Index in full space
-real*4 :: LAI
 
 !      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
 
@@ -673,20 +500,22 @@ type(ChunkIO_t) :: io_lai, io_04crops, io_05crops
 type(ChunkIO_t) :: io_06crops, io_04cropsm, io_C4norm
 type(ChunkIO_t) :: io_Tcold, io_Pdry, io_Pmave, io_TCinave
 type(ChunkIO_t) :: io_CMedit
-type(ChunkIO_t) :: io_waterpart,io_checksum,io_waterout
-type(ChunkIO_t) :: io_wateroutA,io_checksum2,io_waterlai
+type(ChunkIO_t) :: io_waterpart,io_checksum
+type(ChunkIO_t) :: io_wateroutA,io_checksum2
 type(ChunkIO_t) :: io_npftgrid,io_dompftlc
 type(ChunkIO_t) :: io_dompft
 
 real*4 :: WATERLAI
 
 type(ChunkIO_t) :: partit_io(28)
-type(ChunkIO_t) :: entpft_io(19)
+type(ChunkIO_t) :: io_entpft(NENT20)
+type(ChunkIO_t) :: io_entpftlaimax(NENT20)
+type(ChunkIO_t) :: io_entpftlaimaxcheck(NENT20)
 #ifdef COMPUTE_LAI
-type(ChunkIO_t) :: entpftlaimax_io(19)
-type(ChunkIO_t) :: entpftlaimaxcheck_io(19)
 type(ChunkIO_t) :: io_checksum3
 #endif
+
+    call init_ent_labels
 
 RESOUT = '1kmx1km'
 
@@ -768,11 +597,6 @@ call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
     'EntMM29lc_lai_for_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 
-!     WATERLC OUTPUT
-call chunker%nc_create(io_waterout, weighting(chunker%wta1, 1d0,0d0), &  ! Use chunker%wta1*1 + 0 &
-    'EntMM_lc_laimax_1kmx1km/', 'water_lc', 'water', &
-    '', '', TITLE_LC)
-
 !     CHECKSUM
 call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
      'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km', &
@@ -780,19 +604,24 @@ call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
     'checksum', '1', TITLE_CHECKSUM)
 
 
-!     WATER LAI
-call chunker%nc_create(io_waterlai, weighting(io_waterout%buf,1d0,0d0), &
-      'EntMM_lc_laimax_1kmx1km/', 'water_lai', 'water', &
-    'LAI', '1', TITLE_CHECKSUM)
-
 !      ENTPFTLC
-do k = 1,ENTPFTNUM
-   call chunker%nc_create(entpft_io(k), weighting(io_waterout%buf,-1d0,1d0), &    ! LC land-weighted &
+
+! Open water first because we use it later
+call chunker%nc_create(io_entpft(CV_WATER), weighting(chunker%wta1,1d0,0d0), &    ! LC land-weighted &
+    'EntMM_lc_laimax_1kmx1km/', &
+    itoa2(CV_WATER)//'_'//trim(ent20%abbrev(CV_WATER))//'_lc', &
+    trim(ent20%abbrev(CV_WATER)), &
+    ent20%title(CV_WATER), '1', TITLE_LC)
+do k = 1,ent20%ncover
+    if (k == CV_WATER) cycle
+
+    call chunker%nc_create(io_entpft(k), weighting(io_entpft(CV_WATER)%buf,-1d0,1d0), &    ! LC land-weighted &
         'EntMM_lc_laimax_1kmx1km/', &
-        trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lc', &
-        trim(EntPFT_files2(k)), &
-        EntPFT_title(k), '1', TITLE_LC)
+        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lc', &
+        trim(ent20%abbrev(k)), &
+        ent20%title(k), '1', TITLE_LC)
 enddo
+
 
 ! ------------------------------------------------------------
 ! Low-res version computed specially for these
@@ -804,7 +633,7 @@ call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC
-call chunker%nc_create(io_dompftlc, weighting(io_waterout%buf,-1d0,1d0), &  ! LC is Land-weighted &
+call chunker%nc_create(io_dompftlc, weighting(io_entpft(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
     'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
      'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
@@ -818,45 +647,52 @@ call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
 io_dompft%regrid_lr => nop_regrid_lr
 ! ------------------------------------------------------------
 
-!     MODIS PARTITION FILES
+! MODIS PARTITION FILES
 do k = 1,LCLASS
    call chunker%nc_open_gz(partit_io(k), &
         LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT, &
         '2004/',  &
-        'PART_SUB_1km_2004_geo.PARTITION'// &
-            trim(partit_num(k))//'.nc', &
-        'PARTITION'//trim(partit(k)), 1)    ! var name
+        'PART_SUB_1km_2004_geo.PARTITION_'//itoa2(k)//'.nc', &
+        'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo
 
+
+! ENTPFTLAIMAX
 #ifdef COMPUTE_LAI
-!     ENTPFTLAIMAX
-do k=1,ENTPFTNUM
-   call chunker%nc_create(entpftlaimax_io(k), &
-       weighting(entpft_io(k)%buf,1d0,0d0),   ! Weight by entpft LC &
-       'EntMM_lc_laimax_1kmx1km/', &
-       trim(EntPFT_files1(k))//trim(EntPFT_files2(k))//'_lai', &
-       trim(EntPFT_files2(k)), &
-       EntPFT_title(k), 'm2 m-2', TITLE_LAI, 1)
+do k=1,NENT20
+#else
+do k=CV_WATER,CV_WATER    ! Compute water LAI even if not the other LAIs
+#endif
+    call chunker%nc_create(io_entpftlaimax(k), &
+        weighting(io_entpft(k)%buf,1d0,0d0), &   ! Weight by entpft LC
+        'EntMM_lc_laimax_1kmx1km/', &
+        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
+        trim(ent20%abbrev(k)), &
+        ent20%title(k), 'm2 m-2', TITLE_LAI)
 enddo
 
 
-!     ENTPFTLAIMAX CHECKSUM
-do k=1,ENTPFTNUM
-   call chunker%nc_create(entpftlaimaxcheck_io(k), &
-         weighting(chunker%wta1,1d0,0d0), &
-         'checksum/', &
-         trim(EntPFT_files1(k))//trim(EntPFT_files2(k)), &
-         trim(EntPFT_files2(k)), &
-       EntPFT_title(k), '1', TITLE_CHECKSUM, 1)
+! ENTPFTLAIMAX CHECKSUM
+#ifdef COMPUTE_LAI
+do k=1,NENT20
+    if (k == CV_WATER) cycle
+    call chunker%nc_create(io_entpftlaimaxcheck(k), &
+        weighting(chunker%wta1,1d0,0d0), &
+        'checksum/', &
+        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
+        trim(ent20%abbrev(k)), &
+        ent20%title(k), '1', TITLE_CHECKSUM, 1)
 enddo
+#endif
 
-!     CHECKSUM
+! CHECKSUM
+#ifdef COMPUTE_LAI
 call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
     'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
     'EntLAI_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
-
 #endif
+
 
 ! Quit if we had any problems opening files
 call chunker%nc_check('A00_LAI3g_modis_entpftrevcrop')
@@ -903,87 +739,31 @@ do ichunk = 1,nchunk(1)
        jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
        !**   LAI data
-       LAI=io_lai%buf(ic,jc)
+       LAIMAX=io_lai%buf(ic,jc)
 
        !**   Crop files
-
       CROPSHERBNORM=io_04crops%buf(ic,jc)
-!           write(*,*) 'CROPSHERBNORM ',(CROPSHERBNORM)
       CROPSSHRUBNORM=io_05crops%buf(ic,jc)
-!     write(*,*) 'CROPSSHRUBNORM ',shape(CROPSSHRUBNORM)
       CROPSTREENORM=io_06crops%buf(ic,jc)
-!     write(*,*) 'CROPSTREENORM ',shape(CROPSTREENORM)
       CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc)
       if (CROPSC4HERBFRAC.eq.undef) then
           CROPSC4HERBFRAC = 0
       endif
-!     write(*,*) 'CROPSC4HERBFRAC ',shape(CROPSC4HERBFRAC)
 
        !** Input C4 climate file
       C4CLIMFRAC=io_C4norm%buf(ic,jc)
-!     write(*,*) 'C4CLIMFRAC ',(C4CLIMFRAC)
 
        !* Input climate statistics files
        !###  Now getting MAT from Climstats file.
        !###  file tas is in K, Climstats is in C.
       Tcold=io_Tcold%buf(ic,jc)
-!     write(*,*) 'Tcold ',shape(Tcold)
       Pdry=io_Pdry%buf(ic,jc)
-!     write(*,*) 'Pdry ',shape(Pdry)
       Pmave=io_Pmave%buf(ic,jc)
-!     write(*,*) 'Pmave ',shape(Pmave)
 
       TCinave=io_TCinave%buf(ic,jc)
-!     write(*,*) 'TCinave ',shape(TCinave)
       MAT = TCinave + 273.15 !Convert to Kelvin
 
       ClimMedit=io_CMedit%buf(ic,jc)
-!     write(*,*) 'ClimMedit ',shape(ClimMedit)
-      
-
-!     * Calculate LAIMAX for each pft. Loop through LCLASS: LAI------------------------
-!     write(*,*) 'Looping through time steps to get max LAI'
-
-      LAIMAX = 0.
-      !write(*,*) 'LAIMAX ',shape(LAIMAX)
-
-!!           LIN = LAI
-      LAIMAX = LAI
-
-!            do k = 1,LCLASS
-      !write(*,*) "lai ", shape(LIN)
-!               if (LIN.gt.LAIMAX(k))
-!     &              LAIMAX(k)=LIN
-!            end do
-!      write(*,*) 'LAIMAX Finished', shape(LAIMAX)
-
-
-!---------------------------------------------------------------------
-
-!     LAI MAX FOR MODIS 28 LC
-!     fileout_modis0 = LC_LAI_GISS_DIR//
-!     &     'EntMM_maxlai_1kmx1km.bin'
-!     filecheck = LC_LAI_ENT_DIR//
-!     &     'EntMM_checksum_1kmx1km.bin'
-!     file_EntMM = LC_LAI_ENT_DIR//
-!     &     'EntMM_lc_laimax_1kmx1km.bin'
-
-
-!     fileout = fileout_modis0
-!     open(50,file=fileout,form='unformatted')
-!     fileout = fileout_modisA
-!     open(60,file=fileout,form='unformatted')
-!     TITLE = "WATER (LAI)  maximum LAI MODIS"
-!     write(50) TITLE, WATERLAI
-!     LAYEROUT(:,:) = WATERLAI
-!     do k=1,LCLASS
-!     TITLE = MODISpft(k)
-!     write(50) TITLE, LAIMAX(k,:,:)!*TEMPLC(k,:,:)
-!     LAYEROUT(:,:) = LAIMAX(k,:,:)
-!     enddo
-!     close(50)
-!     close(60)
-
 
 !----------------------------------------------------------------------
 !**   ASSIGN MODIS COVER CONVERSION TO ENT PFT **!
@@ -995,22 +775,20 @@ do ichunk = 1,nchunk(1)
       call Zero_ENTPFT
 !     ENTCOVSUM(:,:,:) = 0.
       LIN = 0.
-      WATERLC = 0.
       NPFTGRID = 0.
       DOMPFTLC = 0.
       DOMPFT = 0.
       
       CHECKSUM = 0.0
 
-!     WATERLC
       WATERLC = io_waterpart%buf(ic,jc)
-!            write(*,*) 'WATERLC ',shape(WATERLC)
+      ENTPFTLC(CV_WATER) = WATERLC
 
       MODIS29(1) = WATERLC
       CHECKSUM = CHECKSUM + WATERLC
 
-!            WATERLAI = LAIMAX(1)*WATERLC
       WATERLAI = LAIMAX*WATERLC
+      ENTPFTLAIMAX(CV_WATER) = WATERLAI
 
 
       do k = 1,LCLASS
@@ -1135,209 +913,99 @@ do ichunk = 1,nchunk(1)
 
       end do   ! k=1,lclass
 
-!     * --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
-!     * After attempting re-scaling with this section, I determined that
-!     * the numerical precision is just not good enough to rescale all 
-!     * all cells to produce cover sums of 1.0.
-!     * The loops below cut the number of non-unitary sums from 25749 (10%)
-!     * to 4123 (!%).  Iterating again is bad, as negative cover values start 
-!     * occurring.
-!     *   The precision to 7-8 decimal places propagates through to the final
-!     * VEG outputs, so I'll let Igor re-scale to keep things 0-1 when he
-!     * does his smearing.
+        ! --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
+        ! After attempting re-scaling with this section, I determined that
+        ! the numerical precision is just not good enough to rescale all 
+        ! all cells to produce cover sums of 1.0.
+        ! The loops below cut the number of non-unitary sums from 25749 (10%)
+        ! to 4123 (!%).  Iterating again is bad, as negative cover values start 
+        ! occurring.
+        !   The precision to 7-8 decimal places propagates through to the final
+        ! VEG outputs, so I'll let Igor re-scale to keep things 0-1 when he
+        ! does his smearing.
 
-!     !This confirms that the modis_c2_gissfortran output does not sum to 1.
-      io_checksum%buf(ic,jc)=CHECKSUM
+        ! This confirms that the modis_c2_gissfortran output does not sum to 1.
+        io_checksum%buf(ic,jc)=CHECKSUM
        
-      
-!     write(*,*) err, 'Wrote CHECKSUM on EntMM 29 cover layers'
+        ! Check that ENTPFTLC cover sums to 1.0, and rescale <>1.0.
+        CHECKSUM = 0.0
+        do k=1,NENT20
+           CHECKSUM = CHECKSUM + ENTPFTLC(k)
+        enddo
 
-!     * Check that ENTPFTLC cover sums to 1.0, and rescale <>1.0.
-      CHECKSUM = 0.0
-      CHECKSUM = CHECKSUM + WATERLC
-!           write(*,*) CHECKSUM,'1'
-      do k=1,ENTPFTNUM
-         CHECKSUM = CHECKSUM + ENTPFTLC(k)
-      enddo
+        if (CHECKSUM.ne.1.0) then
+            ! Rescale all cover to sum to 1.
+            do k=1,NENT20
+                ENTPFTLC(k) = ENTPFTLC(k)/CHECKSUM
+            enddo
 
-!     write(*,*) shape(CHECKSUM)
-      f = 0
-      if (CHECKSUM.ne.1.0) then
-         f = f + 1
-!              write(*,*) 'ENTPFTLC<>1.0: ',
-!     &              CHECKSUM,WATERLC,ENTPFTLC(:),jc,ic
-!     * Rescale all cover to sum to 1.
-         WATERLC = WATERLC/CHECKSUM
-         do k=1,ENTPFTNUM
-             ENTPFTLC(k) = ENTPFTLC(k)/CHECKSUM
-!                  write(*,*) 'Rescaled1',k,ENTPFTLC(k),'LAIMAX',ENTPFTLAIMAX(k)
-         enddo
-         CHECKSUM = 0.0
-         CHECKSUM = CHECKSUM + WATERLC
-         do k=1,ENTPFTNUM
-            CHECKSUM = CHECKSUM + ENTPFTLC(k)
-         enddo
-!             write(*,*) CHECKSUM,'2'
-      endif
-!             write(*,*) 'Total<>1:',f
+             CHECKSUM = 0.0
+             do k=1,NENT20
+                 CHECKSUM = CHECKSUM + ENTPFTLC(k)
+             enddo
+        endif
 
-      CHECKSUM = 0.0
-      CHECKSUM = CHECKSUM + WATERLC
-      do k=1,ENTPFTNUM
-         CHECKSUM = CHECKSUM + ENTPFTLC(k)
-      enddo
-!           write(*,*) CHECKSUM,'3'
+        CHECKSUM = 0.0
+        do k=1,NENT20
+           CHECKSUM = CHECKSUM + ENTPFTLC(k)
+        enddo
 
-      f = 0
-      if (CHECKSUM.ne.1.0) then
-          f = f + 1
-!              write(*,*) 'Still ENTPFTLC<>1.0: ',
-!     &              CHECKSUM,WATERLC,ENTPFTLC(:)
-!                  do k=1,ENTPFTNUM
-!                    write(*,*) 'LAIMAX', ENTPFTLAIMAX(k)
-!                 enddo
-      endif
-!            write(*,*) 'Finished checking re-scaled ENTPFTLC. #<>1 =',f
+        ! ---------------------------------------------------------------
+        ! Finish by cover fraction weighted sum.
+        do k=1,NENT20
+            if (k == CV_WATER) cycle
 
-!---------------------------------------------------------------
-!     * Finish by cover fraction weighted sum.
-      do k=1,ENTPFTNUM
-         if (ENTPFTLC(k).le.0.) then
-            ENTPFTLAIMAX(k) = 0.
-         else
-            NPFTGRID = NPFTGRID + 1.
-         endif
-!     Update dominant pft LC and number.
-         if (ENTPFTLC(k).gt.DOMPFTLC) then
-            DOMPFTLC = ENTPFTLC(k)
-            DOMPFT = k
-         endif
-      end do   !k=1,ENTPFTNUM
-!---------------------------------------------------------------
+            if (ENTPFTLC(k).le.0.) then
+                ENTPFTLAIMAX(k) = 0.
+            else
+                NPFTGRID = NPFTGRID + 1.
+            endif
+            ! Update dominant pft LC and number.
+            if (ENTPFTLC(k).gt.DOMPFTLC) then
+                DOMPFTLC = ENTPFTLC(k)
+                DOMPFT = k
+            endif
+        end do   !k=1,ENTPFTNUM
+        ! ---------------------------------------------------------------
 
-!     * Checksumminmax file.
+      ! Checksumminmax file.
       CHECKSUM = 0.0
 
-!     * Write Ent PFT land cover layers
-!     write(*,*) "WATER (cover fraction)"
-      io_waterout%buf(ic,jc)=WATERLC
-
-!     write(*,*) err, 'Wrote WATER (cover fraction)'
-
-      LAYEROUT=WATERLC
-
-!            write(*,*) err, 'Wrote WATER (cover fraction)'
       
-      CHECKSUM = CHECKSUM + WATERLC
-
-      do k=1,ENTPFTNUM
-         
+      do k=1,NENT20
          CHECKSUM = CHECKSUM + ENTPFTLC(k)
-         
-!     Output file for land cover
-         entpft_io(k)%buf(ic,jc) = ENTPFTLC(k)
-
-!     write(*,*) err, 'Wrote ENTPFTLC'
-      
-         LAYEROUT = ENTPFTLC(k)
-
-!     write(*,*) err, 'Wrote LAYEROUT'
-
+         ! Output file for land cover
+         io_entpft(k)%buf(ic,jc) = ENTPFTLC(k)
       end do  ! k=1,ENTPFTNUM
       
-      
-      TITLECHECK = 'Ent Land cover check sum '//MONTH(6)//' ' &
-           //trim(RESOUT)
-!     write(*,*) TITLECHECK
       io_checksum2%buf(ic,jc)=CHECKSUM
-
-!     write(*,*) err, 'Wrote TITLECHECK'
-
-      f = 0
-      if (CHECKSUM.ne.1.0) then
-         f = f + 1
-!               write(*,*) 'COVER<>1.0: ',
-!     &              CHECKSUM,WATERLC,ENTPFTLC(:)
-      endif
-!      write(*,*) 'Non-unitary cover sums: ',f
 
       CHECKSUM=0.0
       TITLE = "WATER (LAI)"
-!     write(*,*) TITLE
-      io_waterlai%buf(ic,jc)=WATERLAI
-
-!     write(*,*) err, 'Wrote WATERLAI'
 
 #ifdef COMPUTE_LAI
-      CHECKSUM = CHECKSUM + WATERLC*WATERLAI
-      do k=1,ENTPFTNUM
-         CHECKSUM = CHECKSUM + &
-              ENTPFTLC(k)*ENTPFTLAIMAX(k)
-         entpftlaimax_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
-         LAYEROUT = ENTPFTLAIMAX(k)
+      do k=1,NENT20
+#else
+      do k=CV_WATER,CV_WATER    ! Compute water LAI even if not the other LAIs
+#endif
+         CHECKSUM = CHECKSUM + ENTPFTLC(k)*ENTPFTLAIMAX(k)
+         io_entpftlaimax(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
       end do  ! k=1,ENTPFTNUM
+#ifdef COMPUTE_LAI
       io_checksum3%buf(ic,jc)=CHECKSUM
 #endif
 
-!     write(*,*) err, 'Wrote ', TITLECHECK
-
-      TITLECHECK = 'Ent PFTs per cell check sum '//MONTH(6)//' ' &
-           //trim(RESOUT)
-!     write(*,*) TITLECHECK
       io_npftgrid%buf(ic,jc)=NPFTGRID
-!     write(*,*) err, 'Wrote ', TITLECHECK
-
-      TITLECHECK = 'Ent dominant PFT LC check sum '//MONTH(6)//' ' &
-           //trim(RESOUT)
-!     write(*,*) TITLECHECK
       io_dompftlc%buf(ic,jc)=DOMPFTLC
-!     write(*,*) err, 'Wrote ', TITLECHECK
-
-      TITLECHECK = 'Ent dominant PFT check sum '//MONTH(6)//' ' &
-           //trim(RESOUT)
-!     write(*,*) TITLECHECK
       io_dompft%buf(ic,jc)=DOMPFT
-!     write(*,*) err, 'Wrote ', TITLECHECK
 
-
-      do k=1,ENTPFTNUM
-         TITLECHECK = EntPFT_title(k)// &
-              'EntMM LAI max '//trim(RESOUT)
 #ifdef COMPUTE_LAI
-         entpftlaimaxcheck_io(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+      do k=1,NENT20
+         if (k == CV_WATER) cycle
+         io_entpftlaimaxcheck(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+      end do  ! k=1,NENT20
 #endif
 
-!     write(*,*) err, 'Wrote ENTPFTLAIMAX'
-!     write(*,*) TITLECHECK
-
-      end do  ! k=1,ENTPFTNUM
-
-!--------------Check for LC and LAI consistency    -------------------------
-!     Check that if LAIMAX>0 then LC>0.  Should be okay.
-
-!--------------Generate map of dominant cover      -------------------------
-!     filein = 'lc_lai_ent/EntMM_lc_laimax_1x1.bin'
-      
-      do k=1,ENTPFTNUM
-         
-      enddo
-      
-!--------------Clean up water and fractions <= 10% -------------------------
-      if (.false.)  then  !Option to generate cleaned up version.
-
-!     Combine 0-water LAI with dominant LC type (cover-weighted average of LAI).
-
-!     Combine 19-Bare or sparsely vegetation LAI with:
-!     - 10-arid adapted shrub.
-
-!     Combine 18-Permanent snow/ice LAI with:
-!     - 14-arctic C3 grass
-         
-!     If LCk<0.1, the combine into, in order of priority:
-!     - next similar type with LC>=LCk
-!     - type with max LC.
-
-      endif
 
    end do   ! ic=1,chunker%chunk_size(1)
    end do   ! jc=1,chunker%chunk_size(2)
@@ -1347,63 +1015,64 @@ do ichunk = 1,nchunk(1)
 end do     ! ichunk=1,nchunk(1)
 end do     ! jchunk=1,nchunk(2)
 
-do k=1,ENTPFTNUM
+do k=1,NENT20
    
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
-        'long_name',EntPFT_title(k))
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL,'history', &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
+        'long_name',ent20%title(k))
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL,'history', &
         'June 2017: C. Montes, N.Y. Kiang')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'title', 'Ent PFT 1 km land cover fraction')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'creator_email', &
         'elizabeth.fischer@columbia.edu,'// &
         'carlo.montes@nasa.gov'// &
         'nancy.y.kiang@nasa.gov')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'geospatial_lat_min', '-90')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'geospatial_lat_max', '90')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'geospatial_lon_min', '-180')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'geospatial_lon_max', '180')
-   err = NF90_PUT_ATT(entpft_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
         'EntTBM', 'Ent Terrestrial Biosphere Model')
 
-#ifdef COMPUTE_LAI
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
-        'long_name',EntPFT_title(k))
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+#ifndef COMPUTE_LAI
+   if (k==CV_WATER) cycle
+#endif
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
+        'long_name',ent20%title(k))
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
          'history', 'June 2017: C. Montes, N.Y. Kiang,'// &
          'downscaled from 1/12 degree to 1km resolution')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'institution', 'Original data:  LAI3g,'// &
         'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'// &
         'Scaling: NASA Goddard Institute for Space Studies')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
          'title', 'Maximum annual LAI (m2/m2) 2004'// &
          'downscaled from 1/12 degrees')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'creator_email', &
         'elizabeth.fischer@columbia.edu,'// &
         'carlo.montes@nasa.gov,'// &
         'nancy.y.kiang@nasa.gov')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'geospatial_lat_min', '-90')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'geospatial_lat_max', '90')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'geospatial_lon_min', '-180')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'geospatial_lon_max', '180')
-   err = NF90_PUT_ATT(entpftlaimax_io(k)%fileid,NF90_GLOBAL, &
+   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
         'EntTBM', 'Ent Terrestrial Biosphere Model')
-#endif
 end do
 
 call chunker%close_chunks
@@ -1430,8 +1099,10 @@ subroutine accum_lr_stats(this, startB, startB_lr)
         NPFTGRID = 0
         DOMPFT = 0
         DOMPFTLC = 0.0
-        do k=1,ENTPFTNUM
-            lc = entpft_io(k)%buf_lr(ic,jc) 
+        do k=1,NENT20
+            if (k == CV_WATER) cycle
+
+            lc = io_entpft(k)%buf_lr(ic,jc) 
             if ((lc == 0).or.(lc==undef)) cycle
 
             ! Count number of PFTs in the gridcell
