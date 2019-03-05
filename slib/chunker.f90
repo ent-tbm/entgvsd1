@@ -386,10 +386,8 @@ end function weighting
 ! Initializes the Chunker container.
 ! @param im,jm Size of high-resolution grid.
 ! @param im_lr,jm_lr Size of low-resolution grid
-! @param max_reads Maximum number of read ChunkIOs that can be
-!        associated with this Chunker.
-! @param max_writes Maximum number of write ChunkIOs that can be
-!        associated with this Chunker.
+! @param max_reads Maximum number of files one can open for reading.
+! @param max_writes Maximum number of files one can open for writing.
 subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
@@ -1040,7 +1038,7 @@ subroutine nc_reuse_var(this, cio0, cio, base, rw, wta)
 
     ! Where to start other instance, in case it's a multi...
     cio%base = base
-    if present(wta) cio%wta = wta
+    if (present(wta)) cio%wta = wta
 
     ! ---- Re-use fileIDs from another instance
     cio%leaf = cio0%leaf
