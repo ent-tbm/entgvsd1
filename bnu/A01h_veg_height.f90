@@ -18,43 +18,34 @@ program simard
     use chunkparams_mod
     use paths_mod
     use ent_labels_mod
+    use geom_mod
 
 implicit none
       
-    integer, parameter :: ENTPFTNUM = 19 !17 Ent PFTs + snow/ice + bare
-
-    integer, parameter :: IMH = 720 !long at 0.5 degrees
-    integer, parameter :: JMH = 360 !lat at 0.5 degrees
-
-    integer, parameter :: X1km = 43200 !long at 1 km
-    integer, parameter :: Y1km = 21600 !lat at 1 km
-
-    integer, parameter :: IM1km = X1km !long at 1 km
-    integer, parameter :: JM1km = Y1km !lat at 1 km
-
     type(Chunker_t) :: chunker
     integer :: jchunk, ichunk    ! Index of current chunk
     integer :: jc, ic    ! Index WITHIN current chunk
     integer :: jj, ii            ! Index in full space
 
+    integer, parameter :: NENT19 = NENT20-1
+    type(EntSet_t) :: ent19
+
     ! ------ Inputs
     type(ChunkIO_t) :: io_sim    ! Simard heights
     type(ChunkIO_t) :: ioall_lc    ! Simard heights
-    type(ChunkIO_t), dimension(ENTPFTNUM) :: io_lc
+    type(ChunkIO_t), dimension(NENT20) :: io_lc
     ! ------ Outputs
     type(ChunkIO_t) :: ioall_out
-    type(ChunkIO_t), dimension(ENTPFTNUM) :: io_out
+    type(ChunkIO_t), dimension(NENT20) :: io_out
 
     real*4 :: SHEIGHT, OHEIGHT
 
-    integer :: i,j,k,p
-
-
+    integer :: k
 
 ! Table assigns standard height, based on Simard Height and PFT index
 ! <Assigned height>(i) = SHEIGHT * std_heights(i*2) + std_heights(i*2+1)
 !  ...where SHEIGHT is the Simard height from the input file.
-real*8, parameter :: heights_form(2,ENTPFTNUM) = RESHAPE( (/ &
+real*8, parameter :: heights_form(2,NENT19) = RESHAPE( (/ &
     1d0, 0d0,    & ! TREE    1 - evergreen broadleaf early successional
     1d0, 0d0,    & ! TREE    2 - evergreen broadleaf late successional
     1d0, 0d0,    & ! TREE    3 - evergreen needleleaf early successional
@@ -73,19 +64,30 @@ real*8, parameter :: heights_form(2,ENTPFTNUM) = RESHAPE( (/ &
     0d0, 0.5d0,  & ! HERB   16 - crops C4 herb
     1d0, 0d0,    & ! TREE   17 - crops woody
     0d0, 0.0d0,  & ! BARREN 18 - Permanent snow/ice
-    0d0, 0.0d0   & ! BARREN 19 - Bare or sparsely vegetated, urban
-/), (/ 2,ENTPFTNUM /))
+    0d0, 0.0d0,  & ! BARREN 19 - Bare or sparsely vegetated, urban
+    0d0, 0.0d0   & ! BARREN 20 - water
+/), (/ 2,NENT19 /))
 
 
 
-!**   INPUT Files at 1km x 1km 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
+! -----------------------------------------------------
+! Set up ent19 = ent20 without water
+! (indices will be the same, but only if water is at the end)
+call ent19%allocate(NENT20-1, NENT20)
+do k=1,NENT20
+    if (k == CV_WATER) cycle
+    call ent19%sub_covertype(ent20, k)
+end do
+! -----------------------------------------------------
+
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
 ! ----------------------------------------------------------------------
 !     GET NC FILES IDs
-      
+
+! ------------- Inputs     
 !     SIMARD HEIGHTS
 call chunker%nc_open_gz(io_sim, &
     DATA_DIR, DATA_INPUT, &
@@ -93,27 +95,29 @@ call chunker%nc_open_gz(io_sim, &
     'simard_forest_heights.nc', 'heights', 1)
 
 !     ENTPFTLC
-do k = 1,ENTPFTNUM
+do k = 1,NENT19
     call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
         'EntMM_lc_laimax_1kmx1km/', &
-        trim(ent19(k)%file1)//trim(ent19(k)%file2)//'_lc.nc', &
-        trim(ent19(k)%file2), 1)
+        itoa2(ent19%mvs(k))//'_'//trim(ent19%abbrev(k))//'_lc.nc', &
+        trim(ent19%abbrev(k)), 1)
 end do
 
+! ---------------- Outputs
 ! ENTPFT heights
 call chunker%nc_create(ioall_out, &
     weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
     'height/', 'EntGVSDmosaic17_height_1kmx1km_lai3g', &
     'SimardHeights', &
     'Plant Heights', 'm', 'Plant Heights', &
-    index_array(ent19), title_array(ent19))
-do p = 1,ENTPFTNUM
-    call chunker%nc_reuse_var(ioall_out, io_out(p), &
-        (/1,1,p/), 'w', weighting(io_lc(p)%buf,1d0,0d0))
+    ent19%mvs, ent19%layer_names())
+
+do k = 1,NENT19
+    call chunker%nc_reuse_var(ioall_out, io_out(k), &
+        (/1,1,k/), 'w', weighting(io_lc(k)%buf,1d0,0d0))
 end do
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A01b_veg_heights')
+call chunker%nc_check('A01h_veg_heights')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif
@@ -140,12 +144,12 @@ do ichunk = 1,nchunk(1)
         jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
 
-        do p = 1,ENTPFTNUM
+        do k = 1,NENT19
             OHEIGHT = undef   ! Default if nothing in this PFT
-            if (io_lc(p)%buf(ic,jc) > 0) then
+            if (io_lc(k)%buf(ic,jc) > 0) then
                 ! Lookup what the height should be
                 SHEIGHT = io_sim%buf(ic,jc)
-                OHEIGHT = SHEIGHT * heights_form(1,p) + heights_form(2,p)
+                OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
 
                 ! TODO: Better way: inverse weighted average of
                 ! gridcell height, so tree heights are taller.  So
@@ -153,13 +157,11 @@ do ichunk = 1,nchunk(1)
                 ! LC's) is same as the Simard height.
             end if
 
-            io_out(p)%buf(ic,jc) = OHEIGHT
+            io_out(k)%buf(ic,jc) = OHEIGHT
         end do    ! p
 
     end do    ! ic
     end do    ! jc
-
-
     
     call chunker%write_chunks
 
