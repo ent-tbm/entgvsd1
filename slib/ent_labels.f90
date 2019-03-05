@@ -126,7 +126,7 @@ function layer_names(ents)
     integer :: k
 
     do k=1,19
-        layer_names(k) = itoa2(k)//'_'//ents%abbrev(k)
+        layer_names(k) = trim(itoa2(ents%mvs(k)))//'_'//trim(ents%abbrev(k))
     end do
 end function layer_names
 

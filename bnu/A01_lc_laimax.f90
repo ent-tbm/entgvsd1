@@ -1,9 +1,6 @@
 !  Program to assign 1kmx1km BNU LAImax to EntPFTs lc
 
 !------------------------------------------------------------------------
-
-
-
 program lc_laimax
 
 use netcdf
@@ -83,7 +80,8 @@ call assign_laimax(chunker, &
     1,nchunk(2), &
     1,nchunk(1), &
 #endif
-    io_lai, io_lc, io_laiout, io_checksum_lclai, io_err)
+    io_lai, io_lc, io_laiout, io_checksum_lclai, &
+    io_err=io_err)
 
 call chunker%close_chunks
 

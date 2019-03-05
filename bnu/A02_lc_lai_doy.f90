@@ -21,7 +21,7 @@ type(ChunkIO_t), target :: io_lai(ndoy)
 type(ChunkIO_t), target :: io_lc(NENT20)
 ! Output files
 type(ChunkIO_t) :: ioall_laiout(ndoy), io_laiout(NENT20,ndoy)
-type(ChunkIO_t) :: io_checksum_lclai(2)
+type(ChunkIO_t) :: io_checksum_lclai(ndoy)
 
 integer :: idoy,k
 
@@ -51,7 +51,7 @@ do idoy = 1,ndoy
         'nc/', 'EntMM_lc_lai_'//DOY(k)//'_1kmx1km', 'EntPFT', &
         'LAI output of A02', 'm2 m-2', 'LAI', &
         ent20%mvs, ent20%layer_names())
-    do k=1,20
+    do k=1,NENT20
         call chunker%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
             (/1,1,k/), 'w', weighting(io_lc(k)%buf, 1d0,0d0))
     end do
@@ -73,7 +73,7 @@ stop 0
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A01_lc_laimax')
+call chunker%nc_check('A02_lc_lai_doy')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif
