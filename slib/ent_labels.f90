@@ -4,13 +4,15 @@ module ent_labels_mod
 
 implicit none
 
+integer, parameter :: ENT_ABBREV_LEN = 20
+
 type EntSet_t
     ! For derived schemes...
     integer, dimension(:), allocatable :: mvs    ! Convert this indexing scheme to master (ent20)
     integer, dimension(:), allocatable :: svm    ! Convert master (ent20) indices to this indexing scheme
 
 
-    character*14, dimension(:), allocatable :: abbrev
+    character*(ENT_ABBREV_LEN), dimension(:), allocatable :: abbrev
     character*50, dimension(:), allocatable :: title
  
     integer :: ncover    ! Total number of cover types
@@ -20,6 +22,7 @@ type EntSet_t
     integer :: nremap
 contains
     procedure :: allocate => EntSet_allocate
+    procedure :: layer_names
 !    generic, public :: allocate => EntSet_allocate
     procedure :: add_covertype
     procedure :: sub_covertype
@@ -104,7 +107,16 @@ function itoa(i) result(ret)
     ret = adjustl(ret)
 end function
 
+function layer_names(ents)
+    class(EntSet_t) :: ents
+    character*(ENT_ABBREV_LEN+3) :: layer_names(ents%ncover)
+    ! ----- Locals
+    integer :: k
 
+    do k=1,19
+        layer_names(k) = itoa2(k)//'_'//ents%abbrev(k)
+    end do
+end function layer_names
 
 subroutine add_covertype(ents, abbrev,title)
     class(EntSet_t) :: ents
