@@ -12,6 +12,7 @@ set(entgvsd_SOURCES
     hntr.f90
     ent_labels.f90
     assign_laimax.F90
+    trim_tiny.F90
     conversions.f
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )

@@ -16,7 +16,7 @@ subroutine assign_laimax(chunker, &
     type(Chunker_t) :: chunker
     integer :: jc0,jc1, ic0,ic1
     ! Input files
-    type(ChunkIO_t) :: io_lai(:)
+    type(ChunkIO_t) :: io_lai(:)      ! io_lai(ndoy)
     type(ChunkIO_t) :: io_lc(NENT20)
     ! Output files
     type(ChunkIO_t) :: io_laiout(NENT20,size(io_lai,1))
