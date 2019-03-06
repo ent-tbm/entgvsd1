@@ -257,31 +257,31 @@
       write(0,*) 'nf_redef ', status, ncid
       !call handle_nf_error(status,  'nf_redef')
       !Put metadata global attributes
-      text = 'Ent Global Vegetation Structure Dataset '//
-     &     '(Ent GVSD) v1.0b  MODIS-Monfreda '
+      text = 'Ent Global Vegetation Structure Dataset '// &
+           '(Ent GVSD) v1.0b  MODIS-Monfreda '
       !write(0,*) 'len, text: ', len(trim(text)), trim(text)
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Description'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Description' &
+           ,len(trim(text)), trim(text))
       call handle_nf_error(status, 'nf_global'//trim(text))
-      text = 'TEMPORARY working version downscaled '//
-     &     'bare/bright soil from 2.5x2 degrees. '//
-     &     'With ext1 files having crops LAI extended by 5 grid cells.'
+      text = 'TEMPORARY working version downscaled '// &
+           'bare/bright soil from 2.5x2 degrees. '// &
+           'With ext1 files having crops LAI extended by 5 grid cells.'
       !write(0,*) 'len, text: ',len(trim(text)), trim(text)
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Comments'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Comments' &
+           ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       text = 'Institution:  NASA Goddard Institute for Space Studies'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Institution'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Institution' &
+           ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       text = 'Nancy.Y.Kiang@nasa.gov'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Contact'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Contact' &
+           ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       call DATE_AND_TIME(date)
       text = date//' Created'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'History'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'History' &
+           ,len(trim(text)), trim(text))
       call handle_nf_error(status,  'nf_put_att NF_GLOBAL')
 
 !      status=nf_enddef(ncid)      
@@ -290,8 +290,8 @@
       end subroutine my_nf_defglobal
 
 
-      subroutine write_output_lai(IM,JM,titlec, laic, n, fileprefix
-     &     , MISC, MON, resoutt)
+      subroutine write_output_lai(IM,JM,titlec, laic, n, fileprefix &
+           , MISC, MON, resoutt)
       !Same as write_output, but only lai, not lc.
       integer, intent(in) :: IM, JM
       character*80 :: titlec(:)
@@ -314,9 +314,9 @@
          MONstr="_"//MON
       endif
 
-      open(90,file=fileprefix//"_lai_"//
-     &     trim(MISC)//trim(MONstr)//".ij",
-     &     form="unformatted",status="unknown")
+      open(90,file=fileprefix//"_lai_"// &
+           trim(MISC)//trim(MONstr)//".ij", &
+           form="unformatted",status="unknown")
 
       do k=1,n
 !        read( titlec(k), '(a4, a46)' ) dum, pft_name
@@ -331,10 +331,10 @@
 
       !* Netcdf output
       fileout = fileprefix//"_lai_"//trim(MISC)//trim(MONstr)//".nc"
-      call my_nf_create_Ent(IM,JM
-     &     ,trim(fileout)
-     &     ,n,ent_names16, Ent_title16,
-     &     "leaf area index m^2 leaf / m^2 ground", ncid)
+      call my_nf_create_Ent(IM,JM &
+           ,trim(fileout) &
+           ,n,ent_names16, Ent_title16, &
+           "leaf area index m^2 leaf / m^2 ground", ncid)
       call my_nf_defglobal(trim(fileout))
 !     &     ,'Ent 16 PFTs MODIS-Monfreda 2004 leaf area index (LAI)'
 !     &     , '  ')
@@ -348,19 +348,19 @@
 !     &        trim(Ent_title16(k))//
 !     &        ' leaf area index', 'm^2 leaf / m^ ground', 
 !     &        laic(:,:,k))
-         status = my_nf_inq_put_var_real32_2(ncid,
-     &        trim(ent_names16(k)), varid,laic(:,:,k))
+         status = my_nf_inq_put_var_real32_2(ncid, &
+              trim(ent_names16(k)), varid,laic(:,:,k))
       end do
       status=nf90_close(ncid)
-      call handle_nf_error(status, 'write_output_lai '//
-     &     trim(fileprefix//"_lai_"//trim(MISC)//trim(MONstr)//".nc"))
+      call handle_nf_error(status, 'write_output_lai '// &
+           trim(fileprefix//"_lai_"//trim(MISC)//trim(MONstr)//".nc"))
       
       end subroutine write_output_lai
 
       
-      subroutine write_output_lai_monthly_nc(IM,JM,ncov
-     &     , laim, fileprefix
-     &     , MISC, units, resoutt)
+      subroutine write_output_lai_monthly_nc(IM,JM,ncov &
+           , laim, fileprefix &
+           , MISC, units, resoutt)
       !Create and write to 3D arrays of Ent cover variables, ixjxmonth.
       use netcdf
       integer,intent(in) :: IM,JM,ncov
@@ -377,18 +377,18 @@
       
       file=fileprefix//"_lai_"//trim(MISC)//".nc"
 
-      call my_nf_create_Ent_vartime(IM,JM,trim(file),ncov,
-     &     ent_names16, Ent_title16, units,ncid)
+      call my_nf_create_Ent_vartime(IM,JM,trim(file),ncov, &
+           ent_names16, Ent_title16, units,ncid)
       status = my_nf_open(trim(file), NF_WRITE, ncid)
 
       do k=1,ncov
          do m=1,12
             laimrev(:,:,m) = laim(m,:,:,k)
          enddo
-         status=my_nf_inq_put_var_real32_3(ncid,
-     &     trim(ent_names16(k)),varid,laimrev(:,:,:))
-         call handle_nf_error(status, 'my_nf_put_var_rea32_3 '//
-     &        trim(ent_names16(k)))
+         status=my_nf_inq_put_var_real32_3(ncid, &
+           trim(ent_names16(k)),varid,laimrev(:,:,:))
+         call handle_nf_error(status, 'my_nf_put_var_rea32_3 '// &
+              trim(ent_names16(k)))
       end do
 
       status=nf_close(ncid)
@@ -397,8 +397,8 @@
       end subroutine write_output_lai_monthly_nc
 
 
-      subroutine write_output_single(IM,JM,titlefoo, varname, vf, lai,
-     &     fileprefix, MISC, MON, resoutt)
+      subroutine write_output_single(IM,JM,titlefoo, varname, vf, lai, &
+           fileprefix, MISC, MON, resoutt)
       !Same as write-output, but arrays are for only one veg type.
       integer,intent(in) :: IM,JM
       character*80 :: titlefoo
@@ -419,17 +419,17 @@
          MONstr="_"//MON
       endif
 
-      open(80,file=fileprefix//"_lc_"//
-     &     trim(MISC)//trim(MONstr)//".ij",
-     &     form="unformatted",status="unknown")
+      open(80,file=fileprefix//"_lc_"// &
+           trim(MISC)//trim(MONstr)//".ij", &
+           form="unformatted",status="unknown")
 
       title = titlefoo(1:48)//"  "//trim(MON)//" (cover)  "//resoutt
       write(80) title, vf(:,:)
       close(80)
 
-      open(90,file=fileprefix//"_lai_"//
-     &     trim(MISC)//trim(MONstr)//".ij",
-     &     form="unformatted",status="unknown")
+      open(90,file=fileprefix//"_lai_"// &
+           trim(MISC)//trim(MONstr)//".ij", &
+           form="unformatted",status="unknown")
 
       title = titlefoo(1:48)//"  "//trim(MON)//" (LAI)  "//resoutt
       write(90) title, lai(:,:)
@@ -438,30 +438,30 @@
 
 !     !* Netcdf output
       fileout = fileprefix//"_lc_"//trim(MISC)//trim(MONstr)//".nc"
-      call my_nf_create_Ent_single(IM,JM
-     &     ,trim(fileout)
-     &     ,varname,trim(MISC),'cover fraction', ncid)
+      call my_nf_create_Ent_single(IM,JM &
+           ,trim(fileout) &
+           ,varname,trim(MISC),'cover fraction', ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
-      status = my_nf_inq_put_var_real32_2(ncid,
-     &        varname, varid,vf(:,:))
+      status = my_nf_inq_put_var_real32_2(ncid, &
+              varname, varid,vf(:,:))
       status=nf90_close(ncid)
 
       fileout = fileprefix//"_lai_"//trim(MISC)//trim(MONstr)//".nc"
-      call my_nf_create_Ent_single(IM,JM
-     &     ,trim(fileout)
-     &     ,varname,trim(MISC), 'm^2 leaf / m^ground', ncid)
+      call my_nf_create_Ent_single(IM,JM &
+           ,trim(fileout) &
+           ,varname,trim(MISC), 'm^2 leaf / m^ground', ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
-      status = my_nf_inq_put_var_real32_2(ncid,
-     &        varname, varid,lai(:,:))
+      status = my_nf_inq_put_var_real32_2(ncid, &
+              varname, varid,lai(:,:))
       status=nf90_close(ncid)
 
       end subroutine write_output_single
 
 
-      subroutine write_output(IM,JM,titlec, vfc, laic, n
-     &     , fileprefix, MISC, MON, resoutt)
+      subroutine write_output(IM,JM,titlec, vfc, laic, n &
+           , fileprefix, MISC, MON, resoutt)
       !LC and LAI, separate files each with all cover types
       !Output monthly files, single file x all cover for each month.
       use netcdf
@@ -490,9 +490,9 @@
          MONstr="_"//MON
       endif
 
-      open(80,file=fileprefix//"_lc_"//
-     &     trim(MISC)//trim(MONstr)//".ij",
-     &     form="unformatted",status="unknown")
+      open(80,file=fileprefix//"_lc_"// &
+           trim(MISC)//trim(MONstr)//".ij", &
+           form="unformatted",status="unknown")
 
       do k=1,n
 !        read( titlec(k), '(a4, a46)' ) dum, pft_name
@@ -507,9 +507,9 @@
       enddo
       close(80)
 
-      open(90,file=fileprefix//"_lai_"//
-     &     trim(MISC)//trim(MONstr)//".ij",
-     &     form="unformatted",status="unknown")
+      open(90,file=fileprefix//"_lai_"// &
+           trim(MISC)//trim(MONstr)//".ij", &
+           form="unformatted",status="unknown")
 
       do k=1,n
 !        read( titlec(k), '(a4, a46)' ) dum, pft_name
@@ -526,9 +526,9 @@
       !Write same netcdf output -----------------
       !LC
       fileout = fileprefix//"_lc_"//trim(MISC)//trim(MONstr)//".nc"
-      call my_nf_create_Ent(IM,JM
-     &     ,trim(fileout)
-     &     ,n,ent_names16, Ent_title16,'cover fraction', ncid)
+      call my_nf_create_Ent(IM,JM &
+           ,trim(fileout) &
+           ,n,ent_names16, Ent_title16,'cover fraction', ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
       do k=1,n
@@ -536,17 +536,17 @@
          !status=nf90_inq_dimid(ncid, ent_names(k), dimid)
          !status=nf90_put_var(ncid, varid, vfc(:,:,k), start, count)
          !call handle_nf_error(status, 'nf90_put_var'//ent_names(k))
-         status = my_nf_inq_put_var_real32_2(ncid,
-     &        trim(ent_names16(k)), varid,vfc(:,:,k))
+         status = my_nf_inq_put_var_real32_2(ncid, &
+              trim(ent_names16(k)), varid,vfc(:,:,k))
 
       end do
       status=nf90_close(ncid)
       
       !LAI
       fileout = fileprefix//"_lai_"//trim(MISC)//trim(MONstr)//".nc"
-      call my_nf_create_Ent(IM,JM
-     &     ,trim(fileout)
-     &     ,n,ent_names16, Ent_title16,"m^2 leaf / m^2 ground", ncid)
+      call my_nf_create_Ent(IM,JM &
+           ,trim(fileout) &
+           ,n,ent_names16, Ent_title16,"m^2 leaf / m^2 ground", ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
       do k=1,n
@@ -554,8 +554,8 @@
          !status=nf90_inq_dimid(ncid, ent_names(k), dimid)
          !status=nf90_put_var(ncid, varid, laic(:,:,k), start, count)
          !call handle_nf_error(status, 'nf90_put_var'//ent_names(k))
-         status = my_nf_inq_put_var_real32_2(ncid,
-     &        trim(ent_names16(k)), varid,laic(:,:,k))
+         status = my_nf_inq_put_var_real32_2(ncid, &
+              trim(ent_names16(k)), varid,laic(:,:,k))
       end do
       status=nf90_close(ncid)
       
@@ -563,9 +563,9 @@
 
       
       
-      subroutine write_output_h_single(IM,JM
-     &     ,titleh, entnamek, h,hsd, filename
-     &     , MISC, resoutt)
+      subroutine write_output_h_single(IM,JM &
+           ,titleh, entnamek, h,hsd, filename &
+           , MISC, resoutt)
       use netcdf
       use convertnc
       implicit none
@@ -584,8 +584,8 @@
       integer :: status, ncid, varid
       integer :: lonid, latid, dim(2)
       
-      open(90,file=filename//trim(MISC)//".ij",
-     &     form="unformatted",status="unknown")
+      open(90,file=filename//trim(MISC)//".ij", &
+           form="unformatted",status="unknown")
 
       title = titleh(1)(1:63)//"  "//trim(resoutt)
       write(90) title, h(:,:)
@@ -597,13 +597,13 @@
 
       !Netcdf output
       fileout = filename//trim(MISC)//".nc"
-      call my_nf_create_Ent_single(IM,JM
-     &     ,trim(fileout),"h_"//trim(ent_names16(entnamek))
-     &     ,Ent_Title16(entnamek)//" height", "meters", ncid)
+      call my_nf_create_Ent_single(IM,JM &
+           ,trim(fileout),"h_"//trim(ent_names16(entnamek)) &
+           ,Ent_Title16(entnamek)//" height", "meters", ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
-      status = my_nf_inq_put_var_real32_2(ncid,
-     &     "h_"//ent_names16(entnamek), varid,h(:,:))
+      status = my_nf_inq_put_var_real32_2(ncid, &
+           "h_"//ent_names16(entnamek), varid,h(:,:))
       
       !Need to make a my_nf_create_Entx2 to output two sets of vars.
  !     status = my_nf_inq_put_var_real32_2(ncid,
@@ -613,18 +613,18 @@
       write(*,*) status, 'lon', lonid
       status = nf_inq_dimid(ncid,'lat',latid)
       write(*,*) status, 'lat', latid
-      status = my_nf_inq_def_put_var_real32_2(ncid,
-     &     IM,JM,1,IM,1,JM,lonid,latid,
-     &     'stdv_h'//ent_names16(entnamek),
-     &     Ent_title16(entnamek)//' standard deviation of height'
-     &     , 'meters', hsd(:,:))
+      status = my_nf_inq_def_put_var_real32_2(ncid, &
+           IM,JM,1,IM,1,JM,lonid,latid, &
+           'stdv_h'//ent_names16(entnamek), &
+           Ent_title16(entnamek)//' standard deviation of height' &
+           , 'meters', hsd(:,:))
       status=nf90_close(ncid)
       
       end subroutine write_output_h_single
 
 
-      subroutine write_output_h(IM,JM,n,titleh, h,hsd, filename
-     &     , MISC, resoutt)
+      subroutine write_output_h(IM,JM,n,titleh, h,hsd, filename &
+           , MISC, resoutt)
       integer,intent(in) :: IM,JM
       character*80 :: titleh(:,:)
       real*4 :: h(:,:,:), hsd(:,:,:)
@@ -639,8 +639,8 @@
       integer :: k
       integer :: status, ncid, varid
 
-      open(90,file=filename//trim(MISC)//".ij",
-     &     form="unformatted",status="unknown")
+      open(90,file=filename//trim(MISC)//".ij", &
+           form="unformatted",status="unknown")
 
       do k=1,n
 !         title = titleh(1,k)(1:48)//" "//trim(MISC)//
@@ -658,14 +658,14 @@
 
       !* Netcdf output
       fileout = filename//trim(MISC)//".nc"
-      call my_nf_create_Ent(IM,JM
-     &     ,trim(fileout),n
-     &     ,ent_names16,Ent_title16,'height (m)', ncid)
+      call my_nf_create_Ent(IM,JM &
+           ,trim(fileout),n &
+           ,ent_names16,Ent_title16,'height (m)', ncid)
       call my_nf_defglobal(trim(fileout))
       status = my_nf_open(trim(fileout), NF_WRITE,ncid)
       do k=1,n
-         status = my_nf_inq_put_var_real32_2(ncid,
-     &        trim(ent_names16(k)), varid,h(:,:,k))
+         status = my_nf_inq_put_var_real32_2(ncid, &
+              trim(ent_names16(k)), varid,h(:,:,k))
       end do
       !Need to make a my_nf_create_Entx2 to output two sets of vars.
 !      do k=1,n
@@ -712,8 +712,8 @@
                bsf(i,j) = bsf_1(i,j) + bsf_0(i,j)
                bs_brightratio(i,j) = bsf_1(i,j) /  bsf(i,j) 
                if (bs_brightratio(i,j).gt.1.0) then
-                  write(*,*) 'bs_brightratio>1.0,i,j, bratio'
-     &                 , i,j,bs_brightratio(i,j)
+                  write(*,*) 'bs_brightratio>1.0,i,j, bratio' &
+                       , i,j,bs_brightratio(i,j)
                endif
             else
                bsf(i,j) = 0.d0
@@ -766,8 +766,8 @@
 
       end subroutine calculate_bs_brightratio
 
-      subroutine get_bare_soil_brightratio(IMn,JMn, filename
-     &     ,bs_brightratio)
+      subroutine get_bare_soil_brightratio(IMn,JMn, filename &
+           ,bs_brightratio)
       ! read bare soil from the "old"  dataset, in GISS layer format
       ! compute ratio of bright/total bare soil.
       ! this will be used to compute bright and dark cover fractions
@@ -783,8 +783,8 @@
       character*80 :: title_bs
       integer :: k
 
-      open(1,file=filename,
-     &     form="unformatted",status="old")
+      open(1,file=filename, &
+           form="unformatted",status="old")
 
       read(1) title_bs, bsf_1(:,:) !BRIGHT cover
       write(*,*) 'read BRIGHT soil'
@@ -802,8 +802,8 @@
       end subroutine get_bare_soil_brightratio
 
       
-      subroutine get_bare_soil_brightratio_Carrer(IMn,JMn, filename
-     &     ,bs_brightratio)
+      subroutine get_bare_soil_brightratio_Carrer(IMn,JMn, filename &
+           ,bs_brightratio)
       ! Read soil albedo from netcdf file. This can be with bright+dark fractions = 1
       ! for soil albedo only, or from a VEG data set with actual bright and dark cover fractions.
       ! Compute bs_brightratio =  bright/total bare soil.
@@ -824,10 +824,10 @@
 
       status = my_nf_open(filename,0,ncid)
 
-      status = my_nf_inq_get_var_real32_2(ncid,'bare_bright_grey',
-     &     varid,bsf_1)
-      status = my_nf_inq_get_var_real32_2(ncid,'bare_dark_grey',
-     &     varid,bsf_0)
+      status = my_nf_inq_get_var_real32_2(ncid,'bare_bright_grey', &
+           varid,bsf_1)
+      status = my_nf_inq_get_var_real32_2(ncid,'bare_dark_grey', &
+           varid,bsf_0)
       status = nf_close(ncid)
       
       call calculate_bs_brightratio(IMn, JMn, bsf_1, bsf_0,
@@ -840,9 +840,9 @@
 
       
 
-      subroutine split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE
-     &     ,bsbr,vfc,laic,vfm,laim,vfh,hm,hsd
-     &     ,titlec, titlem, titleh,res_out)
+      subroutine split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
+           ,bsbr,vfc,laic,vfm,laim,vfh,hm,hsd &
+           ,titlec, titlem, titleh,res_out)
       !Split BARE soil into BRIGHT and DARK cover to preserve albedo from
       !  "old" ModelE cover.  Should be called after each trim, scale, nocrops.
       !Any LAI on BARE soil should already have been moved to vegetated cover,
@@ -880,8 +880,8 @@
               !if ((vf_tot(i,j).lt.0.0).and.(vf_tot(i,j).ne.-1.e30)) then
               !   vf_tot(i,j) = 0.0
               !endif
-              if ((vft.lt.0.0).or.
-     &             ((vft.gt.0.0).and.(bsbr(i,j).lt.0.0))) then !Bad data
+              if ((vft.lt.0.0).or. &
+                   ((vft.gt.0.0).and.(bsbr(i,j).lt.0.0))) then !Bad data
                  write(*,*)'ERR: i,j,vft,bsbr',i,j,vft,bsbr(i,j)
                  if (vft.gt.0.) then
                     !Need to split to bright and dark.
@@ -901,8 +901,8 @@
 
               do m=1,12         !Monthly
                  vft = vfm(m,i,j,N_BARE)
-                 if ((vft.lt.0.0).or.
-     &                ((vft.gt.0.).and.(bsbr(i,j).lt.0.))) then !Bad data
+                 if ((vft.lt.0.0).or. &
+                      ((vft.gt.0.).and.(bsbr(i,j).lt.0.))) then !Bad data
                     write(*,*)'ERRm',N_BARE,m,i,j,vft,bsbr(i,j)
                     if (vft.gt.0.) then
                        !Need to split to bright and dark.
@@ -944,8 +944,8 @@ c                  vfm(m,:,:,N_BARE) = vf_tot(:,:) - vfm(m,:,:,N_BARE-1)
 c                  laim(m,:,:,N_BARE-1:N_BARE) = 0.
 c                enddo
 
-               if ((vft.lt.0.).or.
-     &              ((vft.gt.0).and.(bsbr(i,j).lt.0.))) then !Bad data
+               if ((vft.lt.0.).or. &
+                    ((vft.gt.0).and.(bsbr(i,j).lt.0.))) then !Bad data
                   write(*,*) 'ERR2: bsbr',i,j,vft,bsbr(i,j)
                   !Keep existing bright and dark
                else             !Good data
@@ -955,10 +955,10 @@ c                enddo
                   laic(i,j,BR:DK) = 0.
                endif
                do m=1,12
-                  if ((vft.lt.0.).or.
-     &                 ((vft.gt.0.).and.(bsbr(i,j).lt.0.))) then !Bad data
-                     write(*,*) 'ERR2m: bsbr',i,j,vft
-     &                    ,vfc(i,j,BR),vfc(i,j,DK),bsbr(i,j)
+                  if ((vft.lt.0.).or. &
+                       ((vft.gt.0.).and.(bsbr(i,j).lt.0.))) then !Bad data
+                     write(*,*) 'ERR2m: bsbr',i,j,vft &
+                          ,vfc(i,j,BR),vfc(i,j,DK),bsbr(i,j)
                      !Keep existing bright and dark, or check why vft<0.
                   else          !Good data
                      vfm(m,i,j,BR) = vft*bsbr(i,j)
@@ -976,27 +976,27 @@ c                enddo
       hm(:,:,N_BARE) = 0.
       hsd(:,:,N_BARE) = 0.
 
-      titlec(BR) =   "17 - bright bare soil  "//
-     &     "                           (COVER) "//res_out
-      titlec(DK) =     "18 - dark bare soil    "//
-     &     "                           (COVER) "//res_out
+      titlec(BR) =   "17 - bright bare soil  "// &
+           "                           (COVER) "//res_out
+      titlec(DK) =     "18 - dark bare soil    "// &
+           "                           (COVER) "//res_out
       do m=1,12
-            titlem(m,BR) = "17 - bright bare soil  "//
-     &           "                          "//MONTH(m)//" (cover) "
-     &           //res_out
-            titlem(m,DK) =   "18 - dark bare soil    "//
-     &           "                          "//MONTH(m)//" (cover) "
-     &           //res_out
+            titlem(m,BR) = "17 - bright bare soil  "// &
+                 "                          "//MONTH(m)//" (cover) " &
+                 //res_out
+            titlem(m,DK) =   "18 - dark bare soil    "// &
+                 "                          "//MONTH(m)//" (cover) " &
+                 //res_out
          enddo
          
-      titleh(1,BR) =   "17 - bright bare soil  "//
-     &     "height (m)                                "//res_out
-      titleh(1,DK) =     "18 - dark bare soil    "//
-     &     "height (m)                                "//res_out
-      titleh(2,BR) =   "17 - bright bare soil  "//
-     &     "height stdev(m)                           "//res_out
-      titleh(2,DK) =     "18 - dark bare soil    "//
-     &     "height stdev(m)                           "//res_out
+      titleh(1,BR) =   "17 - bright bare soil  "// &
+           "height (m)                                "//res_out
+      titleh(1,DK) =     "18 - dark bare soil    "// &
+           "height (m)                                "//res_out
+      titleh(2,BR) =   "17 - bright bare soil  "// &
+           "height stdev(m)                           "//res_out
+      titleh(2,DK) =     "18 - dark bare soil    "// &
+           "height stdev(m)                           "//res_out
 
       write(*,*) 'Finished split_bare_soil'
       end subroutine split_bare_soil
@@ -1019,8 +1019,8 @@ c                enddo
 
       L1(:,:) = 0.0
       do k=1,Ln
-            L1(:,:) = IJADD4(1,IMn,1,JMn,L1(:,:),
-     &           IJMULT4(1,IMn,1,JMn,vfs(:,:,k),lais(:,:,k)))
+            L1(:,:) = IJADD4(1,IMn,1,JMn,L1(:,:), &
+                 IJMULT4(1,IMn,1,JMn,vfs(:,:,k),lais(:,:,k)))
       enddo
 
       TITLE = trim(tag)//'   LAI'
@@ -1037,11 +1037,11 @@ c                enddo
       character*(*) :: tag
       real*4 :: vfmon(12,IMn,JMn,KM), laimon(12,IMn,JMn,KM)
       !---Local---
-      character*3, parameter :: MON(12) =
-     &     (/
-     &     "Jan","Feb","Mar","Apr","May","Jun",
-     &     "Jul","Aug","Sep","Oct","Nov","Dec"
-     &     /)
+      character*3, parameter :: MON(12) = &
+           (/ &
+           "Jan","Feb","Mar","Apr","May","Jun", &
+           "Jul","Aug","Sep","Oct","Nov","Dec" &
+           /)
 
       integer :: i,j,k,m
       character*80 :: TITLE
@@ -1050,8 +1050,8 @@ c                enddo
       L1(:,:,:) = 0.0
       do m=1,12
          do k=1,Ln
-            L1(m,:,:) = IJADD4(1,IMn,1,JMn,L1(m,:,:),
-     &           IJMULT4(1,IMn,1,JMn,vfmon(m,:,:,k),laimon(m,:,:,k)))
+            L1(m,:,:) = IJADD4(1,IMn,1,JMn,L1(m,:,:), &
+                 IJMULT4(1,IMn,1,JMn,vfmon(m,:,:,k),laimon(m,:,:,k)))
          enddo
       enddo
 
@@ -1078,11 +1078,11 @@ c                enddo
          LAYER(:,:) = 0.
          do i=1,IX
             do j=1,JX
-               if (((vf(i,j,k).eq.0.0).and.(lai(i,j,k).gt.0.0))
-     &              .or.(vf(i,j,k).gt.0.0).and.(lai(i,j,k).eq.0.0))
-     &              then
-                  print *,label,' mismatch,k,i,j,cov,lai'
-     &                 ,k,i,j,vf(i,j,k),lai(i,j,k)
+               if (((vf(i,j,k).eq.0.0).and.(lai(i,j,k).gt.0.0)) &
+                    .or.(vf(i,j,k).gt.0.0).and.(lai(i,j,k).eq.0.0)) &
+                    then
+                  print *,label,' mismatch,k,i,j,cov,lai' &
+                       ,k,i,j,vf(i,j,k),lai(i,j,k)
                   LAYER(i,j) = vf(i,j,k)
                endif
             enddo
@@ -1093,10 +1093,10 @@ c                enddo
       end subroutine check_lc_lai_mismatch
 
 
-      subroutine replace_crops(IMn,JMn,KM,i,j !,s
-     &     ,bs_brightratio
-     &     ,vfc,vfm,laic,laim
-     &     ,naturalvegfound)  !,flag)
+      subroutine replace_crops(IMn,JMn,KM,i,j !,s &
+           ,bs_brightratio &
+           ,vfc,vfm,laic,laim &
+           ,naturalvegfound)  !,flag)
       !Replace crops in (i,j) with main natural cover in cell or adjacent.
       !The check for existence of crops in (i,j) is done before subroutine call
       !Fix 6 cells that are all crops due to MODIS error or two islands.
@@ -1143,11 +1143,11 @@ c                enddo
       enddo
       if (covmax.gt.0.d0) then  !Assign dominant natural veg to crop
          naturalvegfound = .true.
-         vfc(i,j,covmaxk) = vfc(i,j,covmaxk) 
-     &        + vfc(i,j,15)  + vfc(i,j,16)
+         vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
+              + vfc(i,j,15)  + vfc(i,j,16)
          vfc(i,j,15:16) = 0.0 !zero out crop cover - done below
-         vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk)
-     &        + vfm(:,i,j,15)  + vfm(:,i,j,16)
+         vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
+              + vfm(:,i,j,15)  + vfm(:,i,j,16)
          vfm(:,i,j,15:16) = 0.0 !zero out crop cover - done below
          !If in same cell, keep original LAI in (i,j) of natural veg
          !!DON'T DO ASSIGNMENT BELOW
@@ -1165,18 +1165,18 @@ c                enddo
             covavglaim(:,:) = 0.
             do ii=max(1,i-dg),min(i+dg,IMn)
                do jj=max(1,j-dg),min(j+dg,JMn)
-                  if ( (ii.ge.1).and.(ii.le.IMn)
-     &                 .and.(jj.ge.1).and.(jj.le.JMn) !in grid range
-     &                 .and.((ii.ne.i).or.(jj.ne.j)) ) !not the i,j center cell
-     &                 then
+                  if ( (ii.ge.1).and.(ii.le.IMn) &
+                       .and.(jj.ge.1).and.(jj.le.JMn) !in grid range &
+                       .and.((ii.ne.i).or.(jj.ne.j)) ) !not the i,j center cell &
+                       then
                      do k=1,14     
                      !Sum adjacent natural veg cover by type.
                         covsum(k) = covsum(k) + vfc(ii,jj,k)
-                        covavglai(k) = covavglai(k) + 
-     &                       laic(ii,jj,k)*vfc(ii,jj,k)
+                        covavglai(k) = covavglai(k) +  &
+                             laic(ii,jj,k)*vfc(ii,jj,k)
                         covsumm(:,k) = covsumm(:,k) + vfm(:,ii,jj,k)
-                        covavglaim(:,k) = covavglaim(:,k) +
-     &                       laim(:,ii,jj,k)*vfm(:,ii,jj,k)
+                        covavglaim(:,k) = covavglaim(:,k) + &
+                             laim(:,ii,jj,k)*vfm(:,ii,jj,k)
                      enddo
                   endif
                enddo
@@ -1194,9 +1194,9 @@ c                enddo
             if (covmax>0.) then
                do m=1,12  !Error check
                   if (covsumm(m,covmaxk)<0.) then
-                     write(*,*) 'ERRc ',i,j,ii,jj,m
-     &                    ,covmax,covsum(covmaxk), covsumm(m,covmaxk)
-     &                    ,covavglai(covmaxk),covavglaim(m,covmaxk)
+                     write(*,*) 'ERRc ',i,j,ii,jj,m &
+                          ,covmax,covsum(covmaxk), covsumm(m,covmaxk) &
+                          ,covavglai(covmaxk),covavglaim(m,covmaxk)
                      STOP
                   endif
                enddo
@@ -1204,24 +1204,24 @@ c                enddo
                naturalvegfound = .true.
                !covavglai(k) = covavglai(k)/covsum(k)  !BUG FOUND
                covavglai(covmaxk) = covavglai(covmaxk)/covsum(covmaxk)
-               covavglaim(:,covmaxk) = covavglaim(:,covmaxk)/
-     &              covsumm(:,covmaxk)
-               vfc(i,j,covmaxk) = vfc(i,j,covmaxk) 
-     &              + vfc(i,j,15) + vfc(i,j,16)
+               covavglaim(:,covmaxk) = covavglaim(:,covmaxk)/ &
+                    covsumm(:,covmaxk)
+               vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
+                    + vfc(i,j,15) + vfc(i,j,16)
                vfc(i,j,15:16) = 0.0 !zero out crop cover - done below
-               vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk)
-     &              + vfm(:,i,j,15) + vfm(:,i,j,16)
+               vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
+                    + vfm(:,i,j,15) + vfm(:,i,j,16)
                vfm(:,i,j,15:16) = 0.0 !zero out crop cover  - done below
                !Assign LAI in (i,j) from adjacent cell
                laic(i,j,covmaxk) = covavglai(covmaxk)
                laim(:,i,j,covmaxk) = covavglaim(:,covmaxk)
                !write(*,*) 'Cell or adjacent has crops + natural',i,j,s
-               write(*,*) 'Found natural veg in adjacent cells'
-     &              ,i,j,covmaxk,dg
+               write(*,*) 'Found natural veg in adjacent cells' &
+                    ,i,j,covmaxk,dg
                do m=1,12 !Error check
                   if (covavglaim(m,covmaxk)>10.) then
-                     write(*,*) 'ERRc2 bad avg lai',i,j,ii,jj,m,covmaxk
-     &                    ,covsumm(m,covmaxk),covavglaim(m,covmaxk)
+                     write(*,*) 'ERRc2 bad avg lai',i,j,ii,jj,m,covmaxk &
+                          ,covsumm(m,covmaxk),covavglaim(m,covmaxk)
                      STOP
                   endif
                enddo
@@ -1309,18 +1309,18 @@ c      endif
 
          !Assign bare soil fractions
          if (br.ne.-1.e30) then  !Adjacent bs_brightratio found
-            vfc(i,j,17) = vfc(i,j,17) +
-     &           sum(vfc(i,j,15:16))*br
-            vfc(i,j,18) = vfc(i,j,18) +
-     &           sum(vfc(i,j,15:16))*(1. - br)
+            vfc(i,j,17) = vfc(i,j,17) + &
+                 sum(vfc(i,j,15:16))*br
+            vfc(i,j,18) = vfc(i,j,18) + &
+                 sum(vfc(i,j,15:16))*(1. - br)
             vfc(i,j,15:16) = 0. !zero out crops
-            vfm(:,i,j,17) = vfm(:,i,j,17) +
-     &           sum(vfm(:,i,j,15:16))*br
-            vfm(:,i,j,18) = vfm(:,i,j,18) +
-     &           sum(vfm(:,i,j,15:16))*(1. - br)
+            vfm(:,i,j,17) = vfm(:,i,j,17) + &
+                 sum(vfm(:,i,j,15:16))*br
+            vfm(:,i,j,18) = vfm(:,i,j,18) + &
+                 sum(vfm(:,i,j,15:16))*(1. - br)
             vfm(:,i,j,15:16) = 0. !zero out crops
-            write(*,*) 'Assigned nearby bare'
-     &           ,i,j, dg, bs_brightratio(i,j),br
+            write(*,*) 'Assigned nearby bare' &
+                 ,i,j, dg, bs_brightratio(i,j),br
          elseif ((IMn.eq.720).and.(JMn.eq.360)) then
       !Adjacent bs_brightratio not found for only these cells
 !     Replace specific grid cells ONLY VALID FOR IM=720,JM=360!!!
@@ -1337,37 +1337,37 @@ c      endif
 !     487 141 0.461078912 0.461078912  = (63.25, -19.75)
 !     Fiji?  American Samoa? (pure17 was everbroad, C4 crop, sparse, coast)
 !     694 179 0.353166729 0.353166729  = (163.25,-0.75)
-            if (((i.eq.169).and.(j.eq.36)) !Antarctica1
-     &           .or.((i.eq.168).and.(j.eq.37)) !Antarctica1
-     &           .or.((i.eq.239).and.(j.eq.36)) !Antarctica2
-     &           .or.((i.eq.204).and.(j.eq.36))) !Antarctica2
-     &           then
+            if (((i.eq.169).and.(j.eq.36)) !Antarctica1 &
+                 .or.((i.eq.168).and.(j.eq.37)) !Antarctica1 &
+                 .or.((i.eq.239).and.(j.eq.36)) !Antarctica2 &
+                 .or.((i.eq.204).and.(j.eq.36))) !Antarctica2 &
+                 then
                   !* Assign Antarctica cells to arctic grass
                vfc(i,j,14) = vfc(i,j,14) + sum(vfc(i,j,15:16))
                vfc(i,j,15:16) = 0. !zero out crops
-               laic(i,j,14) = max(laic(i,j,14),
-     &              max(laic(i,j,15),laic(i,j,16)))
+               laic(i,j,14) = max(laic(i,j,14), &
+                    max(laic(i,j,15),laic(i,j,16)))
                do m=1,12
                   vfm(m,i,j,14)=vfm(m,i,j,14) + sum(vfm(m,i,j,15:16))
                   vfm(m,i,j,15:16) = 0. !zero out crops
-                  laim(m,i,j,14)=max(laim(m,i,j,14),
-     &                 max(laim(m,i,j,15),laim(m,i,j,16)))
+                  laim(m,i,j,14)=max(laim(m,i,j,14), &
+                       max(laim(m,i,j,15),laim(m,i,j,16)))
                enddo
                write(*,*) 'Assigned c3 crops cells in Antartica',i,j
             endif
-            if (((i.eq.487).and.(j.eq.141)) !Mauritius
-     &           .or.((i.eq.694).and.(j.eq.179))) !Fiji or American Samoa
-     &           then
+            if (((i.eq.487).and.(j.eq.141)) !Mauritius &
+                 .or.((i.eq.694).and.(j.eq.179))) !Fiji or American Samoa &
+                 then
                !* Assign tropical rainforest
                vfc(i,j,2) = vfc(i,j,2) + sum(vfc(i,j,15:16))
                vfc(i,j,15:16) = 0. !zero out crops
-               laic(i,j,2) = max(laic(i,j,2),
-     &              max(laic(i,j,15), laic(i,j,16)))
+               laic(i,j,2) = max(laic(i,j,2), &
+                    max(laic(i,j,15), laic(i,j,16)))
                do m=1,12
                   vfm(m,i,j,2)=vfm(m,i,j,2) + sum(vfm(m,i,j,15:16))
                   vfm(m,i,j,15:16) = 0. !zero out crops
-                  laim(m,i,j,2)=max(laim(m,i,j,2),
-     &                 max(laim(m,i,j,15),laim(m,i,j,16)))
+                  laim(m,i,j,2)=max(laim(m,i,j,2), &
+                       max(laim(m,i,j,15),laim(m,i,j,16)))
                enddo
                write(*,*) 'Assigned c4 crops cells in islands',i,j
             endif
@@ -1427,20 +1427,20 @@ c      endif
                dg=5
                do ii=i-dg,i+dg    !ext 5 grid cells = 2.5 degrees at HXH
                   do jj=j-dg,j+dg
-                     if ( (ii.ge.1).and.(ii.le.IMn)
-     &                    .and.(jj.ge.1).and.(jj.le.JMn) !in grid range
-     &                    .and.((ii.ne.i).or.(jj.ne.j)) ) !not in i,j 
-     &                    then
+                     if ( (ii.ge.1).and.(ii.le.IMn) &
+                          .and.(jj.ge.1).and.(jj.le.JMn) !in grid range &
+                          .and.((ii.ne.i).or.(jj.ne.j)) ) !not in i,j  &
+                          then
                         if (vfc15(ii,jj).gt.0.d0) then
                            covsum15 = covsum15 + vfc15(ii,jj)
-                           laiavg15 = laiavg15 
-     &                          + laic15(ii,jj)*vfc15(ii,jj)
+                           laiavg15 = laiavg15  &
+                                + laic15(ii,jj)*vfc15(ii,jj)
                            hmavg15 = hmavg15 + hm15(ii,jj)*vfc15(ii,jj)
-                           hsdavg15 = hsdavg15 
-     &                          + hsd15(ii,jj)*vfc15(ii,jj)
+                           hsdavg15 = hsdavg15  &
+                                + hsd15(ii,jj)*vfc15(ii,jj)
                            covmsum15(:) = covmsum15(:) + vfm15(:,ii,jj)
-                           laimavg15(:) = laimavg15(:) +
-     &                          laim15(:,ii,jj)*vfm15(:,ii,jj)
+                           laimavg15(:) = laimavg15(:) + &
+                                laim15(:,ii,jj)*vfm15(:,ii,jj)
                         endif
                      endif
                   enddo
@@ -1484,15 +1484,15 @@ c      endif
 !      character*(*), parameter :: res_in="05x05"  !degrees
       character*(*), parameter :: res_in="HXH"  !degrees
       character*(*), parameter :: res_in_int="720x360"  !number of grid cells
-      character*(*), parameter :: old_veg_file=
-     &     "/Users/nkiang/NancyResearch/GISS/Models/Ent/Code/cmrun/"//
-     &     "V720x360_no_crops_downsc.ext"
-      character*(*), parameter :: soilalb_file = 
-     &     "/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/"//
-!     &     "MODIS/Schaaf/"//
-     &     "Soil/Carrer/CarrerGISS_soil_albedo/"//
-     &     "CarrerGISS_soil_albedo_multiband_annual_2004_v1.0b_HXH"//
-     &     "_fringeice.nc"
+      character*(*), parameter :: old_veg_file= &
+           "/Users/nkiang/NancyResearch/GISS/Models/Ent/Code/cmrun/"// &
+           "V720x360_no_crops_downsc.ext"
+      character*(*), parameter :: soilalb_file =  &
+           "/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/"//
+!     &     "MODIS/Schaaf/"// &
+           "Soil/Carrer/CarrerGISS_soil_albedo/"// &
+           "CarrerGISS_soil_albedo_multiband_annual_2004_v1.0b_HXH"// &
+           "_fringeice.nc"
       !character*(*), parameter :: fversion_out='_downscg5' !TEMP FOR MAX KELLEY
       character*(*), parameter :: version_in = 'v1.0b'
       character*(*), parameter :: fversion_out='v1.0b'
@@ -1537,8 +1537,8 @@ c      endif
       !character*6, parameter :: fileprein = 'EntMM_'
       character*12, parameter :: fileprein = 'EntGVSD17_MM'
       character*12, parameter :: filepreout = 'EntGVSD16_MM'
-      character*(*), parameter :: file_checksum = 
-     &     'lc_lai_ent16/'//filepreout//'_checksum_'//res_out_int//'.ij'
+      character*(*), parameter :: file_checksum =  &
+           'lc_lai_ent16/'//filepreout//'_checksum_'//res_out_int//'.ij'
       character*256 :: filein_h
       
       ! Input values, max, monthly
@@ -1589,9 +1589,9 @@ c      endif
       
       ! lc & laimax file of Ent 17 PFTs
       !open(1,file="lc_lai_ent/EntMM_lc_laimax_"//res_in//
-      open(1,file='lc_lai_ent/'//fileprein//'_lc_laimax_'//
-     &     trim(res_in)//"_"//version_in//'.bin',
-     &     form="unformatted",status="old")
+      open(1,file='lc_lai_ent/'//fileprein//'_lc_laimax_'// &
+           trim(res_in)//"_"//version_in//'.bin', &
+           form="unformatted",status="old")
 
       do k=1,KM 
         read(1) title(k), vfn(:,:,k)
@@ -1608,9 +1608,9 @@ c      endif
 
       ! monthly lc and lai files
       do m=1,12
-         open(2,file='lc_lai_ent/'//fileprein//'_lc_lai_'//MONTH(m)
-     &        //"_"//res_in//"_"//version_in//".bin",
-     &        form="unformatted",status="old")
+         open(2,file='lc_lai_ent/'//fileprein//'_lc_lai_'//MONTH(m) &
+              //"_"//res_in//"_"//version_in//".bin", &
+              form="unformatted",status="old")
          do k=1,KM
             read(2) title12(m,k), vfnm(m,:,:,k)
             write(*,*) 'title12 vfnm, ', title12(m,k)
@@ -1628,14 +1628,14 @@ c      endif
 !!     &     "Vegcover/Simard/Conversions/EntGVSDmosaic_height_"
 !!     &     "Datasets/MODIS/Schaaf/EntGVSD/VEG_EntGVSDmosaic_heights_"
 !     &     "Datasets/MODIS/Schaaf/EntGVSD_05x05/EntGVSDmosaic17_height_"
-!     &     //res_in//".ij",
-     &     'Vegcover/Simard/Conversions/EntGVSD17_Simard_height_'//
-     &     trim(version_in)//'/'//
-     &     'EntGVSD17_Simard'//'_height_'//
-     &     res_in//'_'//trim(version_in)//".ij"
+!     &     //res_in//".ij", &
+           'Vegcover/Simard/Conversions/EntGVSD17_Simard_height_'// &
+           trim(version_in)//'/'// &
+           'EntGVSD17_Simard'//'_height_'// &
+           res_in//'_'//trim(version_in)//".ij"
       write(*,*) filein_h
-      open(3,file=trim(filein_h),
-     &     form="unformatted",status="old")
+      open(3,file=trim(filein_h), &
+           form="unformatted",status="old")
       !titlehn(1,1) = 'NO WATER LAYER' !Old - now water layer is last
 
       !* Netcdf version of Simard heights
@@ -1663,8 +1663,8 @@ c      endif
 !      call get_bare_soil_brightratio(IMn,JMn, old_veg_file
 !     &     ,bs_brightratio)
 
-      call get_bare_soil_brightratio_Carrer(IMn,JMn, soilalb_file
-     &     ,bs_brightratio)
+      call get_bare_soil_brightratio_Carrer(IMn,JMn, soilalb_file &
+           ,bs_brightratio)
 
       open(100,file=file_checksum,form="unformatted",status="unknown")
 
@@ -1710,8 +1710,8 @@ c      endif
             !lc laimax
             a = vfn(i,j,c3) + vfn(i,j,c4)
             if ( a > 0. ) then
-               laic(i,j,15) = (vfn(i,j,c3)*lain(i,j,c3)
-     &              + vfn(i,j,c4)*lain(i,j,c4)) / a
+               laic(i,j,15) = (vfn(i,j,c3)*lain(i,j,c3) &
+                    + vfn(i,j,c4)*lain(i,j,c4)) / a
                vfc(i,j,15) = a
             else
                laic(i,j,15) = 0.
@@ -1721,8 +1721,8 @@ c      endif
             do m=1,12
                am = vfnm(m,i,j,c3) + vfnm(m,i,j,c4)
                if (am > 0. ) then
-                  laim(m,i,j,15) = (vfnm(m,i,j,c3)*lainm(m,i,j,c3)
-     &                 + vfnm(m,i,j,c4)*lainm(m,i,j,c4)) / am
+                  laim(m,i,j,15) = (vfnm(m,i,j,c3)*lainm(m,i,j,c3) &
+                       + vfnm(m,i,j,c4)*lainm(m,i,j,c4)) / am
                   vfm(m,i,j,15) = am
                else
                   laim(m,i,j,15) = 0.
@@ -1736,16 +1736,16 @@ c      endif
 !     &              + vfn(i,j,c4)*hmn(i,j,c4)) / a
                if ((hmn(i,j,c3)>0.).and.(hmn(i,j,c4)>0.)) then
                   !average if both exist
-                  hm(i,j,15) = (vfn(i,j,c3)*hmn(i,j,c3)
-     &                 + vfn(i,j,c4)*hmn(i,j,c4)) / a
+                  hm(i,j,15) = (vfn(i,j,c3)*hmn(i,j,c3) &
+                       + vfn(i,j,c4)*hmn(i,j,c4)) / a
                else
                   !don't average if only one or none exists
                   hm(i,j,15) = max(hmn(i,j,c3),hmn(i,j,c4))
                endif
                !Sum of squares for sd.  Don't weight if only one or less exists
                if ((hmn(i,j,c3)>0.).and.(hmn(i,j,c4)>0.)) then
-                  hsd(i,j,15) = sqrt((vfn(i,j,c3)*hsdn(i,j,c3)**2
-     &                 + vfn(i,j,c4)*hsdn(i,j,c4)**2) / a)
+                  hsd(i,j,15) = sqrt((vfn(i,j,c3)*hsdn(i,j,c3)**2 &
+                       + vfn(i,j,c4)*hsdn(i,j,c4)**2) / a)
                else
                   hsd(i,j,15) = max(hsd(i,j,c3),hsd(i,j,c4))
                endif
@@ -1877,9 +1877,9 @@ c      endif
       lai_yy(:,:) = 0.
       do j=1,JMn
         do i=1,IMn
-          if( vfc(i,j,N_BARE) > .1 .and. laic(i,j,10) < .01 
-     &      .and. laic(i,j,9) < .01 .and. laic(i,j,11) < .01 
-     &      .and. laic(i,j,12) < .01 .and. laic(i,j,13) < .01 ) then
+          if( vfc(i,j,N_BARE) > .1 .and. laic(i,j,10) < .01  &
+            .and. laic(i,j,9) < .01 .and. laic(i,j,11) < .01  &
+            .and. laic(i,j,12) < .01 .and. laic(i,j,13) < .01 ) then
             vf_yy(i,j) = vfc(i,j,N_BARE)
             lai_yy(i,j) = laic(i,j,N_BARE)
           endif
@@ -1898,36 +1898,36 @@ c      endif
 
           s = sum(vfc(i,j,1:N_BARE))
           if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-             write(*,*) 'ERROR orig:  max and monthly lc different'
-     &            ,i,j ,s,sum(vfm(1,i,j,1:N_BARE))
+             write(*,*) 'ERROR orig:  max and monthly lc different' &
+                  ,i,j ,s,sum(vfm(1,i,j,1:N_BARE))
              write(*,*) vfc(i,j,1:N_BARE)
              write(*,*) vfm(1,i,j,1:N_BARE)
           endif
 
-          if( vfc(i,j,N_BARE) > .0 .and. vfc(i,j,N_BARE) < .15
-     &         .and. laic(i,j,N_BARE) > .0
-     &         .and. vfc(i,j,9) > .0 ) then
+          if( vfc(i,j,N_BARE) > .0 .and. vfc(i,j,N_BARE) < .15 &
+               .and. laic(i,j,N_BARE) > .0 &
+               .and. vfc(i,j,9) > .0 ) then
             !convert_vf(vf1, lai1, vf2, lai2, laimin)
-            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &           vfc(i,j,9), laic(i,j,9), laic(i,j,9) )
+            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                 vfc(i,j,9), laic(i,j,9), laic(i,j,9) )
                                 ! lai >= lai(9)
             do m=1,12
                !subroutine convert_vfm(vf1, lai1, vf2, lai2, vfc)
                call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE),
-!!     &              vfm(m,i,j,9),vfm(m,i,j,9), vfc(i,j,9))!BUG??
-     &              vfm(m,i,j,9),laim(m,i,j,9), vfc(i,j,9))
+!!     &              vfm(m,i,j,9),vfm(m,i,j,9), vfc(i,j,9))!BUG?? &
+                    vfm(m,i,j,9),laim(m,i,j,9), vfc(i,j,9))
              
             enddo
 
-            call convert_vfh(
-     &           vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &           vfh(i,j,9),hm(i,j,9),hsd(i,j,9), vfc(i,j,9))
+            call convert_vfh( &
+                 vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                 vfh(i,j,9),hm(i,j,9),hsd(i,j,9), vfc(i,j,9))
           endif
 
           s = sum(vfc(i,j,1:N_BARE))
           if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-             write(*,*) 'ERROR sparse:  max and monthly lc different'
-     &            ,i,j, s,sum(vfm(1,i,j,1:N_BARE))
+             write(*,*) 'ERROR sparse:  max and monthly lc different' &
+                  ,i,j, s,sum(vfm(1,i,j,1:N_BARE))
              write(*,*) vfc(i,j,1:N_BARE)
              write(*,*) vfm(1,i,j,1:N_BARE)
           endif
@@ -1937,21 +1937,21 @@ c      endif
       ! convert sparse veg to arid adapted shrub 10 if present
       do j=1,JMn
         do i=1,IMn
-          if( vfc(i,j,N_BARE) > .0 .and. vfc(i,j,N_BARE) < .15
-     &         .and. laic(i,j,N_BARE) > .0
-     &         .and. vfc(i,j,10) > .0 ) then
+          if( vfc(i,j,N_BARE) > .0 .and. vfc(i,j,N_BARE) < .15 &
+               .and. laic(i,j,N_BARE) > .0 &
+               .and. vfc(i,j,10) > .0 ) then
 
-            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &           vfc(i,j,10), laic(i,j,10), laic(i,j,10) )
+            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                 vfc(i,j,10), laic(i,j,10), laic(i,j,10) )
                                 ! lai >= lai(10)
             do m=1,12
-               call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE),
-     &              vfm(m,i,j,10),laim(m,i,j,10),vfc(i,j,10))
+               call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE), &
+                    vfm(m,i,j,10),laim(m,i,j,10),vfc(i,j,10))
             enddo
 
-            call convert_vfh(
-     &           vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &           vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
+            call convert_vfh( &
+                 vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                 vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
           endif
         enddo
       enddo
@@ -1959,23 +1959,23 @@ c      endif
       ! convert the rest of sparse veg to crop 15 if present
       do j=1,JMn
         do i=1,IMn
-           if( vfc(i,j,N_BARE) > .0 .and. laic(i,j,N_BARE) > .0
-     &         .and. vfc(i,j,15) > .0 ) then
+           if( vfc(i,j,N_BARE) > .0 .and. laic(i,j,N_BARE) > .0 &
+               .and. vfc(i,j,15) > .0 ) then
 !             print *, 'Converting spare to crop/bare',i,j,
 !     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), vfc(i,j,15)
-             call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &            vfc(i,j,15), laic(i,j,15), laic(i,j,15))
-             if (vfc(i,j,N_BARE)<0.0)  print *, 
-     &           'After conversion:            ',i,j,
-     &            vfc(i,j,N_BARE), laic(i,j,N_BARE), 
-     &            vfc(i,j,15), laic(i,j,15)
+             call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                  vfc(i,j,15), laic(i,j,15), laic(i,j,15))
+             if (vfc(i,j,N_BARE)<0.0)  print *,  &
+                 'After conversion:            ',i,j, &
+                  vfc(i,j,N_BARE), laic(i,j,N_BARE),  &
+                  vfc(i,j,15), laic(i,j,15)
              do m=1,12
-                call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE),
-     &               vfm(m,i,j,15),laim(m,i,j,15),vfc(i,j,15))
+                call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE), &
+                     vfm(m,i,j,15),laim(m,i,j,15),vfc(i,j,15))
              enddo
-             call convert_vfh(
-     &            vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &            vfh(i,j,15),hm(i,j,15),hsd(i,j,15), vfc(i,j,15))
+             call convert_vfh( &
+                  vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                  vfh(i,j,15),hm(i,j,15),hsd(i,j,15), vfc(i,j,15))
           endif
         enddo
       enddo
@@ -1990,17 +1990,17 @@ c      endif
             !print *, "max pft is ",maxpft
             if ( vfc(i,j,maxpft) < .0001 ) cycle
             
-            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &           vfc(i,j,maxpft), laic(i,j,maxpft), laic(i,j,maxpft))
+            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                 vfc(i,j,maxpft), laic(i,j,maxpft), laic(i,j,maxpft))
             do m=1,12
-               call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE)
-     &           ,vfm(m,i,j,maxpft),laim(m,i,j,maxpft),vfc(i,j,maxpft))
+               call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE) &
+                 ,vfm(m,i,j,maxpft),laim(m,i,j,maxpft),vfc(i,j,maxpft))
             enddo
 
-            call convert_vfh(
-     &           vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &           vfh(i,j,maxpft),hm(i,j,maxpft),hsd(i,j,maxpft), 
-     &           vfc(i,j,maxpft))
+            call convert_vfh( &
+                 vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                 vfh(i,j,maxpft),hm(i,j,maxpft),hsd(i,j,maxpft),  &
+                 vfc(i,j,maxpft))
 
           endif
         enddo
@@ -2011,15 +2011,15 @@ c      endif
          do i=1,IMn
             if( vfc(i,j,N_BARE) > .0 .and. laic(i,j,N_BARE) > .0 ) then
 
-               call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &              vfc(i,j,10), laic(i,j,10), .0 )
+               call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                    vfc(i,j,10), laic(i,j,10), .0 )
                do m=1,12
-                  call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE),
-     &                 vfm(m,i,j,10),laim(m,i,j,10),vfc(i,j,10))
-                  if ((vfm(m,i,j,10).lt.0.).or.
-     &                 (vfm(m,i,j,N_BARE).lt.0.)) then
-                     write(*,*) 'vfm<0: ',i,j,m,vfm(m,i,j,10)
-     &                    ,vfm(m,i,j,N_BARE),vfc(i,j,10),vfc(i,j,N_BARE)
+                  call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE), &
+                       vfm(m,i,j,10),laim(m,i,j,10),vfc(i,j,10))
+                  if ((vfm(m,i,j,10).lt.0.).or. &
+                       (vfm(m,i,j,N_BARE).lt.0.)) then
+                     write(*,*) 'vfm<0: ',i,j,m,vfm(m,i,j,10) &
+                          ,vfm(m,i,j,N_BARE),vfc(i,j,10),vfc(i,j,N_BARE)
                      STOP
                   endif
                enddo
@@ -2028,18 +2028,18 @@ c      endif
                   hm(i,j,10) = 2.0 !Check simard.f Set_shrub_height for value!
                   hsd(i,j,10) = undef
                endif
-               call convert_vfh(
-     &              vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &              vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
+               call convert_vfh( &
+                    vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                    vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
 
             endif
          enddo
       enddo
 
 #ifdef SPLIT_BARE_SOIL
-      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE
-     &     ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd
-     &     ,titlec, titlem, titleh,res_out)
+      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
+           ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
+           ,titlec, titlem, titleh,res_out)
 #endif
       titlefoo = "after split"
       write(91) titlefoo, bs_brightratio
@@ -2061,23 +2061,23 @@ c      endif
 
 
       call write_output(IMn,JMn,titlec, vfc, laic, N_BARE,
-!     &     "lc_lai_ent16/EntMM16_lc_laimax_pure_"//res_out//".ij"
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_pure_"//trim(fversion),"   ",res_out)
+!     &     "lc_lai_ent16/EntMM16_lc_laimax_pure_"//res_out//".ij" &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_pure_"//trim(fversion),"   ",res_out)
 
       write(*,*) "pure"
       !call check_lc_lai_mismatch(KM,IMn,JMn,vfc,laic,'vfc',titlec)
       do m=1,12
-         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:)
-     &        , laim(m,:,:,:), N_BARE,
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &        ,"pure_"//trim(fversion),MONTH(m), res_out)
+         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:) &
+              , laim(m,:,:,:), N_BARE, &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+              ,"pure_"//trim(fversion),MONTH(m), res_out)
       enddo
 
 
-      call write_output_h(IMn, JMn, N_BARE, titleh, hm, hsd,
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout//
-     &     "_height_pure_"//trim(fversion),"   ",res_out)
+      call write_output_h(IMn, JMn, N_BARE, titleh, hm, hsd, &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout// &
+           "_height_pure_"//trim(fversion),"   ",res_out)
       foo(:,:) = 0.
       do j=1,JMn
         do i=1,IMn
@@ -2100,28 +2100,28 @@ c      endif
 
             if ((IMn.eq.144).and.(JMn.eq.90)) then !## ONLY FOR 2.5X2 !!!
              if ((i.eq.70).and.(j.eq.11)) then
-               print *,'vfc10 before',vfc(i,j,10),vfc(i,j,N_BARE),
-     &              laic(i,j,10),laic(i,j,N_BARE),i,j
+               print *,'vfc10 before',vfc(i,j,10),vfc(i,j,N_BARE), &
+                    laic(i,j,10),laic(i,j,N_BARE),i,j
 !               STOP
              endif
             endif
             if (vfc(i,j,10).le.0.0) then
-               print *,'a vfc10=',vfc(i,j,10),vfc(i,j,N_BARE),
-     &              laic(i,j,10),laic(i,j,N_BARE),i,j
+               print *,'a vfc10=',vfc(i,j,10),vfc(i,j,N_BARE), &
+                    laic(i,j,10),laic(i,j,N_BARE),i,j
                STOP
             endif
-            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE),
-     &           vfc(i,j,10), laic(i,j,10), .15 )
+            call convert_vf(vfc(i,j,N_BARE), laic(i,j,N_BARE), &
+                 vfc(i,j,10), laic(i,j,10), .15 )
                                 ! lai >= .15
             if (vfc(i,j,10).le.0.0) then !ERROR CHECK
-               print *,'b vfc10=',i,j,vfc(i,j,10),vfc(i,j,N_BARE),
-     &              laic(i,j,10),laic(i,j,N_BARE),i,j
+               print *,'b vfc10=',i,j,vfc(i,j,10),vfc(i,j,N_BARE), &
+                    laic(i,j,10),laic(i,j,N_BARE),i,j
                STOP
             endif
             do m=1,12
                if (vfc(i,j,10).gt.0.0) then  
-                  call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE),
-     &                 vfm(m,i,j,10),laim(m,i,j,10), vfc(i,j,10))
+                  call convert_vfm(vfm(m,i,j,N_BARE),laim(m,i,j,N_BARE), &
+                       vfm(m,i,j,10),laim(m,i,j,10), vfc(i,j,10))
                else
                   write(*,*) 'vfc(i,j,10) le 0.:', m,i,j,N_BARE
                   write(*,*) vfc(i,j,:)
@@ -2129,8 +2129,8 @@ c      endif
                   write(*,*) laic(i,j,:)
                   write(*,*) laim(m,i,j,:)
                endif
-               if ((vfm(m,i,j,10).lt.0.).or.(vfm(m,i,j,N_BARE).lt.0.))
-     &              then !CHECK ERROR
+               if ((vfm(m,i,j,10).lt.0.).or.(vfm(m,i,j,N_BARE).lt.0.)) &
+                    then !CHECK ERROR
                   write(*,*) 'vfm<0:',i,j,m,N_BARE
                   write(*,*) vfc(i,j,:)
                   write(*,*) vfm(m,i,j,:)
@@ -2140,15 +2140,15 @@ c      endif
                endif
             enddo
 
-            call convert_vfh(
-     &           vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE),
-     &           vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
+            call convert_vfh( &
+                 vfh(i,j,N_BARE),hm(i,j,N_BARE),hsd(i,j,N_BARE), &
+                 vfh(i,j,10),hm(i,j,10),hsd(i,j,10), vfc(i,j,10))
 
           endif
           s = sum(vfc(i,j,1:N_BARE))
           if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-             write(*,*) 'ERROR trim:  max and monthly lc different'
-     &            ,i,j, s,sum(vfm(1,i,j,1:N_BARE))
+             write(*,*) 'ERROR trim:  max and monthly lc different' &
+                  ,i,j, s,sum(vfm(1,i,j,1:N_BARE))
              write(*,*) vfc(i,j,1:N_BARE)
              write(*,*) vfm(1,i,j,1:N_BARE)
           endif
@@ -2157,29 +2157,29 @@ c      endif
       enddo
 
 #ifdef SPLIT_BARE_SOIL
-      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE
-     &     ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd
-     &     ,titlec, titlem, titleh,res_out)
+      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
+           ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
+           ,titlec, titlem, titleh,res_out)
 #endif
 
       call write_output(IM,JM,titlec, vfc, laic, N_BARE,
-!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_"//res_out//".ij"
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_trimmed_"//trim(fversion),"   ",res_out)
+!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_"//res_out//".ij" &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_trimmed_"//trim(fversion),"   ",res_out)
       write(*,*) "trimmed"
       !call check_lc_lai_mismatch(KM,IMn,JMn,vfc,laic,'vfc',titlec)
 
       do m=1,12
-         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:)
-     &        , laim(m,:,:,:), N_BARE,
-     &        "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &        ,"trimmed_"//trim(fversion),trim(MONTH(m)), res_out)
+         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:) &
+              , laim(m,:,:,:), N_BARE, &
+              "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+              ,"trimmed_"//trim(fversion),trim(MONTH(m)), res_out)
       enddo
 
-      call write_output_h(IMn,JMN, N_BARE, titleh, hm, hsd, 
-     &     "lc_lai_ent16/V"//res_out_int//
-     &     "_"//filepreout//"_height_trimmed_"//trim(fversion)
-     &     ,"   ",res_out)
+      call write_output_h(IMn,JMN, N_BARE, titleh, hm, hsd,  &
+           "lc_lai_ent16/V"//res_out_int// &
+           "_"//filepreout//"_height_trimmed_"//trim(fversion) &
+           ,"   ",res_out)
       
       foo(:,:) = 0.
       do j=1,JMn
@@ -2200,8 +2200,8 @@ c      endif
          do i=1,IMn
             s = sum( vfc(i,j,1:N_BARE) )
             if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-               write(*,*) 'ERROR scale0:  max and monthly lc different'
-     &              ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
+               write(*,*) 'ERROR scale0:  max and monthly lc different' &
+                    ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
                write(*,*) 'vfc',i,j,vfc(i,j,1:N_BARE)
                write(*,*) 'vfm',i,j,vfm(1,i,j,1:N_BARE)
             endif
@@ -2213,8 +2213,8 @@ c      endif
             endif
             s = sum( vfc(i,j,1:N_BARE) ) 
             if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-               write(*,*) 'ERROR scale1:  max and monthly lc different'
-     &              ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
+               write(*,*) 'ERROR scale1:  max and monthly lc different' &
+                    ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
                write(*,*) 'vfc',i,j,vfc(i,j,1:N_BARE)
                write(*,*) 'vfm',i,j,vfm(1,i,j,1:N_BARE)
             endif
@@ -2222,32 +2222,32 @@ c      endif
       enddo
 
 #ifdef SPLIT_BARE_SOIL
-      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE
-     &     ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd
-     &     ,titlec, titlem, titleh,res_out)
+      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
+           ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
+           ,titlec, titlem, titleh,res_out)
 #endif
 
 
       call write_output(IM,JM,titlec, vfc, laic, N_BARE,
-!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_scaled_"
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_trimmed_scaled_"//trim(fversion),"   ",res_out)
+!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_scaled_" &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_trimmed_scaled_"//trim(fversion),"   ",res_out)
       write(*,*) "trimmed scaled"
       !call check_lc_lai_mismatch(KM,IMn,JMn,vfc,laic,'vfc',titlec)
 
       do m=1,12
-         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:)
-     &        , laim(m,:,:,:), N_BARE,
+         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:) &
+              , laim(m,:,:,:), N_BARE,
 !     &     "lc_lai_ent16/EntMM16_lc_lai_trimmed_scaled_"
-!     &        //MONTH(m)//"_"//res_out//".ij"
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &        ,"trimmed_scaled_"//trim(fversion),MONTH(m), res_out)
+!     &        //MONTH(m)//"_"//res_out//".ij" &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+              ,"trimmed_scaled_"//trim(fversion),MONTH(m), res_out)
       enddo
 
-      call write_output_h(IMn,JMN, N_BARE, titleh, hm, hsd, 
-     &     "lc_lai_ent16/V"//res_out_int//
-     &     "_"//filepreout//"_height_trimmed_scaled_"//trim(fversion)
-     &     ,"   ",res_out)
+      call write_output_h(IMn,JMN, N_BARE, titleh, hm, hsd,  &
+           "lc_lai_ent16/V"//res_out_int// &
+           "_"//filepreout//"_height_trimmed_scaled_"//trim(fversion) &
+           ,"   ",res_out)
 
       foo(:,:) = 0.
       do j=1,JMn
@@ -2259,8 +2259,8 @@ c      endif
       enddo
       titlefoo = "LC trimmed scaled checksum"
       write(100) titlefoo, foo
-      call sum_lai(100,IMn,JMn,KM,N_BARE,"MODIS trimmed scaled"
-     &     , vfm, laim)
+      call sum_lai(100,IMn,JMn,KM,N_BARE,"MODIS trimmed scaled" &
+           , vfm, laim)
 
 
       !Generate fill-in crop cover from trimmed_scaled before doing nocrops
@@ -2274,29 +2274,29 @@ c      endif
      o     ,hmcropext,hsdcropext)
       
       titlefoo = "15 - max crops herb ext"
-      call write_output_single(IMn,JMn,titlefoo, trim(ent_names16(15)),
-     &     vfc(:,:,15), laicropext,
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_trimmed_scaled_crops_ext1_"//trim(fversion)
-     &     ,"   ",res_out)
+      call write_output_single(IMn,JMn,titlefoo, trim(ent_names16(15)), &
+           vfc(:,:,15), laicropext, &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_trimmed_scaled_crops_ext1_"//trim(fversion) &
+           ,"   ",res_out)
       write(*,*) "laimax trimmed scaled crops ext1"
 
       do m=1,12
          titlefoo = "15 - crops herb ext"
-         call write_output_single(IMn,JMn,titlefoo, ent_names16(15),
-     &        vfm(m,:,:,15), laimcropext(m,:,:)
-     &        ,"lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &        ,"trimmed_scaled_crops_ext1_"//trim(fversion)
-     &        ,MONTH(m), res_out)
+         call write_output_single(IMn,JMn,titlefoo, ent_names16(15), &
+              vfm(m,:,:,15), laimcropext(m,:,:) &
+              ,"lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+              ,"trimmed_scaled_crops_ext1_"//trim(fversion) &
+              ,MONTH(m), res_out)
       enddo
       write(*,*) "lai month trimmed scaled crops ext1"
 
       titlefoo = "15 - crops herb ext"
-      call write_output_h_single(IMn,JMn
-     &     , titleh(:,15), 15, hmcropext, hsdcropext
-     &     , "lc_lai_ent16/V"//res_out_int//"_"//filepreout//
-     &     "_height_trimmed_scaled_crops_ext1_"//trim(fversion)
-     &     ,"     ",res_out)
+      call write_output_h_single(IMn,JMn &
+           , titleh(:,15), 15, hmcropext, hsdcropext &
+           , "lc_lai_ent16/V"//res_out_int//"_"//filepreout// &
+           "_height_trimmed_scaled_crops_ext1_"//trim(fversion) &
+           ,"     ",res_out)
       write(*,*) "height trimmed scaled crops ext1"
 
 
@@ -2361,9 +2361,9 @@ c      endif
            if (sum(vfc(i,j,15:16))>0.d0) then !Cell has crops
               !write(*,*) 'Cell has crops',i,j,s
               !Replace with closest non-zero natural cover
-              call replace_crops(IMn,JMn,KM,i,j !,s
-     &             ,bs_brightratio
-     &             ,vfc,vfm,laic,laim,naturalfound)
+              call replace_crops(IMn,JMn,KM,i,j !,s &
+                   ,bs_brightratio &
+                   ,vfc,vfm,laic,laim,naturalfound)
 !??     &             ,vfc,vfm,vfc,vfm,naturalfound)
               if (.not.naturalfound) then
                  nonaturalcount = nonaturalcount+1
@@ -2417,8 +2417,8 @@ c      endif
            
            s = sum( vfc(i,j,1:N_BARE) ) !#DEBUG
            if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then 
-              write(*,*) 'ERROR nocrops:  max and monthly lc differ'
-     &             ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
+              write(*,*) 'ERROR nocrops:  max and monthly lc differ' &
+                   ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
               !write(*,*) vfc(i,j,1:N_BARE)
               !write(*,*) vfm(1,i,j,1:N_BARE)
               do m=1,12
@@ -2457,8 +2457,8 @@ c      endif
          else
             flag = flag + 1
             if (flag.eq.1) then
-               write(*,*) 'Some all-crop cells. Iterating once...'
-     &              ,nonaturalcount
+               write(*,*) 'Some all-crop cells. Iterating once...' &
+                    ,nonaturalcount
             elseif (flag.gt.1) then
                write(*,*) 'Remaining all-crop cells,',nonaturalcount
             endif
@@ -2478,9 +2478,9 @@ c      endif
 !      enddo
 
 #ifdef SPLIT_BARE_SOIL
-      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE
-     &     ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd
-     &     ,titlec, titlem, titleh,res_out)
+      call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
+           ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
+           ,titlec, titlem, titleh,res_out)
 #endif
 
       !** DEBUG after rescaling crops and split_bare
@@ -2497,25 +2497,25 @@ c      endif
       enddo
       
       call write_output(IM,JM,titlec, vfc, laic, N_BARE,
-!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_scaled_nocrops_"
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_trimmed_scaled_nocrops_"//trim(fversion),"   ",res_out)
+!     &     "lc_lai_ent16/EntMM16_lc_laimax_trimmed_scaled_nocrops_" &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_trimmed_scaled_nocrops_"//trim(fversion),"   ",res_out)
       write(*,*) "trimmed, scaled, no crops"
       !call check_lc_lai_mismatch(KM,IMn,JMn,vfc,laic,'vfc',titlec)
 
 
       do m=1,12
-         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:)
-     &        , laim(m,:,:,:), N_BARE, 
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &    ,"trimmed_scaled_nocrops_"//trim(fversion),MONTH(m),res_out)
+         call write_output(IM,JM,titlem(m,:), vfm(m,:,:,:) &
+              , laim(m,:,:,:), N_BARE,  &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+          ,"trimmed_scaled_nocrops_"//trim(fversion),MONTH(m),res_out)
       enddo
 
-      call write_output_h(IM,JM,N_BARE
-     &     ,titleh, hm, hsd
-     &     ,"lc_lai_ent16/V"//res_out_int//"_"//filepreout//
-     &     "_height_trimmed_scaled_nocrops_"//trim(fversion)
-     &     ,"   ",res_out)
+      call write_output_h(IM,JM,N_BARE &
+           ,titleh, hm, hsd &
+           ,"lc_lai_ent16/V"//res_out_int//"_"//filepreout// &
+           "_height_trimmed_scaled_nocrops_"//trim(fversion) &
+           ,"   ",res_out)
 
       foo(:,:) = 0.
       do j=1,JMn
@@ -2596,29 +2596,29 @@ c      endif
       hm(:,:,15) =  hmcropext(:,:)
       hsd(:,:,15) = hsdcropext(:,:)
 
-      call write_output_lai(IMn,JMn,titlec, laic, N_BARE,
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     ,"max_trimmed_scaled_ext1_"//trim(fversion),"   ",res_out)
+      call write_output_lai(IMn,JMn,titlec, laic, N_BARE, &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           ,"max_trimmed_scaled_ext1_"//trim(fversion),"   ",res_out)
       write(*,*) "trimmed, scaled, ext1"
       !call check_lc_lai_mismatch(KM,IMn,JMn,vfc,laic,'vfc',titlec)
 
       do m=1,12
-         call write_output_lai(IMn,JMn,titlem(m,:)
-     &        , laim(m,:,:,:), N_BARE, 
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     , "trimmed_scaled_ext1_"//trim(fversion),MONTH(m),res_out)
+         call write_output_lai(IMn,JMn,titlem(m,:) &
+              , laim(m,:,:,:), N_BARE,  &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           , "trimmed_scaled_ext1_"//trim(fversion),MONTH(m),res_out)
       enddo
 
-      call write_output_lai_monthly_nc(IMn,JMn,N_BARE
-     &        , laim(:,:,:,:),
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout
-     &     , "trimmed_scaled_ext1_"//trim(fversion)
-     &     ,"m^2 leaf/m^2 ground",res_out)
+      call write_output_lai_monthly_nc(IMn,JMn,N_BARE &
+              , laim(:,:,:,:), &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout &
+           , "trimmed_scaled_ext1_"//trim(fversion) &
+           ,"m^2 leaf/m^2 ground",res_out)
       
-      call write_output_h(IMn,JMn,N_BARE,titleh, hm, hsd,
-     &     "lc_lai_ent16/V"//res_out_int//"_"//filepreout//
-     &     "_height_trimmed_scaled_ext1_"//trim(fversion)
-     &     ,"   ",res_out)
+      call write_output_h(IMn,JMn,N_BARE,titleh, hm, hsd, &
+           "lc_lai_ent16/V"//res_out_int//"_"//filepreout// &
+           "_height_trimmed_scaled_ext1_"//trim(fversion) &
+           ,"   ",res_out)
 
       write(*,*) 'Done.'
 
