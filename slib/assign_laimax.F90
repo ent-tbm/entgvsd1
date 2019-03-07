@@ -79,8 +79,10 @@ subroutine assign_laimax(chunker, &
                 CHECKSUM = CHECKSUM - io_lai(idoy)%buf(ic,jc)
                 io_checksum_lclai(idoy)%buf(ic,jc) = CHECKSUM
 
-                io_checksum_lclai_alldoy%buf(ic,jc) = &
-                    io_checksum_lclai_alldoy%buf(ic,jc) + CHECKSUM
+                if (present(io_checksum_lclai_alldoy)) then
+                    io_checksum_lclai_alldoy%buf(ic,jc) = &
+                        io_checksum_lclai_alldoy%buf(ic,jc) + CHECKSUM
+                end if
             end do
 
         end do

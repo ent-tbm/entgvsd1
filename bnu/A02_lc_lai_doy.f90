@@ -48,7 +48,7 @@ end do
 do idoy = 1,ndoy
     call chunker%nc_create(ioall_laiout(idoy), &
         weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-        'nc/', 'EntMM_lc_lai_'//DOY(k)//'_1kmx1km', 'EntPFT', &
+        'nc/', 'EntMM_lc_lai_'//DOY(idoy)//'_1kmx1km', 'EntPFT', &
         'LAI output of A02', 'm2 m-2', 'LAI', &
         ent20%mvs, ent20%layer_names())
     do k=1,NENT20
