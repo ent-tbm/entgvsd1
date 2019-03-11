@@ -183,26 +183,26 @@ subroutine init_ent_labels
     integer :: k
 
     call ent20%allocate(20,20)
-    call ent20%add_covertype('ever_br_early ', 'evergreen broadleaf early successional      ')
-    call ent20%add_covertype('ever_br_late  ', 'evergreen broadleaf late successional       ')
-    call ent20%add_covertype('ever_nd_early ', 'evergreen needleleaf early successional     ')
-    call ent20%add_covertype('ever_nd_late  ', 'evergreen needleleaf late successional      ')
-    call ent20%add_covertype('cold_br_early ', 'cold deciduous broadleaf early successional ')
-    call ent20%add_covertype('cold_br_late  ', 'cold deciduous broadleaf late successional  ')
-    call ent20%add_covertype('drought_br    ', 'drought deciduous broadleaf                 ')
-    call ent20%add_covertype('decid_nd      ', 'deciduous needleleaf                        ')
-    call ent20%add_covertype('cold_shrub    ', 'cold adapted shrub                          ')
-    call ent20%add_covertype('arid_shrub    ', 'arid adapted shrub                         ')
-    call ent20%add_covertype('c3_grass_per  ', 'C3 grass perennial                         ')
-    call ent20%add_covertype('c4_grass      ', 'C4 grass                                   ')
-    call ent20%add_covertype('c3_grass_ann  ', 'C3 grass - annual                          ')
-    call ent20%add_covertype('c3_grass_arct ', 'arctic C3 grass                            ')
-    call ent20%add_covertype('crops_c3_herb ', 'crops C3 herb                              ')
-    call ent20%add_covertype('crops_c4_herb ', 'crops C4 herb                              ')
-    call ent20%add_covertype('crops_woody   ', 'crops woody                                ')
-    call ent20%add_covertype('snow_ice      ', 'Permanent snow/ice                         ')
-    call ent20%add_covertype('bare_sparse   ', 'Bare or sparsely vegetated, urban          ')
-    call ent20%add_covertype('water         ', 'water                                      ')
+    call ent20%add_covertype('ever_br_early ', 'evergreen broadleaf early successional      ') !  1
+    call ent20%add_covertype('ever_br_late  ', 'evergreen broadleaf late successional       ') !  2
+    call ent20%add_covertype('ever_nd_early ', 'evergreen needleleaf early successional     ') !  3
+    call ent20%add_covertype('ever_nd_late  ', 'evergreen needleleaf late successional      ') !  4
+    call ent20%add_covertype('cold_br_early ', 'cold deciduous broadleaf early successional ') !  5
+    call ent20%add_covertype('cold_br_late  ', 'cold deciduous broadleaf late successional  ') !  6
+    call ent20%add_covertype('drought_br    ', 'drought deciduous broadleaf                 ') !  7
+    call ent20%add_covertype('decid_nd      ', 'deciduous needleleaf                        ') !  8
+    call ent20%add_covertype('cold_shrub    ', 'cold adapted shrub                          ') !  9
+    call ent20%add_covertype('arid_shrub    ', 'arid adapted shrub                         ')  ! 10
+    call ent20%add_covertype('c3_grass_per  ', 'C3 grass perennial                         ')  ! 11
+    call ent20%add_covertype('c4_grass      ', 'C4 grass                                   ')  ! 12
+    call ent20%add_covertype('c3_grass_ann  ', 'C3 grass - annual                          ')  ! 13
+    call ent20%add_covertype('c3_grass_arct ', 'arctic C3 grass                            ')  ! 14
+    call ent20%add_covertype('crops_c3_herb ', 'crops C3 herb                              ')  ! 15
+    call ent20%add_covertype('crops_c4_herb ', 'crops C4 herb                              ')  ! 16
+    call ent20%add_covertype('crops_woody   ', 'crops woody                                ')  ! 17
+    call ent20%add_covertype('snow_ice      ', 'Permanent snow/ice                         ')  ! 18
+    call ent20%add_covertype('bare_sparse   ', 'Bare or sparsely vegetated, urban          ')  ! 19
+    call ent20%add_covertype('water         ', 'water                                      ')  ! 20
 
 
     ! Set up ent19 = ent20 without water
