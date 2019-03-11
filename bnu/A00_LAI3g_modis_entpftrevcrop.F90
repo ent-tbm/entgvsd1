@@ -52,9 +52,6 @@ public Set_pft, Set_Shrubtype, Set_Grasstype,Set_Broadleaftype
 public Set_Woodysavannasshrub_miscat
 public FIX_MODIS29_NORTHPOLE_BUG
 public FIX_MODIS29_SOUTHPOLE_BUG
-public Debug_set_broadleaf
-
-!     real*4, parameter :: undef = -1e30
 
 integer, parameter :: latout = 1
 integer :: im, jm
@@ -73,16 +70,13 @@ real*4 function latdeg(latj, JM)
 !     See GEOM_B.f
 !     GISS GCM counts grid box 1 at south pole, 1/2 box at poles for 4x5
 implicit none
-integer :: latj, JM
+    integer, intent(IN) :: latj, JM
 
-if (JM.eq.JM4X5) then     !72x46
-   latdeg = -90. + (latj-1)*4.
-else                      !anything finer resolution
-!     m = (90 - -90)/(1-(JM+1)) = 180./JM
-!     b = -90 - 180/JM*1 = -90 - 180/JM
-   latdeg = 180./JM*latj - 90. - 180./JM + 180./JM/2.
-endif
-!      print*, latdeg
+    if (JM.eq.JM4X5) then     !72x46
+       latdeg = -90. + (latj-1)*4.
+    else                      !anything finer resolution
+       latdeg = 180./JM*latj - 90. - 180./JM + 180./JM/2.
+    endif
 end function latdeg
 !------------------------------------------------------------------------------------------
 
@@ -93,73 +87,34 @@ end subroutine Zero_ENTPFT
 
 subroutine Set_pft(pft,LC_IN,LAI_IN)
 implicit none
-integer :: pft
-real*4 :: LC_IN
-real*4 :: LAI_IN
-!-----
-!     real*4,dimension(:,:),pointer :: LC1 !Mask where LC_IN=0. !BEWARE COMPILER BAD POINTERS
-integer :: i,j
+    integer, intent(IN) :: pft
+    real*4, intent(IN) :: LC_IN
+    real*4, intent(IN) :: LAI_IN
 
-!     Quality check write statements
-!     do i=1,im
-!     do j=1,jm
-!     if ((LC_IN(i,j).gt.0.).and.(LAI_IN(i,j).eq.0.)) then
-!     !write(*,*) "Non-zero LC for LAI=0",pft, i,j
-!     &              ,LC_IN(i,j),LAI_IN(i,j)
-!     elseif ((LC_IN(i,j).eq.0.).and.(LAI_IN(i,j).gt.0.)) then
-!     !write(*,*) "Zero LC for non-zero LAI",pft, i,j
-!     &              ,LC_IN(i,j),LAI_IN(i,j)
-!     endif
-!     enddo
-!     enddo
-
-ENTPFTLC(pft) = ENTPFTLC(pft) + LC_IN
-ENTPFTLAIMAX(pft) = ENTPFTLAIMAX(pft)  &
-     + LC_IN*LAI_IN
-
-!     ENTCOVSUM(pft,:,:) = ENTCOVSUM(pft,:,:) + LC_IN(:,:)
-
-!     deallocate(LC1)
+    ENTPFTLC(pft) = ENTPFTLC(pft) + LC_IN
+    ENTPFTLAIMAX(pft) = ENTPFTLAIMAX(pft)  &
+         + LC_IN*LAI_IN
 end subroutine Set_pft
 !------------------------------------------------------------------------------
-!------------------------------------------------------------------------------
-
 subroutine Set_Shrubtype(MATEMP,Pmave,LC_IN,LAI_IN)  
-!     *9,10. Ent  cold- and arid-adapted shrub*! 
 implicit none
-real*4 :: MATEMP,Pmave,LC_IN, LAI_IN
-!------
-integer :: i,j
-real*4 :: PFT9,PFT10
+    real*4, intent(IN) :: MATEMP,Pmave,LC_IN, LAI_IN
+    !------
 
-PFT9 = 0.
-PFT10 = 0.
+    real*4 :: pft_cold_shrub
+    real*4 :: pft_arid_shrub
 
-!     if (MATEMP(i,j).lt.273.15) then !Old 0 C cut-off
-!     PFT9(i,j) = LC_IN(i,j)
-!     else
-!     PFT10(i,j)= LC_IN(i,j)
-!     endif
-!     if (Pmave(i,j).lt.100.) then      !Alt
-!     if ((MATEMP(i,j).lt.278.15)) then ! 5 C cut-off
-!     PFT9(i,j) = LC_IN(i,j) !cold
-!     else
-!     PFT10(i,j)= LC_IN(i,j) !arid
-!     endif
-!     else if (MATEMP(i,j).lt.278.15) then ! 5 C cut-off
-!     PFT9(i,j) = LC_IN(i,j) !cold
-!     else
-!     PFT10(i,j)= LC_IN(i,j) !arid
-!     endif
-if (MATEMP.lt.278.15) then !5 C cut-off
-   PFT9 = LC_IN
-else
-   PFT10= LC_IN
-endif
+    pft_cold_shrub = 0.
+    pft_arid_shrub = 0.
 
+    if (MATEMP.lt.278.15) then !5 C cut-off
+       pft_cold_shrub = LC_IN
+    else
+       pft_arid_shrub= LC_IN
+    endif
 
-call Set_pft(9,PFT9,LAI_IN)
-call Set_pft(10,PFT10,LAI_IN)
+    call Set_pft(COLD_SHRUB, pft_cold_shrub,LAI_IN)
+    call Set_pft(ARID_SHRUB, pft_arid_shrub,LAI_IN)
 end subroutine Set_Shrubtype
 !------------------------------------------------------------------------------------------
 
@@ -178,181 +133,130 @@ subroutine Set_Woodysavannasshrub_miscat( &
 !     evergreen needleleaf in very sparse areas.  
 !     The rest of the world, assign 10-arid-adapted shrub.
 implicit none
-real*4 :: C4CLIMFRAC,MATEMP,LC_IN, LAI_IN
+    real*4 :: C4CLIMFRAC,MATEMP,LC_IN, LAI_IN
 
-!------
-integer :: i,j
-real*4 :: PFT4, PFT8, PFT10
+    !------
+    integer :: i,j
+    real*4 pft_ever_nd_late ! evergreen needleleaf late successional
+    real*4 pft_decid_nd     ! deciduous needleleaf
+    real*4 pft_arid_shrub   ! arid adapted shrub
 
-!      allocate(PFT4)     !evergreen needleleaf
-!      allocate(PFT8)     !deciduous needleleaf
-!      allocate(PFT10)    !arid shrub
-PFT4 = 0.
-PFT8 = 0.
-PFT10 = 0.
-!      do j=1,JM1km
-   if ((C4CLIMFRAC.le.0.1).and.(latdeg(j,JM1km).gt.45.)) then
-      if (MATEMP.ge.(-5.0+273.15)) then !Western Europe boreal
-         PFT4 = LC_IN
-      else                !Russia/Siberia boreal
-         if (LC_IN.ge.0.7) then !Closed forest shades out Larix
-            PFT4 = LC_IN 
-         elseif ((LC_IN.lt.0.7).and.(LC_IN.ge.0.3)) &
-                 then     !Mix Pinus and Larix
-            PFT4 = LC_IN - 0.15
-            PFT8 = 0.15
-         elseif ((LC_IN.lt.0.3).and.(LC_IN.ge.0.15)) &
-                 then     !Larix in open/wetlands areas
-            PFT8 = LC_IN
-         else             !Pinus in sparse areas
-            PFT4 = LC_IN
-         endif
-      endif
-   else                   !Rest of the world arid shrub
-      PFT10 = LC_IN
-   endif
-!      enddo
-call Set_pft(4,PFT4,LAI_IN)
-call Set_pft(8,PFT8,LAI_IN)
-call Set_pft(10,PFT10,LAI_IN)
-!      deallocate(PFT4)
-!      deallocate(PFT8)
-!      deallocate(PFT10)
+    pft_ever_nd_late = 0.
+    pft_decid_nd = 0.
+    pft_arid_shrub = 0.
+
+    if ((C4CLIMFRAC.le.0.1).and.(latdeg(j,JM1km).gt.45.)) then
+       if (MATEMP.ge.(-5.0+273.15)) then !Western Europe boreal
+          pft_ever_nd_late = LC_IN
+       else                !Russia/Siberia boreal
+          if (LC_IN.ge.0.7) then !Closed forest shades out Larix
+             pft_ever_nd_late = LC_IN 
+          elseif ((LC_IN.lt.0.7).and.(LC_IN.ge.0.3)) &
+                  then     !Mix Pinus and Larix
+             pft_ever_nd_late = LC_IN - 0.15
+             pft_decid_nd = 0.15
+          elseif ((LC_IN.lt.0.3).and.(LC_IN.ge.0.15)) &
+                  then     !Larix in open/wetlands areas
+             pft_decid_nd = LC_IN
+          else             !Pinus in sparse areas
+             pft_ever_nd_late = LC_IN
+          endif
+       endif
+    else                   !Rest of the world arid shrub
+       pft_arid_shrub = LC_IN
+    endif
+
+    call Set_pft(EVER_ND_LATE, pft_ever_nd_late, LAI_IN)
+    call Set_pft(DECID_ND,     pft_decid_nd,     LAI_IN)
+    call Set_pft(ARID_SHRUB,   pft_arid_shrub,   LAI_IN)
 
 end subroutine Set_Woodysavannasshrub_miscat
 !------------------------------------------------------------------------------------------
 
 subroutine Set_Grasstype(C4CLIMFRAC,MATEMP,Pdry,ClimMedit, &
      LC_IN,LAI_IN)
-!     * Ent PFTs for grass:
-!     * 11- C3 grass perennial
-!     * 12 - C4 grass
-!     * 13 - C3 grass - annual
-!     * 14- arctic C3 grass
 implicit none
-real*4,intent(in) :: C4CLIMFRAC,MATEMP,Pdry, &
-     ClimMedit,LC_IN,LAI_IN
-!---------
-!     real*4,dimension(:,:),pointer :: C3,PFT11,PFT13,PFT14
-real*4 :: C3, PFT11, PFT13, PFT14
-integer :: i,j
+    real*4, intent(IN) :: C4CLIMFRAC,MATEMP,Pdry
+    real*4, intent(IN) :: ClimMedit,LC_IN,LAI_IN
+    !--------- Local Vars
+    real*4 :: C3
 
-!     allocate(C3(im,jm))
-!     allocate(PFT11(im,jm))
-!     allocate(PFT13(im,jm))
-!     allocate(PFT14(im,jm))
-C3 = 0.
-PFT11 = 0.
-PFT13 = 0.
-PFT14 = 0.
+    real*4 :: pft_c3_grass_per     ! C3 grass perennial
+    real*4 :: pft_c3_grass_annual  ! C3 grass annual
+    real*4 :: pft_c3_grass_arct    ! C3 grass arctic
 
-!     * C4 grass
-call Set_pft(12,LC_IN*C4CLIMFRAC,LAI_IN)
+    pft_c3_grass_per = 0.
+    pft_c3_grass_ann = 0.
+    pft_c3_grass_arct = 0.
 
-!     * C3 grass
-C3 = 1. - C4CLIMFRAC
-if (MATEMP.lt.270) then
-   PFT14 = LC_IN*C3
-elseif (((Pdry.ge.3.).and.(MATEMP.ge.278.)).or. &
-        (ClimMedit.eq.1.)) then
-   PFT13 = LC_IN*C3
-else
-   PFT11 = LC_IN*C3
-endif
+    !     * C4 grass
+    call Set_pft(C4_GRASS, LC_IN*C4CLIMFRAC,LAI_IN)
 
-call Set_pft(11,PFT11,LAI_IN)
-call Set_pft(13,PFT13,LAI_IN)
-call Set_pft(14,PFT14,LAI_IN)
-!     call Set_pft(11, LC_IN*(1.-C4CLIMFRAC),LAI_IN)
+    !     * C3 grass
+    C3 = 1. - C4CLIMFRAC
+    if (MATEMP.lt.270) then
+       pft_c3_grass_arct = LC_IN*C3
+    elseif (((Pdry.ge.3.).and.(MATEMP.ge.278.)).or. &
+            (ClimMedit.eq.1.)) then
+       pft_c3_grass_ann = LC_IN*C3
+    else
+       pft_c3_grass_per = LC_IN*C3
+    endif
 
-!     deallocate(C3)
-!     deallocate(PFT11)
-!     deallocate(PFT13)
-!     deallocate(PFT14)
+    call Set_pft(C3_GRASS_PER,  pft_c3_grass_per,  LAI_IN)
+    call Set_pft(CE_GRASS_ANN,  pft_c3_grass_ann,  LAI_IN)
+    call Set_pft(C3_GRASS_ARCT, pft_c3_grass_arct, LAI_IN)
 
 end subroutine Set_Grasstype
 
 subroutine Set_Broadleaftype(MATEMP,Pdry,C4climfrac,Tcold &
      ,Pmave,ClimMedit,LC_IN,LAI_IN)
 implicit none
-real*4,intent(in) :: MATEMP,Pdry,C4climfrac &
-     ,Tcold,Pmave,ClimMedit &
-     ,LC_IN,LAI_IN
-!-------
-integer :: i,j
-!     real*4,dimension(:,:),pointer :: PFT6,PFT7 !BEWARE BAD COMPILER POINTER MEMORY!
-real*4 :: PFT6, PFT7
-real*4 :: PFT6clim !## DEBUG
-character*80 :: TITLE     !## DEBUG
+    real*4,intent(in) :: MATEMP,Pdry,C4climfrac
+    real*4,intent(in) :: Tcold,Pmave,ClimMedit
+    real*4,intent(in) :: LC_IN,LAI_IN
+    !------- Local Vars
+    real*4 :: pft_cold_br_late  ! cold deciduous broadleaf late successional
+    real*4 :: pft_drough_br     ! drought deciduous broadleaf
 
-!     allocate(PFT6(im,jm))
-!     allocate(PFT7(im,jm))
-PFT6 = 0.
-PFT7 = 0.
-PFT6clim = 0.        !## DEBUG
+    pft_cold_br_late = 0.
+    pft_drough_br = 0.
 
-if ((C4climfrac.lt.0.8).and. &
-     (MATEMP.lt.(18.0+273.15)).and. &
-     (Tcold.le.8.).and. &
-     (ClimMedit.eq.0.)) &
-     then
-   PFT6 = LC_IN
-   PFT6clim = 1.0    !## DEBUG
-else
-   PFT7 = LC_IN
-endif
+    if ((C4climfrac.lt.0.8).and. &
+         (MATEMP.lt.(18.0+273.15)).and. &
+         (Tcold.le.8.).and. &
+         (ClimMedit.eq.0.)) &
+         then
+       pft_cold_br_late = LC_IN
+    else
+       pft_drough_br = LC_IN
+    endif
 
-TITLE = 'PFT6clim in Set_Broad' !##DEBUG
-write(40) TITLE, PFT6clim
-
-call Set_pft(6,PFT6,LAI_IN) !cold-deciduous
-call Set_pft(7,PFT7,LAI_IN) !drought-deciduous
-!     deallocate(PFT6)
-!     deallocate(PFT7)
+    call Set_pft(COLD_BR, pft_cold_br_late,LAI_IN) !cold-deciduous
+    call Set_pft(DROUGHT_BR, pft_drough_br,LAI_IN) !drought-deciduous
 
 end subroutine Set_Broadleaftype
-
-subroutine Debug_set_broadleaf(modispftclass,LC_IN,LAI_IN)
-!     Debug print messages only
-implicit none
-character*71, intent(in) :: modispftclass
-real*4, intent(in) :: LC_IN, LAI_IN
-!-----
-character*80 :: TITLE
-
-TITLE = 'LC_IN k='//modispftclass
-write(40) TITLE,LC_IN
-TITLE = 'LAI_IN k='//modispftclass
-write(40) TITLE, LAI_IN
-TITLE = 'k='//modispftclass(1:3)//' ENTPFTLC 6 colddecidbr'
-write(40) TITLE, ENTPFTLC(6)
-TITLE = 'k='//modispftclass(1:3)//' ENTPFTLC 7 drought decid'
-write(40) TITLE, ENTPFTLC(7)
-end subroutine Debug_set_broadleaf
 
 subroutine FIX_MODIS29_NORTHPOLE_BUG(LC_IN,LAI_IN,lat)
 !     8/26/13 MODIS29 bug fix:  
 !     "18.Croplands-->Cereal crop Cover" has non-zero
 !     cover at North Pole where it should be "27. Permanent Ice."
 !     Assign to Ent17-18Permanent Ice
-
 implicit none
-integer :: pft18ice=18
-real*4,intent(inout) :: LC_IN !Input: "18.Croplands-->Cereal crop Cover"
-real*4 :: LAI_IN     !Input: "18.Croplands-->Cereal crop Cover"
-real*4 :: lat
-integer :: northpole
+    real*4,intent(inout) :: LC_IN !Input: "18.Croplands-->Cereal crop Cover"
+    real*4 :: LAI_IN     !Input: "18.Croplands-->Cereal crop Cover"
+    real*4 :: lat
+    integer :: northpole
 
-northpole = 79.5
+    northpole = 79.5
 
-if ((lat.gt.79.5).and.(LC_IN.gt.0.)) then
-!         print *,'Wrong crops at north pole:',lat,LC_IN
-   ENTPFTLC(pft18ice) =  &
-        ENTPFTLC(pft18ice) + LC_IN
-   ENTPFTLAIMAX(pft18ice) = ENTPFTLAIMAX(pft18ice)  &
-        + 0.              !If LAI_IN not zero, then MODIS is getting algae...
-   LC_IN = 0.             !Don't let later calcs usu wrong LC_IN
-endif
+    if ((lat.gt.79.5).and.(LC_IN.gt.0.)) then
+       ! Wrong crops at north pole
+       ENTPFTLC(SNOW_ICE) =  ENTPFTLC(SNOW_ICE) + LC_IN
+       ENTPFTLAIMAX(SNOW_ICE) = ENTPFTLAIMAX(SNOW_ICE)  &
+            + 0.        !If LAI_IN not zero, then MODIS is getting algae...
+       LC_IN = 0.             !Don't let later calcs usu wrong LC_IN
+    endif
 end subroutine FIX_MODIS29_NORTHPOLE_BUG
 
 subroutine FIX_MODIS29_SOUTHPOLE_BUG(LC_IN,LAI_IN,lat)
@@ -360,65 +264,25 @@ subroutine FIX_MODIS29_SOUTHPOLE_BUG(LC_IN,LAI_IN,lat)
 !     "18.Croplands-->Cereal crop Cover" has non-zero
 !     cover at South Pole corners where it should be "27. Permanent Ice."
 !     Assign to Ent17-18Permanent Ice
-
 implicit none
-integer :: pft18ice=18
-real*4,intent(inout) :: LC_IN !Should be "18.Croplands-->Cereal crop Cover"
-real*4 :: LAI_IN    !Should be "18.Croplands-->Cereal crop Cover"
-real*4 :: lat
-integer :: southpole
+    real*4,intent(inout) :: LC_IN !Should be "18.Croplands-->Cereal crop Cover"
+    real*4 :: LAI_IN    !Should be "18.Croplands-->Cereal crop Cover"
+    real*4 :: lat
+    integer :: southpole
 
-southpole = -82.5
+    southpole = -82.5
 
-if ((lat.lt.-82.5).and.(LC_IN>0.)) then
-!         print *,'Wrong crops at south pole:',lat,LC_IN
-   ENTPFTLC(pft18ice) =  &
-        ENTPFTLC(pft18ice) + LC_IN
-   ENTPFTLAIMAX(pft18ice) = ENTPFTLAIMAX(pft18ice)  &
-        + 0.              !If it's not zero, then MODIS is getting algae...
-   LC_IN = 0.             !Don't let later calcs usu wrong LC_IN
-endif
+    if ((lat.lt.-82.5).and.(LC_IN>0.)) then
+       ! Wrong crops at south pole
+       ENTPFTLC(SNOW_ICE) =  ENTPFTLC(SNOW_ICE) + LC_IN
+       ENTPFTLAIMAX(SNOW_ICE) = ENTPFTLAIMAX(SNOW_ICE)  &
+            + 0.              !If it's not zero, then MODIS is getting algae...
+       LC_IN = 0.             !Don't let later calcs usu wrong LC_IN
+    endif
 end subroutine FIX_MODIS29_SOUTHPOLE_BUG
 
 end module modis_ent_mod
-
-
 !------------------------------------------------------------------------
-subroutine calc_lon_lat_HxH(IMH,JMH,lon,lat)
-implicit none
-integer,intent(in) :: IMH,JMH
-real*4,intent(inout) :: lon(IMH),lat(JMH)
-integer :: i,j
-
-do i=1,IMH
-   lon(i) = -180.0 + 0.5*i - 0.5
-end do
-
-do j=1,JMH
-   lat(j) = -90.0 + 0.5*j - 0.5
-end do
-
-end subroutine calc_lon_lat_HxH
-!------------------------------------------------------------------------
-subroutine calc_lon_lat(IM,JM,lon,lat)
-implicit none
-integer,intent(in) :: IM,JM
-real*4,intent(inout) :: lon(IM),lat(JM)
-integer :: i,j
-
-do i=1,IM
-   lon(i) = -180. + (360./IM)*i - (360./IM)/2.
-end do
-
-do j=1,JM
-   lat(j) = -90. + (180./JM)*j - (180./JM)/2.
-end do
-
-end subroutine calc_lon_lat 
-
-!------------------------------------------------------------------------
-
-
 program modis_ent
 !     Read in MODIS GISS layer and Monfreda 0.5x0.5,1x1,or 4x5 degree files, 
 !     and convert veg types to Ent PFTs as GISS layers.
@@ -806,26 +670,21 @@ do ichunk = 1,nchunk(1)
 !     if (k.eq.0) then       !*MODIS Water*!
 !     call Set_pft(0,LIN,LAIMAX(k,:,:))
          if (k.eq.1) then !*MODIS Evergreen needleleaf forest*
-            p = 4         !*4. evergreen needleleaf late successional*!
+            p = EVER_ND_LATE         !*4. evergreen needleleaf late successional*!
             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.2) then !*MODIS Evergreen broadleaf forest*!
-            p = 2         !*2. Ent  evergreen broadleaf late succ*!
+            p = EVER_BR_LATE         !*2. Ent  evergreen broadleaf late succ*!
             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.3) then !*MODIS Deciduous needleleaf forest*!
-            p = 8         !*8. Ent  deciduous needleleaf*!
+            p = DECID_ND         !*8. Ent  deciduous needleleaf*!
             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.4) then !*MODIS Deciduous broadleaf forest*!
-!     p = 6               !*6. Ent  cold deciduous broadleaf late succ*!
-!     call Set_pft(6,LIN,LAIMAX(k,:,:))
             call Set_Broadleaftype(MAT,Pdry,C4CLIMFRAC,TCOLD &
                  ,Pmave,ClimMedit,LIN,LAIMAX)
          elseif (k.eq.5) then !*MODIS Mixed forest-->Evergreen needleleaf forest*!
-            p = 4         !*4. Ent  evergreen needleleaf late successional*!
+            p = EVER_ND_LATE         !*4. Ent  evergreen needleleaf late successional*!
             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.6) then !*MODIS Mixed forest-->Deciduous broadleaf forest*!
-!     p = 6               !*6. Ent  cold deciduous broadleaf late successional*!
-!     p = 5               !*5. Ent cold deciduous broadleaf early successional*!
-!     call Set_pft(6,LIN,LAIMAX(k,:,:))
             call Set_Broadleaftype(MAT,Pdry,C4CLIMFRAC,TCOLD &
                  ,Pmave,ClimMedit,LIN,LAIMAX)
          elseif (k.eq.7) then !*MODIS Closed shrublands*!
@@ -833,12 +692,8 @@ do ichunk = 1,nchunk(1)
          elseif (k.eq.8) then !*MODIS Open shrublands*!
             call Set_Shrubtype(MAT,Pmave, LIN, LAIMAX) !*9,10. Ent  cold- and arid-adapted shrub*!
          elseif (k.eq.9) then !*MODIS Woody savannas-->Evergreen needleleaf forest*!
-!     p = 3               !*3. Ent  evergreen needleleaf early successional*!
-         p = 4         !*4. Ent  evergreen needleleaf late successional*!
-!               write(*,*) 'Partitioned MODIS Woody savannas'//
-!     &           '-->Evergreen needleleaf forest'
-            call Set_pft(p,LIN,LAIMAX)
-            
+             p = EVER_ND_LATE         !*4. Ent  evergreen needleleaf late successional*!
+             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.10) then !*MODIS Woody savannas-->Deciduous broadleaf forest*!
 !     This layer has some cover (<10%) in boreal and temperate zones, so necessary
 !     to partition into 6-Ent cold decid trees and 7-Ent drought decid trees 
@@ -848,9 +703,9 @@ do ichunk = 1,nchunk(1)
             call Set_Broadleaftype(MAT,Pdry,C4CLIMFRAC,TCOLD &
                  ,Pmave,ClimMedit,LIN,LAIMAX)
          elseif (k.eq.11) then !*MODIS Woody savannas-->shrub*!
-!     OLD before 5/24/2013: 
-!     call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX(k,:,:)) !*9,10. Ent cold- and arid-shrub*! 
-!     REVISED 5/24/2013 to correct boreal zone
+            !     OLD before 5/24/2013: 
+            !     call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX(k,:,:)) !*9,10. Ent cold- and arid-shrub*! 
+            !     REVISED 5/24/2013 to correct boreal zone
             call Set_Woodysavannasshrub_miscat( &
                  C4CLIMFRAC,MAT,LIN,LAIMAX,jj)
          elseif (k.eq.12) then !*MODIS Woody savannas-->Grass*!
@@ -865,52 +720,44 @@ do ichunk = 1,nchunk(1)
             call Set_Grasstype(C4CLIMFRAC, MAT,Pdry,ClimMedit &
                  ,LIN,LAIMAX)
          elseif (k.eq.16)then !*MODIS Permanent wetlands-->Evergreen needleforest*!
-!     *4. Ent  evergreen needleleaf late successional*!
-            call Set_pft(4,LIN,LAIMAX)
+            ! Ent  evergreen needleleaf late successional
+            call Set_pft(EVER_ND_LATE,LIN,LAIMAX)
          elseif (k.eq.17)then !*MODIS Permanent wetlands-->Shrub*!
             call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX) !*9,10. Ent  cold- and arid-adapted shrub*!
          elseif ((k.eq.18).or.(k.eq.25)) then !*MODIS 18. Croplands-->Cereal crop *!
-!     *MODIS 25. Cropland/natural vegetation-->Cereal crop *!
+            ! MODIS 25. Cropland/natural vegetation-->Cereal crop *!
             if (k.eq.18) then
-               call FIX_MODIS29_NORTHPOLE_BUG(LIN,LAIMAX, &
-                  lat(latout))
-               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, &
-                  lat(latout))
+               call FIX_MODIS29_NORTHPOLE_BUG(LIN,LAIMAX, lat(latout))
+               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(latout))
             endif
-            call Set_pft(15,LIN*(1-CROPSC4HERBFRAC),LAIMAX) !*15. Ent C3 herb crop
-            call Set_pft(16,LIN*CROPSC4HERBFRAC, LAIMAX) !*16. Ent C4 herb crop
+            call Set_pft(CROPS_C3_HERB,LIN*(1-CROPSC4HERBFRAC),LAIMAX) !*15. Ent C3 herb crop
+            call Set_pft(CROPS_C4_HERB,LIN*CROPSC4HERBFRAC, LAIMAX) !*16. Ent C4 herb crop
          elseif ((k.eq.19).or.(k.eq.26))then !*MODIS 19. Croplands-->Broadleaf crop=~C4 crops, wide leaves *!
-!     *MODIS 26. Cropland/natural vegetation-->Broadleaf crop *!
+            ! *MODIS 26. Cropland/natural vegetation-->Broadleaf crop *!
             if (k.eq.19) then
-               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, &
-                  lat(latout))
+               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(latout))
             endif
 
-            call Set_pft(16,LIN, LAIMAX) !*16. Ent C4 herb crop
+            call Set_pft(CROPS_C4_HERB, LIN, LAIMAX) !*16. Ent C4 herb crop
          elseif (k.eq.20)then !*MODIS Urban and built up*!
-!     * 19 - Bare or sparsely vegetated
-            call Set_pft(19,LIN,LAIMAX)
+            ! * 19 - Bare or sparsely vegetated
+            call Set_pft(BARE_SPARSE,LIN,LAIMAX)
          elseif (k.eq.21) then !*MODIS Cropland/natural vegetation-->Evergreen needleleaf forest*!
-            p=4           !*4. Ent  evergreen needleleaf late successional*!
+            p=EVER_ND_LATE           !*4. Ent  evergreen needleleaf late successional*!
             call Set_pft(p,LIN,LAIMAX)
          elseif (k.eq.22)then !*MODIS Cropland/natural vegetation-->Deciduous broadleaf forest*!
-!     p = 6               !*6. Ent  cold deciduous broadleaf late successional*!
-!     call Set_pft(p,LIN,LAIMAX(k,:,:))
             call Set_Broadleaftype(MAT,Pdry,C4CLIMFRAC,TCOLD &
                  ,Pmave,ClimMedit,LIN,LAIMAX)
          elseif (k.eq.23) then !*MODIS Cropland/natural vegetation-->Shrub*!
             call Set_Shrubtype(MAT,Pmave, LIN,LAIMAX) !*9,10. Ent cold- and arid-adapted shrub*!
          elseif (k.eq.24)then !*MODIS Cropland/natural vegetation-->Grass*!
-            call Set_Grasstype(C4CLIMFRAC, MAT,Pdry,ClimMedit &
-                 ,LIN,LAIMAX)
+            call Set_Grasstype(C4CLIMFRAC, MAT,Pdry,ClimMedit, LIN,LAIMAX)
          elseif (k.eq.27)then !*MODIS Permanent snow/ice*!
-!     *Ent Permanent snow/ice
-            call Set_pft(18,LIN,LAIMAX)
+            ! *Ent Permanent snow/ice
+            call Set_pft(SNOW_ICE,LIN,LAIMAX)
          elseif (k.eq.28)then !*MODIS Barren or sparsely vegetated*!
-!     * 19 - Bare or sparsely vegetated
-            call Set_pft(19,LIN,LAIMAX)
+            call Set_pft(BARE_SPARSE,LIN,LAIMAX)
          endif
-
       end do   ! k=1,lclass
 
         ! --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
