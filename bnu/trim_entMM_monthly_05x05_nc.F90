@@ -678,8 +678,8 @@
 
 
 
-      subroutine calculate_bs_brightratio(IMn,JMn, bsf_1,bsf_0,
-     o     bs_brightratio)
+      subroutine calculate_bs_brightratio(IMn,JMn, bsf_1,bsf_0, &
+          bs_brightratio)
       ! compute ratio of bright/total bare soil.
       ! this will be used to compute bright and dark cover fractions
       !   so that their sum preserves albedo of the bare soil.

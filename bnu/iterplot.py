@@ -111,6 +111,10 @@ def plot_region(ps):
     """region.center_ll:
         (lat, lon) of center of region to plot"""
     region = regions[ps.algo]
+
+    if ps.ifname.endswith('_err.nc'):
+        return
+
     print('Plotting {} ({})'.format(ps.ifname, region.name))
 
     with netCDF4.Dataset(ps.ifname) as nc:
@@ -290,4 +294,4 @@ for ps in iter_plot_todo():
         plot_global(ps)
     else:
         plot_region(ps)
-    sys.exit(0)
+#    sys.exit(0)
