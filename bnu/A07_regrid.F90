@@ -53,13 +53,14 @@ subroutine regrid_lais(esub, fname)
 
     print *,'****************** BEGIN Regrid ',fname%leaf
 
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'qxq', 100, 120)
+
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
     spec_lr = hntr_spec(chunkerlr%chunk_size(1), chunkerlr%ngrid(2), 0d0, 180d0*60d0 / chunkerlr%ngrid(2))
     hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)   ! datmis=0
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'qxq', 100, 120)
 
     ! ------------- Input Files
     ! LC written by A04; in the esub indexing scheme
@@ -88,7 +89,6 @@ subroutine regrid_lais(esub, fname)
             (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
     end do   ! k
 
-#if 0
 #ifdef ENTGVSD_DEBUG
     do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
     do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
@@ -108,13 +108,9 @@ subroutine regrid_lais(esub, fname)
         end do    ! k=1,esub%ncover
     end do
     end do
-#endif
 
-print *,'CCC1'
     call chunker%close_chunks
-print *,'CCC1'
     call chunkerlr%close_chunks
-print *,'CCC2'
 end subroutine regrid_lais
 
 
@@ -154,13 +150,11 @@ subroutine do_regrid_all
     do imonth=1,NMONTH
         nf = nf + 1
         fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-            'pure2/month/', 'purelr/month/', 'entmm29_'//MONTH(imonth)//'_lai')
+            'pure2/monthly/', 'purelr/monthly/', 'entmm29_'//MONTH(imonth)//'_lai')
     end do
 
     do i=1,nf
-print *,'DD1'
         call regrid_lais(esub, fname(i))
-print *,'DD2'
     end do
 
 end subroutine do_regrid_all
