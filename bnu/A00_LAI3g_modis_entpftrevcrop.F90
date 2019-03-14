@@ -337,9 +337,9 @@ real*4 :: TCinave
 real*4 :: Pmave !Winds up not being used
 real*4 :: ClimMedit !ClimMediterranean climate
 real*4 :: CHECKSUM
-real*4 :: NPFTGRID  
+integer :: NPFTGRID  
 real*4 :: DOMPFTLC  
-real*4 :: DOMPFT
+integer :: DOMPFT
 
 real*4, allocatable :: lon(:),lat(:)
 
@@ -471,7 +471,7 @@ call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
 do k=1,NENT20
     if (k == CV_WATER) cycle
     call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
-        (/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))
+        (/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))   ! Land-weighted LC
 end do
 
 !     CHECKSUM
@@ -699,9 +699,9 @@ do ichunk = 1,nchunk(1)
       call Zero_ENTPFT
 !     ENTCOVSUM(:,:,:) = 0.
       LIN = 0.
-      NPFTGRID = 0.
+      NPFTGRID = 0
       DOMPFTLC = 0.
-      DOMPFT = 0.
+      DOMPFT = 0
       
       CHECKSUM = 0.0
 
@@ -840,17 +840,17 @@ do ichunk = 1,nchunk(1)
            CHECKSUM = CHECKSUM + ENTPFTLC(k)
         enddo
 
-        if (CHECKSUM.ne.1.0) then
-            ! Rescale all cover to sum to 1.
-            do k=1,NENT20
-                ENTPFTLC(k) = ENTPFTLC(k)/CHECKSUM
-            enddo
-
-             CHECKSUM = 0.0
-             do k=1,NENT20
-                 CHECKSUM = CHECKSUM + ENTPFTLC(k)
-             enddo
-        endif
+!        if (CHECKSUM.ne.1.0) then
+!            ! Rescale all cover to sum to 1.
+!            do k=1,NENT20
+!                ENTPFTLC(k) = ENTPFTLC(k)/CHECKSUM
+!            enddo
+!
+!             CHECKSUM = 0.0
+!             do k=1,NENT20
+!                 CHECKSUM = CHECKSUM + ENTPFTLC(k)
+!             enddo
+!        endif
 
         CHECKSUM = 0.0
         do k=1,NENT20
@@ -865,7 +865,7 @@ do ichunk = 1,nchunk(1)
             if (ENTPFTLC(k).le.0.) then
                 ENTPFTLAIMAX(k) = 0.
             else
-                NPFTGRID = NPFTGRID + 1.
+                NPFTGRID = NPFTGRID + 1
             endif
             ! Update dominant pft LC and number.
             if (ENTPFTLC(k).gt.DOMPFTLC) then
@@ -884,7 +884,7 @@ do ichunk = 1,nchunk(1)
          ! Output file for land cover
          io_lc(k)%buf(ic,jc) = ENTPFTLC(k)
       end do  ! k=1,ENTPFTNUM
-      
+
       io_checksum2%buf(ic,jc)=CHECKSUM
 
       CHECKSUM=0.0
@@ -930,9 +930,8 @@ call chunker%close_chunks
 CONTAINS
 
 ! Accumulate stats on low-res variables
-subroutine accum_lr_stats(this, startB, startB_lr)
-    class(ChunkIO_t), intent(INOUT) :: this
-    integer, dimension(:), intent(IN) :: startB, startB_lr
+subroutine accum_lr_stats(this)
+    class(ChunkIO_t) :: this
     ! -------- Locals
     integer :: jc, ic    ! Index WITHIN current chunk (LR)
     integer :: k

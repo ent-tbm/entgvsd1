@@ -151,10 +151,9 @@ end type ChunkIO_t
 
 ! Function pointer type used in ChunkIO_t (most go after ChunkIO_t)
 abstract interface
-    subroutine RegridLR_fn(this, startB, startB_lr)
+    subroutine RegridLR_fn(this)
         import :: ChunkIO_t
-        class(ChunkIO_t), intent(INOUT) :: this
-        integer, dimension(:), intent(IN) :: startB, startB_lr
+        class(ChunkIO_t) :: this
     end subroutine RegridLR_fn
 end interface
 
@@ -465,19 +464,17 @@ subroutine setup_startB(this, cio)
 end subroutine setup_startB
 
 
-subroutine nop_regrid_lr(this, startB, startB_lr)
-    class(ChunkIO_t), intent(INOUT) :: this
-    integer, dimension(:), intent(IN) :: startB, startB_lr
+subroutine nop_regrid_lr(this)
+    class(ChunkIO_t) :: this
 end subroutine nop_regrid_lr
 
-subroutine default_regrid_lr(this, startB, startB_lr)
-    class(ChunkIO_t), intent(INOUT) :: this
-    integer, dimension(:), intent(IN) :: startB, startB_lr
+subroutine default_regrid_lr(this)
+    class(ChunkIO_t) :: this
     ! -------- Locals
     integer :: ic,jc
 
     call this%chunker%hntr_lr%regrid4(this%buf_lr, this%buf, this%wta%buf,this%wta%MM,this%wta%BB, &
-        startB_lr(2), this%chunker%chunk_size_lr(2))
+        this%startB_lr(2), this%chunker%chunk_size_lr(2))
 
     ! Convert zeros to NaN in regridded data (for plotting)
     do jc=1,this%chunker%chunk_size_lr(2)
@@ -526,29 +523,31 @@ subroutine write_chunks(this)
         err=nf90_sync(cio%fileid)
 
         ! Regrid chunk to low-res
-        call cio%regrid_lr(cio%startB, cio%startB_lr)
+        if (allocated(cio%buf_lr)) then
+            call cio%regrid_lr
         
-        ! Store the lo-res chunk
-        err=NF90_PUT_VAR( &
-           cio%fileid_lr, cio%varid_lr, &
-           cio%buf_lr, cio%startB_lr, this%chunk_size_lr)
-        if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),cio%varid_lr,err
-            err= nf90_inquire_variable( &
-                cio%fileid_lr, &
-                cio%varid_lr, vname, xtype,ndims,dimids)
-            ! More error output...
-            write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
-            write(ERROR_UNIT,*) lbound(cio%buf_lr),ubound(cio%buf_lr),cio%startB_lr,this%chunk_size_lr
-            err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
-            write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
-            err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
-            write(ERROR_UNIT,*) 'dim2 ',trim(vname),len
-            write(ERROR_UNIT,*) 
-            nerr = nerr + 1
+            ! Store the lo-res chunk
+            err=NF90_PUT_VAR( &
+               cio%fileid_lr, cio%varid_lr, &
+               cio%buf_lr, cio%startB_lr, this%chunk_size_lr)
+            if (err /= NF90_NOERR) then
+                write(ERROR_UNIT,*) 'Error writing lo-res ',trim(cio%leaf),cio%varid_lr,err
+                err= nf90_inquire_variable( &
+                    cio%fileid_lr, &
+                    cio%varid_lr, vname, xtype,ndims,dimids)
+                ! More error output...
+                write(ERROR_UNIT,*) trim(vname),xtype,ndims,dimids
+                write(ERROR_UNIT,*) lbound(cio%buf_lr),ubound(cio%buf_lr),cio%startB_lr,this%chunk_size_lr
+                err = nf90_inquire_dimension(cio%fileid_lr,dimids(1),vname,len)
+                write(ERROR_UNIT,*) 'dim1 ',trim(vname),len
+                err = nf90_inquire_dimension(cio%fileid_lr,dimids(2),vname,len)
+                write(ERROR_UNIT,*) 'dim2 ',trim(vname),len
+                write(ERROR_UNIT,*) 
+                nerr = nerr + 1
+            end if
         end if
 
-        ! err=nf90_sync(cio%fileid_lr)
+        err=nf90_sync(cio%fileid_lr)
 
         ! Display progress
         write(*,'(A1)',advance="no") '.'
@@ -579,7 +578,7 @@ subroutine clear_writes(this)
     do i=1,this%nwrites
         cio => this%writes(i)%ptr
         if (allocated(cio%buf)) cio%buf = 0
-        call this%setup_startb(cio)
+        call this%setup_startB(cio)
     end do
 end subroutine clear_writes
 
@@ -835,17 +834,14 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
     status=my_nf90_inq_put_var_real32(ncid,'lat',varid,lat)
 
 
-print *,'layer_names2',nlayers,len(layer_names(1)), size(layer_names,1)
     if (nlayers>1) then
         status=nf90_put_var(ncid,idlayer_indices,layer_indices(1:nlayers))
-print *,'BB1 status', status
         if (status /= NF90_NOERR) return
 
         startS = (/ 1,1 /)
         countS = (/ len(layer_names(1)), size(layer_names,1) /)
         status=nf90_put_var(ncid,idlayer_names, layer_names,startS,countS)
 
-print *,'BB2 status', status
         if (status /= NF90_NOERR) return
     end if
 
