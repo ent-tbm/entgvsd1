@@ -18,7 +18,7 @@ implicit none
 type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t), target :: io_lai(ndoy)
-type(ChunkIO_t), target :: io_lc(NENT20)
+type(ChunkIO_t), target :: ioall_lc, io_lc(NENT20)
 ! Output files
 type(ChunkIO_t) :: ioall_laiout(ndoy), io_laiout(NENT20,ndoy)
 type(ChunkIO_t) :: io_checksum_lclai(ndoy)
@@ -38,28 +38,28 @@ do idoy=1,ndoy
 enddo
 
 !     ENTPFTLC: Outputs written by A00
+call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+    'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
 do k = 1,NENT20
-    call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
-        'EntMM_lc_laimax_1kmx1km/', trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lc.nc', &
-        trim(ent20%abbrev(k)), 1)
-end do
+    call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
+enddo
 
 ! ================= Output Files
 do idoy = 1,ndoy
     call chunker%nc_create(ioall_laiout(idoy), &
         weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-        'nc/', 'EntMM_lc_lai_'//DOY(idoy)//'_1kmx1km', 'EntPFT', &
+        'pure/doy/', 'entmm29_'//DOY(idoy)//'_lai', 'lai', &
         'LAI output of A02', 'm2 m-2', 'LAI', &
         ent20%mvs, ent20%layer_names())
     do k=1,NENT20
         call chunker%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
-            (/1,1,k/), 'w', weighting(io_lc(k)%buf, 1d0,0d0))
+            (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
     end do
 
     call chunker%nc_create(io_checksum_lclai(idoy), &
         weighting(chunker%wta1,1d0,0d0), &
-        'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
-        'lclai_'//DOY(idoy), &
+        'pure/doy/checksum/', &
+        'entmm29_'//DOY(idoy)//'_lai_checksum', &
         'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
 enddo
 

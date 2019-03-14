@@ -11,12 +11,6 @@ module a06_mod
 
 implicit none
 
-
-    ! Combine C3 and C4 crops into one PFT, for ModelE
-    logical, parameter :: combine_crops_c3_c4 = .true.
-    ! Split the bare soil into dark and light, to get the right albedo
-    logical, parameter :: split_bare_soil = .true.
-
 CONTAINS
 
 subroutine do_reindex(esub,m0,m1)
@@ -26,8 +20,10 @@ subroutine do_reindex(esub,m0,m1)
     type(Chunker_t) :: chunker
 
     ! ------ Input Files
-    type(ChunkIO_t) :: io_lcin(NENT20), io_bs
+    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
+    type(ChunkIO_t) :: ioall_lc2, io_lc2(esub%ncover)
     type(ChunkIO_t) :: ioall_laiin(m1-m0+1), io_laiin(NENT20,m1-m0+1)
+    type(ChunkIO_t) :: io_bs
     ! ------ Output files
     type(ChunkIO_t) :: ioall_laiout(m1-m0+1), io_laiout(esub%ncover,m1-m0+1)
 
@@ -41,28 +37,29 @@ subroutine do_reindex(esub,m0,m1)
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
 
-    ! lcin
-    do k=1,NENT20
-        ! TODO: LAI3g????
-        ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
-        call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
-            'EntMM_lc_laimax_1kmx1km/', &
-            trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lc.nc', &
-            trim(ent20%abbrev(k)), 1)
+    ! --- ENTPFTLC: Open outputs written by A00
+    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+        'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
+    do k = 1,NENT20
+        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
     enddo
 
+    ! LC written by A04; in the esub indexing scheme
+    call chunker%nc_open(ioall_lc2, LC_LAI_ENT_DIR, &
+        'pure2/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
+    do k = 1,esub%ncover
+        call chunker%nc_reuse_var(ioall_lc2, io_lc2(k), (/1,1,k/))
+    enddo
 
     ! laiin
     do im = m0,m1
         imonth = im - m0 + 1
+
         call chunker%nc_open(ioall_laiin(imonth), LC_LAI_ENT_DIR, &
-            'nc/', 'EntMM_lc_lai_'//trim(MONTH(imonth))//'_1kmx1km.nc', 'EntPFT', 0)
-
-        do k=1,NENT20
-            call chunker%nc_reuse_var(ioall_laiin(imonth), io_laiin(k,imonth), &
-                (/1,1,k/), 'r', weighting(chunker%wta1,1d0,0d0))
-        end do
-
+            'pure/monthly/', 'entmm29_'//trim(MONTH(im))//'_lai.nc', 'lai', 0)
+        do k = 1,NENT20
+            call chunker%nc_reuse_var(ioall_laiin(imonth), io_laiin(k,imonth), (/1,1,k/))
+        enddo
     end do
 
     ! bs ratio
@@ -79,16 +76,14 @@ subroutine do_reindex(esub,m0,m1)
         imonth = im - m0 + 1
         call chunker%nc_create(ioall_laiout(imonth), &
             weighting(chunker%wta1,1d0,0d0), &
-            '16/nc/', 'V1km_EntGVSDv1.1_BNU16_lai_'//MONTH(imonth)//'_pure')
+            'pure2/monthly/', 'entmm29_'//MONTH(im)//'_lai', 'lai', &
+            'Ent LAI on the given day', 'm^2 m-2', 'Leaf Area Index', &
+            esub%mvs, esub%layer_names())
 
         do k=1,esub%ncover
-            call chunker%nc_reuse_file(ioall_laiout(imonth), io_laiout(k,imonth), &
-                'lai_'//trim(esub%abbrev(k)), &
-                trim(esub%title(k)), 'm2 m-2', &
-                trim(esub%title(k)), &
-                weighting(chunker%wta1,1d0,0d0))   ! TODO: What convert LC to 18
-
-        end do  ! k
+            call chunker%nc_reuse_var(ioall_laiout(imonth), io_laiout(k,imonth), &
+                (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
+        end do   ! k
     end do   ! imonth
 
     call chunker%nc_check('A06_trim_lc_laimax_laimonth')
@@ -107,7 +102,7 @@ subroutine do_reindex(esub,m0,m1)
         1,nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lcin, io_laiin, io_bs, &
+        io_lc, io_laiin, io_bs, &
         io_laiout)
 
     call chunker%close_chunks

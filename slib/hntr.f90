@@ -213,8 +213,8 @@ end subroutine partition_north_south
 !    Destination; must be right size to hold REGRIDDED stuff from A
 ! @param A(this%im, jb0:jb0+njb-1)
 !    Source
-! @param jb0 Index of first latitude to start regridding
-! @param njb Number of latitude grid cells to regrid
+! @param jb0 Index of first latitude to start regridding (B grid)
+! @param njb Number of latitude grid cells to regrid (B grid)
 subroutine regrid4(this, B,A,WTA,MM,BB,jb0,njb)
     class(HntrCalc_t) :: this
     real*4, dimension(:,:), intent(INOUT) :: B

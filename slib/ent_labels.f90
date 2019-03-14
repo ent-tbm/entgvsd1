@@ -253,17 +253,17 @@ end module ent_labels_mod
 module gcm_labels_mod
     use ent_labels_mod
 implicit none
-type, extends(EntSet_t) :: GcmEntSet_t
 
-    ! Indices of non-standard cover types
-    integer :: crops_herb
-    integer :: last_pft
-    integer :: bare_bright
-    integer :: bare_dark
-contains
-    procedure :: allocate => GcmEntSet_allocate
-!    generic, public :: allocate => GcmEntSet_allocate
-end type GcmEntSet_t
+    type, extends(EntSet_t) :: GcmEntSet_t
+        ! Indices of non-standard cover types
+        integer :: crops_herb
+        integer :: last_pft
+        integer :: bare_bright
+        integer :: bare_dark
+    contains
+        procedure :: allocate => GcmEntSet_allocate
+    !    generic, public :: allocate => GcmEntSet_allocate
+    end type GcmEntSet_t
 
 CONTAINS
 

@@ -21,7 +21,7 @@
 !
 !io_checksum2 = EntLandcover_check_sum_Jun_1kmx1km
 !    sum_{1...ENTPFTNUM} ENTPFTLC(k) + WATERLC
-!    NOTE: ENTPFTLC(k) == contents of file io_entpft(k) = EntMM_lc_laimax_1kmx1km/...LAI
+!    NOTE: ENTPFTLC(k) == contents of file io_lc(k) = EntMM_lc_laimax_1kmx1km/...LAI
 !
 !io_checksum3 = EntLAI_check_sum_Jun_1kmx1km
 !    sum_{1..ENTPFTNUM} ENTPFTLC(k) * ENTPFTLAIMAX(k) + WATERLC*WATERLAI
@@ -182,7 +182,7 @@ implicit none
     real*4 :: C3
 
     real*4 :: pft_c3_grass_per     ! C3 grass perennial
-    real*4 :: pft_c3_grass_annual  ! C3 grass annual
+    real*4 :: pft_c3_grass_ann  ! C3 grass annual
     real*4 :: pft_c3_grass_arct    ! C3 grass arctic
 
     pft_c3_grass_per = 0.
@@ -204,7 +204,7 @@ implicit none
     endif
 
     call Set_pft(C3_GRASS_PER,  pft_c3_grass_per,  LAI_IN)
-    call Set_pft(CE_GRASS_ANN,  pft_c3_grass_ann,  LAI_IN)
+    call Set_pft(C3_GRASS_ANN,  pft_c3_grass_ann,  LAI_IN)
     call Set_pft(C3_GRASS_ARCT, pft_c3_grass_arct, LAI_IN)
 
 end subroutine Set_Grasstype
@@ -232,7 +232,7 @@ implicit none
        pft_drough_br = LC_IN
     endif
 
-    call Set_pft(COLD_BR, pft_cold_br_late,LAI_IN) !cold-deciduous
+    call Set_pft(COLD_BR_LATE, pft_cold_br_late,LAI_IN) !cold-deciduous
     call Set_pft(DROUGHT_BR, pft_drough_br,LAI_IN) !drought-deciduous
 
 end subroutine Set_Broadleaftype
@@ -360,7 +360,7 @@ integer :: jj, ii            ! Index in full space
 
 !      real*4 :: inbuf(1,1)  ! Buffer reading NetCDF
 
-type(ChunkIO_t) :: io_lai, io_04crops, io_05crops
+type(ChunkIO_t) :: io_laiin,io_04crops, io_05crops
 type(ChunkIO_t) :: io_06crops, io_04cropsm, io_C4norm
 type(ChunkIO_t) :: io_Tcold, io_Pdry, io_Pmave, io_TCinave
 type(ChunkIO_t) :: io_CMedit
@@ -372,9 +372,9 @@ type(ChunkIO_t) :: io_dompft
 real*4 :: WATERLAI
 
 type(ChunkIO_t) :: partit_io(28)
-type(ChunkIO_t) :: io_entpft(NENT20)
-type(ChunkIO_t) :: io_entpftlaimax(NENT20)
-type(ChunkIO_t) :: io_entpftlaimaxcheck(NENT20)
+type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
+type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20)
+type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
 #ifdef COMPUTE_LAI
 type(ChunkIO_t) :: io_checksum3
 #endif
@@ -390,14 +390,14 @@ RESOUT = '1kmx1km'
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
 !     LAI
-call chunker%nc_open_gz(io_lai, &
+call chunker%nc_open_gz(io_laiin, &
     DATA_DIR, DATA_INPUT, &
     'LAI/', &
     'LAI3gMax_1kmx1km.nc', 'laimax', 1)
 
 !     Get variable IDs
-err = NF90_INQ_VARID(io_lai%fileid,'lon',varidx)
-err = NF90_INQ_VARID(io_lai%fileid,'lat',varidy)
+err = NF90_INQ_VARID(io_laiin%fileid,'lon',varidx)
+err = NF90_INQ_VARID(io_laiin%fileid,'lat',varidy)
 write(*,*) err, 'variables IDs'
 
 !     CROPS
@@ -455,57 +455,59 @@ call chunker%nc_open_gz(io_waterpart, &
      '2004/', &
      'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0', 1)
 
+
+! ===================================================
+! Create Output Files
+
+!      ENTPFTLC -- Land Cover
+call chunker%nc_create(ioall_lc, &
+    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    'pure/annual/', 'entmm29_ann_lc', 'lc', &
+    'Ent Landcover (from A00)', '1', 'Land Cover', &
+    ent20%mvs, ent20%layer_names())
+! Open water first because it's used to weight others
+call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
+    (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
+do k=1,NENT20
+    if (k == CV_WATER) cycle
+    call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
+        (/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))
+end do
+
 !     CHECKSUM
 call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
-    'checksum/', 'EntMM29lc_lai_for_1kmx1km', &
+    'pure/annual/checksum/', 'modis_ann_lc_checksum', &
     'EntMM29lc_lai_for_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 
 !     CHECKSUM
 call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
-     'checksum/', 'EntLandcover_check_sum_Jun_1kmx1km', &
+     'pure/annual/checksum/', 'entmm29_ann_lc_checksum', &
      'EntLandcover_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 
 
-!      ENTPFTLC
-
-! Open water first because we use it later
-call chunker%nc_create(io_entpft(CV_WATER), weighting(chunker%wta1,1d0,0d0), &    ! LC land-weighted &
-    'EntMM_lc_laimax_1kmx1km/', &
-    itoa2(CV_WATER)//'_'//trim(ent20%abbrev(CV_WATER))//'_lc', &
-    trim(ent20%abbrev(CV_WATER)), &
-    ent20%title(CV_WATER), '1', TITLE_LC)
-do k = 1,ent20%ncover
-    if (k == CV_WATER) cycle
-
-    call chunker%nc_create(io_entpft(k), weighting(io_entpft(CV_WATER)%buf,-1d0,1d0), &    ! LC land-weighted &
-        'EntMM_lc_laimax_1kmx1km/', &
-        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lc', &
-        trim(ent20%abbrev(k)), &
-        ent20%title(k), '1', TITLE_LC)
-enddo
 
 
 ! ------------------------------------------------------------
 ! Low-res version computed specially for these
-!     NPFTGRID
+!     NPFTGRID  Number of PFTs in a gridcell
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
-    'checksum/', 'EntPFTs_percell_check_sum_Jun_1kmx1km', &
+    'pure/annual/checksum/', 'entmm29_ann_npftgrid', &
      'EntPFTs_percell_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_npftgrid%regrid_lr => accum_lr_stats
 
-!     DOMPFTLC
-call chunker%nc_create(io_dompftlc, weighting(io_entpft(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
-    'checksum/', 'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
-     'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
+!     DOMPFTLC   Dominant PFT's LC in a gridcell
+call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
+    'pure/annual/checksum/', 'entmm29_ann_dompftlc', &
+    'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_dompftlc%regrid_lr => nop_regrid_lr
 
-!     DOMPFT
+!     DOMPFT     Dominant PFT index in a gridcell (int)
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
-    'checksum/', 'EntdominantPFT_check_sum_Jun_1kmx1km', &
+    'pure/annual/checksum/', 'entmm29_ann_dompft', &
      'EntdominantPFT_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_dompft%regrid_lr => nop_regrid_lr
@@ -520,42 +522,43 @@ do k = 1,LCLASS
         'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo
 
-
 ! ENTPFTLAIMAX
+call chunker%nc_create(ioall_laiout, &
+    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
+    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+    ent20%mvs, ent20%layer_names())
 #ifdef COMPUTE_LAI
 do k=1,NENT20
 #else
 do k=CV_WATER,CV_WATER    ! Compute water LAI even if not the other LAIs
 #endif
-    call chunker%nc_create(io_entpftlaimax(k), &
-        weighting(io_entpft(k)%buf,1d0,0d0), &   ! Weight by entpft LC
-        'EntMM_lc_laimax_1kmx1km/', &
-        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
-        trim(ent20%abbrev(k)), &
-        ent20%title(k), 'm2 m-2', TITLE_LAI)
+    call chunker%nc_reuse_var(ioall_lc, io_laiout(k), &
+        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
 enddo
 
 
-! ENTPFTLAIMAX CHECKSUM
-#ifdef COMPUTE_LAI
-do k=1,NENT20
-    if (k == CV_WATER) cycle
-    call chunker%nc_create(io_entpftlaimaxcheck(k), &
-        weighting(chunker%wta1,1d0,0d0), &
-        'checksum/', &
-        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
-        trim(ent20%abbrev(k)), &
-        ent20%title(k), '1', TITLE_CHECKSUM, 1)
-enddo
-#endif
-
-! CHECKSUM
-#ifdef COMPUTE_LAI
-call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
-    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
-    'EntLAI_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
-#endif
+!! TODO: Fix these if we set COMPUTE_LAI
+!! ENTPFTLAIMAX CHECKSUM
+!#ifdef COMPUTE_LAI
+!do k=1,NENT20
+!    if (k == CV_WATER) cycle
+!    call chunker%nc_create(io_laicheck(k), &
+!        weighting(chunker%wta1,1d0,0d0), &
+!        'checksum/', &
+!        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
+!        trim(ent20%abbrev(k)), &
+!        ent20%title(k), '1', TITLE_CHECKSUM, 1)
+!enddo
+!#endif
+!
+!! CHECKSUM
+!#ifdef COMPUTE_LAI
+!call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
+!    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
+!    'EntLAI_check_sum_Jun_1kmx1km', &
+!    'checksum', '1', TITLE_CHECKSUM)
+!#endif
 
 
 ! Quit if we had any problems opening files
@@ -565,18 +568,75 @@ stop 0
 #endif
 
 
+
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'long_name','Land Cover')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL,'history', &
+        'June 2017: C. Montes, N.Y. Kiang')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'title', 'Ent PFT 1 km land cover fraction')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'creator_name', 'NASA GISS')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'creator_email', &
+        'elizabeth.fischer@columbia.edu,'// &
+        'carlo.montes@nasa.gov'// &
+        'nancy.y.kiang@nasa.gov')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'geospatial_lat_min', '-90')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'geospatial_lat_max', '90')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'geospatial_lon_min', '-180')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'geospatial_lon_max', '180')
+   err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
+        'EntTBM', 'Ent Terrestrial Biosphere Model')
+
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'long_name','Maximum LAI over a Year')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+         'history', 'June 2017: C. Montes, N.Y. Kiang,'// &
+         'downscaled from 1/12 degree to 1km resolution')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'institution', 'Original data:  LAI3g,'// &
+        'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'// &
+        'Scaling: NASA Goddard Institute for Space Studies')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+         'title', 'Maximum annual LAI (m2/m2) 2004'// &
+         'downscaled from 1/12 degrees')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'creator_name', 'NASA GISS')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'creator_email', &
+        'elizabeth.fischer@columbia.edu,'// &
+        'carlo.montes@nasa.gov,'// &
+        'nancy.y.kiang@nasa.gov')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'geospatial_lat_min', '-90')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'geospatial_lat_max', '90')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'geospatial_lon_min', '-180')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'geospatial_lon_max', '180')
+   err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
+        'EntTBM', 'Ent Terrestrial Biosphere Model')
+
+
+
 !-----------------------------------------------------------------
 !     Read lat and lon values
 
 startY(1)=1
 countY(1)=JM1km
 allocate(lat(countY(1)))
-err=nf90_get_var(io_lai%fileid, varidy, lat, startY, countY)
+err=nf90_get_var(io_laiin%fileid, varidy, lat, startY, countY)
 
 startX(1)=1
 countX(1)=IM1km
 allocate(lon(countX(1)))
-err=nf90_get_var(io_lai%fileid, varidx, lon, startX, countX)
+err=nf90_get_var(io_laiin%fileid, varidx, lon, startX, countX)
 
 !-----------------------------------------------------------------
 
@@ -603,7 +663,7 @@ do ichunk = 1,nchunk(1)
        jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
        !**   LAI data
-       LAIMAX=io_lai%buf(ic,jc)
+       LAIMAX=io_laiin%buf(ic,jc)
 
        !**   Crop files
       CROPSHERBNORM=io_04crops%buf(ic,jc)
@@ -822,7 +882,7 @@ do ichunk = 1,nchunk(1)
       do k=1,NENT20
          CHECKSUM = CHECKSUM + ENTPFTLC(k)
          ! Output file for land cover
-         io_entpft(k)%buf(ic,jc) = ENTPFTLC(k)
+         io_lc(k)%buf(ic,jc) = ENTPFTLC(k)
       end do  ! k=1,ENTPFTNUM
       
       io_checksum2%buf(ic,jc)=CHECKSUM
@@ -836,7 +896,7 @@ do ichunk = 1,nchunk(1)
       do k=CV_WATER,CV_WATER    ! Compute water LAI even if not the other LAIs
 #endif
          CHECKSUM = CHECKSUM + ENTPFTLC(k)*ENTPFTLAIMAX(k)
-         io_entpftlaimax(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+         io_laiout(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
       end do  ! k=1,ENTPFTNUM
 #ifdef COMPUTE_LAI
       io_checksum3%buf(ic,jc)=CHECKSUM
@@ -849,7 +909,7 @@ do ichunk = 1,nchunk(1)
 #ifdef COMPUTE_LAI
       do k=1,NENT20
          if (k == CV_WATER) cycle
-         io_entpftlaimaxcheck(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
+         io_laicheck(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
       end do  ! k=1,NENT20
 #endif
 
@@ -862,66 +922,7 @@ do ichunk = 1,nchunk(1)
 end do     ! ichunk=1,nchunk(1)
 end do     ! jchunk=1,nchunk(2)
 
-do k=1,NENT20
    
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'long_name',ent20%title(k))
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL,'history', &
-        'June 2017: C. Montes, N.Y. Kiang')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'title', 'Ent PFT 1 km land cover fraction')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'creator_name', 'NASA GISS')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'creator_email', &
-        'elizabeth.fischer@columbia.edu,'// &
-        'carlo.montes@nasa.gov'// &
-        'nancy.y.kiang@nasa.gov')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lat_min', '-90')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lat_max', '90')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lon_min', '-180')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lon_max', '180')
-   err = NF90_PUT_ATT(io_entpft(k)%fileid,NF90_GLOBAL, &
-        'EntTBM', 'Ent Terrestrial Biosphere Model')
-
-#ifndef COMPUTE_LAI
-   if (k==CV_WATER) cycle
-#endif
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'long_name',ent20%title(k))
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-         'history', 'June 2017: C. Montes, N.Y. Kiang,'// &
-         'downscaled from 1/12 degree to 1km resolution')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'institution', 'Original data:  LAI3g,'// &
-        'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'// &
-        'Scaling: NASA Goddard Institute for Space Studies')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-         'title', 'Maximum annual LAI (m2/m2) 2004'// &
-         'downscaled from 1/12 degrees')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'creator_name', 'NASA GISS')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'creator_email', &
-        'elizabeth.fischer@columbia.edu,'// &
-        'carlo.montes@nasa.gov,'// &
-        'nancy.y.kiang@nasa.gov')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lat_min', '-90')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lat_max', '90')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lon_min', '-180')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'geospatial_lon_max', '180')
-   err = NF90_PUT_ATT(io_entpftlaimax(k)%fileid,NF90_GLOBAL, &
-        'EntTBM', 'Ent Terrestrial Biosphere Model')
-end do
-
 call chunker%close_chunks
 
 
@@ -949,7 +950,7 @@ subroutine accum_lr_stats(this, startB, startB_lr)
         do k=1,NENT20
             if (k == CV_WATER) cycle
 
-            lc = io_entpft(k)%buf_lr(ic,jc) 
+            lc = io_lc(k)%buf_lr(ic,jc) 
             if ((lc == 0).or.(lc==undef)) cycle
 
             ! Count number of PFTs in the gridcell

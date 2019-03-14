@@ -12,11 +12,6 @@ module a05_mod
 implicit none
 
 
-    ! Combine C3 and C4 crops into one PFT, for ModelE
-    logical, parameter :: combine_crops_c3_c4 = .true.
-    ! Split the bare soil into dark and light, to get the right albedo
-    logical, parameter :: split_bare_soil = .true.
-
 CONTAINS
 
 subroutine do_reindex(esub)
@@ -24,7 +19,10 @@ subroutine do_reindex(esub)
 
     type(Chunker_t) :: chunker
     ! Input files
-    type(ChunkIO_t) :: io_lcin(NENT20), ioall_laiin(ndoy), io_laiin(NENT20,ndoy), io_bs
+    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
+    type(ChunkIO_t) :: ioall_lc2, io_lc2(esub%ncover)
+    type(ChunkIO_t) :: ioall_laiin(ndoy), io_laiin(NENT20,ndoy)
+    type(ChunkIO_t) :: io_bs
     ! Output files
     type(ChunkIO_t) :: ioall_laiout(ndoy), io_laiout(esub%ncover,ndoy)
 
@@ -36,26 +34,28 @@ subroutine do_reindex(esub)
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
 
-    ! lcin
-    do k=1,NENT20
-        ! USE the land cover we computed in a previous step!!!!!!
-        ! TODO: LAI3g????
-        ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
-        call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
-            'EntMM_lc_laimax_1kmx1km/', &
-            trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lc.nc', &
-            trim(ent20%abbrev(k)), 1)
-    end do
+    ! --- ENTPFTLC: Open outputs written by A00
+    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+        'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
+    do k = 1,NENT20
+        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
+    enddo
 
-    ! laiin
+    ! LC written by A04; in the esub indexing scheme
+    call chunker%nc_open(ioall_lc2, LC_LAI_ENT_DIR, &
+        'pure2/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
+    do k = 1,esub%ncover
+        call chunker%nc_reuse_var(ioall_lc2, io_lc2(k), (/1,1,k/))
+    enddo
+
+
+    ! laimax
     do idoy = 1,ndoy
         call chunker%nc_open(ioall_laiin(idoy), LC_LAI_ENT_DIR, &
-            'nc/', 'EntMM_lc_lai_'//trim(DOY(idoy))//'_1kmx1km.nc', &
-            'EntPFT', 0)
-        do k=1,NENT20
-            call chunker%nc_reuse_var(ioall_laiin(idoy), io_laiin(k,idoy), &
-                (/1,1,k/), 'r', weighting(chunker%wta1,1d0,0d0))
-        end do
+            'pure/doy/', 'entmm29_'//trim(DOY(idoy))//'_lai.nc', 'lai', 0)
+        do k = 1,NENT20
+            call chunker%nc_reuse_var(ioall_laiin(idoy), io_laiin(k,idoy), (/1,1,k/))
+        enddo
     end do
 
     ! Bare Soil Brightness Ratio
@@ -68,14 +68,12 @@ subroutine do_reindex(esub)
     do idoy = 1,ndoy
         call chunker%nc_create(ioall_laiout(idoy), &
             weighting(chunker%wta1,1d0,0d0), &
-            '16/nc/', 'V1km_EntGVSDv1.1_BNU16_lai_'//DOY(idoy)//'_pure')
-
+            'pure2/doy/', 'entmm29_'//DOY(idoy)//'_lai', 'lai', &
+            'Ent LAI on the given day', 'm^2 m-2', 'Leaf Area Index', &
+            esub%mvs, esub%layer_names())
         do k=1,esub%ncover
-            call chunker%nc_reuse_file(ioall_laiout(idoy), io_laiout(k,idoy), &
-                'lai_'//trim(esub%abbrev(k)), &
-                trim(esub%title(k)), 'm2 m-2', &
-                trim(esub%title(k)), &
-                weighting(chunker%wta1,1d0,0d0))   ! TODO: What convert LC to 18-class system for weighting???
+            call chunker%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
+                (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
         end do   ! k
     end do   ! idoy
 
@@ -94,7 +92,7 @@ subroutine do_reindex(esub)
         1,nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lcin, io_laiin, io_bs, &
+        io_lc, io_laiin, io_bs, &
         io_laiout)
 
     call chunker%close_chunks

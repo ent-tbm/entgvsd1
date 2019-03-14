@@ -33,8 +33,11 @@ subroutine do_reindex(esub)
 
     type(Chunker_t) :: chunker
     ! Input files
-    type(ChunkIO_t) :: io_lcin(NENT20), io_laiin(NENT20,one), io_bs
+    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
+    type(ChunkIO_t) :: ioall_laiin(one), io_laiin(NENT20,one)
+    type(ChunkIO_t) :: io_bs
     ! Output files
+    type(ChunkIO_t) :: ioall_lcout(one), io_lcout(esub%ncover,one)
     type(ChunkIO_t) :: ioall_laiout(one), io_laiout(esub%ncover,one)
     type(ChunkIO_t) :: ioall_sum, io_sum_lc(one)
 
@@ -47,23 +50,18 @@ subroutine do_reindex(esub)
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
 
-    ! lcmax
-    do k=1,NENT20
-        ! USE the land cover we computed in a previous step!!!!!!
-        ! TODO: LAI3g????
-        ! PathFilepre= '../../LAI3g/lc_lai_ent/EntMM_lc_laimax_1kmx1km/'
-        call chunker%nc_open(io_lcin(k), LC_LAI_ENT_DIR, &
-            'EntMM_lc_laimax_1kmx1km/', &
-            trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lc.nc', &
-            trim(ent20%abbrev(k)), 1)
-    end do
+    ! --- ENTPFTLC: Open outputs written by A00
+    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+        'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
+    do k = 1,NENT20
+        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
+    enddo
 
     ! laimax
-    do k=1,NENT20
-        call chunker%nc_open(io_laiin(k,1), LC_LAI_ENT_DIR, &
-            'EntMM_lc_laimax_1kmx1km/', &
-            trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lai.nc', &
-            trim(ent20%abbrev(k)), 1)
+    call chunker%nc_open(ioall_laiin(1), LC_LAI_ENT_DIR, &
+        'pure/annual/', 'entmm29_ann_laimax.nc', 'lc', 0)
+    do k = 1,NENT20
+        call chunker%nc_reuse_var(ioall_laiin(1), io_laiin(k,1), (/1,1,k/))
     enddo
 
     ! Bare Soil Brightness Ratio
@@ -74,16 +72,28 @@ subroutine do_reindex(esub)
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES
 
+    ! LC_pure
+    call chunker%nc_create(ioall_lcout(1), &
+        weighting(chunker%wta1, 1d0, 0d0), &
+        'pure2/annual/', 'entmm29_ann_lc', 'lc', &
+        'Ent Landcover (from A04)', '1', 'Land Cover', &
+        esub%mvs, esub%layer_names())
+    do k=1,esub%ncover
+        call chunker%nc_reuse_var(ioall_lcout(1), io_lcout(k,1), &
+            (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
+    enddo
+
+
     ! laimax_pure
     call chunker%nc_create(ioall_laiout(1), &
-        weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
-        '16/nc/', 'V1km_EntGVSDv1.1_BNU16_laimax_pure')
-    do ksub=1,esub%ncover
-        call chunker%nc_reuse_file(ioall_laiout(1), io_laiout(ksub,1), &
-            'lai_'//trim(esub%abbrev(ksub)), trim(esub%title(ksub)), &
-            'm2 m-2', trim(esub%title(ksub)), &
-            weighting(chunker%wta1,1d0,0d0))    ! TODO: Weighting???
-    end do
+        weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+        'pure2/annual/', 'entmm29_ann_laimax', 'lai', &
+        'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+        esub%mvs, esub%layer_names())
+    do k=1,esub%ncover
+        call chunker%nc_reuse_var(ioall_laiout(1), io_laiout(k,1), &
+            (/1,1,k/), weighting(io_lcout(k,1)%buf, 1d0,0d0))
+    enddo
 
     !  checksum land  laimax
     call chunker%nc_create(ioall_sum, &
@@ -109,9 +119,10 @@ subroutine do_reindex(esub)
         1,nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lcin, io_laiin, io_bs, &
+        io_lc, io_laiin, io_bs, &
         io_laiout, &
-        io_sum_lc=io_sum_lc)
+        io_sum_lc=io_sum_lc, &
+        io_lcout=io_lcout)
 
     call chunker%close_chunks
 

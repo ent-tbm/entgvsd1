@@ -85,12 +85,12 @@ call chunker%nc_open_gz(io_sim, &
     'simard_forest_heights.nc', 'heights', 1)
 
 !     ENTPFTLC
+call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+    'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
 do k = 1,NENT19
-    call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
-        'EntMM_lc_laimax_1kmx1km/', &
-        itoa2(ent19%mvs(k))//'_'//trim(ent19%abbrev(k))//'_lc.nc', &
-        trim(ent19%abbrev(k)), 1)
-end do
+    call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
+        (/1,1,ent19%mvs(k)/))
+enddo
 
 ! ---------------- Outputs
 ! ENTPFT heights
@@ -103,7 +103,7 @@ call chunker%nc_create(ioall_out, &
 
 do k = 1,NENT19
     call chunker%nc_reuse_var(ioall_out, io_out(k), &
-        (/1,1,k/), 'w', weighting(io_lc(k)%buf,1d0,0d0))
+        (/1,1,k/), weighting(io_lc(k)%buf,1d0,0d0))
 end do
 
 ! Quit if we had any problems opening files

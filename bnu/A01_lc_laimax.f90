@@ -19,11 +19,11 @@ integer, parameter :: one = 1
 
 type(Chunker_t) :: chunker
 ! Input files
-type(ChunkIO_t) :: io_lai(one)
-type(ChunkIO_t) :: io_lc(NENT20)
+type(ChunkIO_t) :: io_laiin(one)
+type(ChunkIO_t) :: ioall_lc,io_lc(NENT20)
 ! Output files
-type(ChunkIO_t) :: io_laiout(NENT20,one)
-type(ChunkIO_t) :: io_err(NENT20,one)
+type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20,one)
+type(ChunkIO_t) :: ioall_err, io_err(NENT20,one)
 type(ChunkIO_t) :: io_checksum_lclai(one)
 
 integer :: k
@@ -34,29 +34,38 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
 
 ! ================= Input Files
 !      LAI max
-call chunker%nc_open_gz(io_lai(1), DATA_DIR, DATA_INPUT, &
+call chunker%nc_open_gz(io_laiin(1), DATA_DIR, DATA_INPUT, &
     'LAI/', 'global_30s_2004_max.nc', 'lai', 1)
 
 ! --- ENTPFTLC: Open outputs written by A00
+call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+    'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
 do k = 1,NENT20
-    call chunker%nc_open(io_lc(k), LC_LAI_ENT_DIR, &
-        'EntMM_lc_laimax_1kmx1km/', trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lc.nc', &
-        trim(ent20%abbrev(k)), 1)
+    call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
 enddo
 
 ! ================= Output Files
-do k = 1,NENT20
-    call chunker%nc_create(io_laiout(k,1),  weighting(io_lc(k)%buf,1d0,0d0), &
-        'EntMM_lc_laimax_1kmx1km/', &
-        trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_lai', &
-        trim(ent20%abbrev(k)), &
-        ent20%title(k), 'm2 m-2', TITLE_LAI)
 
-    call chunker%nc_create(io_err(k,1),  weighting(io_lc(k)%buf,1d0,0d0), &
-        'EntMM_lc_laimax_1kmx1km/', &
-        trim(itoa2(k))//'_'//trim(ent20%abbrev(k))//'_err', &
-        trim(ent20%abbrev(k)), &
-        ent20%title(k), 'm2 m-2', TITLE_LAI)
+
+call chunker%nc_create(ioall_laiout, &
+    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
+    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+    ent20%mvs, ent20%layer_names())
+do k=1,NENT20
+    call chunker%nc_reuse_var(ioall_laiout, io_laiout(k,1), &
+        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
+enddo
+
+
+call chunker%nc_create(ioall_err, &
+    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+    'pure/annual/', 'entmm29_ann_laierr', 'lai', &
+    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+    ent20%mvs, ent20%layer_names())
+do k=1,NENT20
+    call chunker%nc_reuse_var(ioall_err, io_err(k,1), &
+        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
 enddo
 
 call chunker%nc_create(io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
@@ -80,7 +89,7 @@ call assign_laimax(chunker, &
     1,nchunk(2), &
     1,nchunk(1), &
 #endif
-    io_lai, io_lc, io_laiout, io_checksum_lclai, &
+    io_laiin, io_lc, io_laiout, io_checksum_lclai, &
     io_err=io_err)
 
 call chunker%close_chunks
