@@ -135,6 +135,7 @@ type :: ChunkIO_t
 
     ! NetCDF fileid and varid corresponding to the low-resolution
     ! version of this NetCDF variable.
+    logical :: create_lr      ! True if we're going to regrid to lo-res
     integer :: fileid_lr, varid_lr
     procedure(RegridLR_fn), pointer :: regrid_lr
 
@@ -407,6 +408,7 @@ subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
     ! Set up chunk parameters
     this%ngrid(1) = im
     this%ngrid(2) = jm
+print *,'ngrid',this%ngrid
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / nchunk(i)
     end do
@@ -459,8 +461,10 @@ subroutine setup_startB(this, cio)
 
     cio%startB(1) = cio%base(1) + (this%cur(1)-1) * this%chunk_size(1)
     cio%startB(2) = cio%base(2) + (this%cur(2)-1) * this%chunk_size(2)
-    cio%startB_lr(1) = cio%base(1) + (this%cur(1)-1) * this%chunk_size_lr(1)
-    cio%startB_lr(2) = cio%base(2) + (this%cur(2)-1) * this%chunk_size_lr(2)
+    if (cio%create_lr) then
+        cio%startB_lr(1) = cio%base(1) + (this%cur(1)-1) * this%chunk_size_lr(1)
+        cio%startB_lr(2) = cio%base(2) + (this%cur(2)-1) * this%chunk_size_lr(2)
+    end if
 end subroutine setup_startB
 
 
@@ -518,6 +522,7 @@ subroutine write_chunks(this)
            cio%buf,cio%startB,this%chunk_size)
         if (err /= NF90_NOERR) then
             write(ERROR_UNIT,*) 'Error writing ',trim(cio%leaf),cio%varid,err
+            write(ERROR_UNIT,*) cio%startB, this%chunk_size
             nerr = nerr + 1
         end if
         err=nf90_sync(cio%fileid)
@@ -967,13 +972,18 @@ end subroutine my_nf90_create_Ent_single
 ! @param cio The ChunkIO to finish initializing
 ! @param rw 'r' if this is a read ChunkIO; 'w' for write
 ! @param alloc Should a buffer be allocated?
+! @param regrid_lr Should a lo-res version of the file be produced?
 subroutine finish_cio_init(this, cio, alloc)
     type(Chunker_t), target :: this
     type(ChunkIO_t), target :: cio
     logical :: alloc
 
     cio%chunker => this
-    cio%regrid_lr => default_regrid_lr
+    if (cio%create_lr) then
+        cio%regrid_lr => default_regrid_lr
+    else
+        cio%regrid_lr => nop_regrid_lr
+    end if
 
     ! Allocate startB
     if (size(cio%base,1) == 3) then
@@ -984,11 +994,13 @@ subroutine finish_cio_init(this, cio, alloc)
     end if
 
     ! Allocate startB_lr
-    if (size(cio%base,1) == 3) then
-        allocate(cio%startB_lr(3))
-        cio%startB_lr(3) = cio%base(3)
-    else
-        allocate(cio%startB_lr(2))
+    if (cio%create_lr) then
+        if (size(cio%base,1) == 3) then
+            allocate(cio%startB_lr(3))
+            cio%startB_lr(3) = cio%base(3)
+        else
+            allocate(cio%startB_lr(2))
+        end if
     end if
 
     ! Allocate write buffer (Hi res)
@@ -998,7 +1010,9 @@ subroutine finish_cio_init(this, cio, alloc)
         if (cio%rw == 'w') then
             ! We only need lo-res buffer for writing
             if (allocated(cio%buf_lr)) deallocate(cio%buf_lr)
-            allocate(cio%buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
+            if (cio%create_lr) then
+                allocate(cio%buf_lr(this%chunk_size_lr(1), this%chunk_size_lr(2)))
+            end if
         end if
     end if
 
@@ -1064,6 +1078,7 @@ subroutine nc_reuse_var(this, cio0, cio, base, wta)
     cio%varid_lr = cio0%varid_lr
     cio%own_fileid_lr = .false.
 
+    cio%create_lr = cio0%create_lr
     call finish_cio_init(this, cio, .true.)
 end subroutine nc_reuse_var
 
@@ -1104,6 +1119,7 @@ subroutine nc_reuse_file(this, cio0, cio, &
     call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, &
         vname, long_name, units, title)
 
+    cio%create_lr = cio0%create_lr
     call finish_cio_init(this, cio, .true.)
 end subroutine nc_reuse_file
 
@@ -1149,6 +1165,7 @@ layer_indices, layer_names, create_lr)
     cio%wta = wta
     cio%leaf = leaf
     cio%rw = 'w'
+    cio%create_lr = (.not.present(create_lr)).or.create_lr
 
     if (present(layer_indices)) then
         nlayer = size(layer_indices,1)
@@ -1187,7 +1204,7 @@ layer_indices, layer_names, create_lr)
     cio%own_fileid = .true.
 
     ! ---------- Open/Create lo-res file
-    if (present(create_lr).and..not.create_lr) then
+    if (.not.cio%create_lr) then
         cio%own_fileid_lr = .false.
     else
         path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
@@ -1356,6 +1373,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
         return
     end if
 
+    cio%create_lr = .false.
     call finish_cio_init(this, cio, (k>0))
 end subroutine nc_open
 
