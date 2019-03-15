@@ -14,21 +14,24 @@ type IOFname_t
     character*(512) :: root
     character*(100) :: idir,odir
     character*(100) :: leaf
-
+    logical :: is_lc
 end type IOFname_t
 
 CONTAINS
 
-function make_fname(root, idir, odir, leaf) result(fn)
+function make_fname(root, idir, odir, leaf, is_lc) result(fn)
     character*(*), intent(IN) :: root, idir, odir, leaf
+    logical :: is_lc
     type(IOFname_t) :: fn
 
     fn%root = root
     fn%idir = idir
     fn%odir = odir
     fn%leaf = leaf
+    fn%is_lc = is_lc
 
 end function make_fname
+
 
 subroutine regrid_lais(esub, fname)
     type(GcmEntSet_t), intent(IN) :: esub
@@ -75,19 +78,33 @@ subroutine regrid_lais(esub, fname)
 
     ! LAI
     do idoy=1,ndoy
-        call chunker%nc_open(ioall_lai(idoy), trim(fname(idoy)%root), &
-            trim(fname(idoy)%idir), trim(fname(idoy)%leaf)//'.nc', 'lai', 0)
+        if (fname(idoy)%is_lc) then
+            call chunker%nc_open(ioall_lai(idoy), trim(fname(idoy)%root), &
+                trim(fname(idoy)%idir), trim(fname(idoy)%leaf)//'.nc', 'lc', 0)
+        else
+            call chunker%nc_open(ioall_lai(idoy), trim(fname(idoy)%root), &
+                trim(fname(idoy)%idir), trim(fname(idoy)%leaf)//'.nc', 'lai', 0)
+        end if
         do k = 1,esub%ncover
             call chunker%nc_reuse_var(ioall_lai(idoy), io_lai(k,idoy), (/1,1,k/))
         enddo
 
         ! ----------- Output Files
-        call chunkerlr%nc_create(ioall_laiout(idoy), &
-            weighting(chunker%wta1,1d0,0d0), &
-            trim(fname(idoy)%odir), trim(fname(idoy)%leaf), 'lai', &
-            'Ent LAI (annual, DOY or monthly)', 'm^2 m-2', 'Leaf Area Index', &
-            esub%mvs, esub%layer_names(), &
-            create_lr=.false.)
+        if (fname(idoy)%is_lc) then
+            call chunkerlr%nc_create(ioall_laiout(idoy), &
+                weighting(chunker%wta1,1d0,0d0), &
+                trim(fname(idoy)%odir), trim(fname(idoy)%leaf), 'lai', &
+                'Ent LAI (annual, DOY or monthly)', 'm^2 m-2', 'Leaf Area Index', &
+                esub%mvs, esub%layer_names(), &
+                create_lr=.false.)
+        else
+            call chunkerlr%nc_create(ioall_laiout(idoy), &
+                weighting(chunker%wta1,1d0,0d0), &
+                trim(fname(idoy)%odir), trim(fname(idoy)%leaf), 'lai', &
+                'Ent Land Cover', '1', 'Land Cover', &
+                esub%mvs, esub%layer_names(), &
+                create_lr=.false.)
+        end if
         do k=1,esub%ncover
             call chunkerlr%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
                 (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
@@ -109,10 +126,17 @@ subroutine regrid_lais(esub, fname)
 
         do idoy=1,ndoy
         do k=1,esub%ncover
-            call hntr_lr%regrid4( &
-                io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
-                io_lc2(k)%buf, 1d0, 0d0, &        ! weighting
-                io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
+            if (fname(idoy)%is_lc) then
+                call hntr_lr%regrid4( &
+                    io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
+                    io_lc2(k)%buf, 1d0, 0d0, &        ! weighting
+                    io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
+            else
+                call hntr_lr%regrid4( &
+                    io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
+                    io_lai(k,idoy)%chunker%wta1, 1d0, 0d0, &        ! weighting
+                    io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
+            end if
         end do    ! k=1,esub%ncover
         end do    ! idoy
 
@@ -127,7 +151,7 @@ subroutine regrid_lais(esub, fname)
 end subroutine regrid_lais
 
 
-subroutine do_regrid_all
+subroutine do_regrid_all_lais
 
     use ent_labels_mod
     use gcm_labels_mod
@@ -145,26 +169,26 @@ subroutine do_regrid_all
     nf = 0
 
     ! ----------- Annual
-!    nf = nf + 1
-!    fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-!        'pure/annual/', 'purelr/annual/', 'entmm29_ann_lc')
+    nf = nf + 1
+    fname(nf) = make_fname(LC_LAI_ENT_DIR, &
+        'pure/annual/', 'purelr/annual/', 'entmm29_ann_lc', .true.)
 
     nf = nf + 1
     fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-        'pure2/annual/', 'purelr/annual/', 'entmm29_ann_laimax')
+        'pure2/annual/', 'purelr/annual/', 'entmm29_ann_laimax', .false.)
 
     ! ---------- DOY
     do idoy=1,NDOY
         nf = nf + 1
         fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-            'pure2/doy/', 'purelr/doy/', 'entmm29_'//DOY(idoy)//'_lai')
+            'pure2/doy/', 'purelr/doy/', 'entmm29_'//DOY(idoy)//'_lai', .false.)
     end do
 
     ! ---------- MONTH
     do imonth=1,NMONTH
         nf = nf + 1
         fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-            'pure2/monthly/', 'purelr/monthly/', 'entmm29_'//MONTH(imonth)//'_lai')
+            'pure2/monthly/', 'purelr/monthly/', 'entmm29_'//MONTH(imonth)//'_lai', .false.)
     end do
 
 
@@ -175,7 +199,7 @@ subroutine do_regrid_all
         call regrid_lais(esub, fname(i0:i1))
     end do
 
-end subroutine do_regrid_all
+end subroutine do_regrid_all_lais
 
 
 
@@ -185,5 +209,5 @@ end module a07_mod
 program regrid
     use a07_mod
 implicit none
-    call do_regrid_all
+    call do_regrid_all_lais
 end program regrid
