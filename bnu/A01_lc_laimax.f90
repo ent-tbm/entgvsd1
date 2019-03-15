@@ -69,8 +69,8 @@ do k=1,NENT20
 enddo
 
 call chunker%nc_create(io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
-    'EntMM_lc_laimax_1kmx1km/checksum_lclai/', &
-    'lclai', &
+    'pure/annual/checksum/', &
+    'entmm29_ann_lai_checksum', &
     'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
 
 ! ====================== Done Opening Files

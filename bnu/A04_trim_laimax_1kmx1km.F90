@@ -53,7 +53,7 @@ subroutine do_reindex(esub)
 
     ! laimax
     call chunker%nc_open(ioall_laiin(1), LC_LAI_ENT_DIR, &
-        'pure/annual/', 'entmm29_ann_laimax.nc', 'lc', 0)
+        'pure/annual/', 'entmm29_ann_laimax.nc', 'lai', 0)
     do k = 1,NENT20
         call chunker%nc_reuse_var(ioall_laiin(1), io_laiin(k,1), (/1,1,k/))
     enddo

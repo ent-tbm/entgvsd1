@@ -32,7 +32,7 @@ subroutine do_reindex(esub,m0,m1)
     integer :: im,imonth
 
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 150, 150)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300)
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
