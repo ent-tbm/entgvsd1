@@ -30,11 +30,12 @@ subroutine do_reindex(esub)
     type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
     type(ChunkIO_t) :: ioall_laiin(one), io_laiin(NENT20,one)
     type(ChunkIO_t) :: io_bs
+    type(ChunkIO_t) :: ioall_simin(one), io_simin(NENT20,one)
     ! Output files
     type(ChunkIO_t) :: ioall_lcout(one), io_lcout(esub%ncover,one)
     type(ChunkIO_t) :: ioall_laiout(one), io_laiout(esub%ncover,one)
     type(ChunkIO_t) :: ioall_sum, io_sum_lc(one)
-
+    type(ChunkIO_t) :: ioall_simout(one), io_simout(esub%ncover,one)
     integer :: k,ksub
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', &
@@ -62,6 +63,14 @@ subroutine do_reindex(esub)
     call chunker%nc_open_gz(io_bs, LAI3G_DIR, LAI3G_INPUT, &
         'lc_lai_ent/', 'bs_brightratio.nc', 'bs_brightratio', 1)
 
+    ! Simard heights
+    call chunker%nc_open(ioall_simin(1), lC_LAI_ENT_DIR, &
+        'pure/annual/', 'entmm29_ann_height.nc', 'SimardHeights', 0)
+    do k=1,NENT20
+        call chunker%nc_reuse_var(ioall_simin(1), io_simin(k,1), &
+            (/1,1,k/))
+    end do
+
     !------------------------------------------------------------------------
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES
@@ -77,6 +86,18 @@ subroutine do_reindex(esub)
             (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
     enddo
 
+
+    ! ENTPFT heights in ENT16 indices
+    call chunker%nc_create(ioall_simout(1), &
+        weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
+        'pure2/annual/', 'entmm29_ann_height', &
+        'SimardHeights', &
+        'Plant Heights', 'm', 'Plant Heights', &
+        esub%mvs, esub%layer_names())
+    do k = 1,esub%ncover
+        call chunker%nc_reuse_var(ioall_simout(1), io_simout(k,1), &
+            (/1,1,k/), weighting(io_lc(k)%buf,1d0,0d0))
+    end do
 
     ! laimax_pure
     call chunker%nc_create(ioall_laiout(1), &
@@ -116,7 +137,9 @@ subroutine do_reindex(esub)
         io_lc, io_laiin, io_bs, &
         io_laiout, &
         io_sum_lc=io_sum_lc, &
-        io_lcout=io_lcout)
+        io_lcout=io_lcout, &
+        io_simin=io_simin, &
+        io_simout=io_simout)
 
     call chunker%close_chunks
 

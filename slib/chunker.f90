@@ -12,7 +12,7 @@ module chunker_mod
 
 implicit none
 private
-    public :: Chunker_t,ChunkIO_t,weighting
+    public :: Chunker_t,ChunkIO_t,weighting,Weighting_t
     public :: nop_regrid_lr, default_regrid_lr
 
 ! Controls how variabls are weighted when regridded to low resolution.
@@ -1343,7 +1343,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     print *,'Reading ', oroot//dir//leaf
 
     ! ------- Now open the file
-    cio%path = oroot//dir//leaf
+    cio%path = trim(oroot)//trim(dir)//trim(leaf)
     err = nf90_open(trim(cio%path),NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening ',trim(leaf),err

@@ -354,5 +354,10 @@ integer, parameter :: JM2 = 90 !lat at 2 degrees
 integer, parameter :: IM4X5 = 72 !long at 5 degrees
 integer, parameter :: JM4X5 = 46 !lat at 4 degrees
 
+! Lo-res version (what we trim on)
+integer, parameter :: IMLR=IMH
+integer, parameter :: JMLR=JMH
+
+
 
 end module geom_mod

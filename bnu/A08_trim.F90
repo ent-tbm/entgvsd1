@@ -1,4 +1,4 @@
-module a07_mod
+module a08_mod
     use netcdf
     use chunker_mod
     use chunkparams_mod
@@ -13,6 +13,115 @@ implicit none
 CONTAINS
 
 
+!Converts LAI that is on BARE to a vegetated fraction.
+!Reduces vf1, increases vf2 by increment that maintains lai2,
+! or only increases lai2 if lai1 is so big that the cover-weighted
+! lai is bigger than lai2.
+!vf1, lai1 - BARE cover fraction and LAI
+!vf2, lai2 - vegetated cover fraction and max LAI
+subroutine convert_vf(vf1, lai1, vf2, lai2, laimin)
+    real*4, intent(INOUT) :: vf1, lai1, vf2, lai2
+    real*4, intent(IN) :: laimin
+    ! --- Locals
+    real*4 tot_la, tot_vf, new_lai, new_vf
+
+    tot_la = vf1*lai1 + vf2*lai2
+    tot_vf = vf1 + vf2
+    new_lai = tot_la/tot_vf
+    !Fix for if 100% conversion to vf2.
+    if (new_lai.eq.0.0) then
+       new_vf = vf2 !0.0 !Keep original cover
+    else
+       new_lai = max( new_lai, laimin)
+       new_vf = tot_la/new_lai
+    endif
+    ! get rid of round-off errors
+    !!new_vf = min( new_vf, tot_vf )
+
+    vf2 = new_vf
+    lai2 = new_lai
+    vf1 = max(0.,tot_vf - vf2) !Argh, round-off errors
+    lai1 = 0.
+end subroutine convert_vf
+
+!convert monthly vf using vfc for new vf2 derived from laimax trim. 
+!vf1, lai1 - BARE cover fraction and LAI
+!vf2, lai2 - vegetated cover fraction and monthly LAI
+!vfc = vf2 + dvf1 from laimax trim (dvf1 is positive)
+!vf1 + vf2 = vfc + (vf1-dvf1)
+!vf1*lai1 = 0*(vf1-dvf1) + (dvf1*dlai1)
+!new_lai2 = ((dvf1*dlai1) + (vf2*lai2))/(dvf1+vf2)
+!         = ((vf1*lai1) + (vf2*lai2))/vfc
+subroutine convert_vfm(vf1, lai1, vf2, lai2, vfc)
+    real*4, intent(inout) :: vf1, lai1, vf2, lai2
+    real*4, intent(in) :: vfc
+    !---
+    real*4 :: tot_lai, new_lai, new_vf
+
+    new_vf = vfc
+    if (new_vf.le.0.) then  
+       write(ERROR_UNIT,*) 'new_vf is .leq. zero',vf1,vf2,lai1,lai2,vfc
+       STOP
+    endif
+    new_lai = (vf1*lai1 + vf2*lai2)/new_vf
+    lai2 = new_lai
+    vf1 = max(0., vf1 - (vfc - vf2))   !bare, max for neg. round-off error
+    vf2 = new_vf
+    lai1 = 0.
+end subroutine convert_vfm
+
+
+!Split BARE soil into BRIGHT and DARK cover to preserve albedo from
+!  "old" ModelE cover.  Should be called after each trim, scale, nocrops.
+!Any LAI on BARE soil should already have been moved to vegetated cover,
+!  so laic(:,:,N_BARE) should be zero.
+!This checks for cases if BARE is original total or was previously split.
+subroutine do_split_bare_soil( &
+    esub, bs_brightratio, &
+    vfc,laic,hm,hsd, &
+    vfm,laim)
+implicit none
+    type(GcmEntSet_t), intent(IN) :: esub
+    real*4, intent(IN) :: bs_brightratio   !Fraction of bare that is bright.
+    real*4, intent(INOUT), dimension(esub%ncover) :: vfc,laic,hm,hsd
+    real*4, intent(INOUT), dimension(esub%ncover,NMONTH) :: vfm, laim
+    !-----Local----
+    real*4 :: vft
+    integer :: m
+
+    vft = vfc(esub%bare_bright) + vfc(esub%bare_dark)
+    if ((vft.lt.0.).or. &
+          ((vft.gt.0).and.(bs_brightratio.lt.0.))) then !Bad data
+        write(ERROR_UNIT,*) 'ERR2: bs_brightratio',vft,bs_brightratio
+        !Keep existing bright and dark
+    else             !Good data
+        vfc(esub%bare_bright) = vft*bs_brightratio
+        vfc(esub%bare_dark) = vft*(1.-bs_brightratio)
+        laic(esub%bare_bright) = 0.
+        laic(esub%bare_dark) = 0.
+    end if
+
+    do m=1,12
+        if ((vft.lt.0.).or. &
+           ((vft.gt.0.).and.(bs_brightratio.lt.0.))) then !Bad data
+            write(*,*) 'ERR2m: bs_brightratio',vft &
+              ,vfc(esub%bare_bright),vfc(esub%bare_dark),bs_brightratio
+            !Keep existing bright and dark, or check why vft<0.
+        else          !Good data
+            vfm(esub%bare_bright,m) = vft*bs_brightratio
+            vfm(esub%bare_dark,m) = vft*(1d0-bs_brightratio)
+        end if
+        laim(esub%bare_bright,m) = 0.
+        laim(esub%bare_dark,m) = 0.
+    end do
+
+    hm(esub%bare_dark) = 0.
+    hsd(esub%bare_dark) = 0.
+
+end subroutine do_split_bare_soil
+
+
+
 subroutine do_trim(esub)
     type(GcmEntSet_t), intent(IN) :: esub
     ! ----------- Locals
@@ -22,34 +131,85 @@ subroutine do_trim(esub)
     type(Chunker_t) :: chunker_nc    ! no crops
 
     ! -------- Inputs: pure2
-    type(ChunkIO_t) :: ioall_lc,io_lc(esub%ncover)
+    type(ChunkIO_t) :: ioall_ann_lc,io_ann_lc(esub%ncover)
     type(ChunkIO_t) :: ioall_ann_lai(1),io_ann_lai(esub%ncover,1)
     type(ChunkIO_t) :: ioall_mon_lai(NMONTH),io_mon_lai(esub%ncover,NMONTH)
+    type(ChunkIO_t) :: io_bs
+
+    ! -------- Outputs: trimmed
+    type(ChunkIO_t) :: ioall_ann_lc_tr(1), io_ann_lc_tr(esub%ncover,1)
+    type(ChunkIO_t) :: ioall_ann_lai_tr(1), io_ann_lai_tr(esub%ncover,1)
+    type(ChunkIO_t) :: ioall_mon_lai_tr(NMONTH), io_mon_lai_tr(esub%ncover,NMONTH)
+
+    ! Annual LC and LAI (LC doesn't change so annual LC is used everywhere)
+    real*4, dimension(esub%ncover) :: vfc,laic
+    ! Monthly LC and LAI (NOTE: Monthly LC is set to same as annual)
+    real*4, dimension(esub%ncover,NMONTH) :: vfm,laim
+    real*4 :: bs_brightratio
+    integer :: arid_shrub_s   ! Shortcut indices
+
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', 100, 0)
 
 
     ! --- Inputs: Same for annual vs. monthly
-    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
+    call chunker_pu%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
         'purelr/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
     do k = 1,NENT20
-        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
+        call chunker_pu%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
     enddo
 
     ! Bare Soil Brightness Ratio
-    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, &
+    call chunker_pu%nc_open(io_bs, LC_LAI_ENT_DIR, &
         'purelr/', 'bs_brightratio.nc', 'bs_brightratio', 1)
 
 ! Do we need this?
 !    ! Simard Heights
-!    call chunker%nc_open(io_height, LC_LAI_ENT_DIR, &
+!    call chunker_pu%nc_open(io_height, LC_LAI_ENT_DIR, &
 !        'purelr/', 'simard_height.nc', 'SimardHeights', 0)
 
 
     ! laimax
-    call chunker%nc_open(ioall_laiin(1), LC_LAI_ENT_DIR, &
+    call chunker_pu%nc_open(ioall_laiin(1), LC_LAI_ENT_DIR, &
         'purelr/annual/', 'entmm29_ann_laimax.nc', 'lai', 0)
     do k = 1,NENT20
-        call chunker%nc_reuse_var(ioall_laiin(1), io_laiin(k,1), (/1,1,k/))
+        call chunker_pu%nc_reuse_var(ioall_laiin(1), io_laiin(k,1), (/1,1,k/))
     enddo
+
+
+    ! --------------------- Outputs: trimmed
+    call chunker_tr%nc_create(ioall_ann_lc_tr(1), &
+        weighting(chunker_tr%wta1, 1d0, 0d0), &
+        'trimmed/annual/', 'ent29_ann_lc', 'lc', &
+        'Ent Landcover (from A04)', '1', 'Land Cover', &
+        esub%mvs, esub%layer_names())
+    do k=1,esub%ncover
+        call chunker_tr%nc_reuse_var(ioall_ann_lc_tr(1), io_ann_lc_tr(k,1), &
+            (/1,1,k/), weighting(chunker_tr%wta1, 1d0,0d0))
+    enddo
+
+    call chunker_tr%nc_create(ioall_ann_lai_tr(1), &
+        weighting(chunker_tr%wta1, 1d0, 0d0), &
+        'trimmed/annual/', 'ent29_ann_lai', 'lai', &
+        'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+        esub%mvs, esub%layer_names())
+    do k=1,esub%ncover
+        call chunker_tr%nc_reuse_var(ioall_ann_lai_tr(1), io_ann_lai_tr(k,1), &
+            (/1,1,k/), weighting(ioall_ann_lc_tr(k)%buf, 1d0,0d0))
+    enddo
+
+
+    do imonth=1,NMONTH
+        call chunker_tr%nc_create(ioall_mon_lai_tr(imonth), &
+            weighting(chunker_tr%wta1, 1d0, 0d0), &
+            'trimmed/annual/', 'ent29_mon_lai', 'lai', &
+            'Ent monthly LAI', 'm^2 m-2', 'Leaf Area Index', &
+            esub%mvs, esub%layer_names())
+        do k=1,esub%ncover
+            call chunker_tr%nc_reuse_var(ioall_mon_lai_tr(imonth), io_mon_lai_tr(k,1), &
+                (/1,1,k/), weighting(ioall_ann_lc_tr(k)%buf, 1d0,0d0))
+        enddo
+    end do
+
 
     ! --------------------- Process things
 
@@ -58,14 +218,14 @@ subroutine do_trim(esub)
     do jchunk = jc0,jc1
     do ichunk = ic0,ic1
 
-        call chunker%move_to(ichunk,jchunk)
+        call chunker_pu%move_to(ichunk,jchunk)
 
-        do jc = 1,chunker%chunk_size(2)
-        do ic = 1,chunker%chunk_size(1)
+        do jc = 1,chunker_pu%chunk_size(2)
+        do ic = 1,chunker_pu%chunk_size(1)
 
             ! Compute overall NetCDF index of current cell
-            ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
-            jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
+            ii = (ichunk-1)*chunker_pu%chunk_size(1)+(ic-1)+1
+            jj = (jchunk-1)*chunker_pu%chunk_size(2)+(jc-1)+1
 
 
             ! -------------------------- Read Inputs
@@ -78,13 +238,16 @@ subroutine do_trim(esub)
                 do imonth=1,12
                     vfm(k,imonth) = vfn(k)   ! vfnm in 1km; Re-use annual LC
                     laim(k,month) = io_mon_lai(k,imonth)%buf(ic,jc)  ! lainm in 1km
-                end imonth
+                end do ! imonth
 
                 ! Height file
-                hmn(k) = io_height(k)%buf(ic,jj)
+                ! hmn(k) = io_height(k)%buf(ic,jj)
+                ! hsd = stdev
+                ! vfh = vfn (LC annual), in GISS 16 pfts format (but C3 and C4 crop are summed)
+                !      ===> "LC for heights", i.e. just use the global LC
 
                 ! Bare soil brightness ratiaafo
-                bs_brightratio = io_bs_brightratio%buf(ic,jc)
+                bs_brightratio = io_bs%buf(ic,jc)
             end do    ! k=1,esub%ncover
             ! ----------------------------------------------------
 
@@ -132,10 +295,12 @@ subroutine do_trim(esub)
                    endif
                 enddo
 
-                call convert_vfh( &
-                     vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                     vfh(arid_shrub_s),hm(arid_shrub_s),hsd(arid_shrub_s), vfc(arid_shrub_s))
-            
+                ! **hm = Simard hegihts
+                ! **hsd = stdev of heights
+                ! **vfh = "LC for heights"
+                ! call convert_vfh( &
+                !      vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
+                !      vfh(arid_shrub_s),hm(arid_shrub_s),hsd(arid_shrub_s), vfc(arid_shrub_s))
             end if   ! (vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
             s = sum(vfc(1:N_BARE))
@@ -146,32 +311,28 @@ subroutine do_trim(esub)
                write(ERROR_UNIT,*) vfm(1,1:N_BARE)
             endif
 
-#ifdef SPLIT_BARE_SOIL
-TODO: split_bare_soil needs to do just one gridcell, remove the loop
-            call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
-               ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
-               ,titlec, titlem, titleh,res_out)
-#endif
-
-
+            if (split_bare_soil) then
+                call do_split_bare_soil(esub, bs_brightratio, &
+                    vfc,laic,hm,hsd,vfm,laim)
+            end if
 
             ! -------------------------- Write Outpus (trimmed)
             do k=1,esub%ncover
                 ! Annual LC and LAI file
-                io_ann_lc_t(k)%buf(ic,jc) = vfn(k)    ! vfn in 1km
-                io_ann_lai_t(k)%buf(ic,jc) = lain(k)  ! laic in 1km
+                io_ann_lc_tr(k)%buf(ic,jc) = vfn(k)    ! vfn in 1km
+                io_ann_lai_tr(k)%buf(ic,jc) = lain(k)  ! laic in 1km
 
                 ! Monthly LC and LAI files
                 do imonth=1,12
-                    io_mon_lc_t(k,imonth)%buf(ic,jc) = vfm(k,month)
-                    io_mon_lai_t(k,imonth)%buf(ic,jc) = laim(k,month)  ! lainm in 1km
-                end imonth
+                    !io_mon_lc_tr(k,imonth)%buf(ic,jc) = vfm(k,month)
+                    io_mon_lai_tr(k,imonth)%buf(ic,jc) = laim(k,month)  ! lainm in 1km
+                end do ! imonth
             end do    ! k=1,esub%ncover
             ! ----------------------------------------------------
         end do   ! ic
         end do   ! jc
 
-        call chunker%write_chunks
+        call chunker_pu%write_chunks
 
     end do    ! ichunk
     end do    ! jchunk
@@ -179,11 +340,16 @@ end subroutine do_trim
 
 
 
-end module a07_mod
+end module a08_mod
 
 ! =========================================================
 program regrid
-    use a07_mod
+    use a08_mod
 implicit none
-    call do_regrid_all_lais
+    type(GcmEntSet_t) :: esub
+
+    call init_ent_labels
+    esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
+
+    call do_trim(esub)
 end program regrid
