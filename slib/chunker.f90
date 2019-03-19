@@ -408,7 +408,6 @@ subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
     ! Set up chunk parameters
     this%ngrid(1) = im
     this%ngrid(2) = jm
-print *,'ngrid',this%ngrid
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / nchunk(i)
     end do
@@ -611,7 +610,7 @@ subroutine read_chunks(this)
            this%reads(i)%ptr%buf,cio%startB,this%chunk_size)
         write(*,'(A)',advance="no") '.'
         if (err /= NF90_NOERR) then
-            write(ERROR_UNIT,*) 'Error reading ',trim(this%reads(i)%ptr%leaf)
+            write(ERROR_UNIT,*) 'Error reading ',trim(this%reads(i)%ptr%leaf),err
             nerr = nerr + 1
         end if
     end do
@@ -1047,11 +1046,13 @@ end subroutine finish_cio_init
 subroutine nc_reuse_var(this, cio0, cio, base, wta)
     class(Chunker_t) :: this
     type(ChunkIO_t), intent(IN) :: cio0
-    type(ChunkIO_t), target :: cio
+    type(ChunkIO_t), intent(INOUT) :: cio
     integer, dimension(:), intent(IN) :: base
     type(Weighting_t), intent(IN), OPTIONAL :: wta
 
     ! Where to start other instance, in case it's a multi...
+    if (allocated(cio%base)) deallocate(cio%base)
+    allocate(cio%base(size(base)))
     cio%base = base
     if (present(wta)) then
         if (cio0%rw == 'r') then

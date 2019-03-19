@@ -125,7 +125,6 @@ subroutine do_reindex(esub)
 #endif
 
     call trim_tiny(esub, chunker, one, &
-
 #ifdef ENTGVSD_DEBUG
         nchunk(2)*3/4,nchunk(2)*3/4+1, &
         nchunk(1)*3/4,nchunk(1)*3/4+1, &

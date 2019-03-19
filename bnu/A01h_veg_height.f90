@@ -42,7 +42,7 @@ implicit none
 ! Table assigns standard height, based on Simard Height and PFT index
 ! <Assigned height>(i) = SHEIGHT * std_heights(i*2) + std_heights(i*2+1)
 !  ...where SHEIGHT is the Simard height from the input file.
-real*8, parameter :: heights_form(2,NENT19) = RESHAPE( (/ &
+real*8, parameter :: heights_form(2,NENT20) = RESHAPE( (/ &
     1d0, 0d0,    & ! TREE    1 - evergreen broadleaf early successional
     1d0, 0d0,    & ! TREE    2 - evergreen broadleaf late successional
     1d0, 0d0,    & ! TREE    3 - evergreen needleleaf early successional
@@ -63,7 +63,7 @@ real*8, parameter :: heights_form(2,NENT19) = RESHAPE( (/ &
     0d0, 0.0d0,  & ! BARREN 18 - Permanent snow/ice
     0d0, 0.0d0,  & ! BARREN 19 - Bare or sparsely vegetated, urban
     0d0, 0.0d0   & ! BARREN 20 - water
-/), (/ 2,NENT19 /))
+/), (/ 2,NENT20 /))
 
 
 
@@ -87,21 +87,20 @@ call chunker%nc_open_gz(io_sim, &
 !     ENTPFTLC
 call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
     'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-do k = 1,NENT19
+do k = 1,NENT20
     call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
-        (/1,1,ent19%mvs(k)/))
+        (/1,1,k/))
 enddo
 
 ! ---------------- Outputs
 ! ENTPFT heights
 call chunker%nc_create(ioall_out, &
     weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
-    'height/', 'EntGVSDmosaic17_height_1kmx1km_lai3g', &
+    'pure/annual/', 'entmm29_ann_height', &
     'SimardHeights', &
-    'Plant Heights', 'm', 'Plant Heights', &
-    ent19%mvs, ent19%layer_names())
-
-do k = 1,NENT19
+    'Plant Heights (Simard)', 'm', 'Plant Heights', &
+    ent20%mvs, ent20%layer_names())
+do k = 1,NENT20
     call chunker%nc_reuse_var(ioall_out, io_out(k), &
         (/1,1,k/), weighting(io_lc(k)%buf,1d0,0d0))
 end do
@@ -134,17 +133,21 @@ do ichunk = 1,nchunk(1)
         jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
 
-        do k = 1,NENT19
-            OHEIGHT = undef   ! Default if nothing in this PFT
-            if (io_lc(k)%buf(ic,jc) > 0) then
-                ! Lookup what the height should be
-                SHEIGHT = io_sim%buf(ic,jc)
-                OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
+        do k = 1,NENT20
+            if (k == CV_WATER) then
+                OHEIGHT = 0d0
+            else
+                OHEIGHT = undef   ! Default if nothing in this PFT
+                if (io_lc(k)%buf(ic,jc) > 0) then
+                    ! Lookup what the height should be
+                    SHEIGHT = io_sim%buf(ic,jc)
+                    OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
 
-                ! TODO: Better way: inverse weighted average of
-                ! gridcell height, so tree heights are taller.  So
-                ! average gridcell height (averaging over non-zero
-                ! LC's) is same as the Simard height.
+                    ! TODO: Better way: inverse weighted average of
+                    ! gridcell height, so tree heights are taller.  So
+                    ! average gridcell height (averaging over non-zero
+                    ! LC's) is same as the Simard height.
+                end if
             end if
 
             io_out(k)%buf(ic,jc) = OHEIGHT

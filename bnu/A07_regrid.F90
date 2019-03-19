@@ -65,9 +65,6 @@ subroutine regrid_lais(esub, fname)
     type(IOFname_t), pointer :: fn
     type(Weighting_t) :: wgt
 
-    integer, parameter :: IMLR=IMH
-    integer, parameter :: JMLR=JMH
-
     ndoy = size(fname,1)
     do idoy=1,ndoy
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%leaf)
@@ -187,12 +184,10 @@ subroutine do_regrid_all_lais
         'pure2/annual/', 'purelr/annual/', 'entmm29_ann_laimax', .true., &
         'lai', 'Ent LAI (annual, DOY or monthly)', 'm^2 m-2', 'Leaf Area Index')
 
-    ! Not yet possible; because so far we aren't reindexing Simard heights
-    ! to ENT16 PFTs
-!    nf = nf + 1
-!    fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-!        'pure2/annual/', 'purelr/annual/', 'entmm29_ann_height', .true., &
-!        'height', 'Plant Heights', 'm', 'Plant Heights')
+    nf = nf + 1
+    fname(nf) = make_fname(LC_LAI_ENT_DIR, &
+        'pure2/annual/', 'purelr/annual/', 'entmm29_ann_height', .true., &
+        'SimardHeights', 'Plant Heights', 'm', 'Plant Heights')
 
 
     ! Bare soil Bright Ratio
