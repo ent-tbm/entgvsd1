@@ -196,7 +196,7 @@ subroutine do_trim(esub)
     integer :: arid_shrub_s   ! Shortcut indices
 
 
-    call chunker_pu%init(IMLR,JMLR,  0,0,'', 100, 1)
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1)
     call chunker_tr%init(IMLR,JMLR,  0,0,'', 1, 500)
 
 
@@ -226,6 +226,14 @@ subroutine do_trim(esub)
         call chunker_pu%nc_reuse_var(ioall_ann_lai(1), io_ann_lai(k,1), (/1,1,k/))
     enddo
 
+
+    do imonth=1,NMONTH
+        call chunker_pu%nc_open(ioall_mon_lai(imonth), LC_LAI_ENT_DIR, &
+            'purelr/monthly/', 'entmm29_'//trim(MONTH(imonth))//'_lai.nc', 'lai', 0)
+        do k = 1,esub%ncover
+            call chunker_pu%nc_reuse_var(ioall_mon_lai(imonth), io_mon_lai(k,imonth), (/1,1,k/))
+        enddo
+    end do
 
     ! --------------------- Outputs: trimmed
     call chunker_tr%nc_create(ioall_ann_lc_tr(1), &
@@ -287,21 +295,16 @@ subroutine do_trim(esub)
 
             ! -------------------------- Read Inputs
             do k=1,esub%ncover
-print *,'AA0',k
                 ! Annual LC and LAI file
                 vfc(k) = io_ann_lc(k)%buf(ic,jc)    ! vfn in 1km
                 laic(k) = io_ann_lai(k,1)%buf(ic,jc)  ! laic in 1km
 
                 ! Monthly LC and LAI files
                 do imonth=1,12
-print *,'BB1',imonth
                     vfm(k,imonth) = vfc(k)   ! vfnm in 1km; Re-use annual LC
-print *,'BB1.1',imonth
                     laim(k,imonth) = io_mon_lai(k,imonth)%buf(ic,jc)  ! lainm in 1km
-print *,'BB1.2',imonth
                 end do ! imonth
 
-print *,'BB2'
                 ! Height file
                 hm(k) = io_ann_height(k,1)%buf(ic,jc)
                 ! hsd = stdev
@@ -310,12 +313,10 @@ print *,'BB2'
                 vfh(k) = vfc(k)
                 hsd(k) = 0
 
-print *,'BB3'
                 ! Bare soil brightness ratiaafo
                 bs_brightratio = io_bs%buf(ic,jc)
             end do    ! k=1,esub%ncover
             ! ----------------------------------------------------
-print *,'AA1'
 
             ! By definition, N_BARE indexes the last bare covertype
             !    If not yet split: = BARE_SPARSE
@@ -328,7 +329,6 @@ print *,'AA1'
             ! and restrict lai >= .15 
             arid_shrub_s = esub%svm(ARID_SHRUB)   ! shortcut
 
-print *,'AA2'
             if( vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
                 call convert_vf(vfc(N_BARE), laic(N_BARE), &
@@ -371,11 +371,11 @@ print *,'AA2'
             end if   ! (vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
             sm = sum(vfc(1:N_BARE))
-            if (sm.ne.sum(vfm(1,1:N_BARE))) then !#DEBUG
+            if (sm.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
                write(ERROR_UNIT,*) 'ERROR trim:  max and monthly lc different' &
-                    , sm,sum(vfm(1,1:N_BARE))
+                    , sm,sum(vfm(1:N_BARE,1))
                write(ERROR_UNIT,*) vfc(1:N_BARE)
-               write(ERROR_UNIT,*) vfm(1,1:N_BARE)
+               write(ERROR_UNIT,*) vfm(1:N_BARE,1)
             endif
 
             if (split_bare_soil) then
@@ -383,7 +383,6 @@ print *,'AA2'
                     vfc,laic,hm,hsd,vfm,laim)
             end if
 
-print *,'AA3'
             ! -------------------------- Write Outpus (trimmed)
             do k=1,esub%ncover
                 ! Annual LC and LAI file
@@ -399,13 +398,15 @@ print *,'AA3'
             ! ----------------------------------------------------
         end do   ! ic
         end do   ! jc
-print *,'AA4'
 
         call chunker_pu%write_chunks
         call chunker_tr%write_chunks
 
     end do    ! ichunk
     end do    ! jchunk
+
+    call chunker_pu%close_chunks
+    call chunker_tr%close_chunks
 end subroutine do_trim
 
 
