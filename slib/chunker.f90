@@ -209,14 +209,15 @@ end type ChunkIO_ptr
 !
 type Chunker_t
     integer :: ngrid(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
-    integer :: chunk_size(3)    ! Number of fine grid cells in each chunk (im,jm)
+    integer :: nchunk(chunk_rank)    ! Number of chunks in im,jm direction.
+    integer :: chunk_size(chunk_rank+1)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur(chunk_rank)     ! Index of current chunk
 
     ! Same of a low-res version of the chunker...
     integer :: ngrid_lr(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
     type(HntrCalc_t) :: hntr_lr    ! Preparation to regrid
     character(20) :: lr_suffix     ! Suffix to add to lr filenames (eg: 1x1, hxh, etc)
-    integer :: chunk_size_lr(3)    ! Number of fine grid cells in each chunk (im,jm)
+    integer :: chunk_size_lr(chunk_rank+1)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur_lr(chunk_rank)     ! Index of current chunk
 
 
@@ -395,23 +396,33 @@ end function weighting
 ! @param im_lr,jm_lr Size of low-resolution grid
 ! @param max_reads Maximum number of files one can open for reading.
 ! @param max_writes Maximum number of files one can open for writing.
-subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
+subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,nchunk)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
     integer, intent(IN) :: im_lr,jm_lr
     character(*) :: lr_suffix     ! Suffix to add to lr filenames (eg: 1x1, hxh, etc)
     integer :: max_reads, max_writes
+!    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
+    integer, intent(IN), OPTIONAL :: nchunk(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
+
     ! ------ Locals
     integer :: i
     type(HntrSpec_t) :: spec_hr, spec_lr
+    integer :: nchunk_x(chunk_rank)
+
+    if (present(nchunk)) then
+        this%nchunk = nchunk
+    else
+        this%nchunk = (/18,15/)
+    end if
 
     ! Set up chunk parameters
     this%ngrid(1) = im
     this%ngrid(2) = jm
     do i=1,chunk_rank
-        this%chunk_size(i) = this%ngrid(i) / nchunk(i)
+        this%chunk_size(i) = this%ngrid(i) / this%nchunk(i)
     end do
-    this%chunk_size(3)=1
+    this%chunk_size(chunk_rank+1)=1
 
     ! Allocate weight buffer
     if (allocated(this%wta1)) deallocate(this%wta1)
@@ -423,14 +434,16 @@ subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes)
     this%ngrid_lr(2) = jm_lr
     this%lr_suffix = lr_suffix
     do i=1,chunk_rank
-        this%chunk_size_lr(i) = this%ngrid_lr(i) / nchunk(i)
+        this%chunk_size_lr(i) = this%ngrid_lr(i) / this%nchunk(i)
     end do
-    this%chunk_size_lr(3)=1
+    this%chunk_size_lr(chunk_rank+1)=1
 
     ! Hntr stuff
-    spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
-    spec_lr = hntr_spec(this%chunk_size_lr(1), this%ngrid_lr(2), 0d0, 180d0*60d0 / this%ngrid_lr(2))
-    this%hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)
+    if ((im_lr > 0).and.(jm_lr > 0)) then
+        spec_hr = hntr_spec(this%chunk_size(1), this%ngrid(2), 0d0, 180d0*60d0 / this%ngrid(2))
+        spec_lr = hntr_spec(this%chunk_size_lr(1), this%ngrid_lr(2), 0d0, 180d0*60d0 / this%ngrid_lr(2))
+        this%hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)
+    end if
 
     ! Allocate space to refer to managed chunk buffers
     this%max_reads = max_reads
@@ -881,6 +894,18 @@ function nc_lookup_dims(ncid, dim_names, dim_ids, dim_sizes) result(err)
 end function nc_lookup_dims
 
 
+! Helper function
+function make_chunksizes(imjm, nchunk) result(chunksizes)
+    integer, dimension(chunk_rank), intent(IN) :: imjm, nchunk
+    integer, dimension(chunk_rank) :: chunksizes   ! result
+    ! ----- Locals
+    integer :: i
+
+    do i=1,chunk_rank
+        chunksizes(i) = imjm(i) / nchunk(i)
+    end do
+end function make_chunksizes
+
 ! Creates a variable in an already-open NetCDF file with dimensions defined
 ! @param ncid (IN) NetCDF file handle
 ! @param varid (OUT) NetCDF handle of new variable
@@ -890,12 +915,13 @@ end function nc_lookup_dims
 ! @param long_name Metadata
 ! @param units Metadata: UDUnits2 unit specification
 ! @param title Metadata
-subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, &
+subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     varname,long_name,units,title)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
     integer, intent(IN) :: ncid
     integer, intent(OUT) :: varid
     integer, intent(IN) :: nlayers
+    integer, dimension(chunk_rank), intent(IN) :: nchunk
 
     character*(*), intent(in) :: varname
     character*(*), intent(in) :: long_name
@@ -932,7 +958,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, &
 
     status=nf90_def_var_deflate(ncid,varid,1,1,1)
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
-        make_chunksizes(dim_sz(1), dim_sz(2)))
+        make_chunksizes(dim_sz, nchunk))
 
     status=nf90_put_att(ncid,varid,"long_name", trim(long_name))
     call handle_nf90_error(status,  'nf90_put_att  long_name')
@@ -1114,10 +1140,10 @@ subroutine nc_reuse_file(this, cio0, cio, &
     cio%own_fileid_lr = .false.
 
     ! Create the netCDF variable
-    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, &
+    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk, &
         vname, long_name, units, title)
 
-    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, &
+    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk, &
         vname, long_name, units, title)
 
     cio%create_lr = cio0%create_lr
@@ -1199,7 +1225,7 @@ layer_indices, layer_names, create_lr)
         end if
     end if
     if (present(vname)) then
-        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, &
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk, &
             vname, long_name, units, title)
     end if
     cio%own_fileid = .true.
@@ -1225,7 +1251,7 @@ layer_indices, layer_names, create_lr)
 
         end if
         if (present(vname)) then
-            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, &
+            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk, &
                 vname, long_name, units, title)
         end if
         cio%own_fileid_lr = .true.

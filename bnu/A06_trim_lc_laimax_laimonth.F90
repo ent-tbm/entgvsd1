@@ -95,11 +95,11 @@ subroutine do_reindex(esub,m0,m1)
     call trim_tiny(esub, chunker, m1-m0+1, &
 
 #ifdef ENTGVSD_DEBUG
-        nchunk(2)*3/4,nchunk(2)*3/4+1, &
-        nchunk(1)*3/4,nchunk(1)*3/4+1, &
+        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
+        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
 #else
-        1,nchunk(2), &
-        1,nchunk(1), &
+        1,chunker%nchunk(2), &
+        1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
         io_lc, io_laiin, io_bs, &

@@ -120,11 +120,11 @@ subroutine regrid_lais(esub, fname)
 
 
 #ifdef ENTGVSD_DEBUG
-    do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-    do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
+    do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
+    do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
 #else
-    do jchunk = 1,nchunk(2)
-    do ichunk = 1,nchunk(1)
+    do jchunk = 1,chunker%nchunk(2)
+    do ichunk = 1,chunker%nchunk(1)
 #endif
 
        call chunker%move_to(ichunk,jchunk)

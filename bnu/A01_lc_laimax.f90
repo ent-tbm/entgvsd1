@@ -83,11 +83,11 @@ stop 0
 
 call assign_laimax(chunker, &
 #ifdef ENTGVSD_DEBUG
-    nchunk(2)*3/4,nchunk(2)*3/4+1, &
-    nchunk(1)*3/4,nchunk(1)*3/4+1, &
+    chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
+    chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
 #else
-    1,nchunk(2), &
-    1,nchunk(1), &
+    1,chunker%nchunk(2), &
+    1,chunker%nchunk(1), &
 #endif
     io_laiin, io_lc, io_laiout, io_checksum_lclai, &
     io_err=io_err)

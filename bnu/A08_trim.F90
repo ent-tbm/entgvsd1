@@ -145,7 +145,7 @@ implicit none
     do m=1,12
         if ((vft.lt.0.).or. &
            ((vft.gt.0.).and.(bs_brightratio.lt.0.))) then !Bad data
-            write(*,*) 'ERR2m: bs_brightratio',vft &
+            write(ERROR_UNIT,*) 'ERR2m: bs_brightratio',vft &
               ,vfc(esub%bare_bright),vfc(esub%bare_dark),bs_brightratio
             !Keep existing bright and dark, or check why vft<0.
         else          !Good data
@@ -196,9 +196,8 @@ subroutine do_trim(esub)
     integer :: arid_shrub_s   ! Shortcut indices
 
 
-    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1)
-    call chunker_tr%init(IMLR,JMLR,  0,0,'', 1, 500)
-
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, (/1,1/))
+    call chunker_tr%init(IMLR,JMLR,  0,0,'', 1, 500, (/1,1/))
 
     ! --- Inputs: Same for annual vs. monthly
     call chunker_pu%nc_open(ioall_ann_lc, LC_LAI_ENT_DIR, &
@@ -272,18 +271,20 @@ subroutine do_trim(esub)
 
     ! --------------------- Process things
 
+
     ! Use these loop bounds for testing...
     ! it chooses a land area in Asia
-#ifdef ENTGVSD_DEBUG
-    do jchunk = nchunk(2)*3/4,nchunk(2)*3/4+1
-    do ichunk = nchunk(1)*3/4,nchunk(1)*3/4+1
-#else
-    do jchunk = 1,nchunk(2)
-    do ichunk = 1,nchunk(1)
-#endif
+!#ifdef ENTGVSD_DEBUG
+!    do jchunk = chunker_pu%nchunk(2)*3/4,chunker_pu%nchunk(2)*3/4+1
+!    do ichunk = chunker_pu%nchunk(1)*3/4,chunker_pu%nchunk(1)*3/4+1
+!#else
+    do jchunk = 1,chunker_pu%nchunk(2)
+    do ichunk = 1,chunker_pu%nchunk(1)
+!#endif
 
         call chunker_pu%move_to(ichunk,jchunk)
         call chunker_tr%move_to(ichunk,jchunk)
+
 
         do jc = 1,chunker_pu%chunk_size(2)
         do ic = 1,chunker_pu%chunk_size(1)
@@ -291,7 +292,6 @@ subroutine do_trim(esub)
             ! Compute overall NetCDF index of current cell
             ii = (ichunk-1)*chunker_pu%chunk_size(1)+(ic-1)+1
             jj = (jchunk-1)*chunker_pu%chunk_size(2)+(jc-1)+1
-
 
             ! -------------------------- Read Inputs
             do k=1,esub%ncover
@@ -396,6 +396,7 @@ subroutine do_trim(esub)
                 end do ! imonth
             end do    ! k=1,esub%ncover
             ! ----------------------------------------------------
+
         end do   ! ic
         end do   ! jc
 
@@ -407,6 +408,7 @@ subroutine do_trim(esub)
 
     call chunker_pu%close_chunks
     call chunker_tr%close_chunks
+
 end subroutine do_trim
 
 
