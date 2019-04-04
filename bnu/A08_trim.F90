@@ -46,7 +46,7 @@ subroutine outputsegment_open(this, label, esub)
     ! Open the files
     call this%chunker%nc_create(this%ioall_ann_lc(1), &
         weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/annual/', 'ent29_ann_lc', 'lc', &
+        label//'/', 'ent29_ann_lc', 'lc', &
         'Ent Landcover from A04', '1', 'Land Cover', &
         esub%mvs, esub%layer_names(), create_lr=.false.)
     do k=1,esub%ncover
@@ -56,7 +56,7 @@ subroutine outputsegment_open(this, label, esub)
 
     call this%chunker%nc_create(this%ioall_ann_lai(1), &
         weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/annual/', 'ent29_ann_lai', 'lai', &
+        label//'/', 'ent29_ann_lai', 'lai', &
         'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
         esub%mvs, esub%layer_names(), create_lr=.false.)
     do k=1,esub%ncover
@@ -66,8 +66,8 @@ subroutine outputsegment_open(this, label, esub)
 
     call this%chunker%nc_create(this%ioall_ann_height(1), &
         weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/annual/', 'ent29_ann_height', 'lai', &
-        'Simard plan heights', 'm', 'height', &
+        label//'/', 'ent29_ann_height', 'height', &
+        'Simard plant heights', 'm', 'height', &
         esub%mvs, esub%layer_names(), create_lr=.false.)
     do k=1,esub%ncover
         call this%chunker%nc_reuse_var(this%ioall_ann_height(1), this%io_ann_height(k,1), &
@@ -78,7 +78,7 @@ subroutine outputsegment_open(this, label, esub)
     do m=1,NMONTH
         call this%chunker%nc_create(this%ioall_mon_lai(m), &
             weighting(this%chunker%wta1, 1d0, 0d0), &
-            label//'/annual/', 'ent29_mon_lai', 'lai', &
+            label//'/', 'ent29_'//MONTH(m)//'_lai', 'lai', &
             'Ent monthly LAI', 'm^2 m-2', 'Leaf Area Index', &
             esub%mvs, esub%layer_names(), create_lr=.false.)
         do k=1,esub%ncover
@@ -545,13 +545,14 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
 end subroutine replace_crops
 
 
-subroutine fill_crops(IMn,JMn,vfc15,laic15, &
+subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
     vfm15,laim15,hm15,hsd15,&
     laiccrop, laimcrop, hmcrop,hsdcrop)
 
     !This performs in-fill once for herb crop (PFT15) LAI to create
     !an extended crop LAI data set for use with historical crop cover.
     integer, intent(IN) :: IMn, JMn
+    type(ChunkIO_t), target, intent(IN) :: io_bs
     real*4, intent(IN) :: vfc15(:,:), laic15(:,:)  !(i,j)
     real*4, intent(IN) :: vfm15(:,:,:)   ! (m,i,j)
     real*4, intent(IN) ::  laim15(:,:,:) !(m,i,j)
@@ -575,6 +576,10 @@ subroutine fill_crops(IMn,JMn,vfc15,laic15, &
     nocropcells=0
     do i=1,IMn
        do j=1,JMn
+
+        ! Avoid cells not processed by previous steps
+        if (abs(io_bs%buf(i,j)) > 1.e10) cycle
+
           if (vfc15(i,j).gt.0.d0) then !crops in cell, replicate
              laiccrop(i,j) = laic15(i,j)
              laimcrop(:,i,j) = laim15(:,i,j)
@@ -648,8 +653,12 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
     logical :: isgood
     real*4 :: s
 
+    print *,'========================= Part 1&2: trimmed, trimmed_scaled'
+
     do j = 1,JM
     do i = 1,IM
+        ! Avoid cells not processed by previous steps
+        if (abs(io_bs%buf(i,j)) > 1.e10) cycle
 
         ! -------------------------- Read Inputs
         do k=1,esub%ncover
@@ -813,8 +822,9 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
 
 end subroutine do_part1_2_trimmed
 
-subroutine do_part3_maxcrops(esub, IM,JM, ts,   mc)
+subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
     type(GcmEntSet_t), intent(IN) :: esub
+    type(ChunkIO_t), target, intent(IN) :: io_bs
     integer, intent(IN) :: IM,JM
     type(OutputSegment_t), intent(IN), target :: ts
     ! ------- Output
@@ -832,7 +842,8 @@ subroutine do_part3_maxcrops(esub, IM,JM, ts,   mc)
     real*4, pointer :: hmcrop(:,:)
     real*4, allocatable :: hsdcrop(:,:)
 
-    ! =============== Part 3: maxcrops
+    print *,'========================= Part 3: maxcrops'
+
     c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
     c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
 
@@ -885,7 +896,7 @@ subroutine do_part3_maxcrops(esub, IM,JM, ts,   mc)
     !Generate fill-in crop cover from trimmed_scaled before doing nocrops
     !Herb crop only, since right now zero woody crops.
     call fill_crops( &
-        IM,JM, vfc15, laic15, &
+        IM,JM, io_bs, vfc15, laic15, &
         vfm15, laim15, hm15, hsd15, &
         laiccrop, laimcrop, hmcrop, hsdcrop)    ! outputs
     ! Copy output from 3D array
@@ -916,6 +927,8 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     real*4 LAYER(IM,JM),s
     logical :: naturalfound, nonaturalfound
     integer :: naturalcount, nonaturalcount
+
+    print *,'========================= Part 4: nocrops'
 
     N_BARE = esub%bare_dark
     NOTBARE = esub%svm(BARE_SPARSE) - 1
@@ -1145,7 +1158,7 @@ subroutine do_trim(esub)
 
     call do_part1_2_trimmed(esub, IM,JM, &
         io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
-    call do_part3_maxcrops(esub, IM,JM, ts,    mc)
+    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
     call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     call chunker_pu%write_chunks
