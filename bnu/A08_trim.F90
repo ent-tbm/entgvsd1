@@ -12,27 +12,36 @@ implicit none
 
 type OutputSegment_t
     type(Chunker_t) :: chunker
-    type(ChunkIO_t) :: ioall_ann_lc(1), io_ann_lc(:,:)          ! (esub%ncover,1)
-    type(ChunkIO_t) :: ioall_ann_lai(1), io_ann_lai(:,:)        ! (esub%ncover,1)
-    type(ChunkIO_t) :: ioall_mon_lai(NMONTH), io_mon_lai(:,:)   ! (esub%ncover,NMONTH)
 
+    type(ChunkIO_t) :: ioall_ann_lc(1)
+    type(ChunkIO_t), allocatable :: io_ann_lc(:,:)          ! (esub%ncover,1)
+    type(ChunkIO_t) :: ioall_ann_lai(1)
+    type(ChunkIO_t), allocatable :: io_ann_lai(:,:)        ! (esub%ncover,1)
+    type(ChunkIO_t) :: ioall_ann_height(1)
+    type(ChunkIO_t), allocatable :: io_ann_height(:,:)        ! (esub%ncover,1)
+    type(ChunkIO_t) :: ioall_mon_lai(NMONTH)
+    type(ChunkIO_t), allocatable :: io_mon_lai(:,:)   ! (esub%ncover,NMONTH)
+contains
     procedure :: open => outputsegment_open
 end type OutputSegment_t
 
 CONTAINS
 
 ! Opens one of trimmed, trimmed_scaled or nocrops outputs
-subroutine outputsegment_open(out, label, ncover)
-    class(OutputSegment_t) :: out    ! Set of file handles to open
+subroutine outputsegment_open(this, label, esub)
+    class(OutputSegment_t) :: this    ! Set of file handles to open
     character*(*) :: label    ! 'trimmed', 'trimmed_scaled' or 'nocrops'
-    integer, intent(IN) :: ncover   ! # covertypes to allocate for; comes from esub
+    type(GcmEntSet_t), intent(IN) :: esub
+    ! --------------------------- Locals
+    integer :: m,k
 
     call this%chunker%init(IMLR,JMLR,  0,0,'', 1, 500, (/1,1/))
 
     ! ------- Allocate file handles
-    allocate(this%io_ann_lc(ncover,1))
-    allocate(this%io_ann_lai(ncover,1))
-    allocate(this%io_mon_lai(ncover,NMONTH))
+    allocate(this%io_ann_lc(esub%ncover,1))
+    allocate(this%io_ann_lai(esub%ncover,1))
+    allocate(this%io_ann_height(esub%ncover,1))
+    allocate(this%io_mon_lai(esub%ncover,NMONTH))
 
     ! Open the files
     call this%chunker%nc_create(this%ioall_ann_lc(1), &
@@ -55,15 +64,25 @@ subroutine outputsegment_open(out, label, ncover)
             (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
     enddo
 
+    call this%chunker%nc_create(this%ioall_ann_height(1), &
+        weighting(this%chunker%wta1, 1d0, 0d0), &
+        label//'/annual/', 'ent29_ann_height', 'lai', &
+        'Simard plan heights', 'm', 'height', &
+        esub%mvs, esub%layer_names(), create_lr=.false.)
+    do k=1,esub%ncover
+        call this%chunker%nc_reuse_var(this%ioall_ann_height(1), this%io_ann_height(k,1), &
+            (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
+    enddo
 
-    do imonth=1,NMONTH
-        call this%chunker%nc_create(this%ioall_mon_lai(imonth), &
+
+    do m=1,NMONTH
+        call this%chunker%nc_create(this%ioall_mon_lai(m), &
             weighting(this%chunker%wta1, 1d0, 0d0), &
             label//'/annual/', 'ent29_mon_lai', 'lai', &
             'Ent monthly LAI', 'm^2 m-2', 'Leaf Area Index', &
             esub%mvs, esub%layer_names(), create_lr=.false.)
         do k=1,esub%ncover
-            call this%chunker%nc_reuse_var(this%ioall_mon_lai(imonth), this%io_mon_lai(k,imonth), &
+            call this%chunker%nc_reuse_var(this%ioall_mon_lai(m), this%io_mon_lai(k,m), &
                 (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
         enddo
     end do
@@ -222,10 +241,10 @@ implicit none
 
 end subroutine do_split_bare_soil
 
-subroutine replace_crops(esub, IMn,JMn,i,j !,s &
-         ,bs_brightratio &
-         ,vfc,vfm,laic,laim &
-         ,naturalvegfound)  !,flag)
+subroutine replace_crops(esub, IMn,JMn,i,j, &
+         bs_brightratio, &
+         vfc,vfm,laic,laim, &
+         naturalvegfound)
     !Replace crops in (i,j) with main natural cover in cell or adjacent.
     !The check for existence of crops in (i,j) is done before subroutine call
     !Fix 6 cells that are all crops due to MODIS error or two islands.
@@ -254,13 +273,14 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
     real*4 :: br, brcov   !bright soil ratio, br, to total bare soil, brcov
 
     integer :: NATVEG    ! Index of highest natural vegetation type
-    integer :: c3herb_s, c4herb_s
+    integer :: c3herb_s, c4herb_s, c3_grass_arct_s
 
     KM = esub%ncover
-    c3herb_s = esub%svn(CROPS_C3_HERB)   ! shortcut
-    c4herb_s = esub%svn(CROPS_C4_HERB)   ! shortcut
+    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
+    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+    c3_grass_arct_s = esub%svm(C3_GRASS_ARCT)
 
-    NATVEG = esub%svn(CROPS_C3_HERB)-1
+    NATVEG = esub%svm(CROPS_C3_HERB)-1
     allocate(covsum(NATVEG))
     allocate(covavglai(NATVEG))
     allocate(covsumm(NMONTH, NATVEG))
@@ -307,8 +327,8 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
           do ii=max(1,i-dg),min(i+dg,IMn)
              do jj=max(1,j-dg),min(j+dg,JMn)
                 if ( (ii.ge.1).and.(ii.le.IMn) &
-                     .and.(jj.ge.1).and.(jj.le.JMn) !in grid range &
-                     .and.((ii.ne.i).or.(jj.ne.j)) ) !not the i,j center cell &
+                     .and.(jj.ge.1).and.(jj.le.JMn) & !in grid range
+                     .and.((ii.ne.i).or.(jj.ne.j)) ) & !not the i,j center cell
                      then
                    do k=1,NATVEG
                    !Sum adjacent natural veg cover by type.
@@ -478,10 +498,10 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
 !     487 141 0.461078912 0.461078912  = (63.25, -19.75)
 !     Fiji?  American Samoa? (pure17 was everbroad, C4 crop, sparse, coast)
 !     694 179 0.353166729 0.353166729  = (163.25,-0.75)
-          if (((i.eq.169).and.(j.eq.36)) !Antarctica1 &
-               .or.((i.eq.168).and.(j.eq.37)) !Antarctica1 &
-               .or.((i.eq.239).and.(j.eq.36)) !Antarctica2 &
-               .or.((i.eq.204).and.(j.eq.36))) !Antarctica2 &
+          if (((i.eq.169).and.(j.eq.36)) & !Antarctica1
+               .or.((i.eq.168).and.(j.eq.37)) & !Antarctica1
+               .or.((i.eq.239).and.(j.eq.36)) & !Antarctica2
+               .or.((i.eq.204).and.(j.eq.36))) & !Antarctica2
                then
                 !* Assign Antarctica cells to arctic grass
              vfc(i,j,c3_grass_arct) = vfc(i,j,c3_grass_arct) + sum(vfc(i,j,c3herb_s:c4herb_s))
@@ -496,8 +516,8 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
              enddo
              write(*,*) 'Assigned c3 crops cells in Antartica',i,j
           endif
-          if (((i.eq.487).and.(j.eq.141)) !Mauritius &
-               .or.((i.eq.694).and.(j.eq.179))) !Fiji or American Samoa &
+          if (((i.eq.487).and.(j.eq.141)) & !Mauritius
+               .or.((i.eq.694).and.(j.eq.179))) & !Fiji or American Samoa
                then
              !* Assign tropical rainforest
              vfc(i,j,2) = vfc(i,j,2) + sum(vfc(i,j,c3herb_s:c4herb_s))
@@ -515,7 +535,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
        else
           !Don't do any grid cell fixes
           write(*,*) 'WRONG GRID RES:  PRESCRIBED FIX NOT DONE: '
-          write(*,*) '**Check array indices for grid res for nocrops'            endif !Correct grid resolution
+          write(*,*) '**Check array indices for grid res for nocrops'
        endif                  !Adjacent bs_brightratio not found
     endif                     !.not.(naturalvegfound)
     
@@ -525,7 +545,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j !,s &
 end subroutine replace_crops
 
 
-subroutine fill_crops(IMn,JMn,vfc15,laic15m, &
+subroutine fill_crops(IMn,JMn,vfc15,laic15, &
     vfm15,laim15,hm15,hsd15,&
     laiccrop, laimcrop, hmcrop,hsdcrop)
 
@@ -559,7 +579,7 @@ subroutine fill_crops(IMn,JMn,vfc15,laic15m, &
              laiccrop(i,j) = laic15(i,j)
              laimcrop(:,i,j) = laim15(:,i,j)
              hmcrop(i,j) = hm15(i,j)
-             hsdcrop(i,j) = hsd15
+             hsdcrop(i,j) = hsd15(i,j)
           else !(vfc15(i,j).eq.0.d0) then !no crops in cell, fill in LAI15
              covsum15 = 0.d0
              laiavg15 = 0.d0
@@ -573,16 +593,15 @@ subroutine fill_crops(IMn,JMn,vfc15,laic15m, &
              do ii=i-dg,i+dg    !ext 5 grid cells = 2.5 degrees at HXH
                 do jj=j-dg,j+dg
                    if ( (ii.ge.1).and.(ii.le.IMn) &
-                        .and.(jj.ge.1).and.(jj.le.JMn) !in grid range &
-                        .and.((ii.ne.i).or.(jj.ne.j)) ) !not in i,j  &
+                        .and.(jj.ge.1).and.(jj.le.JMn) & !in grid range
+                        .and.((ii.ne.i).or.(jj.ne.j)) ) & !not in i,j
                         then
                       if (vfc15(ii,jj).gt.0.d0) then
                          covsum15 = covsum15 + vfc15(ii,jj)
                          laiavg15 = laiavg15  &
                               + laic15(ii,jj)*vfc15(ii,jj)
                          hmavg15 = hmavg15 + hm15(ii,jj)*vfc15(ii,jj)
-                         hsdavg15 = hsdavg15  &
-                              + hsd15*vfc15(ii,jj)
+                         hsdavg15 = hsdavg15 + hsd15(ii,jj)*vfc15(ii,jj)
                          covmsum15(:) = covmsum15(:) + vfm15(:,ii,jj)
                          laimavg15(:) = laimavg15(:) + laim15(:,ii,jj)*vfm15(:,ii,jj)
                       endif
@@ -609,14 +628,16 @@ subroutine fill_crops(IMn,JMn,vfc15,laic15m, &
 
 end subroutine fill_crops
 
-subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
+subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
     type(GcmEntSet_t), intent(IN) :: esub
-    type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_height(:), io_ann_lai(:,:), io_mon_lai(:,:)
+    integer, intent(IN) :: IM,JM
+    type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_height(:,:), io_ann_lai(:,:), io_mon_lai(:,:)
     ! ------------- OUTPUT
     type(OutputSegment_t) :: tr,ts
 
     ! ------------- Locals
-    integer :: ic,jc,ii,jj
+    integer :: i,j,k,m
+    integer :: n_bare
     ! Annual LC and LAI (LC doesn't change so annual LC is used everywhere)
     real*4, dimension(esub%ncover) :: vfc,laic,hm,hsd,vfh
     ! Monthly LC and LAI (NOTE: Monthly LC is set to same as annual)
@@ -624,33 +645,26 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
     real*4 :: bs_brightratio
     integer :: arid_shrub_s   ! Shortcut indices
 
-    call chunker_pu%move_to(ichunk,jchunk)
-    call tr%chunker%move_to(ichunk,jchunk)
-    call ts%chunker%move_to(ichunk,jchunk)
-    call mc%chunker%move_to(ichunk,jchunk)
-    call nc%chunker%move_to(ichunk,jchunk)
+    logical :: isgood
+    real*4 :: s
 
-    do jc = 1,chunker_pu%chunk_size(2)
-    do ic = 1,chunker_pu%chunk_size(1)
-
-        ! Compute overall NetCDF index of current cell
-        ii = ic
-        jj = jc
+    do j = 1,JM
+    do i = 1,IM
 
         ! -------------------------- Read Inputs
         do k=1,esub%ncover
             ! Annual LC and LAI file
-            vfc(k) = io_ann_lc(k)%buf(ic,jc)    ! vfn in 1km
-            laic(k) = io_ann_lai(k,1)%buf(ic,jc)  ! laic in 1km
+            vfc(k) = io_ann_lc(k)%buf(i,j)    ! vfn in 1km
+            laic(k) = io_ann_lai(k,1)%buf(i,j)  ! laic in 1km
 
             ! Monthly LC and LAI files
-            do imonth=1,12
-                vfm(k,imonth) = vfc(k)   ! vfnm in 1km; Re-use annual LC
-                laim(k,imonth) = io_mon_lai(k,imonth)%buf(ic,jc)  ! lainm in 1km
-            end do ! imonth
+            do m=1,NMONTH
+                vfm(k,m) = vfc(k)   ! vfnm in 1km; Re-use annual LC
+                laim(k,m) = io_mon_lai(k,m)%buf(i,j)  ! lainm in 1km
+            end do ! m
 
             ! Height file
-            hm(k) = io_ann_height(k,1)%buf(ic,jc)
+            hm(k) = io_ann_height(k,1)%buf(i,j)
             ! hsd = stdev
             ! vfh = vfn (LC annual), in GISS 16 pfts format (but C3 and C4 crop are summed)
             !      ===> "LC for heights", i.e. just use the global LC
@@ -658,7 +672,7 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
             hsd(k) = 0
 
             ! Bare soil brightness ratiaafo
-            bs_brightratio = io_bs%buf(ic,jc)
+            bs_brightratio = io_bs%buf(i,j)
 
             ! Make sure this gridcell has been defined in inputs
             isgood = (bs_brightratio /= undef)
@@ -685,7 +699,7 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
             if (isgood.and.vfc(arid_shrub_s).le.0.0) then !ERROR CHECK
                write(ERROR_UNIT,*) &
                     'b vfc10=',vfc(arid_shrub_s),vfc(N_BARE), &
-                    laic(arid_shrub_s),laic(N_BARE),ii,jj
+                    laic(arid_shrub_s),laic(N_BARE),i,j
                STOP
             endif
             do m=1,NMONTH
@@ -722,16 +736,6 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
                  vfh(arid_shrub_s),hm(arid_shrub_s),hsd(arid_shrub_s), vfc(arid_shrub_s))
         end if   ! (vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
-        sm = sum(vfc(1:N_BARE))
-        if (sm.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
-            if (isgood) then
-               write(ERROR_UNIT,*) 'ERROR trim:  max and monthly lc different' &
-                    , sm,sum(vfm(1:N_BARE,1))
-               write(ERROR_UNIT,*) vfc(1:N_BARE)
-               write(ERROR_UNIT,*) vfm(1:N_BARE,1)
-            end if
-        endif
-
         if (isgood.and.split_bare_soil) then
             call do_split_bare_soil(esub, bs_brightratio, &
                 vfc,laic,hm,hsd,vfm,laim)
@@ -740,14 +744,15 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
         ! -------------------------- Write Outputs (trimmed)
         do k=1,esub%ncover
             ! Annual LC and LAI file
-            tr%io_ann_lc(k,1)%buf(ic,jc) = vfc(k)    ! vfn in 1km
-            tr%io_ann_lai(k,1)%buf(ic,jc) = laic(k)  ! laic in 1km
+            tr%io_ann_lc(k,1)%buf(i,j) = vfc(k)    ! vfn in 1km
+            tr%io_ann_lai(k,1)%buf(i,j) = laic(k)  ! laic in 1km
+            tr%io_ann_height(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
-            do imonth=1,12
-                !tr%io_mon_lc(k,imonth)%buf(ic,jc) = vfm(k,imonth)
-                tr%io_mon_lai(k,imonth)%buf(ic,jc) = laim(k,imonth)  ! lainm in 1km
-            end do ! imonth
+            do m=1,12
+                !tr%io_mon_lc(k,m)%buf(i,j) = vfm(k,m)
+                tr%io_mon_lai(k,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
+            end do ! m
         end do    ! k=1,esub%ncover
         ! ----------------------------------------------------
 
@@ -755,56 +760,50 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
         ! ============= Part 2: trimmed_scaled
 
         ! rescale fractions so that they sum to 1
-        write(*,*) 'Rescaling...'
-        do j=1,JMn
-           do i=1,IMn
-              s = sum( vfc(i,j,1:N_BARE) )
-              if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-                if (isgood) then
-                    write(ERROR_UNIT,*) 'ERROR scale0:  max and monthly lc different' &
-                      ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
-                    write(ERROR_UNIT,*) 'vfc',i,j,vfc(i,j,1:N_BARE)
-                    write(ERROR_UNIT,*) 'vfm',i,j,vfm(1,i,j,1:N_BARE)
-                end if
-              endif
-              if ( s > 1.00001 ) then
-  !            if ( abs(s-1.0) > 0.00001 ) then
-                 vfc(i,j,1:N_BARE) = vfc(i,j,1:N_BARE) / s
-                 vfm(:,i,j,1:N_BARE) = vfm(:,i,j,1:N_BARE) / s
-                !vfh(i,j,1:N_BARE) = vfh(i,j,1:N_BARE) / s !Heights are vertical, no rescale
-              endif
-              s = sum( vfc(i,j,1:N_BARE) ) 
-              if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then !#DEBUG
-                 if (isgood) then
-                    write(ERROR_UNIT,*) 'ERROR scale1:  max and monthly lc different' &
-                       ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
-                    write(ERROR_UNIT,*) 'vfc',i,j,vfc(i,j,1:N_BARE)
-                    write(ERROR_UNIT,*) 'vfm',i,j,vfm(1,i,j,1:N_BARE)
-                 end if
-              endif
-           enddo
-        enddo
+        s = sum(vfc(1:N_BARE))
+        if (s.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
+            if (isgood) then
+               write(ERROR_UNIT,*) 'ERROR trim:  max and monthly lc different' &
+                    , s,sum(vfm(1:N_BARE,1))
+               write(ERROR_UNIT,*) vfc(1:N_BARE)
+               write(ERROR_UNIT,*) vfm(1:N_BARE,1)
+            end if
+        endif
 
-        if (split_bare_soil) then
-            call split_bare_soil(N_VEG, IMn,JMn,KM,N_BARE &
-                ,bs_brightratio,vfc,laic,vfm,laim,vfh,hm,hsd &
-                ,titlec, titlem, titleh,res_out)
+        if ( s > 1.00001 ) then
+            vfc(1:N_BARE) = vfc(1:N_BARE) / s
+            vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / s
+        end if
+        s = sum( vfc(1:N_BARE) ) 
+        if (s.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
+           if (isgood) then
+              write(ERROR_UNIT,*) 'ERROR scale1:  max and monthly lc different' &
+                 ,i,j, s,sum( vfm(1,1:N_BARE) ) 
+              write(ERROR_UNIT,*) 'vfc',i,j,vfc(1:N_BARE)
+              write(ERROR_UNIT,*) 'vfm',i,j,vfm(1:N_BARE,1)
+           end if
+        endif
+
+        if (isgood.and.split_bare_soil) then
+            call do_split_bare_soil(esub, bs_brightratio, &
+                vfc,laic,hm,hsd,vfm,laim)
         end if
 
 
         ! -------------------------- Write Outputs (trimmed_scaled)
         do k=1,esub%ncover
             ! Annual LC and LAI file
-            ts%io_ann_lc(k,1)%buf(ic,jc) = vfc(k)    ! vfn in 1km
-            ts%io_ann_lai(k,1)%buf(ic,jc) = laic(k)  ! laic in 1km
+            ts%io_ann_lc(k,1)%buf(i,j) = vfc(k)    ! vfn in 1km
+            ts%io_ann_lai(k,1)%buf(i,j) = laic(k)  ! laic in 1km
+            ts%io_ann_height(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
-            do imonth=1,12
-                !ts%io_mon_lc(k,imonth)%buf(ic,jc) = vfm(k,imonth)
-                ts%io_mon_lai(k,imonth)%buf(ic,jc) = laim(k,imonth)  ! lainm in 1km
-            end do ! imonth
+            do m=1,12
+                !ts%io_mon_lc(k,m)%buf(i,j) = vfm(k,m)
+                ts%io_mon_lai(k,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
+            end do ! m
 
-            io_ann_height(k,1)%buf(ic,jc) = hm(k)
+            ts%io_ann_height(k,1)%buf(i,j) = hm(k)
         end do    ! k=1,esub%ncover
         ! ----------------------------------------------------
 
@@ -812,32 +811,30 @@ subroutine do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai,
     end do   ! ic
     end do   ! jc
 
-end subroutine do_part1_2
+end subroutine do_part1_2_trimmed
 
-subroutine do_part3_maxcrops(esub, ts,   mc)
+subroutine do_part3_maxcrops(esub, IM,JM, ts,   mc)
     type(GcmEntSet_t), intent(IN) :: esub
+    integer, intent(IN) :: IM,JM
     type(OutputSegment_t), intent(IN), target :: ts
     ! ------- Output
     type(OutputSegment_t), target :: mc
     ! ----------- Locals
-    integer :: IM,JM,k,imonth
+    integer :: k,m
     integer :: c3herb_s,c4herb_s
 
     real*4, pointer :: vfc15(:,:), laic15(:,:)  !(i,j)
     real*4, allocatable :: vfm15(:,:,:), laim15(:,:,:) !(m,i,j)
     real*4, pointer :: hm15(:,:)
     real*4, allocatable :: hsd15(:,:) !(i,j)
-    real*4, pointer :: laiccrop(:,:), laimcrop(:,:,:) !OUTPUT, max monthly
+    real*4, pointer :: laiccrop(:,:) !OUTPUT, max monthly
     real*4, allocatable ::  laimcrop(:,:,:) !OUTPUT, max monthly
     real*4, pointer :: hmcrop(:,:)
     real*4, allocatable :: hsdcrop(:,:)
 
-    IM = size(chunker_pu%buf,1)
-    JM = size(chunker_pu%buf,2)
-
     ! =============== Part 3: maxcrops
-    c3herb_s = esub%svn(CROPS_C3_HERB)   ! shortcut
-    c4herb_s = esub%svn(CROPS_C4_HERB)   ! shortcut
+    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
+    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
 
     ! Copy input to 3D array
     allocate(laim15(NMONTH, IM,JM))
@@ -848,9 +845,9 @@ subroutine do_part3_maxcrops(esub, ts,   mc)
     ! Initialize dummy inputs
     allocate(vfm15(NMONTH,IM,JM))
     do m=1,NMONTH
-        vfm15(m,:,:) = ts%io_ann_lc(:,:)
+        vfm15(m,:,:) = ts%io_ann_lc(c3herb_s,1)%buf(:,:)
     end do
-    allocate(hsd15(NMONTH,IM,JM))
+    allocate(hsd15(IM,JM))
     hsd15 = 0d0
 
     ! Initialze outputs
@@ -864,12 +861,13 @@ subroutine do_part3_maxcrops(esub, ts,   mc)
         ! Annual LC and LAI file
         mc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)    ! vfn in 1km
         mc%io_ann_lai(k,1)%buf(:,:) = ts%io_ann_lai(k,1)%buf(:,:)  ! laic in 1km
+        mc%io_ann_height(k,1)%buf(:,:) = ts%io_ann_height(k,1)%buf(:,:)  ! laic in 1km
 
         ! Monthly LC and LAI files
-        do imonth=1,NMONTH
-            !mc%io_mon_lc(k,imonth)%buf(:,:) = ts%io_mon_lc(k,imonth)%buf(:,:)
-            mc%io_mon_lai(k,imonth)%buf(:,:) = ts%io_mon_lai(k,imonth)%buf(:,:)  ! lainm in 1km
-        end do ! imonth
+        do m=1,NMONTH
+            !mc%io_mon_lc(k,m)%buf(:,:) = ts%io_mon_lc(k,m)%buf(:,:)
+            mc%io_mon_lai(k,m)%buf(:,:) = ts%io_mon_lai(k,m)%buf(:,:)  ! lainm in 1km
+        end do ! m
     end do    ! k=1,esub%ncover
 
     ! Zero stuff out...
@@ -880,7 +878,7 @@ subroutine do_part3_maxcrops(esub, ts,   mc)
     ! Aliases
     vfc15 => ts%io_ann_lai(c3herb_s,1)%buf
     laic15 => ts%io_ann_lc(c3herb_s,1)%buf
-    hm15 => io_ann_height(c3herb_s,1)%buf
+    hm15 => ts%io_ann_height(c3herb_s,1)%buf
     laiccrop => mc%io_ann_lc(c3herb_s,1)%buf
     hmcrop => mc%io_ann_height(c3herb_s,1)%buf
 
@@ -889,72 +887,63 @@ subroutine do_part3_maxcrops(esub, ts,   mc)
     call fill_crops( &
         IM,JM, vfc15, laic15, &
         vfm15, laim15, hm15, hsd15, &
-
-        laic15, vfm15, laim15, &
-        io_ann_height(c3herb_s,1)%buf, &   ! hm15
-        & ! Outputs....
-        laiccrop, laimcrop, hmcrop, hsdcrop)
-
+        laiccrop, laimcrop, hmcrop, hsdcrop)    ! outputs
     ! Copy output from 3D array
     do m=1,NMONTH
         mc%io_mon_lai(c3herb_s,m)%buf(:,:) = laimcrop(m,:,:)
     end do
     
-end do
-
 end subroutine do_part3_maxcrops
 
-subroutine do_part4_nocrops(esub, io_bs, ts,   nc)
+subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     type(GcmEntSet_t), intent(IN) :: esub
+    integer, intent(IN) :: IM,JM
+    type(ChunkIO_t), target, intent(IN) :: io_bs
     type(OutputSegment_t), intent(IN), target :: ts
     ! ------- Output
-    type(OutputSegment_t), target :: mc
+    type(OutputSegment_t), target :: nc
     ! ----------- Locals
-    integer :: IM,JM
-    integer :: i,j,k,m,imonth
-    integer :: c3herb_s,c4herb_s,N_BARE
+    integer :: i,j,k,m
+    integer :: c3herb_s,c4herb_s,N_BARE,NOTBARE
 
-    real*4, pointer :: bs_brightratio
-    real*4 :: vfc(:,:,:), laic(:,:,:)
-    real*4 :: vfm(:,:,:,:), laim(:,:,:,:)
-    
+    real*4, dimension(:,:), pointer :: bs_brightratio
+    real*4, dimension(IM,JM,esub%ncover) :: vfc, laic
+    real*4, dimension(NMONTH,IM,JM,esub%ncover) :: vfm, laim
+    real*4, dimension(esub%ncover) :: hm,hsd
+    real*4, dimension(esub%ncover,NMONTH) :: vfmx, laimx
+
     ! Temporary variables
-    real*4 LAYER(:,:)
+    real*4 LAYER(IM,JM),s
     logical :: naturalfound, nonaturalfound
     integer :: naturalcount, nonaturalcount
 
-    IM = size(chunker_pu%buf,1)
-    JM = size(chunker_pu%buf,2)
     N_BARE = esub%bare_dark
+    NOTBARE = esub%svm(BARE_SPARSE) - 1
 
     bs_brightratio => io_bs%buf
-    allocate(vfc(IM,JM,esub%ncover))
-    allocate(laic(IM,JM,esub%ncover))
-    allocate(vfm(NMONTH,IM,JM,esub%ncover))
-    allocate(laim(NMONTH,IM,JM,esub%ncover))
-    allocate(LAYER(IM,JM))
 
     ! ==================== Part 4:
     ! Initialze nocrops output to be same as trimmed_scaled output
     do k=1,esub%ncover
         ! Annual LC and LAI file
-        nc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)    ! vfn in 1km
-        nc%io_ann_lai(k,1)%buf(:,:) = ts%io_ann_lai(k,1)%buf(:,:)  ! laic in 1km
+        nc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)
+        nc%io_ann_lai(k,1)%buf(:,:) = ts%io_ann_lai(k,1)%buf(:,:)
+        nc%io_ann_height(k,1)%buf(:,:) = ts%io_ann_height(k,1)%buf(:,:)
 
         ! Monthly LC and LAI files
-        do imonth=1,NMONTH
-            !nc%io_mon_lc(k,imonth)%buf(:,:) = ts%io_mon_lc(k,imonth)%buf(:,:)
-            nc%io_mon_lai(k,imonth)%buf(:,:) = ts%io_mon_lai(k,imonth)%buf(:,:)  ! lainm in 1km
-        end do ! imonth
+        do m=1,NMONTH
+            !nc%io_mon_lc(k,m)%buf(:,:) = ts%io_mon_lc(k,m)%buf(:,:)
+            nc%io_mon_lai(k,m)%buf(:,:) = ts%io_mon_lai(k,m)%buf(:,:)  ! lainm in 1km
+        end do ! m
     end do    ! k=1,esub%ncover
     ! ----------------------------------------------------
 
-    nc%io_ann_lai(c3herb_s,1)%buf)(:,:) = 0d0
-    nc%io_ann_lai(c4herb_s,1)%buf)(:,:) = 0d0
-    do imonth=1,NMONTH
-        nc%io_mon_lai(c3herb_s,imonth)%buf(:,:) = 0d0
-        nc%io_mon_lai(c4herb_s,imonth)%buf(:,:) = 0d0
-    end do  ! imonth
+    nc%io_ann_lai(c3herb_s,1)%buf(:,:) = 0d0
+    nc%io_ann_lai(c4herb_s,1)%buf(:,:) = 0d0
+    do m=1,NMONTH
+        nc%io_mon_lai(c3herb_s,m)%buf(:,:) = 0d0
+        nc%io_mon_lai(c4herb_s,m)%buf(:,:) = 0d0
+    end do  ! m
 
     ! Copy to input/output arrays
     do k=1,esub%ncover
@@ -968,7 +957,6 @@ subroutine do_part4_nocrops(esub, io_bs, ts,   nc)
 
 
     ! ------------------ Run the algorithm
-    NOTBARE = esub%svm(BARE_SPARSE) - 1
 
     nonaturalcount=0
     LAYER(:,:) = 0.d0 !Map the cells with no natural veg
@@ -1025,8 +1013,9 @@ subroutine do_part4_nocrops(esub, io_bs, ts,   nc)
     if (split_bare_soil) then
         do i=1,IM
         do j=1,JM
+            ! Loade data from arrays
             do k=1,esub%ncover
-                hm(k) = io_ann_height(k,1)%buf(ic,jc)
+                hm(k) = nc%io_ann_height(k,1)%buf(i,j)
                 hsd(k) = 0d0
                 do m=1,NMONTH
                     vfmx(k,m) = vfm(m,i,j,k)
@@ -1037,12 +1026,12 @@ subroutine do_part4_nocrops(esub, io_bs, ts,   nc)
 
             call do_split_bare_soil( &
                 esub, bs_brightratio(i,j), &
-                vfc(i,j,:),laic(i,j,:),
+                vfc(i,j,:),laic(i,j,:), &
                 hm,hsd,vfmx,laimx)
 
-
+            ! Store answers
             do k=1,esub%ncover
-                io_ann_height(k,1)%buf(ic,jc) = hm(k)
+                nc%io_ann_height(k,1)%buf(i,j) = hm(k)
                 do m=1,NMONTH
                     vfm(m,i,j,k) = vfmx(k,m)
                     laim(m,i,j,k) = laimx(k,m)
@@ -1087,13 +1076,10 @@ subroutine do_trim(esub)
     type(OutputSegment_t) :: nc    ! nocrops
 
 
-    integer :: ichunk,jchunk,ic,jc,ii,jj
-    integer :: k,m,imonth, n_bare
+    integer :: IM,JM
+    integer :: k,m, n_bare
     real*4 :: sm
     logical :: isgood    ! .true. if this gridcell was processed by earlier stages (A00,A01,etc)
-
-    ! Part 3...
-    integer :: c3herb_s,c4herb_s
 
 
     call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, (/1,1/))
@@ -1125,20 +1111,20 @@ subroutine do_trim(esub)
     enddo
 
 
-    do imonth=1,NMONTH
-        call chunker_pu%nc_open(ioall_mon_lai(imonth), LC_LAI_ENT_DIR, &
-            'purelr/monthly/', 'entmm29_'//trim(MONTH(imonth))//'_lai.nc', 'lai', 0)
+    do m=1,NMONTH
+        call chunker_pu%nc_open(ioall_mon_lai(m), LC_LAI_ENT_DIR, &
+            'purelr/monthly/', 'entmm29_'//trim(MONTH(m))//'_lai.nc', 'lai', 0)
         do k = 1,esub%ncover
-            call chunker_pu%nc_reuse_var(ioall_mon_lai(imonth), io_mon_lai(k,imonth), (/1,1,k/))
+            call chunker_pu%nc_reuse_var(ioall_mon_lai(m), io_mon_lai(k,m), (/1,1,k/))
         enddo
     end do
 
 
     ! --------------------- Outputs: trimmed
-    call tr%open(tr, 'trimmed', esub%ncover)
-    call ts%open(ts, 'trimmed_scaled', esub%ncover)
-    call ts%open(mc, 'maxcrops', esub%ncover)
-    call nc%open(nc, 'nocrops', esub%ncover)
+    call tr%open('trimmed', esub)
+    call ts%open('trimmed_scaled', esub)
+    call mc%open('maxcrops', esub)
+    call nc%open('nocrops', esub)
 
     ! Check for only one chunk
     if ((chunker_pu%nchunk(1)/=1).or.(chunker_pu%nchunk(2)/=1)) then
@@ -1154,9 +1140,13 @@ subroutine do_trim(esub)
     call mc%chunker%move_to(1,1)
     call nc%chunker%move_to(1,1)
 
-    call do_part1_2_trimmed(esub, io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
-    call do_part3_maxcrops(esub, ts,    mc)
-    call do_part4_nocrops(esub, io_bs, ts,   nc)
+    IM = chunker_pu%chunk_size(1)
+    JM = chunker_pu%chunk_size(2)
+
+    call do_part1_2_trimmed(esub, IM,JM, &
+        io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
+    call do_part3_maxcrops(esub, IM,JM, ts,    mc)
+    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     call chunker_pu%write_chunks
     call tr%chunker%write_chunks
@@ -1180,7 +1170,7 @@ program regrid
     use a08_mod
 implicit none
     type(GcmEntSet_t) :: esub
-o
+
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
 
