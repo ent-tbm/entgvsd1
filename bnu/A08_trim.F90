@@ -930,6 +930,9 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     print *,'========================= Part 4: nocrops'
 
+    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
+    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+
     N_BARE = esub%bare_dark
     NOTBARE = esub%svm(BARE_SPARSE) - 1
 
@@ -950,7 +953,6 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         end do ! m
     end do    ! k=1,esub%ncover
     ! ----------------------------------------------------
-
     nc%io_ann_lai(c3herb_s,1)%buf(:,:) = 0d0
     nc%io_ann_lai(c4herb_s,1)%buf(:,:) = 0d0
     do m=1,NMONTH
@@ -967,7 +969,6 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
             laim(m,:,:,k) = nc%io_mon_lai(k,m)%buf(:,:)
         end do   ! m
     end do
-
 
     ! ------------------ Run the algorithm
 
@@ -1162,9 +1163,9 @@ subroutine do_trim(esub)
     call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     call chunker_pu%write_chunks
-    call tr%chunker%write_chunks
-    call ts%chunker%write_chunks
-    call mc%chunker%write_chunks
+!    call tr%chunker%write_chunks
+!    call ts%chunker%write_chunks
+!    call mc%chunker%write_chunks
     call nc%chunker%write_chunks
 
 
