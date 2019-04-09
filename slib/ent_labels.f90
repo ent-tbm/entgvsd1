@@ -1,11 +1,95 @@
+TODO: Comment and explain ent_labels!!
+Sections for:
+ 1. combine_c3_c4  
+ 2. split          
+ 3. combine + split
+
 module ent_labels_mod
 
     use, intrinsic :: iso_fortran_env
 
 implicit none
 
+! Output files use the following indexing schemes:
+!
+! entmodisraw/
+!     [Master ent20 scheme]
+!
+! pure/, trimmed/, etc.
+! make_ent_gcm_subset(combine_crops_c3_c4=.true., split_bare_soil=.true.)
+! (see chunkparams.f90 for definitions of these parameters)
+!
+!     01  ever_br_early
+!     02  ever_br_late
+!     03  ever_nd_early
+!     04  ever_nd_late
+!     05  cold_br_early
+!     06  cold_br_late
+!     07  drought_br
+!     08  decid_nd
+!     09  cold_shrub
+!     10  arid_shrub
+!     11  c3_grass_per
+!     12  c4_grass
+!     13  c3_grass_ann
+!     14  c3_grass_arct
+!     15  crops_herb
+!     16  crops_woody
+!     17  bare_bright
+!     18  bare_dark
+!
+! If not combine_crops_c3_c4, then this would be modified as:
+!     ...
+!     15  crops_c3_herb
+!     16  crops_c4_herb
+!     17  crops_woody
+!     18  bare_bright
+!     19  bare_dark
+!
+! If not split_bare, this would be modified as:
+!     ...
+!     17  bare_sparse
+!
+! If neither parameter is set, it would look like:
+!     ...
+!     15  crops_c3_herb
+!     16  crops_c4_herb
+!     17  crops_woody
+!     18  bare_sparse
+!
+! NOTE: Water is NOT part of these sub-sets
+
 integer, parameter :: ENT_ABBREV_LEN = 20
 
+! EntSet_t encapsulates a universe of cover types used as indices.
+! This is done with respect to the "master" set of 20 Ent cover types
+! (see below).  An EntSet_t instance is able to convert between its
+! local (sub-) universe, and the full (master) universe.
+!
+! EntSet_t has the following interesting members:
+!    esub%mvs: Convert from local to global indexing scheme
+!    esub%svm: Convert from global to local indexing scheme
+!    esub%layer_names():
+!        Produce an array of names for each layer.
+!
+! NOTE: For cover types that exist in one but not the other scheme,
+!       esub%mvs and esub%svm contain -1
+!
+! Suppose I have a variable lc(esub%ncover): Then to index the
+! DRAUGHT_BR item in lc, one uses the expression:
+!     lc(esub%svm(DRAUGHT_BR))
+!
+! EntSet_t instances are created in two ways:
+
+!   1. The subroutine init_ent_labels creates the master EntSet_t
+!      ent20, and ent19 (same but without water).  Note that ent20%svm
+!      and ent20%mvs are the identity maping.  init_ent_labels() must
+!      be called at the start of any program that needs to use
+!      ent_labels_mod
+!
+!   2. The subroutine make_ent_gcm_subset() produces cover type
+!       subsets.  Indices in those subsets will change depending on
+!       user options (combine_crops_c3_c4, split_bare_soil).
 type EntSet_t
     ! For derived schemes...
     integer, dimension(:), allocatable :: mvs    ! Convert this indexing scheme to master (ent20)
@@ -30,9 +114,10 @@ contains
 end type
 
 integer, parameter :: NMODIS2 = 28
-type(EntSet_t) :: modis28
+!type(EntSet_t) :: modis28
 
-integer, parameter :: NENT20 = 20
+! List of master Ent cover types
+integer, parameter :: NENT20 = 20   ! Shortcut for ent20%ncover
 type(EntSet_t) :: ent20      ! Master Ent categories
 integer, parameter :: EVER_BR_EARLY = 1
 integer, parameter :: EVER_BR_LATE  = 2
@@ -214,35 +299,35 @@ subroutine init_ent_labels
     end do
 
 
-    call modis28%allocate(28,28)
-    call modis28%add_covertype('ever_needle',         "Evergreen needleleaf forest                               ")
-    call modis28%add_covertype('ever_broad',          "Evergreen broadleaf forest                                ")
-    call modis28%add_covertype('dec_needle',          "Deciduous needleleaf forest                               ")
-    call modis28%add_covertype('dec_broad',           "Deciduous broadleaf forest                                ")
-    call modis28%add_covertype('mixed_ever_needle',   "Mixed forest-->Evergreen needleleaf forest                ")
-    call modis28%add_covertype('mixed_dec_broad',     "Mixed forest-->Deciduous broadleaf forest                 ")
-    call modis28%add_covertype('closed_shrub',        "Closed shrublands                                         ")
-    call modis28%add_covertype('open_shrub',          "Open shrublands                                           ")
-    call modis28%add_covertype('woodsav_ever_needle', "Woody savannas-->Evergreen needleleaf forest              ")
-    call modis28%add_covertype('woodsav_dec_broad',   "Woody savannas_ Deciduous broadleaf forest               ")
-    call modis28%add_covertype('woodsav_shrub',       "Woody savannas-->shrub                                   ")
-    call modis28%add_covertype('woodsav_grass',       "Woody savannas-->Grass                                   ")
-    call modis28%add_covertype('sav_grass',           "Savannas-->Grass                                         ")
-    call modis28%add_covertype('sav_shrub',           "Savannas-->Shrub                                         ")
-    call modis28%add_covertype('grass',               "Grassland                                                ")
-    call modis28%add_covertype('wet_ever_needle',     "Permanent wetlands-->Evergreen needleforest              ")
-    call modis28%add_covertype('wet_shrub',           "Permanent wetlands-->Shrub                               ")
-    call modis28%add_covertype('crop_cereal',         "Croplands-->Cereal crop                                  ")
-    call modis28%add_covertype('crop_broad',          "Croplands-->Broadleaf crop                               ")
-    call modis28%add_covertype('urban',               "Urban and built up                                       ")
-    call modis28%add_covertype('crnat_ever_needle',   "Cropland/natural vegetation-->Evergreen needleleaf forest")
-    call modis28%add_covertype('crnat_dec_broad',     "Cropland/natural vegetation-->Deciduous broadleaf forest ")
-    call modis28%add_covertype('crnat_shrub',         "Cropland/natural vegetation-->Shrub                      ")
-    call modis28%add_covertype('crnat_grass',         "Cropland/natural vegetation-->Grass                      ")
-    call modis28%add_covertype('crnat_cereal_crop',   "Cropland/natural vegetation-->Cereal crop                ")
-    call modis28%add_covertype('crnat_braod_crop',    "Cropland/natural vegetation-->Broadleaf crop             ")
-    call modis28%add_covertype('snow_ice',            "Permanent snow/ice                                       ")
-    call modis28%add_covertype('bare_sparse',         "Barren or sparsely vegetated                             ")
+!    call modis28%allocate(28,28)
+!    call modis28%add_covertype('ever_needle',         "Evergreen needleleaf forest                               ")
+!    call modis28%add_covertype('ever_broad',          "Evergreen broadleaf forest                                ")
+!    call modis28%add_covertype('dec_needle',          "Deciduous needleleaf forest                               ")
+!    call modis28%add_covertype('dec_broad',           "Deciduous broadleaf forest                                ")
+!    call modis28%add_covertype('mixed_ever_needle',   "Mixed forest-->Evergreen needleleaf forest                ")
+!    call modis28%add_covertype('mixed_dec_broad',     "Mixed forest-->Deciduous broadleaf forest                 ")
+!    call modis28%add_covertype('closed_shrub',        "Closed shrublands                                         ")
+!    call modis28%add_covertype('open_shrub',          "Open shrublands                                           ")
+!    call modis28%add_covertype('woodsav_ever_needle', "Woody savannas-->Evergreen needleleaf forest              ")
+!    call modis28%add_covertype('woodsav_dec_broad',   "Woody savannas_ Deciduous broadleaf forest               ")
+!    call modis28%add_covertype('woodsav_shrub',       "Woody savannas-->shrub                                   ")
+!    call modis28%add_covertype('woodsav_grass',       "Woody savannas-->Grass                                   ")
+!    call modis28%add_covertype('sav_grass',           "Savannas-->Grass                                         ")
+!    call modis28%add_covertype('sav_shrub',           "Savannas-->Shrub                                         ")
+!    call modis28%add_covertype('grass',               "Grassland                                                ")
+!    call modis28%add_covertype('wet_ever_needle',     "Permanent wetlands-->Evergreen needleforest              ")
+!    call modis28%add_covertype('wet_shrub',           "Permanent wetlands-->Shrub                               ")
+!    call modis28%add_covertype('crop_cereal',         "Croplands-->Cereal crop                                  ")
+!    call modis28%add_covertype('crop_broad',          "Croplands-->Broadleaf crop                               ")
+!    call modis28%add_covertype('urban',               "Urban and built up                                       ")
+!    call modis28%add_covertype('crnat_ever_needle',   "Cropland/natural vegetation-->Evergreen needleleaf forest")
+!    call modis28%add_covertype('crnat_dec_broad',     "Cropland/natural vegetation-->Deciduous broadleaf forest ")
+!    call modis28%add_covertype('crnat_shrub',         "Cropland/natural vegetation-->Shrub                      ")
+!    call modis28%add_covertype('crnat_grass',         "Cropland/natural vegetation-->Grass                      ")
+!    call modis28%add_covertype('crnat_cereal_crop',   "Cropland/natural vegetation-->Cereal crop                ")
+!    call modis28%add_covertype('crnat_braod_crop',    "Cropland/natural vegetation-->Broadleaf crop             ")
+!    call modis28%add_covertype('snow_ice',            "Permanent snow/ice                                       ")
+!    call modis28%add_covertype('bare_sparse',         "Barren or sparsely vegetated                             ")
 end subroutine init_ent_labels
 
 
@@ -279,6 +364,14 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
     ents%bare_dark = -1
 end subroutine GcmEntSet_allocate
 
+! Produces cover a cover type subset, depending on user options.
+! Parameters:
+!    combine_crops_c3_c4
+!         Should C3 and C4 crop types be combined into one cover type?
+!    split_bare_soil
+!         Should the bare soil cover type be split into bright and dark sub-types?
+! Returns:
+!    The Ent covertype subset
 function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
     logical, intent(IN) :: combine_crops_c3_c4
     logical, intent(IN) :: split_bare_soil
@@ -339,6 +432,7 @@ module geom_mod
 
 implicit none
 
+! Various standard ModelE (and related) resolutions for lon/lat grids
 integer, parameter :: X1km = 43200 !long at 1 km
 integer, parameter :: Y1km = 21600 !lat at 1 km
 
