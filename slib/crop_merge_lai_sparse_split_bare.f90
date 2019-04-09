@@ -1,4 +1,4 @@
-module trim_tiny_mod
+module crop_merge_lai_sparse_split_bare_mod
     use chunker_mod
     use chunkparams_mod
     use ent_labels_mod
@@ -8,7 +8,7 @@ module trim_tiny_mod
 implicit none
 CONTAINS
 
-subroutine trim_tiny(esub, chunker, ndoy, &
+subroutine crop_merge_lai_sparse_split_bare(esub, chunker, ndoy, &
     jc0,jc1, &
     ic0,ic1, &
     combine_crops_c3_c4, split_bare_soil, &
@@ -47,7 +47,7 @@ subroutine trim_tiny(esub, chunker, ndoy, &
     real*4 laic(esub%ncover)   ! = lain = io_lcaiin
 
     real*4 area
-    real*4 c3c4
+    real*4 c3c4_crops
     real*4 am
     ! Converted values
 
@@ -94,13 +94,13 @@ subroutine trim_tiny(esub, chunker, ndoy, &
                 ! Then more complex stuff
                 if (combine_crops_c3_c4) then
                     !lc laimax
-                    c3c4 = io_lcin(CROPS_C3_HERB)%buf(ic,jc) + io_lcin(CROPS_C4_HERB)%buf(ic,jc)
-                    if (c3c4 > 0.) then
+                    c3c4_crops = io_lcin(CROPS_C3_HERB)%buf(ic,jc) + io_lcin(CROPS_C4_HERB)%buf(ic,jc)
+                    if (c3c4_crops > 0.) then
                         laic(esub%crops_herb) = ( &
                               io_lcin(CROPS_C3_HERB)%buf(ic,jc) *io_laiin(CROPS_C3_HERB,idoy)%buf(ic,jc) &
                             + io_lcin(CROPS_C4_HERB)%buf(ic,jc) *io_laiin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
-                            ) / c3c4
-                        vfc(esub%crops_herb) = c3c4
+                            ) / c3c4_crops
+                        vfc(esub%crops_herb) = c3c4_crops
                     else
                         laic(esub%crops_herb) = 0.
                         vfc(esub%crops_herb) = 0.
@@ -110,7 +110,7 @@ subroutine trim_tiny(esub, chunker, ndoy, &
                         io_simout(esub%crops_herb,idoy)%buf(ic,jc) = ( &
                             io_lcin(CROPS_C3_HERB)%buf(ic,jc) * io_simin(CROPS_C3_HERB,idoy)%buf(ic,jc) + &
                             io_lcin(CROPS_C4_HERB)%buf(ic,jc) * io_simin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
-                            ) / c3c4
+                            ) / c3c4_crops
                     end if
                 end if
 
@@ -232,6 +232,6 @@ subroutine trim_tiny(esub, chunker, ndoy, &
     end do
     end do
 
-end subroutine trim_tiny
+end subroutine crop_merge_lai_sparse_split_bare
 
-end module trim_tiny_mod
+end module crop_merge_lai_sparse_split_bare_mod

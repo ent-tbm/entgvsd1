@@ -7,7 +7,7 @@ module a05_mod
     use ent_labels_mod
     use gcm_labels_mod
     use geom_mod
-    use trim_tiny_mod
+    use crop_merge_lai_sparse_split_bare_mod
 
 implicit none
 
@@ -82,7 +82,7 @@ subroutine do_reindex(esub)
 #ifdef JUST_DEPENDENCIES
     stop 0
 #endif
-    call trim_tiny(esub, chunker, ndoy, &
+    call crop_merge_lai_sparse_split_bare(esub, chunker, ndoy, &
 
 #ifdef ENTGVSD_DEBUG
         chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
