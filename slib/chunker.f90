@@ -805,7 +805,7 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
         status=nf90_def_var(ncid, 'layer_indices', NF90_INT, ixdimids, idlayer_indices)
         if (status /= NF90_NOERR) return
 
-        status=nf90_def_var(ncid, 'layer_names', NF90_CHAR, strdimids, idlayer_names)
+        status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlayer_names)
         if (status /= NF90_NOERR) return
 
     end if

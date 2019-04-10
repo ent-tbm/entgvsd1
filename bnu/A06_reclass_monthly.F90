@@ -7,7 +7,7 @@ module a06_mod
     use ent_labels_mod
     use gcm_labels_mod
     use geom_mod
-    use crop_merge_lai_sparse_split_bare_mod
+    use cropmerge_laisparse_splitbare_mod
 
 implicit none
 
@@ -92,7 +92,7 @@ subroutine do_reindex(esub,m0,m1)
     stop 0
 #endif
 
-    call crop_merge_lai_sparse_split_bare(esub, chunker, m1-m0+1, &
+    call cropmerge_laisparse_splitbare(esub, chunker, m1-m0+1, &
 
 #ifdef ENTGVSD_DEBUG
         chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &

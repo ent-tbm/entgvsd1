@@ -1,9 +1,3 @@
-TODO: Comment and explain ent_labels!!
-Sections for:
- 1. combine_c3_c4  
- 2. split          
- 3. combine + split
-
 module ent_labels_mod
 
     use, intrinsic :: iso_fortran_env
@@ -217,7 +211,7 @@ function layer_names(ents)
     integer :: k
 
     do k=1,ents%ncover
-        layer_names(k) = trim(itoa2(ents%mvs(k)))//'_'//trim(ents%abbrev(k))
+        layer_names(k) = trim(itoa2(k))//'_'//trim(ents%abbrev(k))
     end do
 end function layer_names
 

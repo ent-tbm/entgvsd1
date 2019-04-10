@@ -1,4 +1,4 @@
-module crop_merge_lai_sparse_split_bare_mod
+module cropmerge_laisparse_splitbare_mod
     use chunker_mod
     use chunkparams_mod
     use ent_labels_mod
@@ -8,7 +8,7 @@ module crop_merge_lai_sparse_split_bare_mod
 implicit none
 CONTAINS
 
-subroutine crop_merge_lai_sparse_split_bare(esub, chunker, ndoy, &
+subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     jc0,jc1, &
     ic0,ic1, &
     combine_crops_c3_c4, split_bare_soil, &
@@ -232,6 +232,6 @@ subroutine crop_merge_lai_sparse_split_bare(esub, chunker, ndoy, &
     end do
     end do
 
-end subroutine crop_merge_lai_sparse_split_bare
+end subroutine cropmerge_laisparse_splitbare
 
-end module crop_merge_lai_sparse_split_bare_mod
+end module cropmerge_laisparse_splitbare_mod
