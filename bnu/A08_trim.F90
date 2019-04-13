@@ -1134,6 +1134,13 @@ subroutine do_trim(esub)
     end do
 
 
+    call chunker_pu%nc_check('A08_pu')
+    call tr%chunker%nc_check('A08_tr')
+    call ts%chunker%nc_check('A08_ts')
+    call mc%chunker%nc_check('A08_mc')
+    call nc%chunker%nc_check('A08_nc')
+
+
     ! --------------------- Outputs: trimmed
     call tr%open('trimmed', esub)
     call ts%open('trimmed_scaled', esub)

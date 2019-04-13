@@ -241,6 +241,7 @@ contains
     procedure :: nc_create
     procedure :: nc_open_gz
     procedure :: nc_open
+    procedure :: filename
     procedure :: nc_check
 end type Chunker_t
 
@@ -375,6 +376,34 @@ subroutine calc_lon_lat(IM,JM,lon,lat)
 
     enddo
 end subroutine calc_lon_lat     
+
+
+function sres(IM)
+    integer :: IM
+    character(6) :: sres
+
+    if (IM.eq.72) then   !if (res.eq.'4X5') then
+        res = '4X5'
+    else if (IM.eq.144) then !if (res.eq.'2HX2') then
+        res = '2HX2'
+    else if (IM.eq.360) then  !if (res.eq.'1x1') then
+        res = '1x1'
+    else if (IM.eq.720) then !if (res.eq.'HXH') then
+        res = 'HXH'
+    elseif (IM.eq.1440) then !0.25 degree
+        ers = 'QXQ'
+    elseif (IM.eq.7200) then
+        res = '6km'
+    elseif (IM.eq.43200) then
+        res = '1km'
+    elseif (IM.eq.86400) then
+        res = '500m'
+    else
+       write(ERROR_UNIT,*) 'Fix resolution specs'
+       stop
+    endif
+end function sres
+
 !************************************************************************
 
 ! Convenient constructor for Weighting_t
@@ -748,7 +777,7 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
     character(len=*), dimension(:), OPTIONAL :: layer_names
     !--- Local ----
     integer :: idlon, idlat, varid
-    integer :: idlayer_indices, idlayer_names
+    integer :: idlayer_names
     real*4 :: lon(IM), lat(JM)
     !character*80 :: filenc
     character*10 :: res
@@ -802,9 +831,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
         status=nf90_def_dim(ncid, 'layer_name_len', len(layer_names(1)), strdimids(1))
         if (status /= NF90_NOERR) return
 
-        status=nf90_def_var(ncid, 'layer_indices', NF90_INT, ixdimids, idlayer_indices)
-        if (status /= NF90_NOERR) return
-
         status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlayer_names)
         if (status /= NF90_NOERR) return
 
@@ -852,9 +878,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
 
 
     if (nlayers>1) then
-        status=nf90_put_var(ncid,idlayer_indices,layer_indices(1:nlayers))
-        if (status /= NF90_NOERR) return
-
         startS = (/ 1,1 /)
         countS = (/ len(layer_names(1)), size(layer_names,1) /)
         status=nf90_put_var(ncid,idlayer_names, layer_names,startS,countS)
@@ -1160,13 +1183,12 @@ end subroutine nc_reuse_file
 ! @param (OPTIONAL) long_name Metadata
 ! @param (OPTIONAL) units Metadata: UDUnits2 unit specification
 ! @param (OPTIONAL) title Metadata
-! @param (OPTIONAL) layer_indices (OPTIONAL) The PFT number of each layer
 ! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
 subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
 vname,long_name,units,title, &
-layer_indices, layer_names, create_lr)
+layer_names, create_lr)
 
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
@@ -1175,7 +1197,6 @@ layer_indices, layer_names, create_lr)
     character*(*), intent(in) :: leaf
     character*(*), intent(in), OPTIONAL :: vname
     character*(*), intent(in), OPTIONAL :: long_name,units,title
-    integer, dimension(:), OPTIONAL :: layer_indices
     character(len=*), dimension(:), OPTIONAL :: layer_names
     logical, intent(IN), OPTIONAL :: create_lr
 
@@ -1194,8 +1215,8 @@ layer_indices, layer_names, create_lr)
     cio%rw = 'w'
     cio%create_lr = (.not.present(create_lr)).or.create_lr
 
-    if (present(layer_indices)) then
-        nlayer = size(layer_indices,1)
+    if (present(layer_names)) then
+        nlayer = size(layer_names,1)
         allocate(dimids(3))
         cio%base = (/1,1,1/)    ! Not used
     else
@@ -1403,6 +1424,55 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     cio%create_lr = .false.
     call finish_cio_init(this, cio, (k>0))
 end subroutine nc_open
+
+function filename(this, ents, laisource, cropsource, var,step, doytype, idoy, ver)
+    class(Chunker_t), intent(IN) :: this
+    type(EntSet_t), intent(IN) :: ents
+    character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
+
+    character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
+    character*(*), intent(IN) :: var    ! lc, lai, laimax, height
+    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: doytype ! ann,doy,month
+    integer, intent(IN) :: idoy
+    character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
+    ! ---------- Return Var
+    character(50) :: filename
+    ! ------------ Locals
+    character*(10) :: time
+
+    if ((laisource/='M').and.(laisource/='BNU')) then
+        write(ERROR_UNIT,*) 'Illegal laisource', laisource
+        stop
+    end if
+
+    if ((var/='lc').and.(var/='lai').and.(var/='laimax').and.(var/='height')) then
+        write(ERROR_UNIT,*) 'Illegal var', var
+        stop
+    end if
+
+    if (var=='laimax') then
+        time = ''
+    else if (doytype=='doy') then
+        time = itoa3(idoy)//'_'
+    else if (doytype=='month') then
+        time = months(idoy)//'_'
+    else
+        write(ERROR_UNIT,*) 'Illegal doytype', doytype
+        stop
+    end if
+
+    if ((step/='raw').and.(step/='pure').and.(step/='trimmed').and. &
+        (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
+        (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &
+    then
+        write(ERROR_UNIT,*) 'Illegal step', step
+        stop
+    end if
+
+    filename = sres(this%ngrid(1)) // '_EntGVSD' // itoa(ents%npft) // '-' // ents%nonveg // '_' // &
+       laisource // '_' // var // '_' // time // step // '_V' // ver
+end function filename
 
 
 

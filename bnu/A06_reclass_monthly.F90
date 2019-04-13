@@ -86,7 +86,7 @@ subroutine do_reindex(esub,m0,m1)
         end do   ! k
     end do   ! imonth
 
-    call chunker%nc_check('A06_trim_lc_laimax_laimonth')
+    call chunker%nc_check('A06_reclass_monthly')
     print *,'Done opening files: nreads',chunker%nreads,'nwrite',chunker%nwrites
 #ifdef JUST_DEPENDENCIES
     stop 0

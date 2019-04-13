@@ -90,10 +90,15 @@ type EntSet_t
     integer, dimension(:), allocatable :: svm    ! Convert master (ent20) indices to this indexing scheme
 
 
+    character*1, dimension(:), allocatable :: cttype
     character*(ENT_ABBREV_LEN), dimension(:), allocatable :: abbrev
     character*50, dimension(:), allocatable :: title
- 
-    integer :: ncover    ! Total number of cover types
+
+    ! Set by EntSet setup 
+    integer :: npft, nnonveg
+    ! Computed
+    integer :: ncover
+    character*(1) :: nonveg  ! M (M for MODIS, permanent snow/ice, bare/sparse, water), G (G for GISS, bare_bright, bare_dark)
 
     ! Set of master indexes to be remapped
     integer, dimension(:,:), allocatable :: remap
@@ -167,7 +172,11 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
     integer, OPTIONAL :: ncover_master
     integer :: i
 
+    ents%npft = 0
+    ents%nnonveg = 0
     ents%ncover = 0
+
+    allocate(ents%cttype(maxcover))
     allocate(ents%abbrev(maxcover))
     allocate(ents%title(maxcover))
 
@@ -196,6 +205,13 @@ function itoa2(i) result(ret)
     write(ret,'(i2.2)') i
 end function
 
+function itoa3(i) result(ret)
+    integer,intent(IN) :: i
+    character(3) :: ret
+
+    write(ret,'(i3.3)') i
+end function
+
 function itoa(i) result(ret)
     integer,intent(IN) :: i
     character(2) :: ret
@@ -215,8 +231,9 @@ function layer_names(ents)
     end do
 end function layer_names
 
-subroutine add_covertype(ents, abbrev,title)
+subroutine add_covertype(ents, cttype, abbrev,title)
     class(EntSet_t) :: ents
+    character, intent(IN) :: cttype    ! 'v' for vegetation, 'n' for nonveg
     character*(*), intent(IN) :: abbrev
     character*(*), intent(IN) :: title
 
@@ -228,6 +245,24 @@ subroutine add_covertype(ents, abbrev,title)
 
     ents%abbrev(ents%ncover) = abbrev
     ents%title(ents%ncover) = title
+
+    if (cttype == 'v') then
+        ents%npft = ents%npft + 1
+    else if (cttype == 'n') then
+        ents%nnonveg = ents%nnonveg + 1
+    else
+        write(ERROR_UNIT,*) 'Illegal cttype',cttype
+        stop
+    end if
+    ents%ncover = ents%npft + ents%nnonveg
+    if (ents%nnonveg == 3) then
+        ents%nonveg = 'M'
+    else if (ents%nnonveg == 2) then
+        ents%nonveg = 'G'
+    else
+        ents%nonveg = 'X'
+    end if
+
 end subroutine add_covertype
 
 subroutine add_remap(ents, index20)
@@ -253,7 +288,7 @@ subroutine sub_covertype(ents, ent20, index20)
     type(EntSet_t), intent(IN) :: ent20
     integer, intent(IN) :: index20
 
-    call ents%add_covertype(ent20%abbrev(index20), ent20%title(index20))
+    call ents%add_covertype(ent20%cttype(index20), ent20%abbrev(index20), ent20%title(index20))
     call ents%add_remap(index20)
 end subroutine sub_covertype
 
@@ -262,26 +297,26 @@ subroutine init_ent_labels
     integer :: k
 
     call ent20%allocate(20,20)
-    call ent20%add_covertype('ever_br_early ', 'evergreen broadleaf early successional      ') !  1
-    call ent20%add_covertype('ever_br_late  ', 'evergreen broadleaf late successional       ') !  2
-    call ent20%add_covertype('ever_nd_early ', 'evergreen needleleaf early successional     ') !  3
-    call ent20%add_covertype('ever_nd_late  ', 'evergreen needleleaf late successional      ') !  4
-    call ent20%add_covertype('cold_br_early ', 'cold deciduous broadleaf early successional ') !  5
-    call ent20%add_covertype('cold_br_late  ', 'cold deciduous broadleaf late successional  ') !  6
-    call ent20%add_covertype('drought_br    ', 'drought deciduous broadleaf                 ') !  7
-    call ent20%add_covertype('decid_nd      ', 'deciduous needleleaf                        ') !  8
-    call ent20%add_covertype('cold_shrub    ', 'cold adapted shrub                          ') !  9
-    call ent20%add_covertype('arid_shrub    ', 'arid adapted shrub                         ')  ! 10
-    call ent20%add_covertype('c3_grass_per  ', 'C3 grass perennial                         ')  ! 11
-    call ent20%add_covertype('c4_grass      ', 'C4 grass                                   ')  ! 12
-    call ent20%add_covertype('c3_grass_ann  ', 'C3 grass - annual                          ')  ! 13
-    call ent20%add_covertype('c3_grass_arct ', 'arctic C3 grass                            ')  ! 14
-    call ent20%add_covertype('crops_c3_herb ', 'crops C3 herb                              ')  ! 15
-    call ent20%add_covertype('crops_c4_herb ', 'crops C4 herb                              ')  ! 16
-    call ent20%add_covertype('crops_woody   ', 'crops woody                                ')  ! 17
-    call ent20%add_covertype('snow_ice      ', 'Permanent snow/ice                         ')  ! 18
-    call ent20%add_covertype('bare_sparse   ', 'Bare or sparsely vegetated, urban          ')  ! 19
-    call ent20%add_covertype('water         ', 'water                                      ')  ! 20
+    call ent20%add_covertype('v', 'ever_br_early ', 'evergreen broadleaf early successional      ') !  1
+    call ent20%add_covertype('v', 'ever_br_late  ', 'evergreen broadleaf late successional       ') !  2
+    call ent20%add_covertype('v', 'ever_nd_early ', 'evergreen needleleaf early successional     ') !  3
+    call ent20%add_covertype('v', 'ever_nd_late  ', 'evergreen needleleaf late successional      ') !  4
+    call ent20%add_covertype('v', 'cold_br_early ', 'cold deciduous broadleaf early successional ') !  5
+    call ent20%add_covertype('v', 'cold_br_late  ', 'cold deciduous broadleaf late successional  ') !  6
+    call ent20%add_covertype('v', 'drought_br    ', 'drought deciduous broadleaf                 ') !  7
+    call ent20%add_covertype('v', 'decid_nd      ', 'deciduous needleleaf                        ') !  8
+    call ent20%add_covertype('v', 'cold_shrub    ', 'cold adapted shrub                          ') !  9
+    call ent20%add_covertype('v', 'arid_shrub    ', 'arid adapted shrub                         ')  ! 10
+    call ent20%add_covertype('v', 'c3_grass_per  ', 'C3 grass perennial                         ')  ! 11
+    call ent20%add_covertype('v', 'c4_grass      ', 'C4 grass                                   ')  ! 12
+    call ent20%add_covertype('v', 'c3_grass_ann  ', 'C3 grass - annual                          ')  ! 13
+    call ent20%add_covertype('v', 'c3_grass_arct ', 'arctic C3 grass                            ')  ! 14
+    call ent20%add_covertype('v', 'crops_c3_herb ', 'crops C3 herb                              ')  ! 15
+    call ent20%add_covertype('v', 'crops_c4_herb ', 'crops C4 herb                              ')  ! 16
+    call ent20%add_covertype('v', 'crops_woody   ', 'crops woody                                ')  ! 17
+    call ent20%add_covertype('n', 'snow_ice      ', 'Permanent snow/ice                         ')  ! 18
+    call ent20%add_covertype('n', 'bare_sparse   ', 'Bare or sparsely vegetated, urban          ')  ! 19
+    call ent20%add_covertype('n', 'water         ', 'water on land                              ')  ! 20
 
 
     ! Set up ent19 = ent20 without water
@@ -293,37 +328,7 @@ subroutine init_ent_labels
     end do
 
 
-!    call modis28%allocate(28,28)
-!    call modis28%add_covertype('ever_needle',         "Evergreen needleleaf forest                               ")
-!    call modis28%add_covertype('ever_broad',          "Evergreen broadleaf forest                                ")
-!    call modis28%add_covertype('dec_needle',          "Deciduous needleleaf forest                               ")
-!    call modis28%add_covertype('dec_broad',           "Deciduous broadleaf forest                                ")
-!    call modis28%add_covertype('mixed_ever_needle',   "Mixed forest-->Evergreen needleleaf forest                ")
-!    call modis28%add_covertype('mixed_dec_broad',     "Mixed forest-->Deciduous broadleaf forest                 ")
-!    call modis28%add_covertype('closed_shrub',        "Closed shrublands                                         ")
-!    call modis28%add_covertype('open_shrub',          "Open shrublands                                           ")
-!    call modis28%add_covertype('woodsav_ever_needle', "Woody savannas-->Evergreen needleleaf forest              ")
-!    call modis28%add_covertype('woodsav_dec_broad',   "Woody savannas_ Deciduous broadleaf forest               ")
-!    call modis28%add_covertype('woodsav_shrub',       "Woody savannas-->shrub                                   ")
-!    call modis28%add_covertype('woodsav_grass',       "Woody savannas-->Grass                                   ")
-!    call modis28%add_covertype('sav_grass',           "Savannas-->Grass                                         ")
-!    call modis28%add_covertype('sav_shrub',           "Savannas-->Shrub                                         ")
-!    call modis28%add_covertype('grass',               "Grassland                                                ")
-!    call modis28%add_covertype('wet_ever_needle',     "Permanent wetlands-->Evergreen needleforest              ")
-!    call modis28%add_covertype('wet_shrub',           "Permanent wetlands-->Shrub                               ")
-!    call modis28%add_covertype('crop_cereal',         "Croplands-->Cereal crop                                  ")
-!    call modis28%add_covertype('crop_broad',          "Croplands-->Broadleaf crop                               ")
-!    call modis28%add_covertype('urban',               "Urban and built up                                       ")
-!    call modis28%add_covertype('crnat_ever_needle',   "Cropland/natural vegetation-->Evergreen needleleaf forest")
-!    call modis28%add_covertype('crnat_dec_broad',     "Cropland/natural vegetation-->Deciduous broadleaf forest ")
-!    call modis28%add_covertype('crnat_shrub',         "Cropland/natural vegetation-->Shrub                      ")
-!    call modis28%add_covertype('crnat_grass',         "Cropland/natural vegetation-->Grass                      ")
-!    call modis28%add_covertype('crnat_cereal_crop',   "Cropland/natural vegetation-->Cereal crop                ")
-!    call modis28%add_covertype('crnat_braod_crop',    "Cropland/natural vegetation-->Broadleaf crop             ")
-!    call modis28%add_covertype('snow_ice',            "Permanent snow/ice                                       ")
-!    call modis28%add_covertype('bare_sparse',         "Barren or sparsely vegetated                             ")
 end subroutine init_ent_labels
-
 
 end module ent_labels_mod
 
@@ -356,6 +361,7 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
     ents%crops_herb = -1
     ents%bare_bright = -1
     ents%bare_dark = -1
+    ents%NONVEG = ''
 end subroutine GcmEntSet_allocate
 
 ! Produces cover a cover type subset, depending on user options.
@@ -394,7 +400,7 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
     if (combine_crops_c3_c4) then
         !  15 - crops C3+C4 
-        call esub%add_covertype('crops_herb', 'crops herbacious')    ! 15
+        call esub%add_covertype('v', 'crops_herb', 'crops herbacious')    ! 15
         esub%crops_herb = esub%ncover
     else
         call esub%sub_covertype(ent20, CROPS_C3_HERB)        ! 15
@@ -405,12 +411,13 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
     if (split_bare_soil) then
         ! Change bare_spares to bare-bright
-        call esub%add_covertype('bare_bright', 'Bare or sparsely vegated, urban, bright')
+        call esub%add_covertype('n', 'bare_bright', 'Bare or sparsely vegated, urban, bright')
         esub%bare_bright = esub%ncover
         call esub%add_remap(BARE_SPARSE)
 
-        call esub%add_covertype('bare_dark', 'Bare or sparsely vegated, urban, dark')
+        call esub%add_covertype('n', 'bare_dark', 'Bare or sparsely vegated, urban, dark')
         esub%bare_dark = esub%ncover
+        esub%NONVEG = 'G'
     else
         call esub%sub_covertype(ent20, BARE_SPARSE)
     end if

@@ -118,6 +118,9 @@ subroutine regrid_lais(esub, fname)
 
     end do    ! idoy
 
+    call chunker%nc_check('A07_regrid_hr')
+    call chunkerlr%nc_check('A07_regrid_lr')
+
 
 #ifdef ENTGVSD_DEBUG
     do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1

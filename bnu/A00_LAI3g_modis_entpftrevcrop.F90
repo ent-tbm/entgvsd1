@@ -464,7 +464,7 @@ call chunker%nc_create(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
     'pure/annual/', 'entmm29_ann_lc', 'lc', &
     'Ent Landcover (from A00)', '1', 'Land Cover', &
-    ent20%mvs, ent20%layer_names())
+    ent20%mvs, ent20%abbrev)
 ! Open water first because it's used to weight others
 call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
     (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
