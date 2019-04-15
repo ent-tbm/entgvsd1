@@ -46,16 +46,19 @@ enddo
 
 ! ================= Output Files
 
+call chunker%nc_create_set( &
+    ent20, io_laiout, lc_weights(io_lc), &
+    'BNU', 'M', 'laimax', 2004, 'raw', '1.1')
 
-call chunker%nc_create(ioall_laiout, &
-    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
-    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
-    ent20%mvs, ent20%layer_names())
-do k=1,NENT20
-    call chunker%nc_reuse_var(ioall_laiout, io_laiout(k,1), &
-        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
-enddo
+!call chunker%nc_create(ioall_laiout, &
+!    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
+!    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
+!    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
+!    ent20%mvs, ent20%layer_names())
+!do k=1,NENT20
+!    call chunker%nc_reuse_var(ioall_laiout, io_laiout(k,1), &
+!        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
+!enddo
 
 
 call chunker%nc_create(ioall_err, &

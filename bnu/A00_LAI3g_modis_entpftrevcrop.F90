@@ -372,6 +372,7 @@ type(ChunkIO_t) :: io_dompft
 real*4 :: WATERLAI
 
 type(ChunkIO_t) :: partit_io(28)
+type(FileInfo_t) :: info
 type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
 type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20)
 type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
@@ -460,11 +461,12 @@ call chunker%nc_open_gz(io_waterpart, &
 ! Create Output Files
 
 !      ENTPFTLC -- Land Cover
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 call chunker%nc_create(ioall_lc, &
-    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    'pure/annual/', 'entmm29_ann_lc', 'lc', &
-    'Ent Landcover (from A00)', '1', 'Land Cover', &
-    ent20%mvs, ent20%abbrev)
+    weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
+    info%dir, info%fname, 'lc', &
+    info%long_name, info%units, &
+    ent20%layer_names())
 ! Open water first because it's used to weight others
 call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
     (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
@@ -476,13 +478,13 @@ end do
 
 !     CHECKSUM
 call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
-    'pure/annual/checksum/', 'modis_ann_lc_checksum', &
+    'raw/checksum/', 'modis_ann_lc_checksum', &
     'EntMM29lc_lai_for_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 
 !     CHECKSUM
 call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
-     'pure/annual/checksum/', 'entmm29_ann_lc_checksum', &
+     'raw/checksum/', 'entmm29_ann_lc_checksum', &
      'EntLandcover_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 
@@ -493,21 +495,21 @@ call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
 ! Low-res version computed specially for these
 !     NPFTGRID  Number of PFTs in a gridcell
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
-    'pure/annual/checksum/', 'entmm29_ann_npftgrid', &
+    'raw/checksum/', 'entmm29_ann_npftgrid', &
      'EntPFTs_percell_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
-    'pure/annual/checksum/', 'entmm29_ann_dompftlc', &
+    'raw/checksum/', 'entmm29_ann_dompftlc', &
     'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
-    'pure/annual/checksum/', 'entmm29_ann_dompft', &
+    'raw/checksum/', 'entmm29_ann_dompft', &
      'EntdominantPFT_check_sum_Jun_1kmx1km', &
     'checksum', '1', TITLE_CHECKSUM)
 io_dompft%regrid_lr => nop_regrid_lr
@@ -523,11 +525,11 @@ do k = 1,LCLASS
 enddo
 
 ! ENTPFTLAIMAX
+call chunker%file_info(info, ent20, 'BNU', 'M', 'laimax', 2004, 'raw', '1.1')
 call chunker%nc_create(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
-    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
-    ent20%mvs, ent20%layer_names())
+    info%dir, info%fname, 'laimax',
+    info%long_name, info%units, ent20%layer_names())
 #ifdef COMPUTE_LAI
 do k=1,NENT20
 #else

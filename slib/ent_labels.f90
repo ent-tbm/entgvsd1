@@ -212,6 +212,13 @@ function itoa3(i) result(ret)
     write(ret,'(i3.3)') i
 end function
 
+function itoa4(i) result(ret)
+    integer,intent(IN) :: i
+    character(4) :: ret
+
+    write(ret,'(i4.4)') i
+end function
+
 function itoa(i) result(ret)
     integer,intent(IN) :: i
     character(2) :: ret
@@ -243,6 +250,7 @@ subroutine add_covertype(ents, cttype, abbrev,title)
         stop -1
     end if
 
+    ents%cttype(ents%ncover) = cttype
     ents%abbrev(ents%ncover) = abbrev
     ents%title(ents%ncover) = title
 
@@ -251,7 +259,7 @@ subroutine add_covertype(ents, cttype, abbrev,title)
     else if (cttype == 'n') then
         ents%nnonveg = ents%nnonveg + 1
     else
-        write(ERROR_UNIT,*) 'Illegal cttype',cttype
+        write(ERROR_UNIT,*) 'add_covertype() Illegal cttype: ',cttype,trim(abbrev)
         stop
     end if
     ents%ncover = ents%npft + ents%nnonveg

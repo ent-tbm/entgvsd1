@@ -241,9 +241,17 @@ contains
     procedure :: nc_create
     procedure :: nc_open_gz
     procedure :: nc_open
-    procedure :: filename
+    procedure :: file_info
     procedure :: nc_check
 end type Chunker_t
+
+type FileInfo_t
+    character*(30) :: dir
+    character*(40) :: fname
+    character*(50) :: long_name
+    character*(20) :: units
+end type FileInfo_t
+
 
 CONTAINS
 
@@ -383,21 +391,21 @@ function sres(IM)
     character(6) :: sres
 
     if (IM.eq.72) then   !if (res.eq.'4X5') then
-        res = '4X5'
+        sres = '4X5'
     else if (IM.eq.144) then !if (res.eq.'2HX2') then
-        res = '2HX2'
+        sres = '2HX2'
     else if (IM.eq.360) then  !if (res.eq.'1x1') then
-        res = '1x1'
+        sres = '1x1'
     else if (IM.eq.720) then !if (res.eq.'HXH') then
-        res = 'HXH'
+        sres = 'HXH'
     elseif (IM.eq.1440) then !0.25 degree
-        ers = 'QXQ'
+        sres = 'QXQ'
     elseif (IM.eq.7200) then
-        res = '6km'
+        sres = '6km'
     elseif (IM.eq.43200) then
-        res = '1km'
+        sres = '1km'
     elseif (IM.eq.86400) then
-        res = '500m'
+        sres = '500m'
     else
        write(ERROR_UNIT,*) 'Fix resolution specs'
        stop
@@ -761,19 +769,17 @@ end function my_nf90_inq_put_var_real32
 ! Opens/Creates just the file and dimensions
 ! Normally sets up for a file with one or more 2D (single layer) variables
 ! To create a file that will hold 3D (multi layer) variables, set
-! layer_indices and layer_names.  This will then create additional
+! layer_names.  This will then create additional
 ! metadata variables describing the layers in the 3D files.
 ! @param IM,JM Resolution of file to create.
 ! @param ncid (OUT) Returns the open NetCDF file handle here
-! @param layer_indices (OPTIONAL) The PFT number of each layer
 ! @param layer_names (OPTIONAL) The descriptive name of each layer
-function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) result(status)
+function my_nf90_create_ij(filename,IM,JM, ncid, layer_names) result(status)
 
     character(len=*), intent(in) :: filename
     integer,intent(in) :: IM,JM
     integer,intent(out) :: ncid
     integer :: status    ! Return variable
-    integer, dimension(:), OPTIONAL :: layer_indices
     character(len=*), dimension(:), OPTIONAL :: layer_names
     !--- Local ----
     integer :: idlon, idlat, varid
@@ -787,7 +793,7 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_indices, layer_names) res
     integer :: nlayers
     integer, dimension(:), allocatable :: dimids
 
-    if (present(layer_indices)) then
+    if (present(layer_names)) then
         allocate(dimids(3))
         nlayers = size(layer_names,1)
     else
@@ -939,7 +945,7 @@ end function make_chunksizes
 ! @param units Metadata: UDUnits2 unit specification
 ! @param title Metadata
 subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
-    varname,long_name,units,title)
+    varname,long_name,units)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
     integer, intent(IN) :: ncid
     integer, intent(OUT) :: varid
@@ -948,7 +954,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
 
     character*(*), intent(in) :: varname
     character*(*), intent(in) :: long_name
-    character*(*), intent(in) :: units,title
+    character*(*), intent(in) :: units
 
     !-- Local --
     integer, dimension(:), allocatable :: dimids
@@ -995,8 +1001,6 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
         'long_name', long_name)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'title', title)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
@@ -1141,13 +1145,13 @@ end subroutine nc_reuse_var
 ! @param title Metadata
 ! @param wta Weighting to use when writing this variable
 subroutine nc_reuse_file(this, cio0, cio, &
-    vname,long_name,units,title, wta)
+    vname,long_name,units, wta)
 
     class(Chunker_t) :: this
     type(ChunkIO_t), intent(IN) :: cio0
     type(ChunkIO_t), target :: cio
     character*(*), intent(in) :: vname
-    character*(*), intent(in) :: long_name,units,title
+    character*(*), intent(in) :: long_name,units
     type(Weighting_t), target :: wta
 
     cio%base = (/1,1/)
@@ -1164,10 +1168,10 @@ subroutine nc_reuse_file(this, cio0, cio, &
 
     ! Create the netCDF variable
     call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk, &
-        vname, long_name, units, title)
+        vname, long_name, units)
 
     call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk, &
-        vname, long_name, units, title)
+        vname, long_name, units)
 
     cio%create_lr = cio0%create_lr
     call finish_cio_init(this, cio, .true.)
@@ -1182,12 +1186,11 @@ end subroutine nc_reuse_file
 ! @param (OPTIONAL) vname Name of variable to create
 ! @param (OPTIONAL) long_name Metadata
 ! @param (OPTIONAL) units Metadata: UDUnits2 unit specification
-! @param (OPTIONAL) title Metadata
 ! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
 subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
-vname,long_name,units,title, &
+vname,long_name,units, &
 layer_names, create_lr)
 
     class(Chunker_t) :: this
@@ -1195,8 +1198,8 @@ layer_names, create_lr)
     type(Weighting_t), target :: wta
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
-    character*(*), intent(in), OPTIONAL :: vname
-    character*(*), intent(in), OPTIONAL :: long_name,units,title
+    character*(*), intent(in), OPTIONAL :: vname  ! If not set, just create file, not variable
+    character*(*), intent(in), OPTIONAL :: long_name,units
     character(len=*), dimension(:), OPTIONAL :: layer_names
     logical, intent(IN), OPTIONAL :: create_lr
 
@@ -1234,11 +1237,11 @@ layer_names, create_lr)
     print *,'Writing ',trim(cio%path)
     err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
     if (err /= NF90_NOERR) then
-        if (present(layer_indices)) then
+        if (present(layer_names)) then
             err = my_nf90_create_ij(trim(cio%path), &
                 this%ngrid(1), this%ngrid(2), &
                 cio%fileid, &
-                layer_indices, layer_names)
+                layer_names)
         else
             err = my_nf90_create_ij(trim(cio%path), &
                 this%ngrid(1), this%ngrid(2), &
@@ -1247,7 +1250,7 @@ layer_names, create_lr)
     end if
     if (present(vname)) then
         call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk, &
-            vname, long_name, units, title)
+            vname, long_name, units)
     end if
     cio%own_fileid = .true.
 
@@ -1259,11 +1262,10 @@ layer_names, create_lr)
         print *,'Writing ',trim(path_name_lr)
         err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
         if (err /= NF90_NOERR) then
-            if (present(layer_indices)) then
+            if (present(layer_names)) then
                 err = my_nf90_create_ij(trim(path_name_lr), &
                     this%ngrid_lr(1), this%ngrid_lr(2), &
-                    cio%fileid_lr, &
-                    layer_indices, layer_names)
+                    cio%fileid_lr, layer_names)
             else
                 err = my_nf90_create_ij(trim(path_name_lr), &
                     this%ngrid_lr(1), this%ngrid_lr(2), &
@@ -1273,15 +1275,73 @@ layer_names, create_lr)
         end if
         if (present(vname)) then
             call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk, &
-                vname, long_name, units, title)
+                vname, long_name, units)
         end if
         cio%own_fileid_lr = .true.
     end if
 
-    alloc_buf = (.not.present(layer_indices)).and.present(vname)
+    alloc_buf = (.not.present(layer_names)).and.present(vname)
     call finish_cio_init(this, cio, alloc_buf)
 end subroutine nc_create
 
+function lc_weights(io_lc, MM, BB) result(wta)
+    type(ChunkIO_t), intent(IN) :: io_lc(:)
+    real*8, intent(IN) :: MM,BB
+    ! --------- Output
+    type(Weighting_t) :: wta(size(io_lc,1))
+    ! ---------- Locals
+    integer :: k
+
+    do k=1,size(io_lc,1)
+        wta(k) = weighting(io_lc(k)%buf,MM,BB)
+    end do
+
+end function lc_weights
+
+subroutine nc_create_set( &
+    this, ents, cios, wtas, &
+    ! filename() stuff...
+    laisource, cropsource, var, year, step, ver, &
+    ! ---- Optional...
+    ! filename() stuff
+    doytype, idoy, &
+    ! nc_create() stuff
+    create_lr)
+
+
+    class(Chunker_t) :: this
+    type(EntSet_t), intent(IN) :: ents
+    type(ChunkIO_t) :: cios(ents%ncover)   ! Open buffers and file handles into here
+    type(WEighting_t) :: wtas(ents%ncover)
+
+    character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
+
+    character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
+    character*(*), intent(IN) :: var    ! lc, lai, laimax, height
+    integer, intent(IN) :: year
+    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
+    ! ----- Optional
+    logical, intent(IN), OPTIONAL :: create_lr
+    character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
+    integer, intent(IN), OPTIONAL :: idoy
+
+    ! ----- Local Vars
+    integer :: k
+    type(FileInfo_t) :: info
+    type(ChunkIO_t) :: ioall
+
+    call this%file_info(info, ents, laisource, cropsource, var, year, step, ver, doytype, idoy)
+
+    call this%nc_create(ioall, &
+        weighting(this%wta1, 1d0, 0d0), &    ! Dummy; not used
+        info%dir, info%fname, var, &
+        info%long_name, info%units, &
+        ents%layer_names(), create_lr)
+    do k=1,ents%ncover
+        call this%nc_reuse_var(ioall, cios(k), (/1,1,k/), wtas(k))
+    end do
+end subroutine nc_create_set
 
 ! ===========================================================================
 ! Helper: Unzips a gzipped file in iroot, and makes it availabe in oroot
@@ -1425,19 +1485,19 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     call finish_cio_init(this, cio, (k>0))
 end subroutine nc_open
 
-function filename(this, ents, laisource, cropsource, var,step, doytype, idoy, ver)
+subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver, doytype, idoy)
     class(Chunker_t), intent(IN) :: this
+    type(FileInfo_t) :: info   ! Output variable
     type(EntSet_t), intent(IN) :: ents
     character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
 
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
+    integer, intent(IN) :: year
     character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
-    character*(*), intent(IN) :: doytype ! ann,doy,month
-    integer, intent(IN) :: idoy
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
-    ! ---------- Return Var
-    character(50) :: filename
+    character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
+    integer, intent(IN), OPTIONAL :: idoy
     ! ------------ Locals
     character*(10) :: time
 
@@ -1446,20 +1506,48 @@ function filename(this, ents, laisource, cropsource, var,step, doytype, idoy, ve
         stop
     end if
 
-    if ((var/='lc').and.(var/='lai').and.(var/='laimax').and.(var/='height')) then
-        write(ERROR_UNIT,*) 'Illegal var', var
-        stop
-    end if
-
     if (var=='laimax') then
         time = ''
-    else if (doytype=='doy') then
-        time = itoa3(idoy)//'_'
-    else if (doytype=='month') then
-        time = months(idoy)//'_'
-    else
-        write(ERROR_UNIT,*) 'Illegal doytype', doytype
-        stop
+        info%long_name = 'Leaf Area Index, Annual Maximum'
+        info%units = 'm^2 m-2'
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with laimax variable'
+            stop
+        end if
+    else if (var=='lc') then
+        info%long_name = 'Land Cover Fraction'
+        info%units = '1'
+        time = 'ann_'
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with lc variable'
+            stop
+        end if
+    else 
+        if (.not.present(doytype)) then
+            write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax or lc'
+        else
+            if (doytype=='doy') then
+                time = itoa3(idoy)
+            else if (doytype=='month') then
+                time = month(idoy)
+            else
+                write(ERROR_UNIT,*) 'Illegal doytype: ', doytype
+                stop
+            end if
+        end if
+
+        if (var == 'lai') then
+            info%long_name = 'Leaf Area Index, ' // trim(time)
+            info%units = 'm^2 m-2'
+        else if (var == 'hgt') then
+            info%long_name = 'Canopy Height'
+            info%units = ','
+        else
+            write(ERROR_UNIT,*) 'Illegal variable ',var
+            stop
+        end if
+        time = time // '_'
+
     end if
 
     if ((step/='raw').and.(step/='pure').and.(step/='trimmed').and. &
@@ -1470,9 +1558,12 @@ function filename(this, ents, laisource, cropsource, var,step, doytype, idoy, ve
         stop
     end if
 
-    filename = sres(this%ngrid(1)) // '_EntGVSD' // itoa(ents%npft) // '-' // ents%nonveg // '_' // &
-       laisource // '_' // var // '_' // time // step // '_V' // ver
-end function filename
+    info%fname = 'V'//trim(sres(this%ngrid(1))) // '_EntGVSD' // itoa2(ents%npft) // trim(ents%nonveg) // '_' // &
+        trim(laisource) // trim(cropsource) // '_' // trim(var) // '_' // &
+        itoa4(year) // '_' // trim(time) // trim(step) // '_v' // trim(ver)
+
+    info%dir = trim(step) // '_'
+end subroutine file_info
 
 
 
