@@ -234,7 +234,7 @@ function layer_names(ents)
     integer :: k
 
     do k=1,ents%ncover
-        layer_names(k) = trim(itoa2(k))//'_'//trim(ents%abbrev(k))
+        layer_names(k) = trim(ents%abbrev(k))
     end do
 end function layer_names
 

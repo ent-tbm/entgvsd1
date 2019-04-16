@@ -30,7 +30,7 @@ integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120,10)
 
 ! ================= Input Files
 !      LAI max
@@ -38,41 +38,22 @@ call chunker%nc_open_gz(io_laiin(1), DATA_DIR, DATA_INPUT, &
     'LAI/', 'global_30s_2004_max.nc', 'lai', 1)
 
 ! --- ENTPFTLC: Open outputs written by A00
-call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
-    'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-do k = 1,NENT20
-    call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
-enddo
+call chunker%nc_open_set(ent20, io_lc, &
+    'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 
 ! ================= Output Files
 
 call chunker%nc_create_set( &
-    ent20, io_laiout, lc_weights(io_lc), &
+    ent20, io_laiout(:,1), lc_weights(io_lc, 1d0, 0d0), &
     'BNU', 'M', 'laimax', 2004, 'raw', '1.1')
 
-!call chunker%nc_create(ioall_laiout, &
-!    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-!    'pure/annual/', 'entmm29_ann_laimax', 'lai', &
-!    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
-!    ent20%mvs, ent20%layer_names())
-!do k=1,NENT20
-!    call chunker%nc_reuse_var(ioall_laiout, io_laiout(k,1), &
-!        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
-!enddo
-
-
-call chunker%nc_create(ioall_err, &
-    weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    'pure/annual/', 'entmm29_ann_laierr', 'lai', &
-    'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
-    ent20%mvs, ent20%layer_names())
-do k=1,NENT20
-    call chunker%nc_reuse_var(ioall_err, io_err(k,1), &
-        (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
-enddo
+call chunker%nc_create_set( &
+    ent20, io_err(:,1), lc_weights(io_lc, 1d0, 0d0), &
+    'BNU', 'M', 'laimax', 2004, 'raw', '1.1', &
+    varsuffix='_err')
 
 call chunker%nc_create(io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
-    'pure/annual/checksum/', &
+    'raw/annual/checksum/', &
     'entmm29_ann_lai_checksum', &
     'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
 

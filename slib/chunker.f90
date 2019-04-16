@@ -12,7 +12,8 @@ module chunker_mod
 
 implicit none
 private
-    public :: Chunker_t,ChunkIO_t,weighting,Weighting_t
+    public :: Chunker_t,ChunkIO_t,FileInfo_t
+    public :: weighting,Weighting_t,lc_weights
     public :: nop_regrid_lr, default_regrid_lr
 
 ! Controls how variabls are weighted when regridded to low resolution.
@@ -223,8 +224,9 @@ type Chunker_t
 
     ! Keep track if we've globally seen an error
     integer :: nerr = 0
-    integer :: max_reads, max_writes
-    integer :: nreads, nwrites
+    integer :: max_reads, max_writes,max_ioalls
+    integer :: nioalls,nreads, nwrites
+    type(ChunkIO_t), dimension(:), allocatable :: ioalls  ! Store for nc_create_set() and nc_open_set()
     type(ChunkIO_ptr), dimension(:), allocatable :: reads,writes
 
     real*4, dimension(:,:), allocatable :: wta1  ! Default weights
@@ -239,15 +241,18 @@ contains
     procedure :: nc_reuse_var
     procedure :: nc_reuse_file
     procedure :: nc_create
+    procedure :: nc_create_set
     procedure :: nc_open_gz
     procedure :: nc_open
+    procedure :: nc_open_set
     procedure :: file_info
     procedure :: nc_check
 end type Chunker_t
 
 type FileInfo_t
     character*(30) :: dir
-    character*(40) :: fname
+    character*(60) :: leaf
+    character*(20) :: vname
     character*(50) :: long_name
     character*(20) :: units
 end type FileInfo_t
@@ -433,12 +438,12 @@ end function weighting
 ! @param im_lr,jm_lr Size of low-resolution grid
 ! @param max_reads Maximum number of files one can open for reading.
 ! @param max_writes Maximum number of files one can open for writing.
-subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,nchunk)
+subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,max_ioalls,nchunk)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
     integer, intent(IN) :: im_lr,jm_lr
     character(*) :: lr_suffix     ! Suffix to add to lr filenames (eg: 1x1, hxh, etc)
-    integer :: max_reads, max_writes
+    integer, intent(IN) :: max_reads, max_writes,max_ioalls
 !    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
     integer, intent(IN), OPTIONAL :: nchunk(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
 
@@ -483,10 +488,17 @@ subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,nch
     end if
 
     ! Allocate space to refer to managed chunk buffers
+
+    this%max_ioalls = max_ioalls
+    if (allocated(this%ioalls)) deallocate(this%ioalls)
+    allocate(this%ioalls(this%max_ioalls))
+    this%nioalls = 0
+
     this%max_reads = max_reads
     if (allocated(this%reads)) deallocate(this%reads)
     allocate(this%reads(this%max_reads))
     this%nreads = 0
+
     this%max_writes = max_writes
     if (allocated(this%writes)) deallocate(this%writes)
     allocate(this%writes(this%max_writes))
@@ -1306,7 +1318,7 @@ subroutine nc_create_set( &
     ! filename() stuff
     doytype, idoy, &
     ! nc_create() stuff
-    create_lr)
+    create_lr, varsuffix)
 
 
     class(Chunker_t) :: this
@@ -1322,6 +1334,7 @@ subroutine nc_create_set( &
     character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     ! ----- Optional
+    character*(*), intent(IN), OPTIONAL :: varsuffix
     logical, intent(IN), OPTIONAL :: create_lr
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
@@ -1329,20 +1342,80 @@ subroutine nc_create_set( &
     ! ----- Local Vars
     integer :: k
     type(FileInfo_t) :: info
-    type(ChunkIO_t) :: ioall
 
-    call this%file_info(info, ents, laisource, cropsource, var, year, step, ver, doytype, idoy)
 
-    call this%nc_create(ioall, &
+    call this%file_info(info, ents, laisource, cropsource, var, year, &
+        step, ver, doytype, idoy, varsuffix)
+
+    ! Allocate long-lived ChunkIO_t
+    this%nioalls = this%nioalls + 1
+    if (this%nioalls > this%max_ioalls) then
+        write(ERROR_UNIT,*) 'Exceeded maximum number of ioalls', trim(info%leaf)
+        stop -1
+    end if
+
+
+    call this%nc_create(this%ioalls(this%nioalls), &
         weighting(this%wta1, 1d0, 0d0), &    ! Dummy; not used
-        info%dir, info%fname, var, &
+        info%dir, info%leaf, var, &
         info%long_name, info%units, &
         ents%layer_names(), create_lr)
     do k=1,ents%ncover
-        call this%nc_reuse_var(ioall, cios(k), (/1,1,k/), wtas(k))
+        call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/), wtas(k))
     end do
 end subroutine nc_create_set
 
+! Opens a file created by nc_create_set()
+subroutine nc_open_set( &
+    this, ents, cios, &
+    ! filename() stuff...
+    laisource, cropsource, var, year, step, ver, &
+    ! ---- Optional...
+    ! filename() stuff
+    doytype, idoy, &
+    ! nc_create() stuff
+    varsuffix)
+
+
+    class(Chunker_t) :: this
+    type(EntSet_t), intent(IN) :: ents
+    type(ChunkIO_t) :: cios(ents%ncover)   ! Open buffers and file handles into here
+
+    character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
+
+    character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
+    character*(*), intent(IN) :: var    ! lc, lai, laimax, height
+    integer, intent(IN) :: year
+    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
+    ! ----- Optional
+    character*(*), intent(IN), OPTIONAL :: varsuffix
+    character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
+    integer, intent(IN), OPTIONAL :: idoy
+
+    ! ----- Local Vars
+    integer :: k
+    type(FileInfo_t) :: info
+
+    call this%file_info(info, ents, laisource, cropsource, var, year, &
+        step, ver, doytype, idoy, varsuffix)
+
+    ! Allocate long-lived ChunkIO_t
+    this%nioalls = this%nioalls + 1
+    if (this%nioalls > this%max_ioalls) then
+        write(ERROR_UNIT,*) 'Exceeded maximum number of ioalls', trim(info%leaf)
+        stop -1
+    end if
+
+    call this%nc_open(this%ioalls(this%nioalls), LC_LAI_ENT_DIR, &
+        step//'/', trim(info%leaf)//'.nc', info%vname, 0)
+    do k=1,ents%ncover
+        call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/))
+    end do
+
+    ! TODO: Check that layer_names() match!!!
+
+end subroutine nc_open_set
 ! ===========================================================================
 ! Helper: Unzips a gzipped file in iroot, and makes it availabe in oroot
 ! @param iroot Original root dir of (read-only) compressed file
@@ -1485,7 +1558,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     call finish_cio_init(this, cio, (k>0))
 end subroutine nc_open
 
-subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver, doytype, idoy)
+subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver, doytype, idoy, varsuffix)
     class(Chunker_t), intent(IN) :: this
     type(FileInfo_t) :: info   ! Output variable
     type(EntSet_t), intent(IN) :: ents
@@ -1498,8 +1571,10 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
+    character*(*), intent(IN), OPTIONAL :: varsuffix
     ! ------------ Locals
     character*(10) :: time
+    character*(20) :: xvarsuffix
 
     if ((laisource/='M').and.(laisource/='BNU')) then
         write(ERROR_UNIT,*) 'Illegal laisource', laisource
@@ -1558,11 +1633,18 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         stop
     end if
 
-    info%fname = 'V'//trim(sres(this%ngrid(1))) // '_EntGVSD' // itoa2(ents%npft) // trim(ents%nonveg) // '_' // &
-        trim(laisource) // trim(cropsource) // '_' // trim(var) // '_' // &
+    if (present(varsuffix)) then
+        xvarsuffix = varsuffix
+    else
+        xvarsuffix = ''
+    end if
+
+    info%leaf = 'V'//trim(sres(this%ngrid(1))) // '_EntGVSD' // itoa2(ents%npft) // trim(ents%nonveg) // '_' // &
+        trim(laisource) // trim(cropsource) // '_' // trim(var) // trim(xvarsuffix) // '_' // &
         itoa4(year) // '_' // trim(time) // trim(step) // '_v' // trim(ver)
 
-    info%dir = trim(step) // '_'
+    info%dir = trim(step) // '/'
+    info%vname = trim(var) // trim(xvarsuffix)
 end subroutine file_info
 
 

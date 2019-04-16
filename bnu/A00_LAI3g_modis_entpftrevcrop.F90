@@ -464,7 +464,7 @@ call chunker%nc_open_gz(io_waterpart, &
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 call chunker%nc_create(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
-    info%dir, info%fname, 'lc', &
+    info%dir, info%leaf, info%vname, &
     info%long_name, info%units, &
     ent20%layer_names())
 ! Open water first because it's used to weight others
@@ -480,13 +480,13 @@ end do
 call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
     'raw/checksum/', 'modis_ann_lc_checksum', &
     'EntMM29lc_lai_for_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
+    'checksum', '1')
 
 !     CHECKSUM
 call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
      'raw/checksum/', 'entmm29_ann_lc_checksum', &
      'EntLandcover_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
+    'checksum', '1')
 
 
 
@@ -497,21 +497,21 @@ call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     'raw/checksum/', 'entmm29_ann_npftgrid', &
      'EntPFTs_percell_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
+    'checksum', '1')
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
     'raw/checksum/', 'entmm29_ann_dompftlc', &
     'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
+    'checksum', '1')
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     'raw/checksum/', 'entmm29_ann_dompft', &
      'EntdominantPFT_check_sum_Jun_1kmx1km', &
-    'checksum', '1', TITLE_CHECKSUM)
+    'checksum', '1')
 io_dompft%regrid_lr => nop_regrid_lr
 ! ------------------------------------------------------------
 
@@ -528,7 +528,7 @@ enddo
 call chunker%file_info(info, ent20, 'BNU', 'M', 'laimax', 2004, 'raw', '1.1')
 call chunker%nc_create(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    info%dir, info%fname, 'laimax',
+    info%dir, info%leaf, info%vname, &
     info%long_name, info%units, ent20%layer_names())
 #ifdef COMPUTE_LAI
 do k=1,NENT20
@@ -550,7 +550,7 @@ enddo
 !        'checksum/', &
 !        itoa2(k)//'_'//trim(ent20%abbrev(k))//'_lai', &
 !        trim(ent20%abbrev(k)), &
-!        ent20%title(k), '1', TITLE_CHECKSUM, 1)
+!        ent20%title(k), '1', 1)
 !enddo
 !#endif
 !
@@ -559,7 +559,7 @@ enddo
 !call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
 !    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
 !    'EntLAI_check_sum_Jun_1kmx1km', &
-!    'checksum', '1', TITLE_CHECKSUM)
+!    'checksum', '1')
 !#endif
 
 
