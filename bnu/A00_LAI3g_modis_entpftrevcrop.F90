@@ -388,7 +388,7 @@ RESOUT = '1kmx1km'
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
 
 !     LAI
 call chunker%nc_open_gz(io_laiin, &
@@ -789,15 +789,15 @@ do ichunk = 1,chunker%nchunk(1)
          elseif ((k.eq.18).or.(k.eq.25)) then !*MODIS 18. Croplands-->Cereal crop *!
             ! MODIS 25. Cropland/natural vegetation-->Cereal crop *!
             if (k.eq.18) then
-               call FIX_MODIS29_NORTHPOLE_BUG(LIN,LAIMAX, lat(latout))
-               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(latout))
+               call FIX_MODIS29_NORTHPOLE_BUG(LIN,LAIMAX, lat(jj))
+               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(jj))
             endif
             call Set_pft(CROPS_C3_HERB,LIN*(1-CROPSC4HERBFRAC),LAIMAX) !*15. Ent C3 herb crop
             call Set_pft(CROPS_C4_HERB,LIN*CROPSC4HERBFRAC, LAIMAX) !*16. Ent C4 herb crop
          elseif ((k.eq.19).or.(k.eq.26))then !*MODIS 19. Croplands-->Broadleaf crop=~C4 crops, wide leaves *!
             ! *MODIS 26. Cropland/natural vegetation-->Broadleaf crop *!
             if (k.eq.19) then
-               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(latout))
+               call FIX_MODIS29_SOUTHPOLE_BUG(LIN,LAIMAX, lat(jj))
             endif
 
             call Set_pft(CROPS_C4_HERB, LIN, LAIMAX) !*16. Ent C4 herb crop
