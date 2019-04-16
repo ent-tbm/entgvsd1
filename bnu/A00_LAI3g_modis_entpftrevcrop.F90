@@ -535,7 +535,7 @@ do k=1,NENT20
 #else
 do k=CV_WATER,CV_WATER    ! Compute water LAI even if not the other LAIs
 #endif
-    call chunker%nc_reuse_var(ioall_lc, io_laiout(k), &
+    call chunker%nc_reuse_var(ioall_laiout, io_laiout(k), &
         (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
 enddo
 
