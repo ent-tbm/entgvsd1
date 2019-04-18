@@ -13,7 +13,7 @@ module chunker_mod
 implicit none
 private
     public :: Chunker_t,ChunkIO_t,FileInfo_t
-    public :: weighting,Weighting_t,lc_weights
+    public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
 
 ! Controls how variabls are weighted when regridded to low resolution.
@@ -1309,6 +1309,21 @@ function lc_weights(io_lc, MM, BB) result(wta)
     end do
 
 end function lc_weights
+
+function repeat_weights(ncover, buf, MM, BB) result(wta)
+    integer, intent(IN) :: ncover
+    real*4, dimension(:,:), target :: buf
+    real*8, intent(IN) :: MM,BB
+    ! --------- Output
+    type(Weighting_t) :: wta(ncover)
+    ! ---------- Locals
+    integer :: k
+
+    do k=1,ncover
+        wta(k) = weighting(buf,MM,BB)
+    end do
+
+end function repeat_weights
 
 subroutine nc_create_set( &
     this, ents, cios, wtas, &
