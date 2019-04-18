@@ -23,10 +23,11 @@ type(ChunkIO_t), target :: ioall_lc, io_lc(NENT20)
 type(ChunkIO_t) :: ioall_laiout(ndoy), io_laiout(NENT20,ndoy)
 type(ChunkIO_t) :: io_checksum_lclai(ndoy)
 
+type(FileInfo_t) :: info
 integer :: idoy,k
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
 
 !* Input file.
 
@@ -38,37 +39,23 @@ do idoy=1,ndoy
 enddo
 
 !     ENTPFTLC: Outputs written by A00
-call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
-    'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-do k = 1,NENT20
-    call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
-enddo
+call chunker%nc_open_set(ent20, io_lc, &
+    'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 
 ! ================= Output Files
 do idoy = 1,ndoy
-    call chunker%nc_create(ioall_laiout(idoy), &
-        weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-        'pure/doy/', 'entmm29_'//DOY(idoy)//'_lai', 'lai', &
-        'LAI output of A02', 'm2 m-2', 'LAI', &
-        ent20%mvs, ent20%layer_names())
-    do k=1,NENT20
-        call chunker%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
-            (/1,1,k/), weighting(io_lc(k)%buf, 1d0,0d0))
-    end do
+    call chunker%nc_create_set( &
+        ent20, io_laiout(:,idoy), lc_weights(io_lc, 1d0, 0d0), &
+        'BNU', 'M', 'lai', 2004, 'raw', '1.1', &
+        doytype='doy', idoy=idoy)
 
+    call chunker%file_info(info, ent20, 'BNU', 'M', 'lai', 2004, 'raw', '1.1', &
+        doytype='doy', idoy=idoy, varsuffix='_checksum')
     call chunker%nc_create(io_checksum_lclai(idoy), &
         weighting(chunker%wta1,1d0,0d0), &
-        'pure/doy/checksum/', &
-        'entmm29_'//DOY(idoy)//'_lai_checksum', &
-        'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
+        info%dir, info%leaf, info%vname, &
+        info%long_name, info%units)
 enddo
-
-call chunker%nc_check('A02_lc_lai_doy')
-#ifdef JUST_DEPENDENCIES
-stop 0
-#endif
-
-
 
 ! ====================== Done Opening Files
 

@@ -473,45 +473,50 @@ call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
 do k=1,NENT20
     if (k == CV_WATER) cycle
     call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
-        (/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))   ! Land-weighted LC
+        (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
+        !(/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))   ! Land-weighted LC
 end do
 
 !     CHECKSUM
+
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1', &
+    varsuffix = '_modis_checksum')
 call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
-    'raw/checksum/', 'modis_ann_lc_checksum', &
-    'EntMM29lc_lai_for_1kmx1km', &
-    'checksum', '1')
+    info%dir, info%leaf, info%vname, &
+    info%long_name, info%units)
 
 !     CHECKSUM
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1', &
+    varsuffix = '_checksum')
 call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
-     'raw/checksum/', 'entmm29_ann_lc_checksum', &
-     'EntLandcover_check_sum_Jun_1kmx1km', &
-    'checksum', '1')
-
-
+    info%dir, info%leaf, info%vname, &
+    info%long_name, info%units)
 
 
 ! ------------------------------------------------------------
 ! Low-res version computed specially for these
 !     NPFTGRID  Number of PFTs in a gridcell
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1', &
+    varsuffix = '_npftgrid')
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
-    'raw/checksum/', 'entmm29_ann_npftgrid', &
-     'EntPFTs_percell_check_sum_Jun_1kmx1km', &
-    'checksum', '1')
+    info%dir, info%leaf, info%vname, &
+    'Number of PFTs per gridcell', '1')
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1', &
+    varsuffix = '_dompftlc')
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
-    'raw/checksum/', 'entmm29_ann_dompftlc', &
-    'EntdominantPFT_LC_check_sum_Jun_1kmx1km', &
-    'checksum', '1')
+    info%dir, info%leaf, info%vname, &
+    'LC of Dominant PFT in each gridcell', '1')
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'raw', '1.1', &
+    varsuffix = '_dompft')
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
-    'raw/checksum/', 'entmm29_ann_dompft', &
-     'EntdominantPFT_check_sum_Jun_1kmx1km', &
-    'checksum', '1')
+    info%dir, info%leaf, info%vname, &
+    'Index of Dominant PFT in each gridcell', '1')
 io_dompft%regrid_lr => nop_regrid_lr
 ! ------------------------------------------------------------
 

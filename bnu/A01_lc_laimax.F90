@@ -26,6 +26,7 @@ type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20,one)
 type(ChunkIO_t) :: ioall_err, io_err(NENT20,one)
 type(ChunkIO_t) :: io_checksum_lclai(one)
 
+type(FileInfo_t) :: info
 integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
@@ -52,10 +53,13 @@ call chunker%nc_create_set( &
     'BNU', 'M', 'laimax', 2004, 'raw', '1.1', &
     varsuffix='_err')
 
-call chunker%nc_create(io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
-    'raw/annual/checksum/', &
-    'entmm29_ann_lai_checksum', &
-    'Sum(LC*LAI) - LAI_orig == 0', 'm2 m-2', 'Sum of LC*LAI')
+call chunker%file_info(info, ent20, &
+    'BNU', 'M', 'laimax', 2004, 'raw', '1.1', &
+    varsuffix = '_checksum')
+call chunker%nc_create( &
+    io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
+    info%dir, info%leaf, info%vname, &
+    'Sum(LC*LAI) - LAI_orig == 0', info%units)
 
 ! ====================== Done Opening Files
 

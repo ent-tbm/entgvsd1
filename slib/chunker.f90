@@ -1597,32 +1597,40 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             write(ERROR_UNIT,*) 'No doytype allowed with lc variable'
             stop
         end if
+    else if (var == 'hgt') then
+        info%long_name = 'Canopy Height'
+        info%units = ','
+        time = ''
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with hgt variable'
+            stop
+        end if
     else 
-        if (.not.present(doytype)) then
-            write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax or lc'
+        if (.not.(present(doytype).or.present(varsuffix))) then
+            write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax, lc or hgt'
+            stop
         else
-            if (doytype=='doy') then
-                time = itoa3(idoy)
-            else if (doytype=='month') then
-                time = month(idoy)
+            if (.not.present(doytype)) then
+                time = ''
             else
-                write(ERROR_UNIT,*) 'Illegal doytype: ', doytype
-                stop
+                if (doytype=='doy') then
+                    time = itoa3(idoy)//'_'
+                else if (doytype=='month') then
+                    time = month(idoy)//'_'
+                else
+                    write(ERROR_UNIT,*) 'Illegal doytype: ', doytype
+                    stop
+                end if
             end if
         end if
 
         if (var == 'lai') then
             info%long_name = 'Leaf Area Index, ' // trim(time)
             info%units = 'm^2 m-2'
-        else if (var == 'hgt') then
-            info%long_name = 'Canopy Height'
-            info%units = ','
         else
             write(ERROR_UNIT,*) 'Illegal variable ',var
             stop
         end if
-        time = time // '_'
-
     end if
 
     if ((step/='raw').and.(step/='pure').and.(step/='trimmed').and. &
