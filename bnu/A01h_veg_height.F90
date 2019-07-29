@@ -84,14 +84,14 @@ call chunker%nc_open_gz(io_sim, &
 
 !     ENTPFTLC
 call chunker%nc_open_set(ent20, io_lc, &
-    'BNU', 'M', 'lc', 2004, 'raw', '1.1')
+    'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
 
 ! ---------------- Outputs
 ! ENTPFT heights
 
 call chunker%nc_create_set( &
     ent20, io_out, lc_weights(io_lc, 1d0, 0d0), &
-    'BNU', 'M', 'hgt', 2004, 'raw', '1.1')
+    'BNU', 'M', 'hgt', 2004, 'ent17', '1.1')
 
 ! Quit if we had any problems opening files
 call chunker%nc_check('A01h_veg_heights')

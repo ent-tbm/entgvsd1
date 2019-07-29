@@ -66,8 +66,8 @@ result(fn)
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: istep  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
-    character*(*), intent(IN) :: ostep  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: istep  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: ostep  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy

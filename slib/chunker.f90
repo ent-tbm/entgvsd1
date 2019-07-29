@@ -1346,7 +1346,7 @@ subroutine nc_create_set( &
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     ! ----- Optional
     character*(*), intent(IN), OPTIONAL :: varsuffix
@@ -1401,7 +1401,7 @@ subroutine nc_open_set( &
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     ! ----- Optional
     character*(*), intent(IN), OPTIONAL :: varsuffix
@@ -1582,7 +1582,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
@@ -1656,7 +1656,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         end if
     end if
 
-    if ((step/='raw').and.(step/='pure').and.(step/='purelr').and. &
+    if ((step/='ent17').and.(step/='pure').and.(step/='purelr').and. &
         (step/='trimmed').and. &
         (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
         (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &

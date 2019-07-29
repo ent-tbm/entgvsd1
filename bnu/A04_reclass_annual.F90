@@ -52,11 +52,11 @@ subroutine do_reindex(esub)
 
     ! --- ENTPFTLC: Open outputs written by A00
     call chunker%nc_open_set(ent20, io_lc, &
-        'BNU', 'M', 'lc', 2004, 'raw', '1.1')
+        'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
 
     ! laimax
     call chunker%nc_open_set(ent20, io_laiin(:,1), &
-        'BNU', 'M', 'laimax', 2004, 'raw', '1.1')
+        'BNU', 'M', 'laimax', 2004, 'ent17', '1.1')
 
     ! Bare Soil Brightness Ratio
     call chunker%nc_open_gz(io_bs, LAI3G_DIR, LAI3G_INPUT, &
@@ -64,7 +64,7 @@ subroutine do_reindex(esub)
 
     ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &
-        'BNU', 'M', 'hgt', 2004, 'raw', '1.1')
+        'BNU', 'M', 'hgt', 2004, 'ent17', '1.1')
 
     !------------------------------------------------------------------------
     !------------------------------------------------------------------------

@@ -20,7 +20,7 @@ subroutine do_reindex(esub)
 
     type(Chunker_t) :: chunker
     ! Input files
-    type(ChunkIO_t) :: io_lc_raw(NENT20)
+    type(ChunkIO_t) :: io_lc_ent17(NENT20)
     type(ChunkIO_t) :: io_lc_pure(esub%ncover)
     type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
@@ -38,8 +38,8 @@ subroutine do_reindex(esub)
     ! OPEN INPUT FILES
 
     ! --- ENTPFTLC: Open outputs written by A00
-    call chunker%nc_open_set(ent20, io_lc_raw, &
-        'BNU', 'M', 'lc', 2004, 'raw', '1.1')
+    call chunker%nc_open_set(ent20, io_lc_ent17, &
+        'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
 
     ! LC written by A04; in the esub indexing scheme
     call chunker%nc_open_set(esub_p, io_lc_pure, &
@@ -48,7 +48,7 @@ subroutine do_reindex(esub)
     ! lai
     do idoy = 1,ndoy
         call chunker%nc_open_set(ent20, io_laiin(:,idoy), &
-            'BNU', 'M', 'lai', 2004, 'raw', '1.1', &
+            'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
             doytype='doy', idoy=idoy)
     end do
 
@@ -80,7 +80,7 @@ subroutine do_reindex(esub)
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lc_raw, io_laiin, io_bs, &
+        io_lc_ent17, io_laiin, io_bs, &
         io_laiout)
 
     call chunker%close_chunks
