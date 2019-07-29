@@ -94,8 +94,8 @@ subroutine regrid_lais(esub, fname)
     type(EntSet_t), intent(IN) :: esub
     type(IOFname_t),intent(IN), target :: fname(:)
     ! ------------ Local Vars
-    type(Chunker_t) :: chunker, chunkerlr
-    type(ChunkIO_t) :: ioall_lc2, io_lc_pure(esub%ncover)
+    type(Chunker_t), target :: chunker, chunkerlr
+    type(ChunkIO_t), target :: io_lc_pure(esub%ncover)
     type(ChunkIO_t) :: ioall_lai(size(fname,1)), io_lai(esub%ncover,size(fname,1))
     type(ChunkIO_t) :: ioall_laiout(size(fname,1)), io_laiout(esub%ncover,size(fname,1))
 
@@ -190,9 +190,13 @@ subroutine regrid_lais(esub, fname)
         do idoy=1,ndoy
         do k=1,esub%ncover
             if (fn%lc_weighting) then
-                wgt = weighting(io_lc_pure(k)%buf,1d0,0d0)
+                wgt%buf => io_lc_pure(k)%buf
+                wgt%MM = 1d0
+                wgt%BB = 030
             else
-                wgt = weighting(chunker%wta1,1d0,0d0)
+                wgt%buf => chunker%wta1
+                wgt%MM = 1d0
+                wgt%BB = 030
             end if
 
             call hntr_lr%regrid4( &
