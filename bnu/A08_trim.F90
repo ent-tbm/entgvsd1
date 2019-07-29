@@ -353,7 +353,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
              !write(*,*) 'Cell or adjacent has crops + natural',i,j,s
              write(*,*) 'Found natural veg in adjacent cells' &
                   ,i,j,covmaxk,dg
-             do m=1,12 !Error check
+             do m=1,NMONTH !Error check
                 if (covavglaim(m,covmaxk)>10.) then
                    write(*,*) 'ERRc2 bad avg lai',i,j,ii,jj,m,covmaxk &
                         ,covsumm(m,covmaxk),covavglaim(m,covmaxk)
@@ -482,7 +482,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
              vfc(i,j,c3herb_s:c4herb_s) = 0. !zero out crops
              laic(i,j,c3_grass_arct) = max(laic(i,j,c3_grass_arct), &
                   max(laic(i,j,c3herb_s),laic(i,j,c4herb_s)))
-             do m=1,12
+             do m=1,NMONTH
                 vfm(m,i,j,c3_grass_arct_s)=vfm(m,i,j,c3_grass_arct) + sum(vfm(m,i,j,c3herb_s:c4herb_s))
                 vfm(m,i,j,c3herb_s:c4herb_s) = 0. !zero out crops
                 laim(m,i,j,c3_grass_arct)=max(laim(m,i,j,c3_grass_arct), &
@@ -498,7 +498,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
              vfc(i,j,c3herb_s:c4herb_s) = 0. !zero out crops
              laic(i,j,2) = max(laic(i,j,2), &
                   max(laic(i,j,c3herb_s), laic(i,j,c4herb_s)))
-             do m=1,12
+             do m=1,NMONTH
                 vfm(m,i,j,2)=vfm(m,i,j,2) + sum(vfm(m,i,j,c3herb_s:c4herb_s))
                 vfm(m,i,j,c3herb_s:c4herb_s) = 0. !zero out crops
                 laim(m,i,j,2)=max(laim(m,i,j,2), &
@@ -732,7 +732,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
             tr%io_ann_hgt(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
-            do m=1,12
+            do m=1,NMONTH
                 !tr%io_mon_lc(k,m)%buf(i,j) = vfm(k,m)
                 tr%io_mon_lai(k,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
             end do ! m
@@ -781,7 +781,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
             ts%io_ann_hgt(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
-            do m=1,12
+            do m=1,NMONTH
                 !ts%io_mon_lc(k,m)%buf(i,j) = vfm(k,m)
                 ts%io_mon_lai(k,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
             end do ! m
@@ -989,7 +989,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
                ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
             !write(*,*) vfc(i,j,1:N_BARE)
             !write(*,*) vfm(1,i,j,1:N_BARE)
-            do m=1,12
+            do m=1,NMONTH
                 vfm(m,i,j,1:N_BARE) = vfc(i,j,N_BARE)
             enddo
         endif
@@ -1073,34 +1073,28 @@ subroutine do_trim(esub)
 
     esub_p => esub
 
-print *,'AA0'
     call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/))
 
-print *,'AA1'
     ! --- Inputs: Same for annual vs. monthly
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_lc, &
         'BNU', 'M', 'lc', 2004, 'purelr', '1.1')
 
-print *,'AA2'
     ! Bare Soil Brightness Ratio
     call chunker_pu%file_info(info, esub_p, &
         'BNU', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
     call chunker_pu%nc_open(io_bs, LC_LAI_ENT_DIR, &
         info%dir, 'bs_brightratio.nc', info%vname, 1)
-print *,'AA2'
 
     ! Simard Heights
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_hgt, &
         'BNU', 'M', 'hgt', 2004, 'purelr', '1.1')
-print *,'AA2'
 
     ! laimax
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_lai(:,1), &
         'BNU', 'M', 'laimax', 2004, 'purelr', '1.1')
-print *,'AA2'
 
 
     do m=1,NMONTH
@@ -1109,7 +1103,6 @@ print *,'AA2'
             'BNU', 'M', 'lai', 2004, 'purelr', '1.1', &
             doytype='month', idoy=m)
     end do
-print *,'AA2'
 
     ! --------------------- Outputs: trimmed
     call tr%open('trimmed', esub_p)
@@ -1130,8 +1123,6 @@ print *,'AA2'
         write(ERROR_UNIT,*) 'nchunk must be (/1,1/) for A08, due to Part 3'
         STOP
     end if
-
-print *,'AA3'
 
     ! --------------------- Process things: only one chunk
     call chunker_pu%move_to(1,1)

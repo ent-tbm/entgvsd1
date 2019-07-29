@@ -112,8 +112,12 @@ implicit none
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
 
-    call do_reindex(esub,1,6)
-    call do_reindex(esub,7,12)
+    if (nmonth == 1) then
+        call do_reindex(esub,1,1)
+    else
+        call do_reindex(esub,1,6)
+        call do_reindex(esub,7,12)
+    end if
 
 
 end program convert
