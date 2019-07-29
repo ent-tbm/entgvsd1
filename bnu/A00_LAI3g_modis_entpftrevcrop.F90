@@ -473,7 +473,7 @@ call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
 do k=1,NENT20
     if (k == CV_WATER) cycle
     call chunker%nc_reuse_var(ioall_lc, io_lc(k), &
-        (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
+        (/1,1,k/), weighting(chunker%wta1, 1d0,0d0))
         !(/1,1,k/), weighting(io_lc(CV_WATER)%buf, -1d0,1d0))   ! Land-weighted LC
 end do
 
