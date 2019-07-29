@@ -10,7 +10,7 @@ set(entgvsd_SOURCES
     chunkparams.f90
     chunker.f90
     hntr.f90
-    ent_labels.f90
+    ent_labels.F90
     assign_laimax.F90
     cropmerge_laisparse_splitbare.f90
     conversions.f
