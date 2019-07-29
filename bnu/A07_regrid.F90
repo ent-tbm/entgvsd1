@@ -150,22 +150,16 @@ subroutine regrid_lais(esub, fname)
         enddo
 
         ! ----------- Output Files
-        do k=1,esub%ncover
-            if (fn%lc_weighting) then
-                wgt = weighting(io_lc_pure(k)%buf,1d0,0d0)
-            else
-                wgt = weighting(chunker%wta1,1d0,0d0)
-            end if
-        end do
-
-        call chunkerlr%nc_create(ioall_laiout(idoy), wgt, &
+        ! No weighting needed because create_lr==.false.
+        call chunkerlr%nc_create(ioall_laiout(idoy), &
+            weighting(chunkerlr%wta1,1d0,0d0), &
             trim(fn%odir), trim(fn%oleaf), trim(fn%vname), &
             trim(fn%long_name), trim(fn%units), &
             esub%layer_names(), &
             create_lr=.false.)
         do k=1,esub%ncover
             call chunkerlr%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
-                (/1,1,k/), wgt)
+                (/1,1,k/), weighting(chunkerlr%wta1,1d0,0d0))
         end do   ! k
 
     end do    ! idoy
