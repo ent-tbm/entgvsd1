@@ -52,7 +52,7 @@ subroutine do_reindex(esub,m0,m1)
         imonth = im - m0 + 1
 
         call chunker%nc_open_set(ent20, io_laiin(:,imonth), &
-            'BNU', 'M' 'lai', 2004, 'raw', '1.1', &
+            'BNU', 'M', 'lai', 2004, 'raw', '1.1', &
             doytype='month', idoy=im)
     end do
 
@@ -72,7 +72,7 @@ subroutine do_reindex(esub,m0,m1)
         call chunker%nc_create_set( &
             esub_p, io_laiout(:,imonth), lc_weights(io_lc_pure, 1d0, 0d0), &
             'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
-            doytype='doy', idoy=im)
+            doytype='month', idoy=im)
     end do   ! imonth
 
     call chunker%nc_check('A06_reclass_monthly')

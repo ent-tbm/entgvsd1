@@ -1536,7 +1536,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     cio%own_fileid_lr = .false.
     cio%fileid_lr = 0
 
-    print *,'Reading ', oroot//dir//leaf
+    print *,'Reading ', trim(oroot)//trim(dir)//trim(leaf)
 
     ! ------- Now open the file
     cio%path = trim(oroot)//trim(dir)//trim(leaf)
@@ -1614,22 +1614,30 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         end if
     else if (var == 'hgt') then
         info%long_name = 'Canopy Height'
-        info%units = ','
+        info%units = 'm'
         time = ''
         if (present(doytype).or.present(idoy)) then
-            write(ERROR_UNIT,*) 'No doytype allowed with hgt variable'
+            write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
+            stop
+        end if
+    else if (var=='bs_brightratio') then
+        info%long_name = 'Bare Soil Brightness Ratio'
+        info%units = '1'
+        time = ''
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
             stop
         end if
     else 
         if (.not.(present(doytype).or.present(varsuffix))) then
-            write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax, lc or hgt'
+            write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax, lc or hgt or bs_brightratio'
             stop
         else
             if (.not.present(doytype)) then
                 time = ''
             else
                 if (doytype=='doy') then
-                    time = itoa3(idoy)//'_'
+                    time = DOY(idoy)//'_'
                 else if (doytype=='month') then
                     time = month(idoy)//'_'
                 else
@@ -1648,11 +1656,12 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         end if
     end if
 
-    if ((step/='raw').and.(step/='pure').and.(step/='trimmed').and. &
+    if ((step/='raw').and.(step/='pure').and.(step/='purelr').and. &
+        (step/='trimmed').and. &
         (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
         (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &
     then
-        write(ERROR_UNIT,*) 'Illegal step', step
+        write(ERROR_UNIT,*) 'Illegal step ', step
         stop
     end if
 

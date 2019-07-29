@@ -17,7 +17,7 @@ implicit none
 
 type(Chunker_t) :: chunker
 ! Input files
-type(ChunkIO_t), target :: io_lai(ndoy)
+type(ChunkIO_t), target :: io_lai(ndoy)      ! Input...
 type(ChunkIO_t), target :: io_lc(NENT20)
 ! Output files
 type(ChunkIO_t) :: io_laiout(NENT20,ndoy)

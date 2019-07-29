@@ -48,7 +48,7 @@ subroutine do_reindex(esub)
     ! lai
     do idoy = 1,ndoy
         call chunker%nc_open_set(ent20, io_laiin(:,idoy), &
-            'BNU', 'M' 'lai', 2004, 'raw', '1.1', &
+            'BNU', 'M', 'lai', 2004, 'raw', '1.1', &
             doytype='doy', idoy=idoy)
     end do
 
