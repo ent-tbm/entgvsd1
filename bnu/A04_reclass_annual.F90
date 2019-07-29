@@ -89,12 +89,12 @@ subroutine do_reindex(esub)
 
     !  checksum land  laimax
     call chunker%file_info(info, esub_p, &
-        'BNU', 'M', 'laimax', 2004, 'pure', '1.1', &
+        'BNU', 'M', 'lc', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_sum_lc(1), &
         weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
-        info%long_name, info%units)
+        'SUM(lc) - 1', info%units)
 
     call chunker%nc_check('A04_reclass_annual')
 #ifdef JUST_DEPENDENCIES
@@ -135,7 +135,6 @@ implicit none
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
-
     call do_reindex(esub)
 
 

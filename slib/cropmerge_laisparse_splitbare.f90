@@ -224,9 +224,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 
                 ! checksum lc & laimax
                 if (present(io_sum_lc)) then
-                    io_sum_lc(idoy)%buf(ic,jc) = 0.
+                    io_sum_lc(idoy)%buf(ic,jc) = -1.
                     do k=1,esub%ncover
-                        io_sum_lc(idoy)%buf(ic,jc) = io_sum_lc(idoy)%buf(ic,jc) + laic(k)
+                        io_sum_lc(idoy)%buf(ic,jc) = io_sum_lc(idoy)%buf(ic,jc) + vfc(k)
                     end do
                 end if
 
