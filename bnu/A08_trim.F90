@@ -569,6 +569,8 @@ subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
               !do ii=i-1,i+1  !ext 1 grid cell
               !   do jj=j-1,j+1
              dg=5
+! This is causing problems in trimmed_scaled_ext (but not trimmed_scaled)
+! Blocky stuff in crops_herb
              do ii=i-dg,i+dg    !ext 5 grid cells = 2.5 degrees at HXH
                 do jj=j-dg,j+dg
                    if ( (ii.ge.1).and.(ii.le.IMn) &
@@ -1136,13 +1138,13 @@ subroutine do_trim(esub)
 
     call do_part1_2_trimmed(esub, IM,JM, &
         io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
-    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
-    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+!    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
+!    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
-    call chunker_pu%write_chunks
-!    call tr%chunker%write_chunks
-!    call ts%chunker%write_chunks
-!    call mc%chunker%write_chunks
+    !call chunker_pu%write_chunks
+    call tr%chunker%write_chunks
+    call ts%chunker%write_chunks
+    call mc%chunker%write_chunks
     call nc%chunker%write_chunks
 
 
