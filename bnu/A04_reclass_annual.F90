@@ -29,15 +29,15 @@ subroutine do_reindex(esub)
 
     type(Chunker_t) :: chunker
     ! Input files
-    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
-    type(ChunkIO_t) :: ioall_laiin(one), io_laiin(NENT20,one)
+    type(ChunkIO_t) :: io_lc(NENT20)
+    type(ChunkIO_t) :: io_laiin(NENT20,one)
     type(ChunkIO_t) :: io_bs
-    type(ChunkIO_t) :: ioall_simin(one), io_simin(NENT20,one)
+    type(ChunkIO_t) :: io_simin(NENT20,one)
     ! Output files
-    type(ChunkIO_t) :: ioall_lcout(one), io_lcout(esub%ncover,one)
-    type(ChunkIO_t) :: ioall_laiout(one), io_laiout(esub%ncover,one)
+    type(ChunkIO_t) :: io_lcout(esub%ncover,one)
+    type(ChunkIO_t) :: io_laiout(esub%ncover,one)
     type(ChunkIO_t) :: io_sum_lc(one)
-    type(ChunkIO_t) :: ioall_simout(one), io_simout(esub%ncover,one)
+    type(ChunkIO_t) :: io_simout(esub%ncover,one)
     type(FileInfo_t) :: info
     integer :: k,ksub
 

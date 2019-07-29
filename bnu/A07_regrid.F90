@@ -11,45 +11,49 @@ module a07_mod
 implicit none
 
 type IOFname_t
-    character*(512) :: root
-    character*(100) :: idir,odir
-    character*(100) :: leaf
+    type(FileInfo_t) :: iinfo, oinfo
     logical :: lc_weighting
-    character*(40) :: vname
-    character*(100) :: long_name
-    character*(30) :: units
-    character*(60) :: title
 end type IOFname_t
 
 CONTAINS
 
-function make_fname( &
-    root, idir, odir, leaf, lc_weighting, &
-    vname, long_name, units, title) result(fn)
-    character*(*), intent(IN) :: root, idir, odir, leaf
+
+function make_fname(ichunker, ochunker, ents, lc_weighting, &
+    laisource, cropsource, var, year, istep, ostep, ver, &
+    doytype, idoy, varsuffix
+) result(fn)
+    class(Chunker_t), intent(IN) :: ichunker, ochunker
+    type(EntSet_t), intent(IN) :: ents
     logical, intent(IN) :: lc_weighting
-    character*(*), intent(IN) :: vname, long_name, units, title
+
+    character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
+
+    character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
+    character*(*), intent(IN) :: var    ! lc, lai, laimax, height
+    integer, intent(IN) :: year
+    character*(*), intent(IN) :: istep  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: ostep  ! raw, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
+    character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
+    integer, intent(IN), OPTIONAL :: idoy
+    character*(*), intent(IN), OPTIONAL :: varsuffix
+
+    ! ------------- Locals
     type(IOFname_t) :: fn
 
-    fn%root = root
-    fn%idir = idir
-    fn%odir = odir
-    fn%leaf = leaf
     fn%lc_weighting = lc_weighting
-    fn%vname = vname
-    fn%long_name = long_name
-    fn%units = units
-    fn%title = title
-
+    fn%iinfo = ichunker%file_info(ents, laisource, cropsource, var, year, istep, ver, doytype, idoy, varsuffix)
+    fn%oinfo = ochunker%file_info(ents, laisource, cropsource, var, year, ostep, ver, doytype, idoy, varsuffix)
 end function make_fname
 
 
 subroutine regrid_lais(esub, fname)
-    type(GcmEntSet_t), intent(IN) :: esub
+    type(GcmEntSet_t), intent(IN), taret :: esub
     type(IOFname_t),intent(IN), target :: fname(:)
     ! ------------ Local Vars
+    class(EntSet_t), pointer :: esub_p
     type(Chunker_t) :: chunker, chunkerlr
-    type(ChunkIO_t) :: ioall_lc2, io_lc2(esub%ncover)
+    type(ChunkIO_t) :: ioall_lc2, io_lc_pure(esub%ncover)
     type(ChunkIO_t) :: ioall_lai(size(fname,1)), io_lai(esub%ncover,size(fname,1))
     type(ChunkIO_t) :: ioall_laiout(size(fname,1)), io_laiout(esub%ncover,size(fname,1))
 
@@ -81,11 +85,8 @@ subroutine regrid_lais(esub, fname)
 
     ! ------------- Input Files
     ! LC written by A04; in the esub indexing scheme
-    call chunker%nc_open(ioall_lc2, LC_LAI_ENT_DIR, &
-        'pure2/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,esub%ncover
-        call chunker%nc_reuse_var(ioall_lc2, io_lc2(k), (/1,1,k/))
-    enddo
+    call chunker%nc_open_set(esub_p, io_lc_pure, &
+        'BNU', 'M', 'lc', 2004, 'pure', '1.1')
 
     ! LAI
     do idoy=1,ndoy
@@ -100,7 +101,7 @@ subroutine regrid_lais(esub, fname)
         ! ----------- Output Files
         do k=1,esub%ncover
             if (fn%lc_weighting) then
-                wgt = weighting(io_lc2(k)%buf,1d0,0d0)
+                wgt = weighting(io_lc_pure(k)%buf,1d0,0d0)
             else
                 wgt = weighting(chunker%wta1,1d0,0d0)
             end if
@@ -113,7 +114,7 @@ subroutine regrid_lais(esub, fname)
             create_lr=.false.)
         do k=1,esub%ncover
             call chunkerlr%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
-                (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
+                (/1,1,k/), weighting(io_lc_pure(k)%buf, 1d0,0d0))
         end do   ! k
 
     end do    ! idoy
@@ -136,7 +137,7 @@ subroutine regrid_lais(esub, fname)
         do idoy=1,ndoy
         do k=1,esub%ncover
             if (fn%lc_weighting) then
-                wgt = weighting(io_lc2(k)%buf,1d0,0d0)
+                wgt = weighting(io_lc_pure(k)%buf,1d0,0d0)
             else
                 wgt = weighting(chunker%wta1,1d0,0d0)
             end if
@@ -165,7 +166,8 @@ subroutine do_regrid_all_lais
     use gcm_labels_mod
     use chunkparams_mod
 
-    type(GcmEntSet_t) :: esub
+    type(GcmEntSet_t), target :: esub
+
     integer, parameter :: MAXFILES = 20 !(1 + (1 + 2 + 12))   ! LC + LAI(annual + doy + monthly)
     type(IOFname_t) :: fname(MAXFILES)
     integer :: nf,i0,i1,idoy,imonth
@@ -173,16 +175,18 @@ subroutine do_regrid_all_lais
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
 
-
     nf = 0
 
     ! ----------- Annual
     nf = nf + 1
-    fname(nf) = make_fname(LC_LAI_ENT_DIR, &
-        'pure/annual/', 'purelr/annual/', 'entmm29_ann_lc', .false., &
-        'lc', 'Ent Land Cover', '1', 'Land Cover')
+    fname(nf) = make_fname(chunker, chunkerlr, esub, &
+        .false., 'BNU', 'M', 'lc', 2004, 'pure', 'purelr', '1.1')
+
 
     nf = nf + 1
+    fname(nf) = make_fname(chunker, chunkerlr, esub, &
+        .false., 'BNU', 'M', 'laimax', 2004, 'pure', 'purelr', '1.1')
+$$$$$$$$$$$$ WORKING HERE.... $$$$$$$$$
     fname(nf) = make_fname(LC_LAI_ENT_DIR, &
         'pure2/annual/', 'purelr/annual/', 'entmm29_ann_laimax', .true., &
         'lai', 'Ent LAI (annual, DOY or monthly)', 'm^2 m-2', 'Leaf Area Index')

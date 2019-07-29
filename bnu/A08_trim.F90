@@ -13,13 +13,9 @@ implicit none
 type OutputSegment_t
     type(Chunker_t) :: chunker
 
-    type(ChunkIO_t) :: ioall_ann_lc(1)
     type(ChunkIO_t), allocatable :: io_ann_lc(:,:)          ! (esub%ncover,1)
-    type(ChunkIO_t) :: ioall_ann_lai(1)
     type(ChunkIO_t), allocatable :: io_ann_lai(:,:)        ! (esub%ncover,1)
-    type(ChunkIO_t) :: ioall_ann_height(1)
-    type(ChunkIO_t), allocatable :: io_ann_height(:,:)        ! (esub%ncover,1)
-    type(ChunkIO_t) :: ioall_mon_lai(NMONTH)
+    type(ChunkIO_t), allocatable :: io_ann_hgt(:,:)        ! (esub%ncover,1)
     type(ChunkIO_t), allocatable :: io_mon_lai(:,:)   ! (esub%ncover,NMONTH)
 contains
     procedure :: open => outputsegment_open
@@ -28,65 +24,43 @@ end type OutputSegment_t
 CONTAINS
 
 ! Opens one of trimmed, trimmed_scaled or nocrops outputs
-subroutine outputsegment_open(this, label, esub)
+subroutine outputsegment_open(this, step, esub)
     class(OutputSegment_t) :: this    ! Set of file handles to open
-    character*(*) :: label    ! 'trimmed', 'trimmed_scaled' or 'nocrops'
-    type(GcmEntSet_t), intent(IN) :: esub
+    character*(*) :: step    ! 'trimmed', 'trimmed_scaled' or 'nocrops'
+    type(EntSet_t), intent(IN) :: esub
     ! --------------------------- Locals
     integer :: m,k
 
-    call this%chunker%init(IMLR,JMLR,  0,0,'', 1, 500, (/1,1/))
+    call this%chunker%init(IMLR,JMLR,  0,0,'', 1, 500, 30, (/1,1/))
 
     ! ------- Allocate file handles
     allocate(this%io_ann_lc(esub%ncover,1))
     allocate(this%io_ann_lai(esub%ncover,1))
-    allocate(this%io_ann_height(esub%ncover,1))
+    allocate(this%io_ann_hgt(esub%ncover,1))
     allocate(this%io_mon_lai(esub%ncover,NMONTH))
 
     ! Open the files
-    call this%chunker%nc_create(this%ioall_ann_lc(1), &
-        weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/', 'ent29_ann_lc', 'lc', &
-        'Ent Landcover from A04', '1', 'Land Cover', &
-        esub%mvs, esub%layer_names(), create_lr=.false.)
-    do k=1,esub%ncover
-        call this%chunker%nc_reuse_var(this%ioall_ann_lc(1), this%io_ann_lc(k,1), &
-            (/1,1,k/), weighting(this%chunker%wta1, 1d0,0d0))
-    enddo
+    call this%chunker%nc_create_set( &
+        esub, this%io_ann_lc(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
+        'BNU', 'M', 'lc', 2004, step, '1.1', &
+        create_lr=.false.)
 
-    call this%chunker%nc_create(this%ioall_ann_lai(1), &
-        weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/', 'ent29_ann_lai', 'lai', &
-        'Ent maximum LAI for year', 'm^2 m-2', 'Leaf Area Index', &
-        esub%mvs, esub%layer_names(), create_lr=.false.)
-    do k=1,esub%ncover
-        call this%chunker%nc_reuse_var(this%ioall_ann_lai(1), this%io_ann_lai(k,1), &
-            (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
-    enddo
+    call this%chunker%nc_create_set( &
+        esub, this%io_ann_lai(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+        'BNU', 'M', 'laimax', 2004, step, '1.1', &
+        create_lr=.false.)
 
-    call this%chunker%nc_create(this%ioall_ann_height(1), &
-        weighting(this%chunker%wta1, 1d0, 0d0), &
-        label//'/', 'ent29_ann_height', 'height', &
-        'Simard plant heights', 'm', 'height', &
-        esub%mvs, esub%layer_names(), create_lr=.false.)
-    do k=1,esub%ncover
-        call this%chunker%nc_reuse_var(this%ioall_ann_height(1), this%io_ann_height(k,1), &
-            (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
-    enddo
-
+    call this%chunker%nc_create_set( &
+        esub, this%io_ann_hgt(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+        'BNU', 'M', 'hgt', 2004, step, '1.1', &
+        create_lr=.false.)
 
     do m=1,NMONTH
-        call this%chunker%nc_create(this%ioall_mon_lai(m), &
-            weighting(this%chunker%wta1, 1d0, 0d0), &
-            label//'/', 'ent29_'//MONTH(m)//'_lai', 'lai', &
-            'Ent monthly LAI', 'm^2 m-2', 'Leaf Area Index', &
-            esub%mvs, esub%layer_names(), create_lr=.false.)
-        do k=1,esub%ncover
-            call this%chunker%nc_reuse_var(this%ioall_mon_lai(m), this%io_mon_lai(k,m), &
-                (/1,1,k/), weighting(this%ioall_ann_lc(k)%buf, 1d0,0d0))
-        enddo
+        call this%chunker%nc_create_set( &
+            esub, this%io_mon_lai(:,m), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+            'BNU', 'M', 'lai', 2004, step, '1.1', &
+            doytype='month', idoy=m, create_lr=.false.)
     end do
-
 
 end subroutine outputsegment_open
 ! =======================================================================
@@ -211,8 +185,8 @@ implicit none
     integer :: m
 
     vft = vfc(esub%bare_bright) + vfc(esub%bare_dark)
-    if ((vft.lt.0.).or. &
-          ((vft.gt.0).and.(bs_brightratio.lt.0.))) then !Bad data
+    if ((vft.lt.0.and.abs(vft)<1e20).or. &
+          ((vft.gt.0.and.abs(vft)<1e20).and.(bs_brightratio.lt.0.))) then !Bad data
         write(ERROR_UNIT,*) 'ERR2: bs_brightratio',vft,bs_brightratio
         !Keep existing bright and dark
     else             !Good data
@@ -223,9 +197,9 @@ implicit none
     end if
 
     do m=1,NMONTH
-        if ((vft.lt.0.).or. &
-           ((vft.gt.0.).and.(bs_brightratio.lt.0.))) then !Bad data
-            write(ERROR_UNIT,*) 'ERR2m: bs_brightratio',vft &
+        if ((vft<0.and.abs(vft)<1e20).or. &
+           ((vft>0.and.abs(vft)<1e20).and.(bs_brightratio<0.))) then !Bad data
+            write(ERROR_UNIT,*) 'ERR2m: bs_brightratio',vft,abs(vft) &
               ,vfc(esub%bare_bright),vfc(esub%bare_dark),bs_brightratio
             !Keep existing bright and dark, or check why vft<0.
         else          !Good data
@@ -633,10 +607,10 @@ subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
 
 end subroutine fill_crops
 
-subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
+subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     type(GcmEntSet_t), intent(IN) :: esub
     integer, intent(IN) :: IM,JM
-    type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_height(:,:), io_ann_lai(:,:), io_mon_lai(:,:)
+    type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_hgt(:,:), io_ann_lai(:,:), io_mon_lai(:,:)
     ! ------------- OUTPUT
     type(OutputSegment_t) :: tr,ts
 
@@ -673,7 +647,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
             end do ! m
 
             ! Height file
-            hm(k) = io_ann_height(k,1)%buf(i,j)
+            hm(k) = io_ann_hgt(k,1)%buf(i,j)
             ! hsd = stdev
             ! vfh = vfn (LC annual), in GISS 16 pfts format (but C3 and C4 crop are summed)
             !      ===> "LC for heights", i.e. just use the global LC
@@ -755,7 +729,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
             ! Annual LC and LAI file
             tr%io_ann_lc(k,1)%buf(i,j) = vfc(k)    ! vfn in 1km
             tr%io_ann_lai(k,1)%buf(i,j) = laic(k)  ! laic in 1km
-            tr%io_ann_height(k,1)%buf(i,j) = hm(k)
+            tr%io_ann_hgt(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
             do m=1,12
@@ -804,7 +778,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
             ! Annual LC and LAI file
             ts%io_ann_lc(k,1)%buf(i,j) = vfc(k)    ! vfn in 1km
             ts%io_ann_lai(k,1)%buf(i,j) = laic(k)  ! laic in 1km
-            ts%io_ann_height(k,1)%buf(i,j) = hm(k)
+            ts%io_ann_hgt(k,1)%buf(i,j) = hm(k)
 
             ! Monthly LC and LAI files
             do m=1,12
@@ -812,7 +786,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_height, io_a
                 ts%io_mon_lai(k,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
             end do ! m
 
-            ts%io_ann_height(k,1)%buf(i,j) = hm(k)
+            ts%io_ann_hgt(k,1)%buf(i,j) = hm(k)
         end do    ! k=1,esub%ncover
         ! ----------------------------------------------------
 
@@ -872,7 +846,7 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
         ! Annual LC and LAI file
         mc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)    ! vfn in 1km
         mc%io_ann_lai(k,1)%buf(:,:) = ts%io_ann_lai(k,1)%buf(:,:)  ! laic in 1km
-        mc%io_ann_height(k,1)%buf(:,:) = ts%io_ann_height(k,1)%buf(:,:)  ! laic in 1km
+        mc%io_ann_hgt(k,1)%buf(:,:) = ts%io_ann_hgt(k,1)%buf(:,:)  ! laic in 1km
 
         ! Monthly LC and LAI files
         do m=1,NMONTH
@@ -883,15 +857,15 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
 
     ! Zero stuff out...
     mc%io_ann_lc(c3herb_s,1)%buf = 0d0
-    mc%io_ann_height(c3herb_s,1)%buf = 0d0
+    mc%io_ann_hgt(c3herb_s,1)%buf = 0d0
     ! ----------------------------------------------------
 
     ! Aliases
     vfc15 => ts%io_ann_lai(c3herb_s,1)%buf
     laic15 => ts%io_ann_lc(c3herb_s,1)%buf
-    hm15 => ts%io_ann_height(c3herb_s,1)%buf
+    hm15 => ts%io_ann_hgt(c3herb_s,1)%buf
     laiccrop => mc%io_ann_lc(c3herb_s,1)%buf
-    hmcrop => mc%io_ann_height(c3herb_s,1)%buf
+    hmcrop => mc%io_ann_hgt(c3herb_s,1)%buf
 
     !Generate fill-in crop cover from trimmed_scaled before doing nocrops
     !Herb crop only, since right now zero woody crops.
@@ -944,7 +918,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         ! Annual LC and LAI file
         nc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)
         nc%io_ann_lai(k,1)%buf(:,:) = ts%io_ann_lai(k,1)%buf(:,:)
-        nc%io_ann_height(k,1)%buf(:,:) = ts%io_ann_height(k,1)%buf(:,:)
+        nc%io_ann_hgt(k,1)%buf(:,:) = ts%io_ann_hgt(k,1)%buf(:,:)
 
         ! Monthly LC and LAI files
         do m=1,NMONTH
@@ -1029,7 +1003,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         do j=1,JM
             ! Loade data from arrays
             do k=1,esub%ncover
-                hm(k) = nc%io_ann_height(k,1)%buf(i,j)
+                hm(k) = nc%io_ann_hgt(k,1)%buf(i,j)
                 hsd(k) = 0d0
                 do m=1,NMONTH
                     vfmx(k,m) = vfm(m,i,j,k)
@@ -1045,7 +1019,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
             ! Store answers
             do k=1,esub%ncover
-                nc%io_ann_height(k,1)%buf(i,j) = hm(k)
+                nc%io_ann_hgt(k,1)%buf(i,j) = hm(k)
                 do m=1,NMONTH
                     vfm(m,i,j,k) = vfmx(k,m)
                     laim(m,i,j,k) = laimx(k,m)
@@ -1072,13 +1046,14 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 end subroutine do_part4_nocrops
 
 subroutine do_trim(esub)
-    type(GcmEntSet_t), intent(IN) :: esub
+    type(GcmEntSet_t), target, intent(IN) :: esub
     ! ----------- Locals
+    class(EntSet_T), pointer :: esub_p
     type(Chunker_t) :: chunker_pu    ! pure
 
     ! -------- Inputs: pure2
     type(ChunkIO_t) :: ioall_ann_lc,io_ann_lc(esub%ncover)
-    type(ChunkIO_t) :: ioall_ann_height(1),io_ann_height(esub%ncover,1)
+    type(ChunkIO_t) :: ioall_ann_hgt(1),io_ann_hgt(esub%ncover,1)
     type(ChunkIO_t) :: ioall_ann_lai(1),io_ann_lai(esub%ncover,1)
     type(ChunkIO_t) :: ioall_mon_lai(NMONTH),io_mon_lai(esub%ncover,NMONTH)
     type(ChunkIO_t) :: io_bs
@@ -1094,45 +1069,55 @@ subroutine do_trim(esub)
     integer :: k,m, n_bare
     real*4 :: sm
     logical :: isgood    ! .true. if this gridcell was processed by earlier stages (A00,A01,etc)
+    type(FileInfo_t) :: info
 
+    esub_p => esub
 
-    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, (/1,1/))
+print *,'AA0'
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/))
 
+print *,'AA1'
     ! --- Inputs: Same for annual vs. monthly
-    call chunker_pu%nc_open(ioall_ann_lc, LC_LAI_ENT_DIR, &
-        'purelr/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,esub%ncover
-        call chunker_pu%nc_reuse_var(ioall_ann_lc, io_ann_lc(k), (/1,1,k/))
-    enddo
+    call chunker_pu%nc_open_set( &
+        esub_p, io_ann_lc, &
+        'BNU', 'M', 'lc', 2004, 'purelr', '1.1')
 
+print *,'AA2'
     ! Bare Soil Brightness Ratio
+    call chunker_pu%file_info(info, esub_p, &
+        'BNU', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
     call chunker_pu%nc_open(io_bs, LC_LAI_ENT_DIR, &
-        'purelr/annual/', 'bs_brightratio.nc', 'bs_brightratio', 1)
+        info%dir, 'bs_brightratio.nc', info%vname, 1)
+print *,'AA2'
 
     ! Simard Heights
-    call chunker_pu%nc_open(ioall_ann_height(1), LC_LAI_ENT_DIR, &
-        'purelr/annual/', 'entmm29_ann_height.nc', 'SimardHeights', 0)
-    do k = 1,esub%ncover
-        call chunker_pu%nc_reuse_var(ioall_ann_height(1), io_ann_height(k,1), (/1,1,k/))
-    enddo
-
+    call chunker_pu%nc_open_set( &
+        esub_p, io_ann_hgt, &
+        'BNU', 'M', 'hgt', 2004, 'purelr', '1.1')
+print *,'AA2'
 
     ! laimax
-    call chunker_pu%nc_open(ioall_ann_lai(1), LC_LAI_ENT_DIR, &
-        'purelr/annual/', 'entmm29_ann_laimax.nc', 'lai', 0)
-    do k = 1,esub%ncover
-        call chunker_pu%nc_reuse_var(ioall_ann_lai(1), io_ann_lai(k,1), (/1,1,k/))
-    enddo
+    call chunker_pu%nc_open_set( &
+        esub_p, io_ann_lai(:,1), &
+        'BNU', 'M', 'laimax', 2004, 'purelr', '1.1')
+print *,'AA2'
 
 
     do m=1,NMONTH
-        call chunker_pu%nc_open(ioall_mon_lai(m), LC_LAI_ENT_DIR, &
-            'purelr/monthly/', 'entmm29_'//trim(MONTH(m))//'_lai.nc', 'lai', 0)
-        do k = 1,esub%ncover
-            call chunker_pu%nc_reuse_var(ioall_mon_lai(m), io_mon_lai(k,m), (/1,1,k/))
-        enddo
+        call chunker_pu%nc_open_set( &
+            esub_p, io_mon_lai(:,m), &
+            'BNU', 'M', 'lai', 2004, 'purelr', '1.1', &
+            doytype='month', idoy=m)
     end do
+print *,'AA2'
 
+    ! --------------------- Outputs: trimmed
+    call tr%open('trimmed', esub_p)
+    call ts%open('trimmed_scaled', esub_p)
+!    call mc%open('maxcrops', esub_p)
+!    call nc%open('nocrops', esub_p)
+    call mc%open('trimmed_scaled_crops_ext', esub_p)
+    call nc%open('trimmed_scaled_nocrops', esub_p)
 
     call chunker_pu%nc_check('A08_pu')
     call tr%chunker%nc_check('A08_tr')
@@ -1140,19 +1125,13 @@ subroutine do_trim(esub)
     call mc%chunker%nc_check('A08_mc')
     call nc%chunker%nc_check('A08_nc')
 
-
-    ! --------------------- Outputs: trimmed
-    call tr%open('trimmed', esub)
-    call ts%open('trimmed_scaled', esub)
-    call mc%open('maxcrops', esub)
-    call nc%open('nocrops', esub)
-
     ! Check for only one chunk
     if ((chunker_pu%nchunk(1)/=1).or.(chunker_pu%nchunk(2)/=1)) then
         write(ERROR_UNIT,*) 'nchunk must be (/1,1/) for A08, due to Part 3'
         STOP
     end if
 
+print *,'AA3'
 
     ! --------------------- Process things: only one chunk
     call chunker_pu%move_to(1,1)
@@ -1165,7 +1144,7 @@ subroutine do_trim(esub)
     JM = chunker_pu%chunk_size(2)
 
     call do_part1_2_trimmed(esub, IM,JM, &
-        io_ann_lc, io_bs, io_ann_height, io_ann_lai, io_mon_lai,    tr, ts)
+        io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
     call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
@@ -1190,7 +1169,7 @@ end module a08_mod
 program regrid
     use a08_mod
 implicit none
-    type(GcmEntSet_t) :: esub
+    type(GcmEntSet_t), target :: esub
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)

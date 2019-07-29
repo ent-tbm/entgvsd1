@@ -20,10 +20,10 @@ integer, parameter :: one = 1
 type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t) :: io_laiin(one)
-type(ChunkIO_t) :: ioall_lc,io_lc(NENT20)
+type(ChunkIO_t) :: io_lc(NENT20)
 ! Output files
-type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20,one)
-type(ChunkIO_t) :: ioall_err, io_err(NENT20,one)
+type(ChunkIO_t) :: io_laiout(NENT20,one)
+type(ChunkIO_t) :: io_err(NENT20,one)
 type(ChunkIO_t) :: io_checksum_lclai(one)
 
 type(FileInfo_t) :: info

@@ -29,10 +29,8 @@ implicit none
 
     ! ------ Inputs
     type(ChunkIO_t) :: io_sim    ! Simard heights
-    type(ChunkIO_t) :: ioall_lc    ! Simard heights
     type(ChunkIO_t), dimension(NENT20) :: io_lc
     ! ------ Outputs
-    type(ChunkIO_t) :: ioall_out
     type(ChunkIO_t), dimension(NENT20) :: io_out
 
     real*4 :: SHEIGHT, OHEIGHT

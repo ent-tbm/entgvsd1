@@ -14,52 +14,46 @@ implicit none
 CONTAINS
 
 subroutine do_reindex(esub,m0,m1)
-    type(GcmEntSet_t), intent(IN) :: esub
+    type(GcmEntSet_t), intent(IN), target :: esub
     integer :: m0,m1    ! First and last month to work on
 
+    class(EntSet_t), pointer :: esub_p
     type(Chunker_t) :: chunker
 
     ! ------ Input Files
-    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
-    type(ChunkIO_t) :: ioall_lc2, io_lc2(esub%ncover)
-    type(ChunkIO_t) :: ioall_laiin(m1-m0+1), io_laiin(NENT20,m1-m0+1)
+    type(ChunkIO_t) :: io_lc_raw(NENT20)
+    type(ChunkIO_t) :: io_lc_pure(esub%ncover)
+    type(ChunkIO_t) :: io_laiin(NENT20,m1-m0+1)
     type(ChunkIO_t) :: io_bs
     ! ------ Output files
-    type(ChunkIO_t) :: ioall_laiout(m1-m0+1), io_laiout(esub%ncover,m1-m0+1)
+    type(ChunkIO_t) :: io_laiout(esub%ncover,m1-m0+1)
 
 
     integer :: k,ksub
     integer :: im,imonth
 
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300)
+    esub_p => esub
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300, 20)
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
 
     ! --- ENTPFTLC: Open outputs written by A00
-    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
-        'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,NENT20
-        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
-    enddo
+    call chunker%nc_open_set(ent20, io_lc_raw, &
+        'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 
     ! LC written by A04; in the esub indexing scheme
-    call chunker%nc_open(ioall_lc2, LC_LAI_ENT_DIR, &
-        'pure2/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,esub%ncover
-        call chunker%nc_reuse_var(ioall_lc2, io_lc2(k), (/1,1,k/))
-    enddo
+    call chunker%nc_open_set(esub_p, io_lc_pure, &
+        'BNU', 'M', 'lc', 2004, 'pure', '1.1')
 
     ! laiin
     do im = m0,m1
         imonth = im - m0 + 1
 
-        call chunker%nc_open(ioall_laiin(imonth), LC_LAI_ENT_DIR, &
-            'pure/monthly/', 'entmm29_'//trim(MONTH(im))//'_lai.nc', 'lai', 0)
-        do k = 1,NENT20
-            call chunker%nc_reuse_var(ioall_laiin(imonth), io_laiin(k,imonth), (/1,1,k/))
-        enddo
+        call chunker%nc_open_set(ent20, io_laiin(:,imonth), &
+            'BNU', 'M' 'lai', 2004, 'raw', '1.1', &
+            doytype='month', idoy=im)
     end do
 
     ! bs ratio
@@ -74,16 +68,11 @@ subroutine do_reindex(esub,m0,m1)
 
     do im = m0,m1
         imonth = im - m0 + 1
-        call chunker%nc_create(ioall_laiout(imonth), &
-            weighting(chunker%wta1,1d0,0d0), &
-            'pure2/monthly/', 'entmm29_'//MONTH(im)//'_lai', 'lai', &
-            'Ent LAI on the given day', 'm^2 m-2', 'Leaf Area Index', &
-            esub%mvs, esub%layer_names())
 
-        do k=1,esub%ncover
-            call chunker%nc_reuse_var(ioall_laiout(imonth), io_laiout(k,imonth), &
-                (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
-        end do   ! k
+        call chunker%nc_create_set( &
+            esub_p, io_laiout(:,imonth), lc_weights(io_lc_pure, 1d0, 0d0), &
+            'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
+            doytype='doy', idoy=im)
     end do   ! imonth
 
     call chunker%nc_check('A06_reclass_monthly')
@@ -102,7 +91,7 @@ subroutine do_reindex(esub,m0,m1)
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lc, io_laiin, io_bs, &
+        io_lc_raw, io_laiin, io_bs, &
         io_laiout)
 
     call chunker%close_chunks
@@ -118,7 +107,7 @@ program convert
 implicit none
 
     ! -------------------------------------------------------
-    type(GcmEntSet_t) :: esub
+    type(GcmEntSet_t), target :: esub
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)

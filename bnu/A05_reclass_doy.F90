@@ -15,47 +15,41 @@ implicit none
 CONTAINS
 
 subroutine do_reindex(esub)
-    type(GcmEntSet_t), intent(IN) :: esub
+    type(GcmEntSet_t), intent(IN), target :: esub
+    class(EntSet_t), pointer :: esub_p
 
     type(Chunker_t) :: chunker
     ! Input files
-    type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
-    type(ChunkIO_t) :: ioall_lc2, io_lc2(esub%ncover)
-    type(ChunkIO_t) :: ioall_laiin(ndoy), io_laiin(NENT20,ndoy)
+    type(ChunkIO_t) :: io_lc_raw(NENT20)
+    type(ChunkIO_t) :: io_lc_pure(esub%ncover)
+    type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
     ! Output files
-    type(ChunkIO_t) :: ioall_laiout(ndoy), io_laiout(esub%ncover,ndoy)
+    type(ChunkIO_t) :: io_laiout(esub%ncover,ndoy)
 
     integer :: k,ksub
     integer :: idoy
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120)
+    esub_p => esub
+
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
 
     ! --- ENTPFTLC: Open outputs written by A00
-    call chunker%nc_open(ioall_lc, LC_LAI_ENT_DIR, &
-        'pure/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,NENT20
-        call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,k/))
-    enddo
+    call chunker%nc_open_set(ent20, io_lc_raw, &
+        'BNU', 'M', 'lc', 2004, 'raw', '1.1')
 
     ! LC written by A04; in the esub indexing scheme
-    call chunker%nc_open(ioall_lc2, LC_LAI_ENT_DIR, &
-        'pure2/annual/', 'entmm29_ann_lc.nc', 'lc', 0)
-    do k = 1,esub%ncover
-        call chunker%nc_reuse_var(ioall_lc2, io_lc2(k), (/1,1,k/))
-    enddo
+    call chunker%nc_open_set(esub_p, io_lc_pure, &
+        'BNU', 'M', 'lc', 2004, 'pure', '1.1')
 
-
-    ! laimax
+    ! lai
     do idoy = 1,ndoy
-        call chunker%nc_open(ioall_laiin(idoy), LC_LAI_ENT_DIR, &
-            'pure/doy/', 'entmm29_'//trim(DOY(idoy))//'_lai.nc', 'lai', 0)
-        do k = 1,NENT20
-            call chunker%nc_reuse_var(ioall_laiin(idoy), io_laiin(k,idoy), (/1,1,k/))
-        enddo
+        call chunker%nc_open_set(ent20, io_laiin(:,idoy), &
+            'BNU', 'M' 'lai', 2004, 'raw', '1.1', &
+            doytype='doy', idoy=idoy)
     end do
 
     ! Bare Soil Brightness Ratio
@@ -66,19 +60,13 @@ subroutine do_reindex(esub)
     ! CREATE OUTPUT NETCDF FILES
 
     do idoy = 1,ndoy
-        call chunker%nc_create(ioall_laiout(idoy), &
-            weighting(chunker%wta1,1d0,0d0), &
-            'pure2/doy/', 'entmm29_'//DOY(idoy)//'_lai', 'lai', &
-            'Ent LAI on the given day', 'm^2 m-2', 'Leaf Area Index', &
-            esub%mvs, esub%layer_names())
-        do k=1,esub%ncover
-            call chunker%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &
-                (/1,1,k/), weighting(io_lc2(k)%buf, 1d0,0d0))
-        end do   ! k
+        call chunker%nc_create_set( &
+            esub_p, io_laiout(:,idoy), lc_weights(io_lc_pure, 1d0, 0d0), &
+            'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
+            doytype='doy', idoy=idoy)
     end do   ! idoy
 
-
-    call chunker%nc_check('A05_trim_laidoy_1kmx1km')
+    call chunker%nc_check('A05_reclass_doy')
 #ifdef JUST_DEPENDENCIES
     stop 0
 #endif
@@ -92,7 +80,7 @@ subroutine do_reindex(esub)
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lc, io_laiin, io_bs, &
+        io_lc_raw, io_laiin, io_bs, &
         io_laiout)
 
     call chunker%close_chunks

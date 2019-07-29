@@ -19,9 +19,8 @@ implicit none
 type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t), target :: io_lai(nmonth)
-type(ChunkIO_t), target :: ioall_lc,io_lc(NENT20)
 ! Output files
-type(ChunkIO_t) :: ioall_laiout(nmonth), io_laiout(NENT20,nmonth)
+type(ChunkIO_t) :: io_laiout(NENT20,nmonth)
 type(ChunkIO_t) :: io_checksum_lclai(nmonth)
 type(ChunkIO_t) :: io_checksum_lclai_allmonths
 
