@@ -77,6 +77,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! call check_lc_lai_mismatch(KM,IMn,JMn,vfn,lain,'vfn',title)
 
 
+                ! Clear per-grid-cell buffers
+                vfc = 0
+                laic = 0
+
                 ! =============== Convert to GISS 16 pfts format
                 ! First simple transfers
                 do ri=1,esub%nremap
@@ -174,14 +178,18 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
                     maxpft = maxloc( vfc(1:esub%last_pft), 1 )
                     ! TODO: Why is cycle here?  Check Nancy's original code
+                    ! Original code has cycle, which I don't think was correct: because it would
+                    !    have skipped putting the variables back into arrays to be written,
+                    !    as well as split_bare_soil (see original A07.f)
                     ! if ( vfc(maxpft) < .0001 ) cycle
-
-                    call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                        vfc(maxpft), laic(maxpft), laic(maxpft))
+                    if ( vfc(maxpft) >= .0001 ) then
+                        call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                            vfc(maxpft), laic(maxpft), laic(maxpft))
+                    end if
                 end if
 
                 ! If none of the above was true, then:
-                !  a) It's not a smal lfraction
+                !  a) It's not a small fraction
                 !  b) There's no arid shrubs or cold shrubs
                 !  c) No crops
                 !  d) No clear categorization of other vegetation types in the grid cell
