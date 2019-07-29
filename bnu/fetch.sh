@@ -1,5 +1,5 @@
-rsync -av gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . --filter='+ *_qxq.nc' --filter='- *.nc' --filter='+ raw/*'
+# Fetch raw/ and pure/ --- but only _qxq lo-res versions
+rsync  -av gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . --filter='+ *_qxq.nc' --filter='- *.nc'
 
-
-#rsync --dry-run -av gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . --include='*_qxq.nc' --include='trimmed_scaled/*' --include='trimmed/*' --include='maxcrops/*' --include='nocrops/*' --include='purelr/*' --include='raw/*' --exclude='*'
-
+# Fetch everything else
+rsync  -av --filter='- /lc_lai_ent/raw' --filter='- /lc_lai_ent/pure' gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . 
