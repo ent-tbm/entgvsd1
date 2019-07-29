@@ -6,6 +6,12 @@ implicit none
 ! system.
 
 
+! Input files are read from one of four "input files roots", which are
+! defined in `slib/paths.f90` (see below).  Each root has two locations:
+! The `_DIR` version is where the original (compressed) files reside.
+! The `_INPUT` version is where EntGVSD1 uncompresses those files to for
+! its own use.
+
 ! ================ Input Files
 ! Original data input files (e.g. any file NOT created by some program
 ! in EntGVSD: Schaaf UMB files, scaled files, pre-processd.)  are
