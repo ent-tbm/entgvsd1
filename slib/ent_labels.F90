@@ -160,10 +160,10 @@ character*3, parameter :: MONTH(nmonth) = &
      /)
 
 #else
-integer, parameter :: nmonth = 1
+integer, parameter :: nmonth = 2
 character*3, parameter :: MONTH(nmonth) = &
      (/ &
-     "Jan" &
+     "Jan","Jul" &
      /)
 
 #endif
