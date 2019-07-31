@@ -109,7 +109,6 @@ subroutine regrid_lais(esub, fname)
     integer :: k
     integer :: ndoy,idoy
     type(IOFname_t), pointer :: fn
-    type(Weighting_t) :: wgt
     logical :: need_lc
 
     ndoy = size(fname,1)
@@ -190,19 +189,17 @@ subroutine regrid_lais(esub, fname)
         do idoy=1,ndoy
         do k=1,esub%ncover
             if (fn%lc_weighting) then
-                wgt%buf => io_lc_pure(k)%buf
-                wgt%MM = 1d0
-                wgt%BB = 030
+                call hntr_lr%regrid4( &
+                    io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
+                    io_lc_pure(k)%buf, 1d0, 0d0, &   ! weighting
+                    io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
             else
-                wgt%buf => chunker%wta1
-                wgt%MM = 1d0
-                wgt%BB = 030
+                call hntr_lr%regrid4( &
+                    io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
+                    chunker%wta1, 1d0, 0d0, &   ! weighting
+                    io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
             end if
 
-            call hntr_lr%regrid4( &
-                io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
-                wgt%buf, wgt%MM, wgt%BB, &    ! weighting
-                io_laiout(k,idoy)%startB(2), io_laiout(k,idoy)%chunker%chunk_size(2))
         end do    ! k=1,esub%ncover
         end do    ! idoy
 
