@@ -188,7 +188,7 @@ subroutine regrid_lais(esub, fname)
 
         do idoy=1,ndoy
         do k=1,esub%ncover
-            if (fn%lc_weighting) then
+            if (fname(idoy)%lc_weighting) then
                 call hntr_lr%regrid4( &
                     io_laiout(k,idoy)%buf, io_lai(k,idoy)%buf, &
                     io_lc_pure(k)%buf, 1d0, 0d0, &   ! weighting
@@ -201,6 +201,7 @@ subroutine regrid_lais(esub, fname)
             end if
 
         end do    ! k=1,esub%ncover
+!if (esub%ncover > 1) print *,'CS',idoy,sum(io_laiout(2,1)%buf)
         end do    ! idoy
 
         call chunker%write_chunks
