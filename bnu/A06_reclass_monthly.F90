@@ -108,16 +108,17 @@ implicit none
 
     ! -------------------------------------------------------
     type(GcmEntSet_t), target :: esub
+    integer, parameter :: monthchunk = 6
+    integer :: m0,m1
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
 
-    if (nmonth == 1) then
-        call do_reindex(esub,1,1)
-    else
-        call do_reindex(esub,1,6)
-        call do_reindex(esub,7,12)
-    end if
+    do m0=1,nmonth,monthchunk
+        m1 = min(m0+monthchunk-1, nmonth)
+
+        call do_reindex(esub,m0,m1)
+    end do
 
 
 end program convert
