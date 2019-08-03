@@ -149,8 +149,6 @@ character(*), parameter :: TITLE_LAI = &
     'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
 character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
-real*4, parameter :: undef = -1.e30   ! Missing data in NetCDF
-
 #if 0
 integer, parameter :: nmonth = 12
 character*3, parameter :: MONTH(nmonth) = &

@@ -3,9 +3,8 @@
 !Routines for doing matrix arithmetic.
 !*Specialized to exclude UNDEF, NaN.
 
-#define GCM_DRV
-
       module arrayutil
+      use chunker_mod, only : FillValue
       
       implicit none
       private
@@ -14,17 +13,13 @@
       public IJMULT,IJDIV,IJADD,IJSUB  !real*8 functions
       public IJMULT4,IJADD4,IJSUB4,IJDIV4 !real*4 functions
 
-      !---- FROM OTHER MODULES ---
-      !use CONSTANT, only : undef
-      real*4, parameter :: undef = -1.e30
-  
       contains
 
   !---- Utility functions -----------------------------------
 
       logical function NONUM(num)
       real*8 :: num
-      if ((num.le.undef).or.(isNaN(num))) then
+      if ((num.le.FillValue).or.(isNaN(num))) then
          NONUM = .true.
       else
          NONUM = .false.
@@ -34,7 +29,7 @@
       function NONUM4(num) Result(NONUMres)
       real*4 :: num
       logical :: NONUMres
-      if ((num.le.undef).or.(isNaN(num))) then
+      if ((num.le.FillValue).or.(isNaN(num))) then
          NONUMres = .true.
       else
          NONUMres = .false.
@@ -43,7 +38,7 @@
 
 
       function CHECKNUM(num) Result(CHECKres)
-      !Return 0.0 if num is undef or NaN
+      !Return 0.0 if num is FillValue or NaN
       real*8 :: num
       real*8 :: CHECKres
       if (NONUM(num)) then
@@ -55,7 +50,7 @@
 
 
       function CHECKNUM4(num) Result(CHECKres)
-      !Return 0.0 if num is undef or NaN
+      !Return 0.0 if num is FillValue or NaN
       real*4 :: num
       real*4 :: CHECKres
       if (NONUM4(num)) then
@@ -66,7 +61,7 @@
       end function CHECKNUM4
 
       function DIV0(num, denom) Result(DIVres)
-      !Returns 0 if divide by zero or divide by undef.
+      !Returns 0 if divide by zero or divide by FillValue.
       real*8 :: num, denom, DIVres
       real*8 :: n,d
 
@@ -81,7 +76,7 @@
       end function DIV0
 
       function DIV04(num, denom) Result(DIVres)
-      !Returns 0 if divide by zero or divide by undef.
+      !Returns 0 if divide by zero or divide by FillValue.
       real*4 :: num, denom, DIVres
       real*4 :: n,d
 

@@ -409,7 +409,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
 
     !*** PRESCRIBED GRID CELL FIXES FOR 720X360 *********
     if (.not.naturalvegfound) then !Assign bare
-       if (bs_brightratio(i,j).eq.-1.e30) then
+       if (bs_brightratio(i,j).eq.FillValue) then
           !Find bs_brightratio in adjacent cells
           br = 0.
           brcov = 0.
@@ -435,7 +435,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
                 br=0.4        !This gives 0.5*.4 + 0.*0. = 0.2 albedo
              else
                 write(*,*) "Assign specific grid cells"
-                br=-1.e30     !Assign undef to make sure no wrong values.
+                br=FillValue     !Assign FillValue to make sure no wrong values.
              endif
           endif
        else !bs_brightratio was defined
@@ -443,7 +443,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        endif
 
        !Assign bare soil fractions
-       if (br.ne.-1.e30) then  !Adjacent bs_brightratio found
+       if (br.ne.FillValue) then  !Adjacent bs_brightratio found
           vfc(i,j,esub%bare_bright) = vfc(i,j,esub%bare_bright) + &
                sum(vfc(i,j,c3herb_s:c4herb_s))*br
           vfc(i,j,esub%bare_dark) = vfc(i,j,esub%bare_dark) + &
@@ -660,7 +660,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
             bs_brightratio = io_bs%buf(i,j)
 
             ! Make sure this gridcell has been defined in inputs
-            isgood = (bs_brightratio /= undef)
+            isgood = (bs_brightratio /= FillValue)
         end do    ! k=1,esub%ncover
         ! ----------------------------------------------------
 

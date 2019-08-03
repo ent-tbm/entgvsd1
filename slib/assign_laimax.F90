@@ -58,7 +58,7 @@ subroutine assign_laimax(chunker, &
 
                     ! If this LC type does NOT participate in this 1km grid cell,
                     ! then LAI needs to be zero.
-                    if ((io_lc(k)%buf(ic,jc) <= 0d0).or.(io_lc(k)%buf(ic,jc) == undef)) then
+                    if ((io_lc(k)%buf(ic,jc) <= 0d0).or.(io_lc(k)%buf(ic,jc) == FillValue)) then
                         ! If lc==0, fix LAImax=0 (enforce the invariant)
                         io_laiout(k,idoy)%buf(ic,jc) = 0d0
                     else    ! non-zero LC type

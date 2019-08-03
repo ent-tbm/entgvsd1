@@ -677,7 +677,7 @@ do ichunk = 1,chunker%nchunk(1)
       CROPSSHRUBNORM=io_05crops%buf(ic,jc)
       CROPSTREENORM=io_06crops%buf(ic,jc)
       CROPSC4HERBFRAC=io_04cropsm%buf(ic,jc)
-      if (CROPSC4HERBFRAC.eq.undef) then
+      if (CROPSC4HERBFRAC.eq.FillValue) then
           CROPSC4HERBFRAC = 0
       endif
 
@@ -957,7 +957,7 @@ subroutine accum_lr_stats(this)
             if (k == CV_WATER) cycle
 
             lc = io_lc(k)%buf_lr(ic,jc) 
-            if ((lc == 0).or.(lc==undef)) cycle
+            if ((lc == 0).or.(lc==FillValue)) cycle
 
             ! Count number of PFTs in the gridcell
             NPFTGRID = NPFTGRID + 1.

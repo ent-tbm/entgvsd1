@@ -15,6 +15,7 @@ private
     public :: Chunker_t,ChunkIO_t,FileInfo_t
     public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
+    public :: FillValue
 
 ! Controls how variabls are weighted when regridded to low resolution.
 ! The variable buf points to a buffer, of same shape as ChunkIO_t
@@ -257,6 +258,8 @@ type FileInfo_t
     character*(20) :: units
 end type FileInfo_t
 
+
+    real*4, parameter :: FillValue=-1.e30
 
 CONTAINS
 
@@ -544,7 +547,7 @@ subroutine default_regrid_lr(this)
     ! Convert zeros to NaN in regridded data (for plotting)
     do jc=1,this%chunker%chunk_size_lr(2)
     do ic=1,this%chunker%chunk_size_lr(1)
-        if (this%buf_lr(ic,jc) == 0) this%buf_lr(ic,jc) = undef
+        if (this%buf_lr(ic,jc) == 0) this%buf_lr(ic,jc) = FillValue
     end do
     end do
 
@@ -882,9 +885,9 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names) result(status)
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlat, 'units', 'degrees_north')
     if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlon, '_FillValue', -1.e30)
+    status=nf90_put_att(ncid, idlon, '_FillValue', FillValue)
     if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlat, '_FillValue', -1.e30)
+    status=nf90_put_att(ncid, idlat, '_FillValue', FillValue)
 
     status=nf90_enddef(ncid)
     if (status /= NF90_NOERR) return
@@ -1004,7 +1007,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_put_att(ncid,varid,"long_name", trim(long_name))
     call handle_nf90_error(status,  'nf90_put_att  long_name')
     status=nf90_put_att(ncid,varid,"units", units)
-    status=nf90_put_att(ncid,varid,'_FillValue',-1.e30)
+    status=nf90_put_att(ncid,varid,'_FillValue',FillValue)
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
          trim(long_name))
 
