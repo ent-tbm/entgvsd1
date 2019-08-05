@@ -105,16 +105,20 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                             + io_lcin(CROPS_C4_HERB)%buf(ic,jc) *io_laiin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
                             ) / c3c4_crops
                         vfc(esub%crops_herb) = c3c4_crops
-                    else
+
+
+
+                        if (present(io_simout)) then
+                            io_simout(esub%crops_herb,idoy)%buf(ic,jc) = ( &
+                                io_lcin(CROPS_C3_HERB)%buf(ic,jc) * io_simin(CROPS_C3_HERB,idoy)%buf(ic,jc) + &
+                                io_lcin(CROPS_C4_HERB)%buf(ic,jc) * io_simin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
+                                ) / c3c4_crops
+
+                        end if
+                    else   ! c3c4_crops <= 0
                         laic(esub%crops_herb) = 0.
                         vfc(esub%crops_herb) = 0.
-                    end if
-
-                    if (present(io_simout)) then
-                        io_simout(esub%crops_herb,idoy)%buf(ic,jc) = ( &
-                            io_lcin(CROPS_C3_HERB)%buf(ic,jc) * io_simin(CROPS_C3_HERB,idoy)%buf(ic,jc) + &
-                            io_lcin(CROPS_C4_HERB)%buf(ic,jc) * io_simin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
-                            ) / c3c4_crops
+                        io_simout(esub%crops_herb,idoy)%buf(ic,jc) = FillValue
                     end if
                 end if
 
