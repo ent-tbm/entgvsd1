@@ -103,8 +103,10 @@ subroutine do_reindex(esub)
 
     call cropmerge_laisparse_splitbare(esub, chunker, one, &
 #ifdef ENTGVSD_DEBUG
-        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+!        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
+!        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+    11,12, &
+    5,7, &
 #else
         1,chunker%nchunk(2), &
         1,chunker%nchunk(1), &

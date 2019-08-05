@@ -104,8 +104,10 @@ stop 0
 ! it chooses a land area in Asia
 
 #ifdef ENTGVSD_DEBUG
-do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
-do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
+!do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
+!do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
+do jchunk = 11,12
+do ichunk = 5,7
 #else
 do jchunk = 1,chunker%nchunk(2)
 do ichunk = 1,chunker%nchunk(1)
@@ -125,7 +127,7 @@ do ichunk = 1,chunker%nchunk(1)
             if (k == CV_WATER) then
                 OHEIGHT = 0d0
             else
-                OHEIGHT = undef   ! Default if nothing in this PFT
+                OHEIGHT = FillValue   ! Default if nothing in this PFT
                 if (io_lc(k)%buf(ic,jc) > 0) then
                     ! Lookup what the height should be
                     SHEIGHT = io_sim%buf(ic,jc)
