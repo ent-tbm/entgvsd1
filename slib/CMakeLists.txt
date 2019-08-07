@@ -14,6 +14,7 @@ set(entgvsd_SOURCES
     assign_laimax.F90
     cropmerge_laisparse_splitbare.f90
     conversions.f
+    soilalbedo.F90
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 

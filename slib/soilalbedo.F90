@@ -44,31 +44,31 @@
       write(0,*) 'nf_redef ', status, ncid
       !call handle_nf_error(status,  'nf_redef')
       !Put metadata global attributes
-      text = 'Ent Global Vegetation Structure Dataset (Ent GVSD) '//
-     &     Description
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Description'
-     &     ,len(trim(text)), trim(text))
+      text = 'Ent Global Vegetation Structure Dataset (Ent GVSD) '// &
+          Description
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Description' &
+          ,len(trim(text)), trim(text))
       call handle_nf_error(status, 'nf_global'//trim(text))
       text = Comments
-!      'e.g. TEMPORARY working version '//
-!     &     'bare/bright Carrer soil albedo at HxH capped at 0.5. '//
-!     &     'With ext1 files having crops LAI extended by 5 grid cells.'
+!      'e.g. TEMPORARY working version '// &
+!          'bare/bright Carrer soil albedo at HxH capped at 0.5. '// &
+!          'With ext1 files having crops LAI extended by 5 grid cells.'
 !      !write(0,*) 'len, text: ',len(trim(text)), trim(text)
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Comments'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Comments' &
+          ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       text = 'NASA Goddard Institute for Space Studies'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Institution'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Institution' &
+          ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       text = 'Nancy.Y.Kiang@nasa.gov'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'Contact'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'Contact' &
+          ,len(trim(text)), trim(text))
       call handle_nf_error(status, '')
       call DATE_AND_TIME(date)
       text = date//' Created'
-      status=nf_put_att_text(ncid, NF_GLOBAL, 'History'
-     &     ,len(trim(text)), trim(text))
+      status=nf_put_att_text(ncid, NF_GLOBAL, 'History' &
+          ,len(trim(text)), trim(text))
       call handle_nf_error(status,  'nf_put_att NF_GLOBAL')
 
       status=nf_enddef(ncid)      
@@ -104,9 +104,9 @@
       !character*118 :: GISSBANDStxt = !len = 6*19 + 4
       !Below parameters are moved to EntGVSD_util.f
 !     integer, parameter :: N_BANDS = 6 !GISS 6 spectral bands
-!      character*101, parameter :: GISSBANDStxt = 
-!     &     'VIS (330-770), NIR1 (770-860), NIR2 (860-1250), '//
-!     &     'NIR3 (1250-1500), NIR4 (1500-2200), NIR5 (2200-4000)'
+!      character*101, parameter :: GISSBANDStxt =  &
+!          'VIS (330-770), NIR1 (770-860), NIR2 (860-1250), '// &
+!          'NIR3 (1250-1500), NIR4 (1500-2200), NIR5 (2200-4000)'
 
       integer, parameter :: IM = IMH 
       integer, parameter :: JM = JMH 
@@ -134,8 +134,8 @@
       integer, parameter :: DARK = 2
       
       ! netcdf names in Carrer soil albedo files
-      character*4 :: varnames(4) = (/
-     &     'max ','mean','min ','std ' /)
+      character*4 :: varnames(4) = (/ &
+          'max ','mean','min ','std ' /)
       character*16 :: vark
       integer, parameter :: MMAX=1
       integer, parameter :: MMEAN=2
@@ -149,16 +149,16 @@
 
       !From Judith Lean 0 km solar surface irradiance (from 2006 version)
       !Fraction of shortwave 300-4000 nm in MODIS & GISS band portions.
-      real*4 :: fracSW_MG(8) =  (/
-     &     0.105992883,         !1 300-400 nm
-     &     0.992030205,	!2 400-700 nm
-     &     0.174912449,	!3 700-770 nm
-     &     0.203020351,	!4 770-860 nm
-     &     0.477761295,	!5 860-1250 nm
-     &     0.089450965,	!6 1250-1500 nm
-     &     0.17866227,  !7 1500-2200 nm
-     &     0.051105118  !8 2200-4000 nm
-     &   /)
+      real*4 :: fracSW_MG(8) =  (/ &
+          0.105992883, &        !1 300-400 nm
+          0.992030205,&	!2 400-700 nm
+          0.174912449,&	!3 700-770 nm
+          0.203020351,&	!4 770-860 nm
+          0.477761295,&	!5 860-1250 nm
+          0.089450965,&	!6 1250-1500 nm
+          0.17866227,&  !7 1500-2200 nm
+          0.051105118 & !8 2200-4000 nm
+        /)
 
       real*4 :: lc_ice(IM,JM)   !Permanent ice cover to be masked out
       real*4 :: lc_water(IM,JM) !Water cover to be masked out
@@ -204,27 +204,27 @@
       
       !* Paths.   !* UPDATE ME *!
       DIR = '/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/'
-      PATHin = trim(DIR)//'Soil/Carrer/'//
-!     &     'Carrer2014_means_2004_Qingsong/'//
-     &     'Montes_Carrer_temporal_avg_NKfix/'  !Fixed flipped latitude
-      PATHout ='/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/'//
-     &     'Soil/Carrer/CarrerGISS_soil_albedo/'
+      PATHin = trim(DIR)//'Soil/Carrer/'// &
+!          'Carrer2014_means_2004_Qingsong/'// &
+          'Montes_Carrer_temporal_avg_NKfix/'  !Fixed flipped latitude
+      PATHout ='/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/'// &
+          'Soil/Carrer/CarrerGISS_soil_albedo/'
 
       !* Make Output file - netcdf - ##UPDATE ME##
-      fileout = trim(PATHout)//
-     &     'CarrerGISS_soil_albedo_multiband_annual_2004_'//
-     &     trim(version)//"_"//trim(res)//'.nc'
-      call my_nf_create_ij(trim(fileout),IM,JM,
-     &     ncidout,dimlon,dimlat)
+      fileout = trim(PATHout)// &
+          'CarrerGISS_soil_albedo_multiband_annual_2004_'// &
+          trim(version)//"_"//trim(res)//'.nc'
+      call my_nf_create_ij(trim(fileout),IM,JM, &
+          ncidout,dimlon,dimlat)
       write(0,*) "dimlon, dimlat", dimlon, dimlat
-      call my_nf_defglobal(trim(fileout),
-     &     'Soil albedo derived from D. Carrer et al. (2014) '//
-     &     'MODIS soil albedos.  Created at same as v1.0b Ent GVSD.',
-     &     'Includes copy of source VIS and NIR annual averages. '//
-     &     'Partial coastline and permanent ice cells filled by '//
-     &     'nearest-5 neighbor. fringeice-uses cell albedo if no '//
-     &     'neighbor; shows islands.  noice-undef if no neighbor. '//
-     &     ' Fortran program:  Carrer_soilalbedo_to_GISS.f')
+      call my_nf_defglobal(trim(fileout), &
+          'Soil albedo derived from D. Carrer et al. (2014) '// &
+          'MODIS soil albedos.  Created at same as v1.0b Ent GVSD.', &
+          'Includes copy of source VIS and NIR annual averages. '// &
+          'Partial coastline and permanent ice cells filled by '// &
+          'nearest-5 neighbor. fringeice-uses cell albedo if no '// &
+          'neighbor; shows islands.  noice-undef if no neighbor. '// &
+          ' Fortran program:  Carrer_soilalbedo_to_GISS.f')
       status = nf_close(ncidout)
       status = nf_open(trim(fileout),NF_WRITE,ncidout)
       write(*,*) status, 'nf_open out ',trim(fileout)
@@ -232,28 +232,28 @@
       status = nf_redef(ncidout)
       status=nf_def_dim(ncidout, 'band', N_BANDS, dimband)
       write(0,*) 'GISSBANDStxt:', GISSBANDStxt
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'GISS_bands', 'description',GISSBANDstxt)
+      status = my_nf_inq_put_att_any(ncidout, &
+          'GISS_bands', 'description',GISSBANDstxt)
       write(0,*) 'def band status',status, dimband
       status = nf_enddef(ncidout)
 
       !* Input file - Permanent ice and water -----------------------------
-      filein = 'lc_lai_ent/EntMM_lc_max_'//trim(res)//'.'//
-     &     trim(version)//'.nc'
+      filein = 'lc_lai_ent/EntMM_lc_max_'//trim(res)//'.'// &
+          trim(version)//'.nc'
       print *, trim(filein)
       status = nf_open(trim(filein),0,ncidin)
-      status = my_nf_inq_get_var_real32_2(ncidin,'permanent_ice'
-     &        ,varid,varin)
+      status = my_nf_inq_get_var_real32_2(ncidin,'permanent_ice' &
+             ,varid,varin)
       lc_ice(:,:) = varin(:,:)
-      status = my_nf_inq_get_var_real32_2(ncidin,'water'
-     &        ,varid,varin)
+      status = my_nf_inq_get_var_real32_2(ncidin,'water' &
+             ,varid,varin)
       lc_water(:,:) = varin(:,:)
       status = nf_close(ncidin)
       
       !* Input file - VIS -------------------------------------------------
       !filein = trim(PATHin)//'VIS_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME
-      filein = trim(PATHin)//
-     &     'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
+      filein = trim(PATHin)// &
+          'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
       write(*,*) 'filein: ', filein
       status = nf_open(trim(filein),0,ncidin)
       write(*,*) status, 'nf_open in ',trim(filein)
@@ -262,8 +262,8 @@
       do k=1,4
          vark = 'soilalb_VIS_'//trim(varnames(k))
          write(*,*) 'VIS ', vark
-         status = my_nf_inq_get_var_real32_2(ncidin,trim(vark)
-     &        ,varid,varin)
+         status = my_nf_inq_get_var_real32_2(ncidin,trim(vark) &
+             ,varid,varin)
          write(*,*) 'Got here 1', status
          albmodis(:,:,MODISVIS, k) = varin(:,:)
          write(*,*) 'Got here'
@@ -280,8 +280,8 @@
 
       !* Input file - NIR --------------------------------------------
       !filein = trim(PATHin)//'NIR_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME
-!    filein = trim(PATHin)//!'NIR_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME
-!    &     'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
+!    filein = trim(PATHin)//!'NIR_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME &
+!         'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
 !      write(*,*) 'filein: ', filein
 !      status = nf_open(trim(filein),0,ncidin)
 !      write(*,*) status, 'nf_open in ',trim(filein)
@@ -290,8 +290,8 @@
       !* Get NIR
       do k=1,4
          vark = 'soilalb_NIR_'//trim(varnames(k))
-         status = my_nf_inq_get_var_real32_2(ncidin,trim(vark)
-     &        ,varid,varin)
+         status = my_nf_inq_get_var_real32_2(ncidin,trim(vark) &
+             ,varid,varin)
          albmodis(:,:,MODISNIR,k) = varin
          
          !* Before writing, check against land mask for any undef on land.
@@ -310,56 +310,56 @@
       albSW(:,:) = undef_out
       do i=I0o,I1o
          do j=J0o,J1o
-            if ((albmodis(i,j,MODISVIS,MMEAN).eq.undef_out).or.
-     &           (albmodis(i,j,MODISNIR,MMEAN).eq.undef_out)) then
+            if ((albmodis(i,j,MODISVIS,MMEAN).eq.undef_out).or. &
+                (albmodis(i,j,MODISNIR,MMEAN).eq.undef_out)) then
                albSW(i,j) = undef_out
             else
-               albSW(i,j) = 
-     &              ( albmodis(i,j,MODISVIS,MMEAN)*sum(fracSW_MG(1:2)) !( fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) +
-     &              + albmodis(i,j, MODISNIR,MMEAN)*
-     &              sum(fracSW_MG(3:8)) )/sum(fracSW_MG(1:8)) 
+               albSW(i,j) =  &
+                   ( albmodis(i,j,MODISVIS,MMEAN)*sum(fracSW_MG(1:2)) !( fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
+                   + albmodis(i,j, MODISNIR,MMEAN)* &
+                   sum(fracSW_MG(3:8)) )/sum(fracSW_MG(1:8)) 
             endif
          enddo
       enddo
       write(*,*) 'Got here SW'
-      status = my_nf_inq_def_put_var_real32_2(ncidout,
-     &     IM,JM,1,IM,1,JM,dimlon,dimlat,
-     &     'albedo_soil_SW',
-     &     'soil albedo shortwave',
-     &     'fraction', albSW)
-       status = my_nf_inq_put_att_any(ncidout,
-     &     'albedo_soil_SW', 'description',
-     &     'Carrer annual mean soil albedo shortwave 400-4000 nm')
+      status = my_nf_inq_def_put_var_real32_2(ncidout, &
+          IM,JM,1,IM,1,JM,dimlon,dimlat, &
+          'albedo_soil_SW', &
+          'soil albedo shortwave', &
+          'fraction', albSW)
+       status = my_nf_inq_put_att_any(ncidout, &
+          'albedo_soil_SW', 'description', &
+          'Carrer annual mean soil albedo shortwave 400-4000 nm')
 
       
       !* Put spectral breakdown into GISS bands ------------------------
       albgiss(:,:,:) = undef_out
       do i=I0o,I1o
          do j=J0o,J1o
-            if ((albmodis(i,j,MODISVIS,MMEAN).eq.undef_out).or.
-     &           (albmodis(i,j,MODISNIR,MMEAN).eq.undef_out)) then
+            if ((albmodis(i,j,MODISVIS,MMEAN).eq.undef_out).or. &
+                (albmodis(i,j,MODISNIR,MMEAN).eq.undef_out)) then
                albgiss(i,j,1:N_BANDS) = undef_out
             else
-               albgiss(i,j,GISS300_770NM) =
-     &              ( albmodis(i,j,MODISVIS,MMEAN) *
-     &              (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) +
-     &              albmodis(i,j,MODISNIR,MMEAN)*fracSW_MG(nm700_770))
-     &              /( fracSW_MG(nm300_400) + fracSW_MG(nm400_700) +
-     &              fracSW_MG(nm700_770) )
+               albgiss(i,j,GISS300_770NM) = &
+                   ( albmodis(i,j,MODISVIS,MMEAN) * &
+                   (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
+                   albmodis(i,j,MODISNIR,MMEAN)*fracSW_MG(nm700_770)) &
+                   /( fracSW_MG(nm300_400) + fracSW_MG(nm400_700) + &
+                   fracSW_MG(nm700_770) )
                do k=2,N_BANDS
                   albgiss(i,j,k) = albmodis(i,j,MODISNIR,MMEAN) !All NIR bands
                end do
             endif
          enddo
       enddo
-      status = my_nf_inq_def_put_var_real32_3t(ncidout,
-     &     IM,JM,N_BANDS,
-     &     1,IM,1,JM,dimlon,dimlat,dimband,
-     &     'albedo_soil_giss',
-     &     'soil albedo GISS bands', 'fraction', albgiss)
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'albedo_soil_giss', 'description',
-     &     'Carrer annual mean soil albedo, GISS GCM spectral bands')
+      status = my_nf_inq_def_put_var_real32_3t(ncidout, &
+          IM,JM,N_BANDS, &
+          1,IM,1,JM,dimlon,dimlat,dimband, &
+          'albedo_soil_giss', &
+          'soil albedo GISS bands', 'fraction', albgiss)
+      status = my_nf_inq_put_att_any(ncidout, &
+          'albedo_soil_giss', 'description', &
+          'Carrer annual mean soil albedo, GISS GCM spectral bands')
 
 !      !------ Old VEG bare_bright vs. bare_dark soil fractions
 !      !* Calculate GISS ModelE grey albedo bright vs. dark fractions
@@ -377,8 +377,8 @@
                      !All permanent ice, no soil.
                      fracbd(i,j,k,BRIGHT) = undef_out
                      fracbd(i,j,k,DARK) = undef_out
-                  elseif (((lc_ice(i,j)+lc_water(i,j)).gt.0.).and.
-     &                   ((lc_ice(i,j)+lc_water(i,j)).lt.1.0)) then  !Partial
+                  elseif (((lc_ice(i,j)+lc_water(i,j)).gt.0.).and. &
+                        ((lc_ice(i,j)+lc_water(i,j)).lt.1.0)) then  !Partial
                      !Search for nearest grid cell up to 5 that is all ground
                      s = undef_out
                      do dg=1,5
@@ -402,8 +402,8 @@
 !                     !fracgrey(i,j,:) = undef_out
 !                     !*fringeice - Or, since there is some ground, assign i,j value there.
 !                     !  Leaves some coastal ice fringe.
-                      fracgrey(i,j,BRIGHT) =
-     &                     min(0.5, albgiss(i,j,k))/0.5 !
+                      fracgrey(i,j,BRIGHT) = &
+                          min(0.5, albgiss(i,j,k))/0.5 !
                       fracgrey(i,j,DARK) = 1.0 - fracgrey(i,j,BRIGHT)
                    else
                       fracbd(i,j,k,BRIGHT) = min(s,0.5)/0.5
@@ -422,25 +422,25 @@
         enddo
        enddo
       
-      status = my_nf_inq_def_put_var_real32_3t(ncidout,
-     &     IM,JM,N_BANDS,
-     &     1,IM,1,JM,dimlon,dimlat,dimband,
-     &     'bare_bright_band',
-     &     'soil albedo bright fraction in GISS spectral bands',
-     &     'fraction', fracbd(:,:,:,BRIGHT))
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'bare_bright_band', 'description',
-     &     'Annual mean soil albedo band bright fraction')
+      status = my_nf_inq_def_put_var_real32_3t(ncidout, &
+          IM,JM,N_BANDS, &
+          1,IM,1,JM,dimlon,dimlat,dimband, &
+          'bare_bright_band', &
+          'soil albedo bright fraction in GISS spectral bands', &
+          'fraction', fracbd(:,:,:,BRIGHT))
+      status = my_nf_inq_put_att_any(ncidout, &
+          'bare_bright_band', 'description', &
+          'Annual mean soil albedo band bright fraction')
       
-      status = my_nf_inq_def_put_var_real32_3t(ncidout,
-     &     IM,JM,N_BANDS,
-     &     1,IM,1,JM,dimlon,dimlat,dimband,
-     &     'bare_dark_band',
-     &     'soil albedo dark fraction in GISS spectral bands',
-     &     'fraction', fracbd(:,:,:,DARK))
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'bare_dark_band', 'description',
-     &     'Annual mean soil albedo band dark fraction')
+      status = my_nf_inq_def_put_var_real32_3t(ncidout, &
+          IM,JM,N_BANDS, &
+          1,IM,1,JM,dimlon,dimlat,dimband, &
+          'bare_dark_band', &
+          'soil albedo dark fraction in GISS spectral bands', &
+          'fraction', fracbd(:,:,:,DARK))
+      status = my_nf_inq_put_att_any(ncidout, &
+          'bare_dark_band', 'description', &
+          'Annual mean soil albedo band dark fraction')
 
 !     !2) Grey shortwave albedos - exclude 100% ice+water, nearest-neighbor fill
 !      !  For partial-land cells (that have water) use
@@ -452,8 +452,8 @@
             if (albSW(i,j).ne.undef_out) then 
                if ((lc_ice(i,j)+lc_water(i,j)).eq.1.0) then !No ground
                   fracgrey(i,j,:) = undef_out
-               elseif (((lc_ice(i,j)+lc_water(i,j)).gt.0.).and.
-     &                 ((lc_ice(i,j)+lc_water(i,j)).lt.1.0)) then !Partial
+               elseif (((lc_ice(i,j)+lc_water(i,j)).gt.0.).and. &
+                      ((lc_ice(i,j)+lc_water(i,j)).lt.1.0)) then !Partial
                   !Search for nearest grid cell up to 5 that is all ground
                   s = undef_out
                   do dg=1,5
@@ -490,22 +490,22 @@
             endif
          enddo
       enddo
-      status = my_nf_inq_def_put_var_real32_2(ncidout,
-     &        IM,JM,I0o,I1o,J0o,J1o,
-     &     dimlon,dimlat,
-     &     'bare_bright_grey','soil albedo grey SW bright fraction',
-     &     'fraction', fracgrey(:,:,BRIGHT))
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'bare_bright_grey', 'description',
-     &     'Carrer annual mean SW soil albedo grey bright fraction')
-      status = my_nf_inq_def_put_var_real32_2(ncidout,
-     &     IM,JM,I0o,I1o,J0o,J1o,
-     &     dimlon,dimlat,
-     &     'bare_dark_grey', 'soil albedo grey SW dark fraction',
-     &     'fraction', fracgrey(:,:,DARK))
-      status = my_nf_inq_put_att_any(ncidout,
-     &     'bare_dark_grey', 'description',
-     &     'Carrer annual mean SW soil albedo grey dark fraction')
+      status = my_nf_inq_def_put_var_real32_2(ncidout, &
+             IM,JM,I0o,I1o,J0o,J1o, &
+          dimlon,dimlat, &
+          'bare_bright_grey','soil albedo grey SW bright fraction', &
+          'fraction', fracgrey(:,:,BRIGHT))
+      status = my_nf_inq_put_att_any(ncidout, &
+          'bare_bright_grey', 'description', &
+          'Carrer annual mean SW soil albedo grey bright fraction')
+      status = my_nf_inq_def_put_var_real32_2(ncidout, &
+          IM,JM,I0o,I1o,J0o,J1o, &
+          dimlon,dimlat, &
+          'bare_dark_grey', 'soil albedo grey SW dark fraction', &
+          'fraction', fracgrey(:,:,DARK))
+      status = my_nf_inq_put_att_any(ncidout, &
+          'bare_dark_grey', 'description',&
+          'Carrer annual mean SW soil albedo grey dark fraction')
       !status = nf_close(ncidin)
       !write(*,*) status, 'nf_close in ',trim(filein)
 
