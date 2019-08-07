@@ -37,34 +37,6 @@ implicit none
 
     integer :: k
 
-! Table assigns standard height, based on Simard Height and PFT index
-! <Assigned height>(i) = SHEIGHT * std_heights(i*2) + std_heights(i*2+1)
-!  ...where SHEIGHT is the Simard height from the input file.
-real*8, parameter :: heights_form(2,NENT20) = RESHAPE( (/ &
-    1d0, 0d0,    & ! TREE    1 - evergreen broadleaf early successional
-    1d0, 0d0,    & ! TREE    2 - evergreen broadleaf late successional
-    1d0, 0d0,    & ! TREE    3 - evergreen needleleaf early successional
-    1d0, 0d0,    & ! TREE    4 - evergreen needleleaf late successional
-    1d0, 0d0,    & ! TREE    5 - cold deciduous broadleaf early successional
-    1d0, 0d0,    & ! TREE    6 - cold deciduous broadleaf late successional
-    1d0, 0d0,    & ! TREE    7 - drought deciduous broadleaf
-    1d0, 0d0,    & ! TREE    8 - deciduous needleleaf
-    0d0, 0.365d0,& ! SHRUB   9 - cold adapted shrub
-    0d0, 2.0d0,  & ! SHRUB  10 - arid adapted shrub
-    0d0, 1.5d0,  & ! GRASS  11 - C3 grass perennial
-    0d0, 1.5d0,  & ! GRASS  12 - C4 grass
-    0d0, 0.5d0,  & ! GRASS  13 - C3 grass - annual
-    0d0, 0.5d0,  & ! GRASS  14 - arctic C3 grass
-    0d0, 0.5d0,  & ! HERB   15 - crops C3 herb
-    0d0, 0.5d0,  & ! HERB   16 - crops C4 herb
-    1d0, 0d0,    & ! TREE   17 - crops woody
-    0d0, 0.0d0,  & ! BARREN 18 - Permanent snow/ice
-    0d0, 0.0d0,  & ! BARREN 19 - Bare or sparsely vegetated, urban
-    0d0, 0.0d0   & ! BARREN 20 - water
-/), (/ 2,NENT20 /))
-
-
-
 call init_ent_labels
 
 ! -----------------------------------------------------

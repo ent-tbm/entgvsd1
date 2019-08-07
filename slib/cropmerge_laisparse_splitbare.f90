@@ -81,6 +81,16 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 vfc = 0
                 laic = 0
 
+
+                ! ============= Zero stuff out
+                if (present(io_sum_lc)) io_sum_lc(idoy)%buf(ic,jc) = 0
+!                do k=1,esub%ncover
+!                    io_laiout(k,idoy)%buf(ic,jc) = 0
+!                    if (present(io_lcout)) io_lcout(k,idoy)%buf(ic,jc) = 0
+!                    if (present(io_simout)) io_simout(k,idoy)%buf(ic,jc) = 0
+!                end do
+
+
                 ! =============== Convert to GISS 16 pfts format
                 ! First simple transfers
                 do ri=1,esub%nremap
@@ -205,6 +215,11 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0e0 )
                 end if
                 ! -----------------------------------------------------------------
+                if (vfc(esub%svm(ARID_SHRUB)) > 0 .and. &
+                    io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) == FillValue) then
+
+                    io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) = heights_form(2,ARID_SHRUB)
+                end if
 
                 ! Splits bare soil into bright and dark fractions, so we get
                 ! the proper albedo in the GCM
