@@ -25,26 +25,25 @@
 !------------------------------------------------------------------------------
       
 program Carrer_soilalbedo_to_GISS
-    use convertnc
-    use netcdf
-    use EntGVSD_netcdf_util
+
+
+use netcdf
+use chunker_mod
+use chunkparams_mod
+use paths_mod
+use ent_labels_mod
+use geom_mod
+use assign_laimax_mod
+
+
+!    use convertnc
+!    use netcdf
+!    use EntGVSD_netcdf_util
     
     implicit none
-    !!include 'netcdf.inc'
 
     
 !    integer, parameter :: N_BANDS = 6
-      
-    integer, parameter :: IMK = 7200 !long at 0.05 degrees ~ 1 km
-    integer, parameter :: JMK = 3600 !lat at 0.05 degrees ~ 1 im
-    integer, parameter :: IMH = 720 !long at 0.5 degrees
-    integer, parameter :: JMH = 360 !lat at 0.5 degrees
-    integer, parameter :: IM1 = 360 !long at 1 degrees
-    integer, parameter :: JM1 = 180 !lat at 1 degrees
-    integer, parameter :: IM2 = 144 !long at 2.5 degrees
-    integer, parameter :: JM2 = 90 !lat at 2 degrees
-    integer, parameter :: IM4X5 = 72 !long at 5 degrees
-    integer, parameter :: JM4X5 = 46 !lat at 4 degrees
 
     !integer, parameter :: NSPEC = 3785 !Number of rows in Lean spectrum
     !character*118 :: GISSBANDStxt = !len = 6*19 + 4
@@ -94,7 +93,7 @@ program Carrer_soilalbedo_to_GISS
 
     !From Judith Lean 0 km solar surface irradiance (from 2006 version)
     !Fraction of shortwave 300-4000 nm in MODIS & GISS band portions.
-    real*4 :: fracSW_MG(8) =  (/ &
+    real*4, parameter :: fracSW_MG(8) =  (/ &
         0.105992883, &        !1 300-400 nm
         0.992030205,&	!2 400-700 nm
         0.174912449,&	!3 700-770 nm
@@ -458,5 +457,5 @@ program Carrer_soilalbedo_to_GISS
       status = nf_close(ncidout)
       write(*,*) status, 'nf_close out ',trim(fileout)
          
-      end program Carrer_soilalbedo_to_GISS
+end program Carrer_soilalbedo_to_GISS
             
