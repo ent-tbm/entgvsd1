@@ -128,7 +128,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     else   ! c3c4_crops <= 0
                         laic(esub%crops_herb) = 0.
                         vfc(esub%crops_herb) = 0.
-                        io_simout(esub%crops_herb,idoy)%buf(ic,jc) = FillValue
+                        if (present(io_simout)) then
+                            io_simout(esub%crops_herb,idoy)%buf(ic,jc) = FillValue
+                        end if
                     end if
                 end if
 
@@ -215,10 +217,12 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0e0 )
                 end if
                 ! -----------------------------------------------------------------
-                if (vfc(esub%svm(ARID_SHRUB)) > 0 .and. &
-                    io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) == FillValue) then
+                if (present(io_simout)) then
+                    if (vfc(esub%svm(ARID_SHRUB)) > 0 .and. &
+                        io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) == FillValue) then
 
-                    io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) = heights_form(2,ARID_SHRUB)
+                        io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) = heights_form(2,ARID_SHRUB)
+                    end if
                 end if
 
                 ! Splits bare soil into bright and dark fractions, so we get
