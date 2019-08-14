@@ -91,6 +91,8 @@ use assign_laimax_mod
     !real*4 :: solarsplit(5)   !W m-2 per split MODIS/GISS bands
     !real*8 :: solarr8(5)   !W m-2 per split MODIS/GISS bands
 
+
+Convert spectrum in one set of bands to another set of bands while conserving energy
     !From Judith Lean 0 km solar surface irradiance (from 2006 version)
     !Fraction of shortwave 300-4000 nm in MODIS & GISS band portions.
     real*4, parameter :: fracSW_MG(8) =  (/ &
@@ -275,7 +277,7 @@ use assign_laimax_mod
           'albedo_soil_SW', 'description', &
           'Carrer annual mean soil albedo shortwave 400-4000 nm')
 
-      
+
       !* Put spectral breakdown into GISS bands ------------------------
       albgiss(:,:,:) = FillValue
       do i=I0o,I1o
@@ -284,6 +286,7 @@ use assign_laimax_mod
                 (albmodis(i,j,MODISNIR,MMEAN).eq.FillValue)) then
                albgiss(i,j,1:N_BANDS) = FillValue
             else
+Convert MODIS to GISS band albedo
                albgiss(i,j,GISS300_770NM) = &
                    ( albmodis(i,j,MODISVIS,MMEAN) * &
                    (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
@@ -404,6 +407,16 @@ use assign_laimax_mod
                   do ii=i-dg,i+dg
                      do jj=j-dg,j+dg
                         if ((lc_ice(ii,jj)+lc_water(ii,jj)).eq.0.) then
+ice+water==1 ==> no soil in that gridcell.  So we must interpolate what soil under that ice/water might be.  SO search for adjacent gridcells that have soil in them.  It can go up to 5, but not as big as 5.  dg=5.  Played around with dg, 5 was biggest had to go.
+
+At 1km.. skip cover that is ocean, permanetn lake or permanent ice
+Don't want to skip anything that's just water.
+
+First look at output files and input files from Nancy's lo-res version
+
+
+First do a map of all gricells where lc_ice and lc_water add up to 1, see where they are.  If they're ocean or Antarctica, it's fine if we exclude them.  Don't want to use MODIS water cover for lots of lakes in Arctic.
+
                           !All ground found
                           s = albSW(ii,jj)
                           exit
@@ -419,6 +432,7 @@ use assign_laimax_mod
                      !fracgrey(i,j,:) = FillValue
 !                    !*Or, since there is some ground, assign i,j value there.
 !                    !Leaves some coastal ice fringe.
+This is where had to cap bright/dark fraction to .5
                      fracgrey(i,j,BRIGHT) = min(0.5, albSW(i,j))/0.5 !
                      fracgrey(i,j,DARK) = 1.0 - fracgrey(i,j,BRIGHT)
                   else !Found nearby all-ground cell
