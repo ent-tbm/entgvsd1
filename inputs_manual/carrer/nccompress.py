@@ -20,6 +20,7 @@ vanilla_vars = {'lon', 'lat'}
 
 # Cutoff points for spectral bands
 bands = (300,770,5000)
+band_labels = ('VIS', 'NIR')
 
 def get_ifiles(idir):
     ifiles = []
@@ -45,26 +46,25 @@ def create_ncfile(ofname, bands, dates):
         nclat.long_name = 'latitude'
         nclat.units = 'degrees north'
         dy = 180. / JM
-        nclat[:] = np.array([(i+.5)*dy for i in range(0,JM)])
+        nclat[:] = np.array([(i+.5)*dy-90. for i in range(0,JM)])
 
         ncout.createDimension('lon', IM)
         nclon = ncout.createVariable('lon', 'd', ('lon',))
         nclon.long_name = 'longitude'
         nclon.units = 'degrees east'
         dx = 360. / IM
-        nclon[:] = np.array([(i+.5)*dx for i in range(0,IM)])
+        nclon[:] = np.array([(i+.5)*dx-180. for i in range(0,IM)])
 
         ncout.createDimension('dates', len(dates))
         ncout.createDimension('datelen', 10)    # Length of date string YYYY-MM-dd
         nbands = len(bands)-1
-        ncout.createDimension('nbands', nbands)
+        ncout.createDimension('bands', nbands)
         ncout.createDimension('bands_plus1', nbands+1)
 
-#        ncout.setncattr('title', title)
         ncout.title = 'Albedo of Soil'
         ncout.history = 'Aug 2019: Compiled from non-NetCDF files provided by Carrer'
-        ncout.creator_name = 'Dominique Carrer'
-        ncout.create_email = 'dominique.carrer@meteo.fr'
+        ncout.creator_name = 'Elizabeth Fischer, Dominique Carrer'
+        ncout.creator_email = 'elizabeth.fischer@columbia.edu, dominique.carrer@meteo.fr'
         ncout.geospatial_lat_min = -90
         ncout.geospatial_lat_max = 90
         ncout.geospatial_lon_min = -180
@@ -72,20 +72,27 @@ def create_ncfile(ofname, bands, dates):
 
 
         # Store bands
-        ncv = ncout.createVariable('banddiv', 'd', ('bands_plus1',))
-        ncv.long_name = 'Definition of spectral bands'
-        ncv.units = 'nm'
-        ncv[:] = bands
+#        ncv = ncout.createVariable('banddiv', 'd', ('bands_plus1',))
+#        ncv.long_name = 'Definition of spectral bands'
+#        ncv.units = 'nm'
+#        ncv[:] = bands
 
-        ncout.createDimension('bands.strlen', 9)
-        ncv = ncout.createVariable('bands', 'c', ('nbands','bands.strlen'))
-        ncv.long_name = 'Spectral range of each band'
-        ncv.units = 'nm'
+#        ncout.createDimension('bands.strlen', 18)
+#        ncv = ncout.createVariable('bands', 'c', ('bands','bands.strlen'))
+#        ncv.long_name = 'Spectral range of each band'
+#        ncv.units = 'nm'
         sbands = []
+        band_ranges = []
         for i in range(0,nbands):
-            sbands.append('%04d-%04d' % (bands[i],bands[i+1]))
-        ncv[:] = netCDF4.stringtochar(np.array(sbands, dtype='S'))
-            
+            sbands.append('%s %04d - %04d nm' % (band_labels[i],bands[i],bands[i+1]))
+            band_ranges.append((float(bands[i]),float(bands[i+1])))
+
+#        ncv[:] = netCDF4.stringtochar(np.array(sbands, dtype='S'))
+
+
+#        ncout.createDimension('band_labels.strlen', 3)
+#        ncv = ncout.createVariable('band_labels', 'c', ('bands', 'band_labels.strlen'))
+#        ncv[:] = netCDF4.stringtochar(np.array(band_labels, dtype='S'))
 
         # Store dates as integers
         dtbase = datetime.date(1970,1,1)
@@ -99,12 +106,15 @@ def create_ncfile(ofname, bands, dates):
         ncv.setncattr('description', 'Date of each observation, as string')
         ncv[:] = netCDF4.stringtochar(np.array([dt for dt in dates], dtype='S'))
 
-        chunk_size = (1, 1, round(JM/nchunk[0]), round(IM/nchunk[1]))
-        ncv = ncout.createVariable('soilalb', 'f',
-            ('nbands', 'dates', 'lat', 'lon'),
-            chunksizes=chunk_size, shuffle=True, zlib=True,
-            fill_value=FillValue)
-        ncv.units = '1'
+        chunk_size = (1, round(JM/nchunk[0]), round(IM/nchunk[1]))
+        for blab,sband,band_range in zip(band_labels,sbands,band_ranges):
+            ncv = ncout.createVariable('soilalb_{}'.format(blab), 'f',
+                ('dates', 'lat', 'lon'),
+                chunksizes=chunk_size, shuffle=True, zlib=True,
+                fill_value=FillValue)
+            ncv.band_description = sband
+            ncv.band_range = band_range
+            ncv.units = '1'
 
 
 
@@ -121,7 +131,7 @@ def compress_ncfiles(ifiles, iband, ofname):
 
     with netCDF4.Dataset(ofname, 'a') as ncout:
 
-        ncv = ncout.variables['soilalb']
+        ncv = ncout.variables['soilalb_{}'.format(band_labels[iband])]
 
         for idt,(dt,ifname) in enumerate(ifiles):
             print('Reading {}'.format(ifname))
@@ -141,7 +151,7 @@ def compress_ncfiles(ifiles, iband, ofname):
             val[val == 999] = FillValue
 
             # Store it
-            ncv[iband, idt,:,:] = val
+            ncv[idt,:,:] = val
 
 
 YEAR = 2004
