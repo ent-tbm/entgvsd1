@@ -31,6 +31,8 @@ CHARACTER (LEN=*), PARAMETER :: DATA_DIR= &
    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/data/'
 CHARACTER (LEN=*), PARAMETER :: DATA_INPUT= &
    '/home2/rpfische/git/entgvsd1/inputs/data/'
+CHARACTER (LEN=*), PARAMETER :: DATA_INPUT_MANUAL= &
+   '/home2/rpfische/git/entgvsd1/inputs_manual/'
 
 
 

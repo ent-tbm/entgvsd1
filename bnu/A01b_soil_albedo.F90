@@ -27,13 +27,14 @@
 program Carrer_soilalbedo_to_GISS
 
 
-use netcdf
-use chunker_mod
-use chunkparams_mod
-use paths_mod
-use ent_labels_mod
-use geom_mod
-use assign_laimax_mod
+    use carrer_mod
+    use netcdf
+    use chunker_mod
+    use chunkparams_mod
+    use paths_mod
+    use ent_labels_mod
+    use geom_mod
+    use assign_laimax_mod
 
 
 !    use convertnc
@@ -53,8 +54,16 @@ use assign_laimax_mod
 !          'VIS (330-770), NIR1 (770-860), NIR2 (860-1250), '// &
 !          'NIR3 (1250-1500), NIR4 (1500-2200), NIR5 (2200-4000)'
 
-    integer, parameter :: IM = IMH 
-    integer, parameter :: JM = JMH 
+    integer, parameter :: NBANDS_GISS = 6
+    character*4, parameter :: sbands_giss(NBANDS_GISS) = &
+        (/"VIS ", "NIR1", "NIR2", "NIR3", "NIR4", "NIR5"/)
+    real*8, parameter :: bandpoints_giss(NBANDS_GISS+1) = &
+        (/300,770,860,1250,1500,2200,4000/)
+
+
+
+
+
     character*3,parameter :: res = 'HXH'
     
     real*4 :: lon(IM),lat(JM)
@@ -134,171 +143,104 @@ Convert spectrum in one set of bands to another set of bands while conserving en
     integer :: I0i,I1i, J0i,J1i
     integer :: I0o,I1o, J0o,J1o
 
-    
-    !Set up if need to do parallel or tiles for large files
-    I0i = 1
-    I1i = IM
-    J0i = 1
-    J1i = JM
-    I0o = 1
-    I1o = IM
-    J0o = 1
-    J1o = JM
+    ! Input files
+    type(ChunkIO_t), target :: ioall_albcarr(NBANDS_CARRER)
+    type(ChunkIO_t), target :: io_albcarr(NSTATS,NBANDS_CARRER)
+    integer :: iband,istat
+    real, dimension(:,:), allocatable, target :: wta    ! Surmised landmask
 
     !* Select spectral band irradiance fractions
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
-    
-    !* Paths.   !* UPDATE ME *!
-    DIR = '/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/'
-    PATHin = trim(DIR)//'Soil/Carrer/'// &
-         'Carrer2014_means_2004_Qingsong/'// &
-        'Montes_Carrer_temporal_avg_NKfix/'  !Fixed flipped latitude
-    PATHout ='/Users/nkiang/NancyResearch/GISS/Models/Ent/Datasets/'// &
-        'Soil/Carrer/CarrerGISS_soil_albedo/'
 
-    !* Make Output file - netcdf - ##UPDATE ME##
-    fileout = trim(PATHout)// &
-        'CarrerGISS_soil_albedo_multiband_annual_2004_'// &
-        trim(version)//"_"//trim(res)//'.nc'
-    call my_nf_create_ij(trim(fileout),IM,JM, &
-        ncidout,dimlon,dimlat)
-    write(0,*) "dimlon, dimlat", dimlon, dimlat
-    call my_nf_defglobal(trim(fileout), &
-        'Soil albedo derived from D. Carrer et al. (2014) '// &
-        'MODIS soil albedos.  Created at same as v1.0b Ent GVSD.', &
-        'Includes copy of source VIS and NIR annual averages. '// &
-        'Partial coastline and permanent ice cells filled by '// &
-        'nearest-5 neighbor. fringeice-uses cell albedo if no '// &
-        'neighbor; shows islands.  noice-undef if no neighbor. '// &
-        ' Fortran program:  Carrer_soilalbedo_to_GISS.f')
-    status = nf_close(ncidout)
-    status = nf_open(trim(fileout),NF_WRITE,ncidout)
-    write(*,*) status, 'nf_open out ',trim(fileout)
-    !* Add some more def attributes
-    status = nf_redef(ncidout)
-    status=nf_def_dim(ncidout, 'band', N_BANDS, dimband)
-    write(0,*) 'GISSBANDStxt:', GISSBANDStxt
-    status = my_nf_inq_put_att_any(ncidout, &
-        'GISS_bands', 'description',GISSBANDstxt)
-    write(0,*) 'def band status',status, dimband
-    status = nf_enddef(ncidout)
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 10, 10, 10, (/6,5/))
+    allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
-    !* Input file - Permanent ice and water -----------------------------
-    filein = 'lc_lai_ent/EntMM_lc_max_'//trim(res)//'.'// &
-        trim(version)//'.nc'
-    print *, trim(filein)
-    status = nf_open(trim(filein),0,ncidin)
-    status = my_nf_inq_get_var_real32_2(ncidin,'permanent_ice' &
-           ,varid,varin)
-    lc_ice(:,:) = varin(:,:)
-    status = my_nf_inq_get_var_real32_2(ncidin,'water' &
-           ,varid,varin)
-    lc_water(:,:) = varin(:,:)
-    status = nf_close(ncidin)
-    
-    !* Input file - VIS -------------------------------------------------
-    !filein = trim(PATHin)//'VIS_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME
-    filein = trim(PATHin)// &
-        'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
-    write(*,*) 'filein: ', filein
-    status = nf_open(trim(filein),0,ncidin)
-    write(*,*) status, 'nf_open in ',trim(filein)
+    ! ------------- Open Input Files
+    do iband=1,NBANDS_CARRER
+        call chunker%nc_open(ioall_albmodis(iband), LC_LAI_ENT_DIR, &
+            'carrer/', &
+            'soilalb_'//trim(sbands(iband))//'.nc', &
+            'soilalb_'//trim(sbands(iband)), 0)
+        do istat=1,nstats
+            call chunker%nc_reuse_var( &
+                ioall_albmodis(iband), io_albmodis(istat,iband), &
+                (/1,1,istat/))
+        end do
+    end do
 
-     !* Get VIS
-    do k=1,4
-       vark = 'soilalb_VIS_'//trim(varnames(k))
-       write(*,*) 'VIS ', vark
-       status = my_nf_inq_get_var_real32_2(ncidin,trim(vark) &
-           ,varid,varin)
-       write(*,*) 'Got here 1', status
-       albmodis(:,:,MODISVIS, k) = varin(:,:)
-       write(*,*) 'Got here'
-       status = my_nf_inq_def_put_var_real32_2(ncidout, &
-             IM,JM,1,IM,1,JM,dimlon,dimlat, &
-!             "soilalb_VIS_"//trim(vark), &
-             trim(vark), &
-             "Carrer soil albedo VIS (300-700 nm) annual " &
-             //trim(vark), &
-             "fraction", varin)
-       !status = nf_close(ncidin)
-       write(*,*) status, 'nf_close in ',trim(filein)
-    enddo
+    ! ---------------- Open Output Files
+    call chunker%nc_create(ioall_albgiss, weighting(wta,1d0,0d0), &
+        'carrer/', &
+        'albgiss', 'albgiss', &
+        'Soil albedo in GISS bands', &
+        '1', sbands_giss)
+    do iband=1,NBANDS_GISS
+        call chunker%nc_reuse_var(ioall_albgiss, io_albgiss(iband), (/1,1,iband/), &
+            weighting(wta, 1d0, 0d0))
+    end do
 
-    !* Input file - NIR --------------------------------------------
-    !filein = trim(PATHin)//'NIR_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME
-!   filein = trim(PATHin)//!'NIR_Alb_soil_yearly.006.2004.NK.nc' !## UPDATE ME &
-!        'Carrer_soil_albedo_VIS_NIR_annual_2004_upscale_HXH.nc' !## UPDATE ME
-!     write(*,*) 'filein: ', filein
-!     status = nf_open(trim(filein),0,ncidin)
-!     write(*,*) status, 'nf_open in ',trim(filein)
-     !write(0,*) trim(nf90_strerror(status)), trim(filein)
 
-    !* Get NIR
-    do k=1,4
-       vark = 'soilalb_NIR_'//trim(varnames(k))
-       status = my_nf_inq_get_var_real32_2(ncidin,trim(vark) &
-           ,varid,varin)
-       albmodis(:,:,MODISNIR,k) = varin
-       
-       !* Before writing, check against land mask for any undef on land.
-       status = my_nf_inq_def_put_var_real32_2(ncidout, &
-             IM,JM,1,IM,1,JM,dimlon,dimlat, &
-!             "soilalb_NIR_"//trim(vark), &
-             trim(vark), &
-             "Carrer soilalbedo NIR (700-5000 nm) annual " &
-             //trim(vark), &
-             "fraction", varin)
-      end do
-      status = nf_close(ncidin)
-      write(*,*) status, 'nf_close in ',trim(filein)
-      
-      !* Calculate total SW albedo --------------------------------------
-      albSW(:,:) = FillValue
-      do i=I0o,I1o
-         do j=J0o,J1o
-            if ((albmodis(i,j,MODISVIS,MMEAN).eq.FillValue).or. &
-                (albmodis(i,j,MODISNIR,MMEAN).eq.FillValue)) then
-               albSW(i,j) = FillValue
+#ifdef ENTGVSD_DEBUG
+    !do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
+    !do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
+    do jchunk = 1,3
+    do ichunk = 2,4
+#else
+    do jchunk = 1,chunker%nchunk(2)
+    do ichunk = 1,chunker%nchunk(1)
+#endif
+
+        call chunker%move_to(ichunk,jchunk)
+        wta = 0
+
+        do jc = 1,chunker%chunk_size(2)
+        do ic = 1,chunker%chunk_size(1)
+
+            ! Compute overall NetCDF index of current cell
+            ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
+            jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
+
+            ! Infer soil mask
+            if (io_albmodis(SMEAN,1)%buf(ic,jc) /= FillValue)
+                wta(ic,jc) = 1
             else
-               albSW(i,j) =  &
-                   ( albmodis(i,j,MODISVIS,MMEAN)*sum(fracSW_MG(1:2)) !( fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
-                   + albmodis(i,j, MODISNIR,MMEAN)* &
-                   sum(fracSW_MG(3:8)) )/sum(fracSW_MG(1:8)) 
+                sta(ic,jc) = 0
+            end if
+
+
+            !* Calculate total SW albedo --------------------------------------
+            if ((albmodis(SMEAN, VIS_MODIS).eq.FillValue).or. &
+                (albmodis(SMEAN, NIR_MODIS).eq.FillValue)) then
+               io_albsw%buf(ic,jc) = FillValue
+            else
+               io_albsw%buf(ic,jc) = ( &
+                     io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc) * sum(fracSW_MG(1:2)) &
+                   + io_albmodis(SMEAN,NIR_MODIS)%buf(ic,jc) * sum(fracSW_MG(3:8)) &
+                ) / sum(fracSW_MG(1:8)) 
             endif
-         enddo
-      enddo
-      write(*,*) 'Got here SW'
-      status = my_nf_inq_def_put_var_real32_2(ncidout, &
-          IM,JM,1,IM,1,JM,dimlon,dimlat, &
-          'albedo_soil_SW', &
-          'soil albedo shortwave', &
-          'fraction', albSW)
-       status = my_nf_inq_put_att_any(ncidout, &
-          'albedo_soil_SW', 'description', &
-          'Carrer annual mean soil albedo shortwave 400-4000 nm')
 
+            !* Put spectral breakdown into GISS bands ------------------------
+            do iband=1,NBANDS_GISS
+                io_albgiss(iband)%buf = FillValue
+            end do
 
-      !* Put spectral breakdown into GISS bands ------------------------
-      albgiss(:,:,:) = FillValue
-      do i=I0o,I1o
-         do j=J0o,J1o
-            if ((albmodis(i,j,MODISVIS,MMEAN).eq.FillValue).or. &
-                (albmodis(i,j,MODISNIR,MMEAN).eq.FillValue)) then
-               albgiss(i,j,1:N_BANDS) = FillValue
+            if ((io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc).eq.FillValue).or. &
+                (io_albmodis(SMEAN,NIR_MODIS)%buf(ic,jc).eq.FillValue)) then
+                do iband=1,NBANDS_GISS
+                   io_albgiss(iband)%buf(ic,jc) = FillValue
+                end do
             else
-Convert MODIS to GISS band albedo
-               albgiss(i,j,GISS300_770NM) = &
-                   ( albmodis(i,j,MODISVIS,MMEAN) * &
+                io_albgiss(VIS_GISS)%buf(ic,jc) = &
+                   ( io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc) * &
                    (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
-                   albmodis(i,j,MODISNIR,MMEAN)*fracSW_MG(nm700_770)) &
+                   io_albmodis(SMEAN,NIR_MODS)%buf(ic,jc)*fracSW_MG(nm700_770)) &
                    /( fracSW_MG(nm300_400) + fracSW_MG(nm400_700) + &
                    fracSW_MG(nm700_770) )
-               do k=2,N_BANDS
-                  albgiss(i,j,k) = albmodis(i,j,MODISNIR,MMEAN) !All NIR bands
+               do k=2,NBANDS_GISS
+                    io_albgiss(k)%buf(ic,jc) = io_albmodis(SMEAN, NIR_MODIS)%buf(ic,jc)
                end do
             endif
-         enddo
-      enddo
+
       status = my_nf_inq_def_put_var_real32_3t(ncidout, &
           IM,JM,N_BANDS, &
           1,IM,1,JM,dimlon,dimlat,dimband, &
