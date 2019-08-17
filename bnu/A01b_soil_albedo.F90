@@ -110,11 +110,14 @@ program Carrer_soilalbedo_to_GISS
     type(Chunker_t) :: chunker
     ! Input files
     type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
-    type(ChunkIO_t) :: ioall_albmodis(NBANDS_MODIS)
-    type(ChunkIO_t) :: io_albmodis(NSTATS,NBANDS_MODIS)
+    real*4 :: lcice, lcwater
+    type(ChunkIO_t) :: ioall_albmodis(NBANDS_MODIS), io_albmodis(NSTATS,NBANDS_MODIS)
+    real*4 :: albmodis(NSTATS,NBANDS_MODIS)
     ! Output Files
     type(ChunkIO_t) :: io_albsw
+    real*4 :: albsw
     type(ChunkIO_t) :: io_albgiss(NBANDS_GISS)
+    real*4 :: albgiss(NBANDS_GISS)
     integer, parameter :: BRIGHT_DARK = 2
     type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
     type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
@@ -220,10 +223,16 @@ program Carrer_soilalbedo_to_GISS
         wta = 0
 
         do jc = 1,chunker%chunk_size(2)
-print *,jc
         do ic = 1,chunker%chunk_size(1)
 
-
+            ! ---------- Read inputs
+            lcice = io_lcice%buf(ic,jc)
+            lcwater = io_lcwater%buf(ic,jc)
+            do iband=1,NBANDS_MODIS
+            do istat=1,NSTATS
+                albmodis(istat,iband) = io_albmodis(istat,iband)%buf(ic,jc)
+            end do
+            end do
 
 #if 1
             ! Compute overall NetCDF index of current cell
@@ -232,7 +241,7 @@ print *,jc
 
             ! Infer soil mask
             ! TODO: Get this from LC instead
-            if (io_albmodis(SMEAN,1)%buf(ic,jc) /= FillValue) then
+            if (albmodis(SMEAN,1) /= FillValue) then
                 wta(ic,jc) = 1
             else
                 wta(ic,jc) = 0
@@ -240,39 +249,43 @@ print *,jc
 
 
             !* Calculate total SW albedo --------------------------------------
-            if ((io_albmodis(SMEAN, VIS_MODIS)%buf(ic,jc).eq.FillValue).or. &
-                (io_albmodis(SMEAN, NIR_MODIS)%buf(ic,jc).eq.FillValue)) then
+            if ((albmodis(SMEAN, VIS_MODIS).eq.FillValue).or. &
+                (albmodis(SMEAN, NIR_MODIS).eq.FillValue)) then
                 io_albsw%buf(ic,jc) = FillValue
             else
                 io_albsw%buf(ic,jc) = ( &
-                     io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc) * sum(fracSW_MG(1:2)) &
-                   + io_albmodis(SMEAN,NIR_MODIS)%buf(ic,jc) * sum(fracSW_MG(3:8)) &
+                     albmodis(SMEAN,VIS_MODIS) * sum(fracSW_MG(1:2)) &
+                   + albmodis(SMEAN,NIR_MODIS) * sum(fracSW_MG(3:8)) &
                 ) / sum(fracSW_MG(1:8)) 
             endif
 
             !* Put spectral breakdown into GISS bands ------------------------
             do iband=1,NBANDS_GISS
-                io_albgiss(iband)%buf = FillValue
+                albgiss(iband) = FillValue
             end do
 
-            if ((io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc).eq.FillValue).or. &
-                (io_albmodis(SMEAN,NIR_MODIS)%buf(ic,jc).eq.FillValue)) then
+            if ((albmodis(SMEAN,VIS_MODIS).eq.FillValue).or. &
+                (albmodis(SMEAN,NIR_MODIS).eq.FillValue)) then
                 do iband=1,NBANDS_GISS
-                    io_albgiss(iband)%buf(ic,jc) = FillValue
+                    albgiss(iband) = FillValue
                 end do
             else
-                io_albgiss(VIS_GISS)%buf(ic,jc) = &
-                   ( io_albmodis(SMEAN,VIS_MODIS)%buf(ic,jc) * &
+                albgiss(VIS_GISS) = &
+                   ( albmodis(SMEAN,VIS_MODIS) * &
                    (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
-                   io_albmodis(SMEAN,NIR_MODIS)%buf(ic,jc)*fracSW_MG(nm700_770)) &
+                   albmodis(SMEAN,NIR_MODIS)*fracSW_MG(nm700_770)) &
                    /( fracSW_MG(nm300_400) + fracSW_MG(nm400_700) + &
                    fracSW_MG(nm700_770) )
                 do k=2,NBANDS_GISS
-                    io_albgiss(k)%buf(ic,jc) = io_albmodis(SMEAN, NIR_MODIS)%buf(ic,jc)
+                    albgiss(k) = albmodis(SMEAN, NIR_MODIS)
                 end do
             endif
 #endif
-#if 0
+            io_albsw%buf(ic,jc) = albsw
+            do k=2,NBANDS_GISS
+                io_albgiss(k)%buf(ic,jc) = albgiss(k)
+            end do
+#if 1
             !------ Old VEG bare_bright vs. bare_dark soil fractions
             !* Calculate GISS ModelE grey albedo bright vs. dark fractions
             !Same netcdf names as in Ent_pfts.
@@ -282,24 +295,24 @@ print *,jc
             ! to cell's mixed albedo.
             do iband=1,NBANDS_GISS
             do k=1,2
-                io_fracbd(k,iband)%buf = FillValue
+                io_fracbd(k,iband)%buf(ic,jc) = FillValue
             end do
             end do
             do k=1,NBANDS_GISS
                 if (io_albgiss(k)%buf(ic,jc) /= FillValue) then
-                    if (abs(1d0 - (io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc))) < 1d-5) then
+                    if (abs(1d0 - (lcice+lcwater)) < 1d-5) then
                         !All permanent ice, no soil.
                         io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
                         io_fracbd(DARK,k)%buf(ic,jc) = FillValue
-                    else if (((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)) > 0.).and. &
-                        ((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)) < 1.0)) then  !Partial
+                    else if (((lcice+lcwater) > 0.).and. &
+                        ((lcice+lcwater) < 1.0)) then  !Partial
                         !Search for nearest grid cell up to 5 that is all ground
                         s = FillValue
 #if 0
                         do dg=1,5
                         do jj=j-dg,j+dg
                         do ii=i-dg,i+dg
-                            if ((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)(ii,jj)).eq.0.) then
+                            if ((lcice+lcwater(ii,jj)).eq.0.) then
                                 !All ground found
                                 s = albgiss(ii,jj,k)
                                 exit
@@ -344,18 +357,18 @@ print *,jc
             io_fracgrey(DARK)%buf(ic,jc) = 0
 
             if (io_albsw%buf(ic,jc).ne.FillValue) then 
-               if ((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)).eq.1.0) then !No ground
+               if ((lcice+lcwater).eq.1.0) then !No ground
                     io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
                     io_fracgrey(DARK)%buf(ic,jc) = FillValue
-               elseif (((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)).gt.0.).and. &
-                      ((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)).lt.1.0)) then !Partial
+               elseif (((lcice+lcwater).gt.0.).and. &
+                      ((lcice+lcwater).lt.1.0)) then !Partial
                   !Search for nearest grid cell up to 5 that is all ground
                   s = FillValue
 #if 0
                   do dg=1,5
                   do ii=i-dg,i+dg
                      do jj=j-dg,j+dg
-                        if ((io_lcice%buf(ic,jc)+io_lcwater%buf(ic,jc)(ii,jj)).eq.0.) then
+                        if ((lcice+lcwater(ii,jj)).eq.0.) then
                           !All ground found
                           s = albSW(ii,jj)
                           exit
