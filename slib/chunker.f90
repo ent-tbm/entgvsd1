@@ -659,6 +659,7 @@ subroutine read_chunks(this)
     integer :: nerr
     integer :: err
     type(ChunkIO_t), pointer :: cio
+integer :: ic,jc
 
     write(*, '(A I3 I3)', advance="no") 'Reading Chunk',this%cur
 
