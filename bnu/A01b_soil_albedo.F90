@@ -234,7 +234,6 @@ program Carrer_soilalbedo_to_GISS
             end do
             end do
 
-#if 1
             ! Compute overall NetCDF index of current cell
             !ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
             !jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
@@ -251,9 +250,9 @@ program Carrer_soilalbedo_to_GISS
             !* Calculate total SW albedo --------------------------------------
             if ((albmodis(SMEAN, VIS_MODIS).eq.FillValue).or. &
                 (albmodis(SMEAN, NIR_MODIS).eq.FillValue)) then
-                io_albsw%buf(ic,jc) = FillValue
+                albsw = FillValue
             else
-                io_albsw%buf(ic,jc) = ( &
+                albsw = ( &
                      albmodis(SMEAN,VIS_MODIS) * sum(fracSW_MG(1:2)) &
                    + albmodis(SMEAN,NIR_MODIS) * sum(fracSW_MG(3:8)) &
                 ) / sum(fracSW_MG(1:8)) 
@@ -280,12 +279,7 @@ program Carrer_soilalbedo_to_GISS
                     albgiss(k) = albmodis(SMEAN, NIR_MODIS)
                 end do
             endif
-#endif
-            io_albsw%buf(ic,jc) = albsw
-            do k=2,NBANDS_GISS
-                io_albgiss(k)%buf(ic,jc) = albgiss(k)
-            end do
-#if 1
+
             !------ Old VEG bare_bright vs. bare_dark soil fractions
             !* Calculate GISS ModelE grey albedo bright vs. dark fractions
             !Same netcdf names as in Ent_pfts.
@@ -356,7 +350,7 @@ program Carrer_soilalbedo_to_GISS
             io_fracgrey(BRIGHT)%buf(ic,jc) = 0
             io_fracgrey(DARK)%buf(ic,jc) = 0
 
-            if (io_albsw%buf(ic,jc).ne.FillValue) then 
+            if (albsw.ne.FillValue) then 
                if ((lcice+lcwater).eq.1.0) then !No ground
                     io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
                     io_fracgrey(DARK)%buf(ic,jc) = FillValue
@@ -386,21 +380,28 @@ program Carrer_soilalbedo_to_GISS
 !                    !*Or, since there is some ground, assign i,j value there.
 !                    !Leaves some coastal ice fringe.
                      ! *** This is where had to cap bright/dark fraction to .5
-                     io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, io_albsw%buf(ic,jc))/0.5 !
+                     io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5 !
                      io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
                   else !Found nearby all-ground cell
                      io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5,s)/0.5
                      io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
                   endif
                else    !Cell is all ground with SW
-                  io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, io_albsw%buf(ic,jc))/0.5
+                  io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5
                   io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
                endif
             else
                 io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
                 io_fracgrey(DARK)%buf(ic,jc) = FillValue
             endif
-#endif
+
+
+            ! ---------- Store outputs
+            io_albsw%buf(ic,jc) = albsw
+            do k=2,NBANDS_GISS
+                io_albgiss(k)%buf(ic,jc) = albgiss(k)
+            end do
+
 
         end do
         end do
