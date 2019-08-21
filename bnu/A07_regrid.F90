@@ -289,9 +289,9 @@ subroutine do_regrid_all_lais
     call chunkerlr%file_info(oinfo, ent1, &
         'BNU', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
     fnames1(1) = &
-        make_fname(LAI3G_INPUT, &
-            'lc_lai_ent/', 'bs_brightratio', &   ! 
-            oinfo%dir, 'bs_brightratio', & !oinfo%leaf, &
+        make_fname(LC_LAI_ENT_DIR, &
+            'carrer/', 'V1km_bs_brightratio', &   ! 
+            'purelr/', 'bs_brightratio', &
             .false., &
             oinfo%vname, oinfo%long_name, oinfo%units)
 

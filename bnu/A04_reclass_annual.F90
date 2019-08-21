@@ -59,8 +59,8 @@ subroutine do_reindex(esub)
         'BNU', 'M', 'laimax', 2004, 'ent17', '1.1')
 
     ! Bare Soil Brightness Ratio
-    call chunker%nc_open_gz(io_bs, LAI3G_DIR, LAI3G_INPUT, &
-        'lc_lai_ent/', 'bs_brightratio.nc', 'bs_brightratio', 1)
+    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, 'carrer/', &
+        'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &

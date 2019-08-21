@@ -57,8 +57,8 @@ subroutine do_reindex(esub,m0,m1)
     end do
 
     ! bs ratio
-    call chunker%nc_open_gz(io_bs, LAI3G_DIR, LAI3G_INPUT, &
-        'lc_lai_ent/', 'bs_brightratio.nc', 'bs_brightratio', 1)
+    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, 'carrer/', &
+        'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
     ! For now at least, use BS BrightRatio from LAI3G dataset
     ! call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, &
     !     '', 'bs_brightratio.nc', 'bs_brightratio', 1)

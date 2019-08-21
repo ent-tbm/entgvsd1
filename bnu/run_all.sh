@@ -7,9 +7,9 @@ set -e
 #        A01_lc_laimax.F90 \
 #        A02_lc_lai_doy.F90 \
 #        A03_lc_lai_monthly.F90 \
-#        A04_reclass_annual.F90 \
 
 for stage in \
+        A04_reclass_annual.F90 \
         A05_reclass_doy.F90 \
         A06_reclass_monthly.F90 \
         A07_regrid.F90 \

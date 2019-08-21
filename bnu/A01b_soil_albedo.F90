@@ -113,7 +113,9 @@ program Carrer_soilalbedo_to_GISS
     integer, parameter :: BRIGHT_DARK = 2
     type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
     type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
-    type(ChunkIO_t) :: ioall_fracgrey_hr, io_fracgrey_hr(BRIGHT_DARK)
+    !type(ChunkIO_t) :: ioall_fracgrey_hr, io_fracgrey_hr(BRIGHT_DARK)
+    type(ChunkIO_t) :: io_bs_brightratio_hr
+    real*4 :: bsbr
 
     INTEGER :: ichunk,jchunk,ic,jc
     integer :: i1km,j1km   ! Indexing into hi-res 1km variable
@@ -205,19 +207,13 @@ program Carrer_soilalbedo_to_GISS
             (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
     end do
 
-    ! ---------------- fracgrey_hr (1km resolution)
-    call chunkerhr%nc_create(ioall_fracgrey_hr, weighting(wta_fracbd_hr,1d0,0d0), &
+    ! ---------------- bs_brightratio_hr (1km resolution)
+    call chunkerhr%nc_create( &
+        io_bs_brightratio_hr, weighting(wta_fracbd_hr,1d0,0d0), &
         'carrer/', &
-        'fracgrey_hr', &
-        'fracgrey_hr', &
-        'Bright/Dark Soil in GISS Bands', '1', &
-        sbright_dark)
-    do k=1,2
-        call chunkerhr%nc_reuse_var( &
-            ioall_fracgrey_hr, io_fracgrey_hr(k), &
-            (/1,1,k/), weighting(wta_fracbd_hr,1d0,0d0))
-    end do
-
+        'V1km_bs_brightratio', &
+        'bs_brightratio', &
+        'Ratio of Bright/Dark Soil in GISS Bands', '1')
 
     call chunker%nc_check('A01b_soil_albedo')
     call chunkerhr%nc_check('A01b_soil_albedo_hr')
@@ -420,12 +416,11 @@ program Carrer_soilalbedo_to_GISS
             endif
 
             ! ------------ Regrid fracgrey
+            bsbr = io_fracgrey(BRIGHT)%buf(ic,jc)
             do j1km = (jc-1)*nhr(2)+1, jc*nhr(2)
             do i1km = (ic-1)*nhr(1)+1, ic*nhr(1)
                 wta_fracbd_hr(i1km,j1km) = wta_fracbd(ic,jc)
-                do k=1,2
-                    io_fracgrey_hr(k)%buf(i1km,j1km) = io_fracgrey(k)%buf(ic,jc)
-                end do
+                io_bs_brightratio_hr%buf(i1km,j1km) = bsbr
             end do
             end do
 
