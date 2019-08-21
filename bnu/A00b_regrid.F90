@@ -36,7 +36,7 @@ implicit none
     ! ---------------- Open land cover
     call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc.test', trim(info%vname), 0)
+        LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     do k=1,2
         call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,ent2%mvs(k)/))
     end do
@@ -48,13 +48,16 @@ implicit none
         weighting(chunkerlr%wta1,1d0,0d0), &
         trim(info%dir), trim(info%leaf), trim(info%vname), &
         'Land Cover Fractions', '1', &
-        ent2%layer_names(), create_lr=.false.)
+        ent2%layer_names())!, create_lr=.false.)
     do k=1,2
         call chunkerlr%nc_reuse_var( &
             ioall_lcout, io_lcout(k), (/1,1,k/), &
             weighting(chunkerlr%wta1, 1d0, 0d0))
     end do
 
+
+    call chunker%nc_check('A00b_regrid_hr')
+    call chunkerlr%nc_check('A00b_regrid_lr')
 
     ! -------------- Regrid!
 #ifdef ENTGVSD_DEBUG
@@ -71,13 +74,18 @@ implicit none
         call chunker%move_to(ichunk,jchunk)
         call chunkerlr%move_to(ichunk,jchunk)
 
-!        do k=1,2
-!        do jc = 1,chunker%chunk_size(2)
-!        do ic = 1,chunker%chunk_size(1)
-!            if (io_lc(k)%buf(ic,jc) == FillValue) io_lc(k)%buf(ic,jc) = 0
-!        end do
-!        end do
-!        end do        
+        ! Convert away from FillValue so averaging / regridding works.
+        do k=1,2
+        do jc = 1,chunker%chunk_size(2)
+        do ic = 1,chunker%chunk_size(1)
+            if (io_lc(k)%buf(ic,jc) == FillValue) then
+                io_lc(k)%buf(ic,jc) = 0
+!            else
+!                print *,ic,jc,io_lc(k)%buf(ic,jc)
+            end if
+        end do
+        end do
+        end do        
 
 #if 1
         do k=1,2

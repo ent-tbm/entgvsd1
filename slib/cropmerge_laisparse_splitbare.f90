@@ -227,6 +227,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 
                 ! Splits bare soil into bright and dark fractions, so we get
                 ! the proper albedo in the GCM
+                ! (We need a soil albedo wherever there is veg or bare soil type)
+                ! (If there is not, we need to interpolate a little bit)
+                ! Carrer uses same dataset, so things should line up...
                 if (split_bare_soil) then
                     vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
                     vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio

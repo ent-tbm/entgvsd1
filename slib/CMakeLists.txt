@@ -15,6 +15,7 @@ set(entgvsd_SOURCES
     cropmerge_laisparse_splitbare.f90
     conversions.f
     carrer.F90
+    gridfill.f90
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90
 )
 

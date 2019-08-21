@@ -4,19 +4,19 @@
 
 module A01a_mod
 
-use netcdf
-use chunker_mod
-use chunkparams_mod
-use paths_mod
-use ent_labels_mod
-use geom_mod
-use assign_laimax_mod
+    use netcdf
+    use chunker_mod
+    use chunkparams_mod
+    use paths_mod
+    use ent_labels_mod
+    use geom_mod
+    use assign_laimax_mod
+    use carrer_mod
 
  ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
  ! interpolate to coarser resolutions.
 implicit none
 
-    use carrer_mod
 
 CONTAINS
 
@@ -53,8 +53,8 @@ subroutine do_carrer_mean(iband, ndates)
     ! ======================== Output Files
     call chunker%nc_create(ioall_albout, weighting(wta,1d0,0d0), &
         'carrer/', &
-        'soilalb_'//trim(sbands_modis(iband)), &
-        'soilalb_'//trim(sbands_modis(iband)), &
+        'albmodis_'//trim(sbands_modis(iband)), &
+        'albmodis_'//trim(sbands_modis(iband)), &
         'Soil albedo ('//trim(sbands_modis(iband))//' band)', &
         '1', sstats)
     do id=1,NSTATS
@@ -110,12 +110,18 @@ subroutine do_carrer_mean(iband, ndates)
                 mean = sum * byN
                 io_albout(SMEAN)%buf(ic,jc) = mean
                 io_albout(SSTD)%buf(ic,jc) = sqrt(byN*sumsq - mean*mean)
+                io_albout(SNUM)%buf(ic,jc) = n
             else
                 io_albout(SMIN)%buf(ic,jc) = FillValue
                 io_albout(SMAX)%buf(ic,jc) = FillValue
                 io_albout(SMEAN)%buf(ic,jc) = FillValue
                 io_albout(SSTD)%buf(ic,jc) = FillValue
+                io_albout(SNUM)%buf(ic,jc) = 0
             end if
+
+if (io_albout(SSTD)%buf(ic,jc) > 1e10) then
+    print *,'xBIG'
+end if
                 
         end do
         end do

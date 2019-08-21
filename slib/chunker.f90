@@ -211,7 +211,8 @@ end type ChunkIO_ptr
 !
 type Chunker_t
     integer :: ngrid(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
-    integer :: nchunk(chunk_rank)    ! Number of chunks in im,jm direction.
+    integer :: nchunk(chunk_rank)    ! Number of chunks in im,jm direction (buffer)
+    integer :: nchunk_file(chunk_rank)    ! Number of chunks in im,jm direction (on-disk compression)
     integer :: chunk_size(chunk_rank+1)    ! Number of fine grid cells in each chunk (im,jm)
     integer :: cur(chunk_rank)     ! Index of current chunk
 
@@ -441,7 +442,8 @@ end function weighting
 ! @param im_lr,jm_lr Size of low-resolution grid
 ! @param max_reads Maximum number of files one can open for reading.
 ! @param max_writes Maximum number of files one can open for writing.
-subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,max_ioalls,nchunk)
+subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, &
+max_reads, max_writes,max_ioalls,nchunk,nchunk_file)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
     integer, intent(IN) :: im_lr,jm_lr
@@ -459,6 +461,12 @@ subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, max_reads, max_writes,max
         this%nchunk = nchunk
     else
         this%nchunk = (/18,15/)
+    end if
+
+    if (present(nchunk_file)) then
+        this%nchunk_file = nchunk_file
+    else
+        this%nchunk_file = (/18,15/)
     end if
 
     ! Set up chunk parameters
@@ -1183,10 +1191,10 @@ subroutine nc_reuse_file(this, cio0, cio, &
     cio%own_fileid_lr = .false.
 
     ! Create the netCDF variable
-    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk, &
+    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk_file, &
         vname, long_name, units)
 
-    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk, &
+    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk_file, &
         vname, long_name, units)
 
     cio%create_lr = cio0%create_lr
@@ -1265,7 +1273,7 @@ layer_names, create_lr)
         end if
     end if
     if (present(vname)) then
-        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk, &
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk_file, &
             vname, long_name, units)
     end if
     cio%own_fileid = .true.
@@ -1290,7 +1298,7 @@ layer_names, create_lr)
 
         end if
         if (present(vname)) then
-            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk, &
+            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk_file, &
                 vname, long_name, units)
         end if
         cio%own_fileid_lr = .true.
