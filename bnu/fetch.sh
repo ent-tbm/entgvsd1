@@ -2,4 +2,4 @@
 rsync  -av gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . --filter='+ *_qxq.nc' --filter='- *.nc'
 
 # Fetch everything else
-rsync  -av --filter='- /lc_lai_ent/ent17' --filter='- /lc_lai_ent/pure' gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . 
+rsync  -av --filter='- /lc_lai_ent/ent17' --filter='- /lc_lai_ent/carrer' --filter='- /lc_lai_ent/pure' gibbs:/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent . 

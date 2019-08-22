@@ -277,6 +277,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        endif
     enddo
     if (covmax.gt.0.d0) then  !Assign dominant natural veg to crop
+       ! -------------- Replace crops with dominant natural vegetation type
        naturalvegfound = .true.
        vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
             + vfc(i,j,c3herb_s)  + vfc(i,j,c4herb_s)
@@ -290,10 +291,70 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        !!laim(:,i,j,covmaxk) = laim(:,covmaxii,covmaxjj,covmaxk)
        !write(*,*) 'Cell has crops + natural',i,j,s
     else
+       ! --------- If no natural vegetation, look at adjacent cells for veg type
        write(*,*) "No natural veg in (i,j). Checking adjacent",i,j !,s
        dg = 1
-       do while ((.not.naturalvegfound).and.(dg.le.9)) !Check up to 9 grid 
-       
+       do while (.not.naturalvegfound) !Check up to 9 grid 
+
+          if (dg > 9) then
+              ! ---------------- NO NATURAL VEG FOUND IN NEARBY GRIDCELLS!
+              ! Look again at immediately adjacent gridcells, for bare soil vs. crops
+
+              ! Determine LC of crops and bare soil in adjacent grid cells
+              ! (ignore for now the possiblities those gridcells are different area)
+TODO: get a vfc_in that does not change.
+              crops_sum  = 0  ! Sum of crop LC in adjacent cells (including this one)
+              bs_sum = 0      ! Sum of bare soil in adjacent grid cells (including this one)
+              ndg2 = 0
+              dg2 = 1
+              do ii=max(1,i-dg2),min(i+dg2,IMn)
+              do jj=max(1,j-dg2),min(j+dg2,JMn)
+                  crops_sum = crops_sum + vfc_in(i,j,c3herb_s) + vfc_in(i,j,c4herb_s)
+                  bs_sum = bs_sum + vfc_in(i,j,esub%bare_bright) + vfc_in(i,j,esub%bare_dark)
+                  ndg2 = ndg2 + 1
+              end do
+              end do
+              by_ndg2 = 1. / ndg2
+              bs_mean = bs_sum * by_ndg2
+              crops_mean = crops_sum * by_ndg2
+              noncrops_mean = 1.0 - crops_mean
+
+!              if ((noncrops_mean < 1e-5).or.(bs_mean/noncrops_mean < .3)) then
+!                  ! Nearby area is all crops
+!                  !    OR
+!                  ! Nearby area doesn't have too much bare soil (excluding crop area) 
+
+                  ! ===> Assign crop LC and LAI to C3 grass (which started out with lc=0)
+                  covmaxk = esub%svm(C3_GRASS_PER)
+                  ! (this code block copied from below)
+                  vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
+                       + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
+                  vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+                  vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
+                       + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
+                  vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover  - done below
+                  !Assign LAI in (i,j) from adjacent cell
+                  laic(i,j,covmaxk) = covavglai(covmaxk)
+                  laim(:,i,j,covmaxk) = covavglaim(:,covmaxk)
+
+!              else
+!                  ! Just change these crops to bare soil
+!                  bs_mult = 
+!                  covmaxk = esub%svm(
+!              end if
+
+
+
+              ! Assign to C3 grass if bare soil is significant
+              if (bs_mean > .4) then
+
+              if cr
+
+
+              EXIT   ! do loop; done increasing dg
+          end if
+
+
           covsum(:) = 0.d0
           covavglai(:) = 0.d0
           covsumm(:,:) = 0.
@@ -552,7 +613,7 @@ subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
        do j=1,JMn
 
         ! Avoid cells not processed by previous steps
-        if (abs(io_bs%buf(i,j)) > 1.e10) cycle
+        if (io_bs%buf(i,j) == FillValue) cycle
 
           if (vfc15(i,j).gt.0.d0) then !crops in cell, replicate
              laiccrop(i,j) = laic15(i,j)
@@ -609,6 +670,20 @@ subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
 
 end subroutine fill_crops
 
+subroutine check_laim(laim, msg)
+    real*4 :: laim(:,:)
+    character*(*), intent(IN) :: msg
+    ! --------- Locals
+    integer :: i,j
+
+    do j=1,size(laim,2)
+    do i=1,size(laim,1)
+        if (laim(i,j) /= laim(i,j)) print *,trim(msg),i,j
+    end do
+    end do
+
+end subroutine check_laim
+
 subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     type(GcmEntSet_t), intent(IN) :: esub
     integer, intent(IN) :: IM,JM
@@ -627,7 +702,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
     integer :: arid_shrub_s   ! Shortcut indices
 
     logical :: isgood
-    real*4 :: s
+    real*4 :: sum_vfc,sum_vfm
 
     print *,'========================= Part 1&2: trimmed, trimmed_scaled'
 
@@ -646,6 +721,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
             do m=1,NMONTH
                 vfm(k,m) = vfc(k)   ! vfnm in 1km; Re-use annual LC
                 laim(k,m) = io_mon_lai(k,m)%buf(i,j)  ! lainm in 1km
+call check_laim(laim, 'check1')
             end do ! m
 
             ! Height file
@@ -656,12 +732,12 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
             vfh(k) = vfc(k)
             hsd(k) = 0
 
-            ! Bare soil brightness ratiaafo
-            bs_brightratio = io_bs%buf(i,j)
-
-            ! Make sure this gridcell has been defined in inputs
-            isgood = (bs_brightratio /= FillValue)
         end do    ! k=1,esub%ncover
+        ! Bare soil brightness ratiaafo
+        bs_brightratio = io_bs%buf(i,j)
+
+        ! Make sure this gridcell has been defined in inputs
+        isgood = (bs_brightratio /= FillValue)
         ! ----------------------------------------------------
 
         ! By definition, N_BARE indexes the last bare covertype
@@ -678,8 +754,10 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
         arid_shrub_s = esub%svm(ARID_SHRUB)   ! shortcut
         if( vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
+!print *,'AA1',vfc(arid_shrub_s),vfc(n_bare)
             call convert_vf(vfc(N_BARE), laic(N_BARE), &
                  vfc(arid_shrub_s), laic(arid_shrub_s), .15 )
+!print *,'AA2',vfc(arid_shrub_s),vfc(n_bare)
                                 ! lai >= .15
             if (isgood.and.vfc(arid_shrub_s).le.0.0) then !ERROR CHECK
                write(ERROR_UNIT,*) &
@@ -712,6 +790,8 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
                 end if
               endif
             enddo
+call check_laim(laim, 'check1')
+
 
             ! **hm = Simard hegihts
             ! **hsd = stdev of heights
@@ -745,25 +825,27 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
         ! ============= Part 2: trimmed_scaled
 
         ! rescale fractions so that they sum to 1
-        s = sum(vfc(1:N_BARE))
-        if (s.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
+        sum_vfc = sum(vfc(1:N_BARE))
+        sum_vfm = sum(vfm(1:N_BARE, 1))
+        if (abs(sum_vfc - sum_vfm) > 1.e-5) then !#DEBUG
             if (isgood) then
                write(ERROR_UNIT,*) 'ERROR trim:  max and monthly lc different' &
-                    , s,sum(vfm(1:N_BARE,1))
+                    , sum_vfc,sum(vfm(1:N_BARE,1))
                write(ERROR_UNIT,*) vfc(1:N_BARE)
                write(ERROR_UNIT,*) vfm(1:N_BARE,1)
             end if
         endif
 
-        if ( s > 1.00001 ) then
-            vfc(1:N_BARE) = vfc(1:N_BARE) / s
-            vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / s
+        if ( sum_vfc > 1.00001 ) then
+            vfc(1:N_BARE) = vfc(1:N_BARE) / sum_vfc
+            vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / sum_vfc
         end if
-        s = sum( vfc(1:N_BARE) ) 
-        if (s.ne.sum(vfm(1:N_BARE,1))) then !#DEBUG
+        sum_vfc = sum(vfc(1:N_BARE))
+        sum_vfm = sum(vfm(1:N_BARE, 1))
+        if (abs(sum_vfc - sum_vfm) > 1.e-5) then !#DEBUG
            if (isgood) then
               write(ERROR_UNIT,*) 'ERROR scale1:  max and monthly lc different' &
-                 ,i,j, s,sum( vfm(1,1:N_BARE) ) 
+                 ,i,j, sum_vfc, sum_vfm
               write(ERROR_UNIT,*) 'vfc',i,j,vfc(1:N_BARE)
               write(ERROR_UNIT,*) 'vfm',i,j,vfm(1:N_BARE,1)
            end if
@@ -818,11 +900,13 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
     real*4, pointer :: hmcrop(:,:)
     real*4, allocatable :: hsdcrop(:,:)
 
+real*4 :: xsum
+
     print *,'========================= Part 3: maxcrops'
 
     c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
     c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
-
+print *,'c3herb',c3herb_s,c4herb_s
     ! Copy input to 3D array
     allocate(laim15(NMONTH, IM,JM))
     do m=1,NMONTH
@@ -869,6 +953,10 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
     laiccrop => mc%io_ann_lc(c3herb_s,1)%buf
     hmcrop => mc%io_ann_hgt(c3herb_s,1)%buf
 
+do k=1,esub%ncover
+    print *,'sumA',k,sum(mc%io_ann_lai(k,1)%buf)
+end do
+
     !Generate fill-in crop cover from trimmed_scaled before doing nocrops
     !Herb crop only, since right now zero woody crops.
     call fill_crops( &
@@ -879,7 +967,10 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
     do m=1,NMONTH
         mc%io_mon_lai(c3herb_s,m)%buf(:,:) = laimcrop(m,:,:)
     end do
-    
+
+do k=1,esub%ncover
+    print *,'sumB',k,sum(mc%io_ann_lai(k,1)%buf)
+end do
 end subroutine do_part3_maxcrops
 
 subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
@@ -953,7 +1044,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     do j=1,JM
     do i=1,IM
         s = sum( vfc(i,j,1:NOTBARE) ) 
-        if (sum(vfc(i,j,CROPS_C3_HERB:CROPS_C4_HERB))>0.d0) then !Cell has crops
+        if (sum(vfc(i,j,c3herb_s:c4herb_s))>0.d0) then !Cell has crops
             !write(*,*) 'Cell has crops',i,j,s
             !Replace with closest non-zero natural cover
             call replace_crops(esub, IM,JM,i,j, &
@@ -1138,8 +1229,8 @@ subroutine do_trim(esub)
 
     call do_part1_2_trimmed(esub, IM,JM, &
         io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
-!    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
-!    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
+    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     !call chunker_pu%write_chunks
     call tr%chunker%write_chunks
