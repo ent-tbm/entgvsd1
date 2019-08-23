@@ -62,6 +62,7 @@ subroutine do_carrer_mean(iband, ndates)
             weighting(wta, 1d0, 0d0))
     end do
 
+    call chunker%nc_check('A01a_carrer_mean')
 
 #ifdef ENTGVSD_DEBUG
     !do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
