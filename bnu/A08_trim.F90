@@ -247,7 +247,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     real*4 :: br, brcov   !bright soil ratio, br, to total bare soil, brcov
 
     integer :: NATVEG    ! Index of highest natural vegetation type
-    integer :: c3herb_s, c4herb_s, c3_grass_arct_s
+    integer :: c3herb_s, c4herb_s, c3_grass_arct_s, c3_grass_s
 
     KM = esub%ncover
     c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
@@ -296,60 +296,30 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        dg = 1
        do while (.not.naturalvegfound) !Check up to 9 grid 
 
-          if (dg > 9) then
+          if (dg > 5) then
               ! ---------------- NO NATURAL VEG FOUND IN NEARBY GRIDCELLS!
               ! Look again at immediately adjacent gridcells, for bare soil vs. crops
 
-              ! Determine LC of crops and bare soil in adjacent grid cells
-              ! (ignore for now the possiblities those gridcells are different area)
-TODO: get a vfc_in that does not change.
-              crops_sum  = 0  ! Sum of crop LC in adjacent cells (including this one)
-              bs_sum = 0      ! Sum of bare soil in adjacent grid cells (including this one)
-              ndg2 = 0
-              dg2 = 1
-              do ii=max(1,i-dg2),min(i+dg2,IMn)
-              do jj=max(1,j-dg2),min(j+dg2,JMn)
-                  crops_sum = crops_sum + vfc_in(i,j,c3herb_s) + vfc_in(i,j,c4herb_s)
-                  bs_sum = bs_sum + vfc_in(i,j,esub%bare_bright) + vfc_in(i,j,esub%bare_dark)
-                  ndg2 = ndg2 + 1
-              end do
-              end do
-              by_ndg2 = 1. / ndg2
-              bs_mean = bs_sum * by_ndg2
-              crops_mean = crops_sum * by_ndg2
-              noncrops_mean = 1.0 - crops_mean
+              ! ===> Assign crop LC and LAI to C3 grass (which started out with lc=0)
+              c3_grass_s = esub%svm(C3_GRASS_PER)
 
-!              if ((noncrops_mean < 1e-5).or.(bs_mean/noncrops_mean < .3)) then
-!                  ! Nearby area is all crops
-!                  !    OR
-!                  ! Nearby area doesn't have too much bare soil (excluding crop area) 
+              write(*,*) "Assigning to C3_GRASS_PER at",i,j
 
-                  ! ===> Assign crop LC and LAI to C3 grass (which started out with lc=0)
-                  covmaxk = esub%svm(C3_GRASS_PER)
-                  ! (this code block copied from below)
-                  vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
-                       + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
-                  vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
-                  vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
-                       + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
-                  vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover  - done below
-                  !Assign LAI in (i,j) from adjacent cell
-                  laic(i,j,covmaxk) = covavglai(covmaxk)
-                  laim(:,i,j,covmaxk) = covavglaim(:,covmaxk)
+              ! (this code block copied from below)
+              vfc(i,j,c3_grass_s) = vfc(i,j,c3_grass_s)  &
+                   + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
+              vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+              vfm(:,i,j,c3_grass_s) = vfm(:,i,j,c3_grass_s) &
+                   + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
+              vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover  - done below
 
-!              else
-!                  ! Just change these crops to bare soil
-!                  bs_mult = 
-!                  covmaxk = esub%svm(
-!              end if
-
-
-
-              ! Assign to C3 grass if bare soil is significant
-              if (bs_mean > .4) then
-
-              if cr
-
+              ! Move the crop LAI to the new C3 grass
+              laic(i,j,c3_grass_s) = &
+                  (laic(i,j,c3herb_s)*vfc(i,j,c3herb_s) + laic(i,j,c4herb_s)*vfc(i,j,c4herb_s)) &
+                  / (vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s))
+              laim(:,i,j,c3_grass_s) = &
+                  (laim(:,i,j,c3herb_s)*vfm(:,i,j,c3herb_s) + laim(:,i,j,c4herb_s)*vfm(:,i,j,c4herb_s)) &
+                  / (vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s))
 
               EXIT   ! do loop; done increasing dg
           end if
