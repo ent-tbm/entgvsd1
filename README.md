@@ -19,3 +19,7 @@ TODO
 8. Upload input files to NCCS Data Portal
 
 9. Upload code to GitHub
+
+10. Need to include Sonali’s crops LAI (and compare to BNU crops LAI).
+
+11. Need to compare Sonali’s Natveg to BNU nocrops after we fixed the dg thing.

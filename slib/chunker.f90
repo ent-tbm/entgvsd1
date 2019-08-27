@@ -253,7 +253,7 @@ end type Chunker_t
 
 type FileInfo_t
     character*(30) :: dir
-    character*(60) :: leaf
+    character*(80) :: leaf
     character*(20) :: vname
     character*(50) :: long_name
     character*(20) :: units

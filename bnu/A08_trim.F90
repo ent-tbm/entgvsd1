@@ -31,7 +31,7 @@ subroutine outputsegment_open(this, step, esub)
     ! --------------------------- Locals
     integer :: m,k
 
-    call this%chunker%init(IMLR,JMLR,  0,0,'', 1, 500, 30, (/1,1/))
+    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'plot', 1, 500, 30, (/1,1/))
 
     ! ------- Allocate file handles
     allocate(this%io_ann_lc(esub%ncover,1))
@@ -42,24 +42,21 @@ subroutine outputsegment_open(this, step, esub)
     ! Open the files
     call this%chunker%nc_create_set( &
         esub, this%io_ann_lc(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'lc', 2004, step, '1.1', &
-        create_lr=.false.)
+        'BNU', 'M', 'lc', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
         esub, this%io_ann_lai(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
-        'BNU', 'M', 'laimax', 2004, step, '1.1', &
-        create_lr=.false.)
+        'BNU', 'M', 'laimax', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
         esub, this%io_ann_hgt(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
-        'BNU', 'M', 'hgt', 2004, step, '1.1', &
-        create_lr=.false.)
+        'BNU', 'M', 'hgt', 2004, step, '1.1')
 
     do m=1,NMONTH
         call this%chunker%nc_create_set( &
             esub, this%io_mon_lai(:,m), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
             'BNU', 'M', 'lai', 2004, step, '1.1', &
-            doytype='month', idoy=m, create_lr=.false.)
+            doytype='month', idoy=m)
     end do
 
 end subroutine outputsegment_open
@@ -673,6 +670,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
 
     logical :: isgood
     real*4 :: sum_vfc,sum_vfm
+    real*4, parameter :: lc_trim_threshold = .05
 
     print *,'========================= Part 1&2: trimmed, trimmed_scaled'
 
@@ -724,10 +722,8 @@ call check_laim(laim, 'check1')
         arid_shrub_s = esub%svm(ARID_SHRUB)   ! shortcut
         if( vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
-!print *,'AA1',vfc(arid_shrub_s),vfc(n_bare)
             call convert_vf(vfc(N_BARE), laic(N_BARE), &
                  vfc(arid_shrub_s), laic(arid_shrub_s), .15 )
-!print *,'AA2',vfc(arid_shrub_s),vfc(n_bare)
                                 ! lai >= .15
             if (isgood.and.vfc(arid_shrub_s).le.0.0) then !ERROR CHECK
                write(ERROR_UNIT,*) &
@@ -775,6 +771,28 @@ call check_laim(laim, 'check1')
             call do_split_bare_soil(esub, bs_brightratio, &
                 vfc,laic,hm,hsd,vfm,laim)
         end if
+
+
+        ! ------------------ Trim small fractions, just zero them out
+        ! Trimming stage is not getting rid of some tiny fractions
+        ! Things over Antarctica, also over the ocean
+        ! Should be getting rid of those; maybe not because there's nothing else to replace them with.
+        !
+        !   At 1/2 degree: if lc<.1 and laimax==0 or undef  ==> zero it out
+        ! if laimax is nonzero, then... must make sure some lai of that gridcell is preserved when zero out that cover
+        ! if there is vegetation in some other PFT in the same cell...
+        !      ==>  zero it out
+        ! If no other vegetation in that cell and that's the only point with LAI and it's that small...
+        !     ==> just zero it out
+        !     Then checksum to see loss/gain in LAI
+
+        do k=1,esub%ncover
+            if (vfc(k) < lc_trim_threshold) vfc(k) = 0
+            do m=1,NMONTH
+                if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
+            end do   ! m
+        end do    ! k=1,esub%ncover
+
 
         ! -------------------------- Write Outputs (trimmed)
         do k=1,esub%ncover
@@ -923,9 +941,9 @@ print *,'c3herb',c3herb_s,c4herb_s
     laiccrop => mc%io_ann_lc(c3herb_s,1)%buf
     hmcrop => mc%io_ann_hgt(c3herb_s,1)%buf
 
-do k=1,esub%ncover
-    print *,'sumA',k,sum(mc%io_ann_lai(k,1)%buf)
-end do
+!do k=1,esub%ncover
+!    print *,'sumA',k,sum(mc%io_ann_lai(k,1)%buf)
+!end do
 
     !Generate fill-in crop cover from trimmed_scaled before doing nocrops
     !Herb crop only, since right now zero woody crops.
@@ -938,9 +956,9 @@ end do
         mc%io_mon_lai(c3herb_s,m)%buf(:,:) = laimcrop(m,:,:)
     end do
 
-do k=1,esub%ncover
-    print *,'sumB',k,sum(mc%io_ann_lai(k,1)%buf)
-end do
+!do k=1,esub%ncover
+!    print *,'sumB',k,sum(mc%io_ann_lai(k,1)%buf)
+!end do
 end subroutine do_part3_maxcrops
 
 subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)

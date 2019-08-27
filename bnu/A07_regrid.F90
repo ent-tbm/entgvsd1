@@ -255,6 +255,11 @@ subroutine do_regrid_all_lais
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
         .true., 'BNU', 'M', 'hgt', 2004, 'pure', 'purelr', '1.1')
 
+#if 0
+! We only need the doy files at the ent17 and pure steps.  We do not
+! need them at later trimming steps. The doy files are only for 1km
+! hi-res evaluation against MODIS albedo.
+
     ! ---------- DOY
     do idoy=1,NDOY
         nf = nf + 1
@@ -262,6 +267,7 @@ subroutine do_regrid_all_lais
             .true., 'BNU', 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
             'doy', idoy)
     end do
+#endif
 
     ! ---------- MONTH
     do imonth=1,NMONTH
