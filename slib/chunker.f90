@@ -451,6 +451,7 @@ max_reads, max_writes,max_ioalls,nchunk,nchunk_file)
     integer, intent(IN) :: max_reads, max_writes,max_ioalls
 !    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
     integer, intent(IN), OPTIONAL :: nchunk(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
+    integer, intent(IN), OPTIONAL :: nchunk_file(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
 
     ! ------ Locals
     integer :: i

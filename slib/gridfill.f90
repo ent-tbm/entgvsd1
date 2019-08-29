@@ -33,6 +33,44 @@ CONTAINS
 ! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 ! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 ! THE SOFTWARE.
+!
+
+! 
+! Elizabeth A. Fischer	Tue, Aug 20, 2019 at 1:23 AM
+! To: Andrew Dawson
+! Hello,
+! 
+! I tried your gridfill.f90, and it's giving me good results for
+! filling missing data on a lat-lon grid.  (I dug it out of an old
+! version of the repo, before you converted to Cython.  Fortran is
+! definitely preferable to Python for this project).  Can you point to
+! any references on the algorithm used?
+! 
+! Thank you,
+! -- Elizabeth
+! 
+! Andrew Dawson	Tue, Aug 27, 2019 at 5:17 AM
+! To: Elizabeth Fischer
+! Hi Elizabeth
+! 
+! I don't have any particular reference for the algorithm. It is
+! really just solving Poisson's equation at each of the missing points
+! using a successive over relaxation method. For each missing point we
+! compute the difference between its Laplacian and its current value
+! and add the scaled difference back to it, doing this in-place for
+! each missing point in the grid (so subsequent points compute the
+! Laplacian using some already updated neighbour points). This
+! procedure is then repeated until the biggest residual (difference
+! between Laplacian and gridpoint value) is smaller than the specified
+! threshold, or the maximum number of iterations is reached.
+! 
+! It was originally based on this, but written from scratch using
+! modern(ish) Fortran and to be integrated with Python:
+! https://www.ncl.ucar.edu/Document/Functions/Built-in/poisson_grid_fill.shtml
+! 
+! Regards
+! Andrew
+
 
 
 subroutine initialize_missing(nlat, nlon, grid, missing, initzonal, mask)

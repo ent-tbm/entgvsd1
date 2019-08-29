@@ -24,5 +24,11 @@ do
     xent $stage
 done
 
+# Plot everything
+Rscript EntGVSD_ef.R
+
+# Convert it all to PNG
+python3 plots_to_png.py
+
 echo "=================== Finished run_all.sh"
 
