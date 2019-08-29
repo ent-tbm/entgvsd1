@@ -536,7 +536,7 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
 	} else if 	(res=="1x1") {
 		i = (-180:179) + 0.5
 		j = (-90:89) + 0.5
-	} else if (res=="2x2.5" | "2HX2" ) {
+	} else if (res=="2x2.5" | res=="2HX2" ) {
 		i = (-72:71)*2.5 + 1.25
 		i = i*2.5
 		j = (-45:44)*2 + 1
@@ -549,9 +549,14 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
 		dj = 4
 		j = ((-90/dj):((90)/dj))*dj
 	}
+	#print(res)
 	#print(i)
 	#print(j)
-	mapzlim = mapz
+	if (sum(!is.na(mapz))==0) {
+		mapzlim = matrix(0, dim(mapz)[1], dim(mapz)[2]) 
+	} else {
+		mapzlim = mapz
+	}
 	if (if.fill & !is.null(zlim)) {  #Color extreme values with the zlim colors
 		mapzlim[mapzlim<zlim[1]] = zlim[1]
 		mapzlim[mapzlim>zlim[2]] = zlim[2]
@@ -562,6 +567,8 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
 	}
 	title(titletext)
 }
+
+
 #-----------------
 plot.grid3 = function(mapz, res="1x1", colors=terrain.colors(40), legend.lab=NULL, xlab="longitude", ylab="latitude", zlim=NULL, ADD=FALSE) {
 	#Plot map of continuous values contoured
@@ -640,7 +647,8 @@ lines.gissbands = function(agiss, col="black", lty=1, lwd=1) {
 entgvsd_pagetitles = function(paths, fname) {
 	mtext(outer=TRUE, paths, line=1.5)
 	mtext(outer=TRUE, fname, line=0)
-	mtext(outer=TRUE, date(), line=-1,cex=0.5, adj=1)
+	#mtext(outer=TRUE, date(), line=-1,cex=0.5, adj=1)
+	mtext(outer=TRUE, date(), line=3,cex=0.5, adj=1)
 }
 
 Ent_Type13 = c("evergreen broadleaf trees", "evergreen needleleaf trees", "cold deciduous broadleaf trees", "drought deciduous broadleaf", "deciduous needleleaf", "cold-adapted shrub", "arid-adapted shrub", "C3 grass perennial", "C4 grass", "C3 grass annual", "arctic C3 grass", "C4 herb crops", "tree crops")
@@ -762,6 +770,79 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
 	
 }
 
+#-------------------------------------------------------------------------------------------------
+map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="") { 
+ 	# Plot maps of lc, laimax, lai, or hgt
+	# entlclaidir:  Directory containing subdirectories of trim options Ent GVSD files
+	# res:          Grid resolution of data file.  "ent17" and "pure" V1km are plotted at qzq.  Trimmed files are at HXH.
+	# enttyp:		  ent17: 1:20;  pure, trimmmed...nocrops:  1:18
+	# varname:	  lc, laimax, hgt, lai
+	# trimopt:	  ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_crops_ext1
+	# filepre:	  File prefix (Vres_EntGVSD<PFTs>_<LAILdata>, e.g. V1km_EntGVSD17G_BNUM, VHXH_EntGVSD16G_BNUM 
+	# datatime:	  Time point of data, e.g.:  2004
+	# version:	  EntGVSD version, e.g.:  v0.1, v1.1
+	# filesuf:	  Extra suffix for miscellaneous, e.g. "_qxq" for scaled up V1km for plotting at coarser resolution.
+	# do.pdf = TRUE  Logical if to output pdf instead of to the screen.
+	# pathplot=""	  If do.pdf, then give output path for plots.
+
+   #quartz(width=11,height=6) #Open plotting window
+
+   if (varname == "lc") {
+   	  zlim = c(0,1)
+   	  restime = "_ann"
+   	  colors = giss.palette.nowhite(40)
+   } else if (varname == "laimax" | varname=="lai") {
+   	  zlim = c(0,7)
+   	  restime = ""
+   	  colors=drywet(40)
+   } else if (varname == "hgt") {
+   	  zlim = c(0,40)
+   	  restime = ""
+   	  colors=drywet(40)
+   } else {
+   	print("Whoops, only does lc or laimax")
+   	return()
+   }
+   	  	
+  for (opt in trimopt) {
+	#if (if.trim) { #TRUE only for Ent 16 PFTs
+	if (opt=="ent17") {  #Ent 17 PFTs
+		fname = paste(filepre, "_",varname,"_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+	} else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
+		#fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
+		fname = paste(filepre, "_",varname,"_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
+	}
+	fnamelc = paste(filepre, "_","lc","_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+	if (do.pdf) { 
+		pdf(file=paste(pathplot, fname, ".pdf", sep=""), width=11, height=7) 
+	} else {
+		if (!add.new) {
+			quartz(width=11,height=7) #Open plotting window
+		}
+	}
+	filelc = paste(entlclaidir, opt, "/", fnamelc, sep="")
+	filevar = paste(entlclaidir, opt, "/", fname, sep="")
+	print(filelc)
+	print(filevar)
+	#par(mfrow=c(4,4), omi=c(0,0.0,.5,0.5), mar=c(1,1,2,2)+0.1)
+	par(mfrow=c(4,5), omi=c(0,0.0,.5,0.5), mar=c(1,1,2,2)+0.1)
+	if (do.pdf) {
+		par(mfrow=c(4,5), omi=c(0,0.0,1.0,0.5), mar=c(1,1,2,2)+0.1)
+	}
+	titletop = paste(entlclaidir, sep="")
+	map.EntGVSD.v1.1(filelc=filelc, file=filevar, res=res, zlim=zlim, varname=varname, layersnum=enttyp, colors=colors)
+	
+	entgvsd_pagetitles(titletop, fname)
+	if (do.pdf) {
+		dev.off()
+	}
+	
+    # Checksum TBD
+    
+  }
+}
+
+
 
 Ent_lctype_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, if.new=FALSE) {
 	#Plot maps of Ent GVSD dominant cover types with nice color scheme.
@@ -864,7 +945,7 @@ map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname=
 	# hgt - height all layers continuous
 	# heightall - cover-weighted average height per grid cell
 	# heighttree - height of tree PFTs only
-
+	
 	ncid <- open.nc(con=file, write=FALSE)
 	if (type=="any") {
 		x = var.get.nc(ncid, varname)
@@ -886,6 +967,7 @@ map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname=
 			}
 		}
 	} 
+	close.nc(con=ncid)
 }
 
 #------------
@@ -954,7 +1036,7 @@ map.GCM <- function(file, varname="tsurf", res="2x2.5",colors=giss.palette(40), 
 } 
 
 #----------------
-map.GCM.Ent <- function(filelc=NULL, file, varname="vf", pftlist=EntGVSD_PFT13, colors=giss.palette.nowhite(40), type="any", zlim=NULL, unitstype=1, if.zeroNA=TRUE, titletype=1) {
+map.GCM.Ent <- function(filelc=NULL, res="2x2.5", file, varname="vf", pftlist=EntGVSD_PFT13, colors=giss.palette.nowhite(40), type="any", zlim=NULL, unitstype=1, if.zeroNA=TRUE, titletype=1) {
 	#Map a GCM Ent diagnostic with varname, for all PFTs in pftlist (netcdf names)
 	#file = netcdf file path and name
 	#type = 
@@ -972,24 +1054,28 @@ map.GCM.Ent <- function(filelc=NULL, file, varname="vf", pftlist=EntGVSD_PFT13, 
 		for (p in pftlist) {
 			p = trim(p)
 			diagname = make.GCM.Ent.diag.name(varname, p)
+			print(diagname)
 			x = var.get.nc(ncid, diagname)
 			if (if.zeroNA) {x[x==0]=NA}
-			plot.grid.continuous(mapz=x, res="2x2.5",colors=colors, 		
+			plot.grid.continuous(mapz=x, res=res,colors=colors, 		
 					xlab="", ylab="", 
 					zlim=zlim)
 			plot(coastsCoarse, add=TRUE)
 			if (titletype==1) {
 				long_name = att.get.nc(ncid, p, attribute="long_name")
-				mtext(paste(long_name), cex=0.6)
+				mtext(paste(long_name), cex=0.6, line=1)
 			} else if (titletype==2){
 				units = att.get.nc(ncid, p, attribute="units")
-				title(paste(p, " (",units,")", sep=""))
+				mtext(paste(p, " (",units,")", sep=""), line=1)
 			} else if (titletype==3) {
-				title(paste(varname, p))
+				mtext(paste(varname, p), line=1)
 			}
+			mtext(paste("(", round(na.min(x[,]),2), round(na.mean(x[,]),2), round(na.max(x[,]),2), ")"), cex=0.6)
+
 		}
 	} 
 }
+
 #------------
 create.map.template.nc = function(res, varname, longname, units, undef=-1e30, description, fileout, contact="Nancy.Y.Kiang@nasa.gov") {
 	lon.lat = grid.lon.lat(res)

@@ -75,7 +75,7 @@ subroutine do_gridfill(iband)
         'carrer/', &
         'albfill_'//trim(sbands_modis(iband)), &
         'albfill_'//trim(sbands_modis(iband))//'_MEAN', &
-        'albgiss MEAN with missing values filled in', '1')
+        'albmodis MEAN with missing values filled in', '1')
 
 
     call chunker%nc_check('A01f_albmodis_gridfill')

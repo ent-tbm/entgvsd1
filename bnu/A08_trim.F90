@@ -670,7 +670,11 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
 
     logical :: isgood
     real*4 :: sum_vfc,sum_vfm
-    real*4, parameter :: lc_trim_threshold = .05
+
+    ! real*4, parameter :: lc_trim_threshold = .05
+    ! Wow, that <0.05 threshold sure cleans out a lot of that dark
+    ! blue.  I think we can go to a threshold of < 0.1.
+    real*4, parameter :: lc_trim_threshold = .1
 
     print *,'========================= Part 1&2: trimmed, trimmed_scaled'
 
@@ -787,12 +791,42 @@ call check_laim(laim, 'check1')
         !     Then checksum to see loss/gain in LAI
 
         do k=1,esub%ncover
+            ! Note: Do not trim bare_bright and bare_dark.  They still have to
+            ! add up to total bare soil fraction and give the right
+            ! weighted-sum albedo.  Or you can trim them ONLY if bare_bright +
+            ! bare_dark < 0.05.
+            if ((k == esub%bare_dark).or.(k == esub%bare_bright)) cycle
+
             if (vfc(k) < lc_trim_threshold) vfc(k) = 0
             do m=1,NMONTH
                 if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
             end do   ! m
         end do    ! k=1,esub%ncover
 
+        do k=1,esub%ncover
+            ! Note: Do not trim bare_bright and bare_dark.  They still have to
+            ! add up to total bare soil fraction and give the right
+            ! weighted-sum albedo.
+            if ((k == esub%bare_bright).or.(k == esub%bare_dark)) cycle
+
+            if (vfc(k) < lc_trim_threshold) vfc(k) = 0
+            do m=1,NMONTH
+                if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
+            end do   ! m
+        end do    ! k=1,esub%ncover
+
+        ! Or you can trim them ONLY if bare_bright +
+        ! bare_dark < 0.05.
+        if (vfc(esub%bare_bright) + vfc(esub%bare_dark) < lc_trim_threshold) then
+            vfc(esub%bare_bright) = 0
+            vfc(esub%bare_dark) = 0
+        end if
+        do m=1,NMONTH
+            if (vfm(esub%bare_bright,m) + vfm(esub%bare_dark,m) < lc_trim_threshold) then
+                vfm(esub%bare_bright,m) = 0
+                vfm(esub%bare_dark,m) = 0
+            end if
+        end do
 
         ! -------------------------- Write Outputs (trimmed)
         do k=1,esub%ncover

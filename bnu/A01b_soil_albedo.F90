@@ -13,6 +13,8 @@
 !###  To do:  May want to correct spectral waiting for 300-400 nm to be lower.
 !###  To do:  Get Brian Cairns zonal spectral irradiances.
 
+! Use the filled-in version of Carrer MODIS albedo
+#define USE_FILLED
 
 !------------------------------------------------------------------------------
       
@@ -103,8 +105,8 @@ program Carrer_soilalbedo_to_GISS
     ! Input files
     type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
     real*4 :: lcice, lcwater
-    type(ChunkIO_t) :: ioall_albmodis(NBANDS_MODIS), io_albmodis(NSTATS,NBANDS_MODIS)
-    real*4 :: albmodis(NSTATS,NBANDS_MODIS)
+    type(ChunkIO_t) :: io_albmodis(NBANDS_MODIS)
+    real*4 :: albmodis(NBANDS_MODIS)
     ! Output Files
     type(ChunkIO_t) :: io_albsw
     real*4 :: albsw
@@ -150,17 +152,23 @@ program Carrer_soilalbedo_to_GISS
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
     ! ------------ albmodis
+#ifdef USE_FILLED
     do iband=1,NBANDS_MODIS
-        call chunker%nc_open(ioall_albmodis(iband), LC_LAI_ENT_DIR, &
+        ! Read from 2D NetCDF var
+        call chunker%nc_open(io_albmodis(iband), LC_LAI_ENT_DIR, &
+            'carrer/', &
+            'albfill_'//trim(sbands_modis(iband))//'.nc', &
+            'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
+    end do
+#else
+    do iband=1,NBANDS_MODIS
+        ! Read from 3D NetCDF var
+        call chunker%nc_open(io_albmodis(iband), LC_LAI_ENT_DIR, &
             'carrer/', &
             'albmodis_'//trim(sbands_modis(iband))//'.nc', &
-            'albmodis_'//trim(sbands_modis(iband)), 0)
-        do istat=1,nstats
-            call chunker%nc_reuse_var( &
-                ioall_albmodis(iband), io_albmodis(istat,iband), &
-                (/1,1,istat/))
-        end do
+            'albmodis_'//trim(sbands_modis(iband)), SMEAN)
     end do
+#endif
 
     ! ===================== Open Output Files
 
@@ -240,9 +248,7 @@ program Carrer_soilalbedo_to_GISS
             lcice = io_lcice%buf(ic,jc)
             lcwater = io_lcwater%buf(ic,jc)
             do iband=1,NBANDS_MODIS
-            do istat=1,NSTATS
-                albmodis(istat,iband) = io_albmodis(istat,iband)%buf(ic,jc)
-            end do
+                albmodis(iband) = io_albmodis(iband)%buf(ic,jc)
             end do
 
             ! Compute overall NetCDF index of current cell
@@ -251,7 +257,7 @@ program Carrer_soilalbedo_to_GISS
 
             ! Infer soil mask
             ! TODO: Get this from LC instead
-            if (albmodis(SMEAN,1) /= FillValue) then
+            if (albmodis(1) /= FillValue) then
                 wta(ic,jc) = 1
             else
                 wta(ic,jc) = 0
@@ -259,13 +265,13 @@ program Carrer_soilalbedo_to_GISS
 
 
             !* Calculate total SW albedo --------------------------------------
-            if ((albmodis(SMEAN, VIS_MODIS).eq.FillValue).or. &
-                (albmodis(SMEAN, NIR_MODIS).eq.FillValue)) then
+            if ((albmodis(VIS_MODIS).eq.FillValue).or. &
+                (albmodis(NIR_MODIS).eq.FillValue)) then
                 albsw = FillValue
             else
                 albsw = ( &
-                     albmodis(SMEAN,VIS_MODIS) * sum(fracSW_MG(1:2)) &
-                   + albmodis(SMEAN,NIR_MODIS) * sum(fracSW_MG(3:8)) &
+                     albmodis(VIS_MODIS) * sum(fracSW_MG(1:2)) &
+                   + albmodis(NIR_MODIS) * sum(fracSW_MG(3:8)) &
                 ) / sum(fracSW_MG(1:8)) 
             endif
 
@@ -274,20 +280,20 @@ program Carrer_soilalbedo_to_GISS
                 albgiss(iband) = FillValue
             end do
 
-            if ((albmodis(SMEAN,VIS_MODIS).eq.FillValue).or. &
-                (albmodis(SMEAN,NIR_MODIS).eq.FillValue)) then
+            if ((albmodis(VIS_MODIS).eq.FillValue).or. &
+                (albmodis(NIR_MODIS).eq.FillValue)) then
                 do iband=1,NBANDS_GISS
                     albgiss(iband) = FillValue
                 end do
             else
                 albgiss(VIS_GISS) = &
-                   ( albmodis(SMEAN,VIS_MODIS) * &
+                   ( albmodis(VIS_MODIS) * &
                    (fracSW_MG(nm300_400) + fracSW_MG(nm400_700)) + &
-                   albmodis(SMEAN,NIR_MODIS)*fracSW_MG(nm700_770)) &
+                   albmodis(NIR_MODIS)*fracSW_MG(nm700_770)) &
                    /( fracSW_MG(nm300_400) + fracSW_MG(nm400_700) + &
                    fracSW_MG(nm700_770) )
                 do k=2,NBANDS_GISS
-                    albgiss(k) = albmodis(SMEAN, NIR_MODIS)
+                    albgiss(k) = albmodis(NIR_MODIS)
                 end do
             endif
 
