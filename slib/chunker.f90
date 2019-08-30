@@ -253,7 +253,7 @@ end type Chunker_t
 
 type FileInfo_t
     character*(30) :: dir
-    character*(80) :: leaf
+    character*(100) :: leaf
     character*(20) :: vname
     character*(50) :: long_name
     character*(20) :: units
@@ -1238,11 +1238,12 @@ layer_names, create_lr)
     logical :: alloc_buf
     integer :: nlayer
 
+
     cio%wta = wta
     cio%leaf = leaf
     cio%rw = 'w'
     cio%create_lr = (.not.present(create_lr)).or.create_lr
-
+    if (allocated(cio%base)) deallocate(cio%base)
     if (present(layer_names)) then
         nlayer = size(layer_names,1)
         allocate(dimids(3))
@@ -1617,6 +1618,14 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             write(ERROR_UNIT,*) 'No doytype allowed with laimax variable'
             stop
         end if
+    else if (var=='lclaimax') then
+        time = ''
+        info%long_name = 'CHECKSUM: sum(LC*LAIMAX)'
+        info%units = 'm^2 m-2'
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with lclaimax variable'
+            stop
+        end if
     else if (var=='lc') then
         info%long_name = 'Land Cover Fraction'
         info%units = '1'
@@ -1627,6 +1636,14 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         end if
     else if (var == 'hgt') then
         info%long_name = 'Canopy Height'
+        info%units = 'm'
+        time = ''
+        if (present(doytype).or.present(idoy)) then
+            write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
+            stop
+        end if
+    else if (var == 'lchgt') then
+        info%long_name = 'CHECKSUM: sum(LC*HGT)'
         info%units = 'm'
         time = ''
         if (present(doytype).or.present(idoy)) then
@@ -1662,6 +1679,9 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
 
         if (var == 'lai') then
             info%long_name = 'Leaf Area Index, ' // trim(time)
+            info%units = 'm^2 m-2'
+        else if (var == 'lclai') then
+            info%long_name = 'SUM(LC*LAI), ' // trim(time)
             info%units = 'm^2 m-2'
         else
             write(ERROR_UNIT,*) 'Illegal variable ',var

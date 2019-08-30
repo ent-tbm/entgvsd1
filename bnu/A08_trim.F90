@@ -17,8 +17,14 @@ type OutputSegment_t
     type(ChunkIO_t), allocatable :: io_ann_lai(:,:)        ! (esub%ncover,1)
     type(ChunkIO_t), allocatable :: io_ann_hgt(:,:)        ! (esub%ncover,1)
     type(ChunkIO_t), allocatable :: io_mon_lai(:,:)   ! (esub%ncover,NMONTH)
+
+    type(ChunkIO_t) :: io_ann_lc_checksum
+    type(ChunkIO_t) :: io_ann_lclaimax_checksum
+    type(ChunkIO_t) :: io_ann_lchgt_checksum
+    type(ChunkIO_t), allocatable :: io_mon_lclai_checksum(:)   ! (NMONTH)
 contains
     procedure :: open => outputsegment_open
+    procedure :: checksum => outputsegment_checksum
 end type OutputSegment_t
 
 CONTAINS
@@ -30,6 +36,7 @@ subroutine outputsegment_open(this, step, esub)
     type(EntSet_t), intent(IN) :: esub
     ! --------------------------- Locals
     integer :: m,k
+    type(FileInfo_t) :: info
 
     call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'plot', 1, 500, 30, (/1,1/))
 
@@ -59,7 +66,88 @@ subroutine outputsegment_open(this, step, esub)
             doytype='month', idoy=m)
     end do
 
+    ! ------------- Open checksum files
+    allocate(this%io_mon_lclai_checksum(NMONTH))
+
+    ! Open checksum files
+    call this%chunker%file_info(info, esub, 'BNU', 'M', 'lc', 2004, step, '1.1', &
+        varsuffix = '_checksum')
+    call this%chunker%nc_create(this%io_ann_lc_checksum, &
+        weighting(this%chunker%wta1,1d0,0d0), &
+        info%dir, info%leaf, info%vname, &
+        info%long_name, info%units)
+
+    call this%chunker%file_info(info, esub, 'BNU', 'M', 'lclaimax', 2004, step, '1.1', &
+        varsuffix = '_checksum')
+    call this%chunker%nc_create(this%io_ann_lclaimax_checksum, &
+        weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
+        info%dir, info%leaf, info%vname, &
+        info%long_name, info%units)
+
+
+    call this%chunker%file_info(info, esub, 'BNU', 'M', 'lchgt', 2004, step, '1.1', &
+        varsuffix = '_checksum')
+    call this%chunker%nc_create(this%io_ann_lchgt_checksum, &
+        weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
+        info%dir, info%leaf, info%vname, &
+        info%long_name, info%units)
+
+    do m=1,NMONTH
+        call this%chunker%file_info(info, esub, 'BNU', 'M', 'lclai', 2004, step, '1.1', &
+            doytype='month', idoy=m, varsuffix='_checksum')
+        call this%chunker%nc_create(this%io_mon_lclai_checksum(m), &
+            weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
+            info%dir, info%leaf, info%vname, &
+            info%long_name, info%units)
+    end do
+
+
 end subroutine outputsegment_open
+
+subroutine outputsegment_checksum(this, esub)
+    class(OutputSegment_t) :: this    ! Set of file handles to open
+    type(EntSet_t), intent(IN) :: esub
+    ! ---------- Local Vars
+    integer :: ic,jc,k,m
+    real*4 :: sum
+
+    do jc = 1,this%chunker%chunk_size(2)
+    do ic = 1,this%chunker%chunk_size(1)
+        ! lc_checksum = sum(lc)
+        sum = 0
+        do k=1,esub%ncover
+            sum = sum + this%io_ann_lc(k,1)%buf(ic,jc)
+        end do
+        this%io_ann_lc_checksum%buf(ic,jc) = sum
+
+        ! lclaimax_checksum = sum(LC*LAIMAX) - LAIMAX
+        sum = 0
+        do k=1,esub%ncover
+            sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_lai(k,1)%buf(ic,jc)
+        end do
+        this%io_ann_lclaimax_checksum%buf(ic,jc) = sum
+
+        ! lchgt_checksum = sum(LC*HGT) - HGT
+        sum = 0
+        do k=1,esub%ncover
+            sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_hgt(k,1)%buf(ic,jc)
+        end do
+        this%io_ann_lchgt_checksum%buf(ic,jc) = sum
+
+        ! MONTHLY: lclai_checksum = sum(LC*LAI) - LAI
+        do m=1,NMONTH
+            sum = 0
+            do k=1,esub%ncover
+                sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_lai(k,1)%buf(ic,jc)
+            end do
+            this%io_ann_lclaimax_checksum%buf(ic,jc) = sum
+        end do
+    end do
+    end do
+
+
+end subroutine
+
 ! =======================================================================
 
 
@@ -1254,6 +1342,12 @@ subroutine do_trim(esub)
         io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
     call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+
+    ! Compute checksums for each output segment
+    call tr%checksum(esub_p)
+    call ts%checksum(esub_p)
+    call mc%checksum(esub_p)
+    call nc%checksum(esub_p)
 
     !call chunker_pu%write_chunks
     call tr%chunker%write_chunks
