@@ -715,6 +715,7 @@ call check_laim(laim, 'check1')
         ! By definition, N_BARE indexes the last bare covertype
         !    If not yet split: = BARE_SPARSE
         !    If split already: = BARE_DARK
+        ! 1:N_BARE == everything but water
         ! We assume we've already been split in A04...A06
         n_bare = esub%bare_dark
 
@@ -846,7 +847,7 @@ call check_laim(laim, 'check1')
 
         ! ============= Part 2: trimmed_scaled
 
-        ! rescale fractions so that they sum to 1
+        ! rescale fractions so that they sum to 1 (except water)
         sum_vfc = sum(vfc(1:N_BARE))
         sum_vfm = sum(vfm(1:N_BARE, 1))
         if (abs(sum_vfc - sum_vfm) > 1.e-5) then !#DEBUG
@@ -858,7 +859,7 @@ call check_laim(laim, 'check1')
             end if
         endif
 
-        if ( sum_vfc > 1.00001 ) then
+        if ( sum_vfc > 0.00001 ) then
             vfc(1:N_BARE) = vfc(1:N_BARE) / sum_vfc
             vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / sum_vfc
         end if
