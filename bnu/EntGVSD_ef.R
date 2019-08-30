@@ -25,7 +25,7 @@ datatime=2004
 #   If linux command line:  R CMD BATCH EntGVSD_ef.R 
 
 # ent17
-if (FALSE) {
+if (TRUE) {
     trimopt = "ent17"
     res="qxq"
     IM=1440
@@ -44,7 +44,7 @@ if (FALSE) {
 
 
 # pure
-if (FALSE) {
+if (TRUE) {
     trimopt = "pure"
     res="qxq"
     filepre = "V1km_EntGVSD16G_BNUM"
