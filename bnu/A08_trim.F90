@@ -138,9 +138,9 @@ subroutine outputsegment_checksum(this, esub)
         do m=1,NMONTH
             sum = 0
             do k=1,esub%ncover
-                sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_lai(k,1)%buf(ic,jc)
+                sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_mon_lai(k,m)%buf(ic,jc)
             end do
-            this%io_ann_lclaimax_checksum%buf(ic,jc) = sum
+            this%io_mon_lclai_checksum(m)%buf(ic,jc) = sum
         end do
     end do
     end do
