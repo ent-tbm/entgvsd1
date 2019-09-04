@@ -52,16 +52,16 @@ subroutine outputsegment_open(this, step, esub)
         'BNU', 'M', 'lc', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
-        esub, this%io_ann_lai(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+        esub, this%io_ann_lai(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
         'BNU', 'M', 'laimax', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
-        esub, this%io_ann_hgt(:,1), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+        esub, this%io_ann_hgt(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
         'BNU', 'M', 'hgt', 2004, step, '1.1')
 
     do m=1,NMONTH
         call this%chunker%nc_create_set( &
-            esub, this%io_mon_lai(:,m), lc_weights(this%io_ann_lc(:,1), 1d0, 0d0), &
+            esub, this%io_mon_lai(:,m), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
             'BNU', 'M', 'lai', 2004, step, '1.1', &
             doytype='month', idoy=m)
     end do
