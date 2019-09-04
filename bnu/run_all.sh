@@ -8,7 +8,7 @@ for stage in \
         A00b_regrid.F90 \
         A01h_veg_height.F90 \
         A01a_carrer_mean.F90 \
-        A01f__albmodis_gridfill.F90 \
+        A01f_albmodis_gridfill.F90 \
         A01b_soil_albedo.F90 \
         A01_lc_laimax.F90 \
         A02_lc_lai_doy.F90 \
