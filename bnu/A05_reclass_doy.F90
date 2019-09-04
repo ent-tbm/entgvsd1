@@ -22,20 +22,21 @@ subroutine do_reindex(esub)
     ! Input files
     type(ChunkIO_t) :: io_lc_ent17(NENT20)
     type(ChunkIO_t) :: io_lc_pure(esub%ncover)
-    real*4 :: sum_lc(:,:)
+    real*4, allocatable :: sum_lc(:,:)
     type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
     ! Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover,ndoy)
     type(ChunkIO_t) :: io_lclai_checksum(ndoy)
 
+    type(FileInfo_t) :: info
     integer :: k,ksub
     integer :: idoy
 
     esub_p => esub
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
-    allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
+    allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
@@ -85,16 +86,16 @@ subroutine do_reindex(esub)
     call cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 
 #ifdef ENTGVSD_DEBUG
-        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+        dbj0,dbj1, &
+        dbi0,dbi1, &
 #else
         1,chunker%nchunk(2), &
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
         io_lc_ent17, io_laiin, io_bs, &
-        io_laiout,
-        sum_lc=sum_lc,
+        io_laiout, &
+        sum_lc=sum_lc, &
         io_lclai_checksum=io_lclai_checksum)
 
     call chunker%close_chunks

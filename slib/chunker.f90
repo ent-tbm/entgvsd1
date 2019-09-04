@@ -16,6 +16,14 @@ private
     public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
     public :: FillValue
+    public :: dbi0,dbi1,dbj0,dbj1
+
+
+! Chunks used when debugging
+integer, parameter :: dbj0 = 11
+integer, parameter :: dbj1 = 12
+integer, parameter :: dbi0 = 5
+integer, parameter :: dbi1 = 5
 
 ! Controls how variabls are weighted when regridded to low resolution.
 ! The variable buf points to a buffer, of same shape as ChunkIO_t

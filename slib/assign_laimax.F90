@@ -11,7 +11,7 @@ subroutine assign_laimax(chunker, &
     ic0,ic1, &
     io_lai, io_lc, &                        ! INPUT
     io_laiout, io_lclai_checksum, &   ! OUTPUT
-    io_lclai_checksum_alldoy, io_err)    ! Optional OUTPUT
+    sum_lc, io_lclai_checksum_alldoy, io_err)    ! Optional OUTPUT
 
     type(Chunker_t) :: chunker
     integer :: jc0,jc1, ic0,ic1
@@ -47,10 +47,11 @@ subroutine assign_laimax(chunker, &
             ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
             jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
+            ! Compute weighting for checksums
             if (present(sum_lc)) then
                 sum_lc(ic,jc) = 0
                 do k = 1,NENT20
-                    sum_lc(ic,jc) = sum_lc(ic,jc) + io_lc%buf(ic,jc)
+                    sum_lc(ic,jc) = sum_lc(ic,jc) + io_lc(k)%buf(ic,jc)
                 end do
             end if
 

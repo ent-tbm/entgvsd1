@@ -136,8 +136,8 @@ program Carrer_soilalbedo_to_GISS
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
 
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/6,5/))
-    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/6,5/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/18,15/))
+    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/18,15/))
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd_hr(chunkerhr%chunk_size(1), chunkerhr%chunk_size(2)))
@@ -228,10 +228,8 @@ program Carrer_soilalbedo_to_GISS
     ! ================== Main Loop
 
 #ifdef ENTGVSD_DEBUG
-    !do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
-    !do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
-    do jchunk = 11,12
-    do ichunk = 5,7
+    do jchunk = dbj0,dbj1
+    do ichunk = dbi0,dbi1
 #else
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)

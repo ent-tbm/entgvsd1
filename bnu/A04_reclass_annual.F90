@@ -93,7 +93,7 @@ subroutine do_reindex(esub)
     call chunker%file_info(info, esub_p, &
         'BNU', 'M', 'lc', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
-    call chunker%nc_create(io_lc_checksum, &
+    call chunker%nc_create(io_lc_checksum(1), &
         weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
         'SUM(lc)', info%units)
@@ -101,8 +101,8 @@ subroutine do_reindex(esub)
     call chunker%file_info(info, esub_p, &
         'BNU', 'M', 'lchgt', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
-    call chunker%nc_create(io_lchgt_checksum, &
-        weighting(io_lc_checksum%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+    call chunker%nc_create(io_lchgt_checksum(1), &
+        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
         'SUM(lc*height)', info%units)
 
@@ -110,7 +110,7 @@ subroutine do_reindex(esub)
         'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lclai_checksum(1), &
-        weighting(io_lc_checksum%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
         'SUM(lc*LAI)', info%units)
 
@@ -121,10 +121,8 @@ subroutine do_reindex(esub)
 
     call cropmerge_laisparse_splitbare(esub, chunker, one, &
 #ifdef ENTGVSD_DEBUG
-!        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-!        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
-    11,12, &
-    5,7, &
+        dbj0,dbj1, &
+        dbi0,dbi1, &
 #else
         1,chunker%nchunk(2), &
         1,chunker%nchunk(1), &

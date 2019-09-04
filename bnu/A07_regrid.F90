@@ -173,11 +173,8 @@ subroutine regrid_lais(esub, fname)
 !subroutine regrid_handles()
 
 #ifdef ENTGVSD_DEBUG
-!    do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
-!    do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
-    ! Choose a smalle area to debug
-    do jchunk = 11,12
-    do ichunk = 5,7
+    do jchunk = dbj0,dbj1
+    do ichunk = dbi0,dbi1
 #else
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)

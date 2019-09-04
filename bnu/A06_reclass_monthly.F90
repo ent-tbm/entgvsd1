@@ -31,13 +31,14 @@ subroutine do_reindex(esub,m0,m1)
     type(ChunkIO_t) :: io_lclai_checksum(m1-m0+1)
 
 
+    type(FileInfo_t) :: info
     integer :: k,ksub
     integer :: im,imonth
 
 
     esub_p => esub
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300, 20)
-    allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
+    allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
@@ -96,8 +97,8 @@ subroutine do_reindex(esub,m0,m1)
     call cropmerge_laisparse_splitbare(esub, chunker, m1-m0+1, &
 
 #ifdef ENTGVSD_DEBUG
-        chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-        chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+        dbj0,dbj1, &
+        dbi0,dbi1, &
 #else
         1,chunker%nchunk(2), &
         1,chunker%nchunk(1), &
@@ -105,7 +106,7 @@ subroutine do_reindex(esub,m0,m1)
         combine_crops_c3_c4, split_bare_soil, &
         io_lc_ent17, io_laiin, io_bs, &
         io_laiout, &
-        sum_lc = sum_lc,
+        sum_lc = sum_lc, &
         io_lclai_checksum=io_lclai_checksum)
 
     call chunker%close_chunks

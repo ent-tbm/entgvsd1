@@ -35,7 +35,7 @@ implicit none
     type(ChunkIO_t) :: io_lchgt_checksum
 
     real*4 :: SHEIGHT, OHEIGHT
-
+    type(FileInfo_t) :: info
     integer :: k
 
 call init_ent_labels
@@ -86,10 +86,8 @@ stop 0
 ! it chooses a land area in Asia
 
 #ifdef ENTGVSD_DEBUG
-!do jchunk = chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1
-!do ichunk = chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1
-do jchunk = 11,12
-do ichunk = 5,7
+do jchunk = dbj0,dbj1
+do ichunk = dbi0,dbi1
 #else
 do jchunk = 1,chunker%nchunk(2)
 do ichunk = 1,chunker%nchunk(1)
@@ -115,7 +113,7 @@ do ichunk = 1,chunker%nchunk(1)
                     SHEIGHT = io_sim%buf(ic,jc)
                     OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
                     io_lchgt_checksum%buf(ic,jc) = io_lchgt_checksum%buf(ic,jc) + &
-                        io_lc%buf(ic,jc) * OHEIGHT
+                        io_lc(k)%buf(ic,jc) * OHEIGHT
                     ! TODO: Better way: inverse weighted average of
                     ! gridcell height, so tree heights are taller.  So
                     ! average gridcell height (averaging over non-zero

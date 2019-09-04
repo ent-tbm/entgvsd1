@@ -21,7 +21,7 @@ type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t) :: io_laiin(one)
 type(ChunkIO_t) :: io_lc(NENT20)
-real*4 :: sum_lc(:,:)
+real*4, allocatable :: sum_lc(:,:)
 ! Output files
 type(ChunkIO_t) :: io_laiout(NENT20,one)
 type(ChunkIO_t) :: io_err(NENT20,one)
@@ -73,10 +73,8 @@ stop 0
 
 call assign_laimax(chunker, &
 #ifdef ENTGVSD_DEBUG
-    11,12, &
-    5,7, &
-!    chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-!    chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+    dbj0,dbj1, &
+    dbi0,dbi1, &
 #else
     1,chunker%nchunk(2), &
     1,chunker%nchunk(1), &

@@ -19,7 +19,7 @@ type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t), target :: io_lai(ndoy)      ! Input...
 type(ChunkIO_t), target :: io_lc(NENT20)
-real*4 :: sum_lc(:,:)
+real*4, allocatable :: sum_lc(:,:)
 ! Output files
 type(ChunkIO_t) :: io_laiout(NENT20,ndoy)
 type(ChunkIO_t) :: io_lclai_checksum(ndoy)
@@ -29,7 +29,7 @@ integer :: idoy,k
 
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
-allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
+allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 !* Input file.
 
@@ -69,8 +69,8 @@ stop 0
 
 call assign_laimax(chunker, &
 #ifdef ENTGVSD_DEBUG
-    chunker%nchunk(2)*3/4,chunker%nchunk(2)*3/4+1, &
-    chunker%nchunk(1)*3/4,chunker%nchunk(1)*3/4+1, &
+    dbj0,dbj1, &
+    dbi0,dbi1, &
 #else
     1,chunker%nchunk(2), &
     1,chunker%nchunk(1), &
