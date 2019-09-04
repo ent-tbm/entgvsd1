@@ -22,10 +22,12 @@ subroutine do_reindex(esub)
     ! Input files
     type(ChunkIO_t) :: io_lc_ent17(NENT20)
     type(ChunkIO_t) :: io_lc_pure(esub%ncover)
+    real*4 :: sum_lc(:,:)
     type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
     ! Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover,ndoy)
+    type(ChunkIO_t) :: io_lclai_checksum(ndoy)
 
     integer :: k,ksub
     integer :: idoy
@@ -33,6 +35,7 @@ subroutine do_reindex(esub)
     esub_p => esub
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
+    allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
@@ -64,6 +67,15 @@ subroutine do_reindex(esub)
             esub_p, io_laiout(:,idoy), lc_weights(io_lc_pure, 1d0, 0d0), &
             'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
             doytype='doy', idoy=idoy)
+
+        call chunker%file_info(info, esub_p, &
+            'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
+            varsuffix = '_checksum', &
+            doytype='doy', idoy=idoy)
+        call chunker%nc_create(io_lclai_checksum(idoy), &
+            weighting(sum_lc, 1d0, 0d0), &   ! TODO: Scale by _lc
+            info%dir, info%leaf, info%vname, &
+            'SUM(LC*LAI)', info%units)
     end do   ! idoy
 
     call chunker%nc_check('A05_reclass_doy')
@@ -81,7 +93,9 @@ subroutine do_reindex(esub)
 #endif
         combine_crops_c3_c4, split_bare_soil, &
         io_lc_ent17, io_laiin, io_bs, &
-        io_laiout)
+        io_laiout,
+        sum_lc=sum_lc,
+        io_lclai_checksum=io_lclai_checksum)
 
     call chunker%close_chunks
 

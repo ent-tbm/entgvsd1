@@ -21,10 +21,11 @@ type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t) :: io_laiin(one)
 type(ChunkIO_t) :: io_lc(NENT20)
+real*4 :: sum_lc(:,:)
 ! Output files
 type(ChunkIO_t) :: io_laiout(NENT20,one)
 type(ChunkIO_t) :: io_err(NENT20,one)
-type(ChunkIO_t) :: io_checksum_lclai(one)
+type(ChunkIO_t) :: io_lclai_checksum(one)
 
 type(FileInfo_t) :: info
 integer :: k
@@ -32,6 +33,7 @@ integer :: ichunk,jchunk, ic,jc, ii,jj
 
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120,10)
+allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
 
 ! ================= Input Files
 !      LAI max
@@ -54,12 +56,12 @@ call chunker%nc_create_set( &
     varsuffix='_err')
 
 call chunker%file_info(info, ent20, &
-    'BNU', 'M', 'laimax', 2004, 'ent17', '1.1', &
+    'BNU', 'M', 'lclaimax', 2004, 'ent17', '1.1', &
     varsuffix = '_checksum')
 call chunker%nc_create( &
-    io_checksum_lclai(1),  weighting(chunker%wta1,1d0,0d0), &
+    io_lclai_checksum(1),  weighting(sum_lc,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
-    'Sum(LC*LAI) - LAI_orig == 0', info%units)
+    'Sum(LC*LAI) == 0', info%units)
 
 ! ====================== Done Opening Files
 
@@ -79,7 +81,8 @@ call assign_laimax(chunker, &
     1,chunker%nchunk(2), &
     1,chunker%nchunk(1), &
 #endif
-    io_laiin, io_lc, io_laiout, io_checksum_lclai, &
+    io_laiin, io_lc, io_laiout, &
+    sum_lc=sum_lc, io_lclai_checksum=io_lclai_checksum, &
     io_err=io_err)
 
 call chunker%close_chunks

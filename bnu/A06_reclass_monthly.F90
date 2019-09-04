@@ -23,10 +23,12 @@ subroutine do_reindex(esub,m0,m1)
     ! ------ Input Files
     type(ChunkIO_t) :: io_lc_ent17(NENT20)
     type(ChunkIO_t) :: io_lc_pure(esub%ncover)
+    real*4, ALLOCATABLE :: sum_lc(:,:)
     type(ChunkIO_t) :: io_laiin(NENT20,m1-m0+1)
     type(ChunkIO_t) :: io_bs
     ! ------ Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover,m1-m0+1)
+    type(ChunkIO_t) :: io_lclai_checksum(m1-m0+1)
 
 
     integer :: k,ksub
@@ -35,6 +37,7 @@ subroutine do_reindex(esub,m0,m1)
 
     esub_p => esub
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300, 20)
+    allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
@@ -73,6 +76,15 @@ subroutine do_reindex(esub,m0,m1)
             esub_p, io_laiout(:,imonth), lc_weights(io_lc_pure, 1d0, 0d0), &
             'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
             doytype='month', idoy=im)
+
+        call chunker%file_info(info, esub_p, &
+            'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
+            varsuffix = '_checksum', &
+            doytype='month', idoy=im)
+        call chunker%nc_create(io_lclai_checksum(imonth), &
+            weighting(sum_lc, 1d0, 0d0), &
+            info%dir, info%leaf, info%vname, &
+            'SUM(LC*LAI)', info%units)
     end do   ! imonth
 
     call chunker%nc_check('A06_reclass_monthly')
@@ -92,7 +104,9 @@ subroutine do_reindex(esub,m0,m1)
 #endif
         combine_crops_c3_c4, split_bare_soil, &
         io_lc_ent17, io_laiin, io_bs, &
-        io_laiout)
+        io_laiout, &
+        sum_lc = sum_lc,
+        io_lclai_checksum=io_lclai_checksum)
 
     call chunker%close_chunks
 

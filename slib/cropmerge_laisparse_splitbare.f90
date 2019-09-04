@@ -14,8 +14,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     combine_crops_c3_c4, split_bare_soil, &
     io_lcin, io_laiin, io_bs, &               ! INPUT
     io_laiout, &                              ! OUTPUT
-    io_sum_lc, io_lcout, &                      ! OUTPUT (optional)
-    io_simin, io_simout)
+    sum_lc, io_lclai_checksum, &
+    io_lc_checksum, io_lcout, &                      ! OUTPUT (optional)
+    io_simin, io_simout, io_lchgt_checksum)
 
     type(GcmEntSet_t) :: esub
     type(Chunker_t) :: chunker
@@ -28,10 +29,13 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     type(ChunkIO_t) :: io_bs
     ! Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover, ndoy)
-    type(ChunkIO_t), OPTIONAL :: io_sum_lc(ndoy)
+    real*4, dimension(:,:), OPTIONAL :: sum_lc
+    type(ChunkIO_t), OPTIONAL :: io_lclai_checksum(ndoy)
+    type(ChunkIO_t), OPTIONAL :: io_lc_checksum(ndoy)
     type(ChunkIO_t), OPTIONAL :: io_lcout(esub%ncover, ndoy)
     type(ChunkIO_t), OPTIONAL :: io_simin(NENT20,ndoy)   ! Input
     type(ChunkIO_t), OPTIONAL :: io_simout(esub%ncover,ndoy)   ! Output
+    type(ChunkIO_t), OPTIONAL :: io_lchgt_checksum(ndoy)
 
     ! -------------- Local Vars
     integer :: ichunk,jchunk,ic,jc,ii,jj
@@ -80,15 +84,6 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! Clear per-grid-cell buffers
                 vfc = 0
                 laic = 0
-
-
-                ! ============= Zero stuff out
-                if (present(io_sum_lc)) io_sum_lc(idoy)%buf(ic,jc) = 0
-!                do k=1,esub%ncover
-!                    io_laiout(k,idoy)%buf(ic,jc) = 0
-!                    if (present(io_lcout)) io_lcout(k,idoy)%buf(ic,jc) = 0
-!                    if (present(io_simout)) io_simout(k,idoy)%buf(ic,jc) = 0
-!                end do
 
 
                 ! =============== Convert to GISS 16 pfts format
@@ -249,10 +244,40 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 end if
 
                 ! checksum lc & laimax
-                if (present(io_sum_lc)) then
-                    io_sum_lc(idoy)%buf(ic,jc) = -1.
+
+                ! ============= Zero stuff out
+                if (present(io_lc_checksum)) io_lc_checksum(idoy)%buf(ic,jc) = 0
+                if (present(io_lclai_checksum)) io_lclai_checksum(idoy)%buf(ic,jc) = 0
+                if (present(io_lchgt_checksum)) io_lchgt_checksum(idoy)%buf(ic,jc) = 0
+
+                if (present(io_lc_checksum)) then
+                    io_lc_checksum(idoy)%buf(ic,jc) = 0.
                     do k=1,esub%ncover
-                        io_sum_lc(idoy)%buf(ic,jc) = io_sum_lc(idoy)%buf(ic,jc) + vfc(k)
+                        io_lc_checksum(idoy)%buf(ic,jc) = io_lc_checksum(idoy)%buf(ic,jc) + vfc(k)
+                    end do
+                end if
+
+                ! Compute weighting for checksums
+                if (present(sum_lc)) then
+                    sum_lc(ic,jc) = 0
+                    do k = 1,esub%ncover
+                        sum_lc(ic,jc) = sum_lc(ic,jc) + vfc(k)
+                    end do
+                end if
+
+                if (present(io_lclai_checksum)) then
+                    io_lclai_checksum(idoy)%buf(ic,jc) = 0.
+                    do k=1,esub%ncover
+                        io_lclai_checksum(idoy)%buf(ic,jc) = io_lclai_checksum(idoy)%buf(ic,jc) + &
+                            vfc(k) * laic(k)
+                    end do
+                end if
+
+                if (present(io_lchgt_checksum)) then
+                    io_lchgt_checksum(idoy)%buf(ic,jc) = 0.
+                    do k=1,esub%ncover
+                        io_lchgt_checksum(idoy)%buf(ic,jc) = io_lchgt_checksum(idoy)%buf(ic,jc) + &
+                            vfc(k) * io_simout(k,idoy)%buf(ic,jc) 
                     end do
                 end if
 

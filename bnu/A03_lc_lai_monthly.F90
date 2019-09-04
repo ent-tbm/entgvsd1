@@ -19,16 +19,18 @@ implicit none
 type(Chunker_t) :: chunker
 ! Input files
 type(ChunkIO_t), target :: io_lai(nmonth), io_lc(NENT20)
+real*4 :: sum_lc(:,:)
 ! Output files
 type(ChunkIO_t) :: io_laiout(NENT20,nmonth)
-type(ChunkIO_t) :: io_checksum_lclai(nmonth)
-type(ChunkIO_t) :: io_checksum_lclai_allmonths
+type(ChunkIO_t) :: io_lclai_checksum(nmonth)
+type(ChunkIO_t) :: io_lclai_checksum_allmonths
 
 type(FileInfo_t) :: info
 integer :: imonth,k
 
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 320, 20)
+allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
 
 !* Input file.
 
@@ -50,18 +52,18 @@ do imonth=1,nmonth
         'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
         doytype='month', idoy=imonth)
 
-    call chunker%file_info(info, ent20, 'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
+    call chunker%file_info(info, ent20, 'BNU', 'M', 'lclai', 2004, 'ent17', '1.1', &
         doytype='month', idoy=imonth, varsuffix='_checksum')
-    call chunker%nc_create(io_checksum_lclai(imonth), &
-        weighting(chunker%wta1,1d0,0d0), &
+    call chunker%nc_create(io_lclai_checksum(imonth), &
+        weighting(sum_lc,1d0,0d0), &
         info%dir, info%leaf, info%vname, &
         info%long_name, info%units)
 enddo
 
-call chunker%file_info(info, ent20, 'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
-    varsuffix='_allmonths_checksum')
-call chunker%nc_create(io_checksum_lclai_allmonths, &
-    weighting(chunker%wta1,1d0,0d0), &
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lclai', 2004, 'ent17', '1.1', &
+    varsuffix='_allmonth_checksum')
+call chunker%nc_create(io_lclai_checksum_allmonths, &
+    weighting(sum_lc,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
     info%long_name, info%units)
 
@@ -88,8 +90,9 @@ call assign_laimax(chunker, &
     1,chunker%nchunk(2), &
     1,chunker%nchunk(1), &
 #endif
-    io_lai, io_lc, io_laiout, io_checksum_lclai, &
-    io_checksum_lclai_alldoy = io_checksum_lclai_allmonths)
+    io_lai, io_lc, io_laiout,
+    sum_lc=sum_lc, io_lclai_checksum=io_lclai_checksum, &
+    io_lclai_checksum_alldoy = io_lclai_checksum_allmonths)
 
 call chunker%close_chunks
 

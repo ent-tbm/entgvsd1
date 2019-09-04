@@ -14,16 +14,16 @@
 ! This produces the following checksums:
 !
 !# Checksom on original MODIS LAI??  LC??
-!io_checksum = EntMM29lc_lai_for_1kmx1km
+!io_lc_modis_checksum = EntMM29lc_lai_for_1kmx1km
 !   sum_{1...MODIS28 LCLASS} partit_io(k) + io_waterpart
 !    partit_io = 2004/PART_SUB_1km_2004_geo.PARTITION/...
 !    io_waterpart = <same>/water
 !
-!io_checksum2 = EntLandcover_check_sum_Jun_1kmx1km
+!io_lc_checksum = EntLandcover_check_sum_Jun_1kmx1km
 !    sum_{1...ENTPFTNUM} ENTPFTLC(k) + WATERLC
 !    NOTE: ENTPFTLC(k) == contents of file io_lc(k) = EntMM_lc_laimax_1kmx1km/...LAI
 !
-!io_checksum3 = EntLAI_check_sum_Jun_1kmx1km
+!io_lclai_checksum = EntLAI_check_sum_Jun_1kmx1km
 !    sum_{1..ENTPFTNUM} ENTPFTLC(k) * ENTPFTLAIMAX(k) + WATERLC*WATERLAI
 !
 !# Number of non-zero PFTs in each gridcell
@@ -364,8 +364,8 @@ type(ChunkIO_t) :: io_laiin,io_04crops, io_05crops
 type(ChunkIO_t) :: io_06crops, io_04cropsm, io_C4norm
 type(ChunkIO_t) :: io_Tcold, io_Pdry, io_Pmave, io_TCinave
 type(ChunkIO_t) :: io_CMedit
-type(ChunkIO_t) :: io_waterpart,io_checksum
-type(ChunkIO_t) :: io_wateroutA,io_checksum2
+type(ChunkIO_t) :: io_waterpart,io_lc_modis_checksum
+type(ChunkIO_t) :: io_wateroutA,io_lc_checksum
 type(ChunkIO_t) :: io_npftgrid,io_dompftlc
 type(ChunkIO_t) :: io_dompft
 
@@ -377,7 +377,7 @@ type(ChunkIO_t) :: ioall_lc, io_lc(NENT20)
 type(ChunkIO_t) :: ioall_laiout, io_laiout(NENT20)
 type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
 #ifdef COMPUTE_LAI
-type(ChunkIO_t) :: io_checksum3
+type(ChunkIO_t) :: io_lclai_checksum
 #endif
 
     call init_ent_labels
@@ -481,14 +481,14 @@ end do
 
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_modis_checksum')
-call chunker%nc_create(io_checksum, weighting(chunker%wta1,1d0,0d0), &
+call chunker%nc_create(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
     info%long_name, info%units)
 
 !     CHECKSUM
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_checksum')
-call chunker%nc_create(io_checksum2, weighting(chunker%wta1,1d0,0d0), &
+call chunker%nc_create(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
     info%long_name, info%units)
 
@@ -561,7 +561,7 @@ enddo
 !
 !! CHECKSUM
 !#ifdef COMPUTE_LAI
-!call chunker%nc_create(io_checksum3, weighting(chunker%wta1,1d0,0d0), &
+!call chunker%nc_create(io_lclai_checksum, weighting(chunker%wta1,1d0,0d0), &
 !    'checksum/', 'EntLAI_check_sum_Jun_1kmx1km', &
 !    'EntLAI_check_sum_Jun_1kmx1km', &
 !    'checksum', '1')
@@ -841,7 +841,7 @@ do ichunk = 1,chunker%nchunk(1)
         ! does his smearing.
 
         ! This confirms that the modis_c2_gissfortran output does not sum to 1.
-        io_checksum%buf(ic,jc)=CHECKSUM
+        io_lc_modis_checksum%buf(ic,jc)=CHECKSUM
        
         ! Check that ENTPFTLC cover sums to 1.0, and rescale <>1.0.
         CHECKSUM = 0.0
@@ -894,7 +894,7 @@ do ichunk = 1,chunker%nchunk(1)
          io_lc(k)%buf(ic,jc) = ENTPFTLC(k)
       end do  ! k=1,ENTPFTNUM
 
-      io_checksum2%buf(ic,jc)=CHECKSUM
+      io_lc_checksum%buf(ic,jc)=CHECKSUM
 
       CHECKSUM=0.0
       TITLE = "WATER (LAI)"
@@ -908,7 +908,7 @@ do ichunk = 1,chunker%nchunk(1)
          io_laiout(k)%buf(ic,jc)=ENTPFTLAIMAX(k)
       end do  ! k=1,ENTPFTNUM
 #ifdef COMPUTE_LAI
-      io_checksum3%buf(ic,jc)=CHECKSUM
+      io_lclai_checksum%buf(ic,jc)=CHECKSUM
 #endif
 
       io_npftgrid%buf(ic,jc)=NPFTGRID

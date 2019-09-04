@@ -36,7 +36,9 @@ subroutine do_reindex(esub)
     ! Output files
     type(ChunkIO_t) :: io_lcout(esub%ncover,one)
     type(ChunkIO_t) :: io_laiout(esub%ncover,one)
-    type(ChunkIO_t) :: io_sum_lc(one)
+    type(ChunkIO_t) :: io_lc_checksum(one)
+    type(ChunkIO_t) :: io_lchgt_checksum(one)
+    type(ChunkIO_t) :: io_lclai_checksum(one)
     type(ChunkIO_t) :: io_simout(esub%ncover,one)
     type(FileInfo_t) :: info
     integer :: k,ksub
@@ -86,15 +88,31 @@ subroutine do_reindex(esub)
         esub_p, io_laiout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
         'BNU', 'M', 'laimax', 2004, 'pure', '1.1')
 
-
+    ! ------------- Checksums
     !  checksum land  laimax
     call chunker%file_info(info, esub_p, &
         'BNU', 'M', 'lc', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
-    call chunker%nc_create(io_sum_lc(1), &
+    call chunker%nc_create(io_lc_checksum, &
         weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
-        'SUM(lc) - 1', info%units)
+        'SUM(lc)', info%units)
+
+    call chunker%file_info(info, esub_p, &
+        'BNU', 'M', 'lchgt', 2004, 'pure', '1.1', &
+        varsuffix = '_checksum')
+    call chunker%nc_create(io_lchgt_checksum, &
+        weighting(io_lc_checksum%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+        info%dir, info%leaf, info%vname, &
+        'SUM(lc*height)', info%units)
+
+    call chunker%file_info(info, esub_p, &
+        'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
+        varsuffix = '_checksum')
+    call chunker%nc_create(io_lclai_checksum(1), &
+        weighting(io_lc_checksum%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+        info%dir, info%leaf, info%vname, &
+        'SUM(lc*LAI)', info%units)
 
     call chunker%nc_check('A04_reclass_annual')
 #ifdef JUST_DEPENDENCIES
@@ -114,10 +132,12 @@ subroutine do_reindex(esub)
         combine_crops_c3_c4, split_bare_soil, &
         io_lc, io_laiin, io_bs, &
         io_laiout, &
-        io_sum_lc=io_sum_lc, &
+        io_lclai_checksum=io_lclai_checksum, &
+        io_lc_checksum=io_lc_checksum, &
         io_lcout=io_lcout, &
         io_simin=io_simin, &
-        io_simout=io_simout)
+        io_simout=io_simout, &
+        io_lchgt_checksum=io_lchgt_checksum)
 
     call chunker%close_chunks
 

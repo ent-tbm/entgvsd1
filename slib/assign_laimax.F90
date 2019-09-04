@@ -10,8 +10,8 @@ subroutine assign_laimax(chunker, &
     jc0,jc1, &
     ic0,ic1, &
     io_lai, io_lc, &                        ! INPUT
-    io_laiout, io_checksum_lclai, &   ! OUTPUT
-    io_checksum_lclai_alldoy, io_err)    ! Optional OUTPUT
+    io_laiout, io_lclai_checksum, &   ! OUTPUT
+    io_lclai_checksum_alldoy, io_err)    ! Optional OUTPUT
 
     type(Chunker_t) :: chunker
     integer :: jc0,jc1, ic0,ic1
@@ -20,8 +20,9 @@ subroutine assign_laimax(chunker, &
     type(ChunkIO_t) :: io_lc(NENT20)
     ! Output files
     type(ChunkIO_t) :: io_laiout(NENT20,size(io_lai,1))
-    type(ChunkIO_t) :: io_checksum_lclai(size(io_lai,1))
-    type(ChunkIO_t), OPTIONAL :: io_checksum_lclai_alldoy
+    type(ChunkIO_t) :: io_lclai_checksum(size(io_lai,1))
+    real*4, dimension(:,:), OPTIONAL :: sum_lc  ! Weighting buffer
+    type(ChunkIO_t), OPTIONAL :: io_lclai_checksum_alldoy
     type(ChunkIO_t), OPTIONAL :: io_err(NENT20,size(io_lai,1))
 
     ! -------------- Local Vars
@@ -46,8 +47,15 @@ subroutine assign_laimax(chunker, &
             ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
             jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
-            if (present(io_checksum_lclai_alldoy)) then
-                io_checksum_lclai_alldoy%buf(ic,jc) = 0.0
+            if (present(sum_lc)) then
+                sum_lc(ic,jc) = 0
+                do k = 1,NENT20
+                    sum_lc(ic,jc) = sum_lc(ic,jc) + io_lc%buf(ic,jc)
+                end do
+            end if
+
+            if (present(io_lclai_checksum_alldoy)) then
+                io_lclai_checksum_alldoy%buf(ic,jc) = 0.0
             end if
 
             do idoy=1,ndoy
@@ -77,11 +85,11 @@ subroutine assign_laimax(chunker, &
                         io_lc(k)%buf(ic,jc) * io_laiout(k,idoy)%buf(ic,jc)
                 end do
                 CHECKSUM = CHECKSUM - io_lai(idoy)%buf(ic,jc)
-                io_checksum_lclai(idoy)%buf(ic,jc) = CHECKSUM
+                io_lclai_checksum(idoy)%buf(ic,jc) = CHECKSUM
 
-                if (present(io_checksum_lclai_alldoy)) then
-                    io_checksum_lclai_alldoy%buf(ic,jc) = &
-                        io_checksum_lclai_alldoy%buf(ic,jc) + CHECKSUM
+                if (present(io_lclai_checksum_alldoy)) then
+                    io_lclai_checksum_alldoy%buf(ic,jc) = &
+                        io_lclai_checksum_alldoy%buf(ic,jc) + CHECKSUM
                 end if
             end do
 

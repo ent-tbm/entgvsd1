@@ -120,21 +120,21 @@ subroutine outputsegment_checksum(this, esub)
         end do
         this%io_ann_lc_checksum%buf(ic,jc) = sum
 
-        ! lclaimax_checksum = sum(LC*LAIMAX) - LAIMAX
+        ! lclaimax_checksum = sum(LC*LAIMAX)
         sum = 0
         do k=1,esub%ncover
             sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_lai(k,1)%buf(ic,jc)
         end do
         this%io_ann_lclaimax_checksum%buf(ic,jc) = sum
 
-        ! lchgt_checksum = sum(LC*HGT) - HGT
+        ! lchgt_checksum = sum(LC*HGT)
         sum = 0
         do k=1,esub%ncover
             sum = sum + this%io_ann_lc(k,1)%buf(ic,jc) * this%io_ann_hgt(k,1)%buf(ic,jc)
         end do
         this%io_ann_lchgt_checksum%buf(ic,jc) = sum
 
-        ! MONTHLY: lclai_checksum = sum(LC*LAI) - LAI
+        ! MONTHLY: lclai_checksum = sum(LC*LAI)
         do m=1,NMONTH
             sum = 0
             do k=1,esub%ncover

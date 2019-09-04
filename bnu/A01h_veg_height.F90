@@ -32,6 +32,7 @@ implicit none
     type(ChunkIO_t), dimension(NENT20) :: io_lc
     ! ------ Outputs
     type(ChunkIO_t), dimension(NENT20) :: io_out
+    type(ChunkIO_t) :: io_lchgt_checksum
 
     real*4 :: SHEIGHT, OHEIGHT
 
@@ -65,6 +66,15 @@ call chunker%nc_create_set( &
     ent20, io_out, lc_weights(io_lc, 1d0, 0d0), &
     'BNU', 'M', 'hgt', 2004, 'ent17', '1.1')
 
+! ---------- Checksums
+call chunker%file_info(info, ent20, 'BNU', 'M', 'lchgt', 2004, 'ent17', '1.1', &
+    varsuffix='_checksum')
+call chunker%nc_create(io_lchgt_checksum, &
+    weighting(chunker%wta1,1d0,0d0), &
+    info%dir, info%leaf, info%vname, &
+    info%long_name, info%units)
+
+
 ! Quit if we had any problems opening files
 call chunker%nc_check('A01h_veg_heights')
 #ifdef JUST_DEPENDENCIES
@@ -94,7 +104,7 @@ do ichunk = 1,chunker%nchunk(1)
         ii = (ichunk-1)*chunker%chunk_size(1)+(ic-1)+1
         jj = (jchunk-1)*chunker%chunk_size(2)+(jc-1)+1
 
-
+        io_lchgt_checksum%buf(ic,jc) = 0
         do k = 1,NENT20
             if (k == CV_WATER) then
                 OHEIGHT = 0d0
@@ -104,7 +114,8 @@ do ichunk = 1,chunker%nchunk(1)
                     ! Lookup what the height should be
                     SHEIGHT = io_sim%buf(ic,jc)
                     OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
-
+                    io_lchgt_checksum%buf(ic,jc) = io_lchgt_checksum%buf(ic,jc) + &
+                        io_lc%buf(ic,jc) * OHEIGHT
                     ! TODO: Better way: inverse weighted average of
                     ! gridcell height, so tree heights are taller.  So
                     ! average gridcell height (averaging over non-zero
