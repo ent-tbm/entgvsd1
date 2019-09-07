@@ -33,7 +33,7 @@ integer :: ichunk,jchunk, ic,jc, ii,jj
 
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120,10)
-allocate(sum_lc(chunker%chunk_size(0), chunker%chunk_size(1)))
+allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 ! ================= Input Files
 !      LAI max
@@ -61,7 +61,7 @@ call chunker%file_info(info, ent20, &
 call chunker%nc_create( &
     io_lclai_checksum(1),  weighting(sum_lc,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
-    'Sum(LC*LAI) == 0', info%units)
+    'Sum(LC*LAI)', info%units)
 
 ! ====================== Done Opening Files
 
