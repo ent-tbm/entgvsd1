@@ -391,10 +391,18 @@ RESOUT = '1kmx1km'
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
 
 !     LAI
-call chunker%nc_open_gz(io_laiin, &
-    DATA_DIR, DATA_INPUT, &
-    'LAI/', &
-    'LAI3gMax_1kmx1km.nc', 'laimax', 1)
+if (LAI_SOURCE == 'LAI3g') then
+    call chunker%nc_open_gz(io_laiin, &
+        DATA_DIR, DATA_INPUT, &
+        'LAI/', &
+        'LAI3gMax_1kmx1km.nc', 'laimax', 1)
+else if (LAI_SOURCE == 'BNU') then
+    ! Result of A00a_bnu_lclai.F90
+    call chunker%nc_open(io_laiin, &
+        LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax.nc', &
+        'laimax', 1)
+end if
+
 
 !     Get variable IDs
 err = NF90_INQ_VARID(io_laiin%fileid,'lon',varidx)

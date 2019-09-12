@@ -62,7 +62,7 @@ subroutine do_carrer_mean(iband, ndates)
             weighting(wta, 1d0, 0d0))
     end do
 
-    call chunker%nc_check('A01a_carrer_mean')
+    call chunker%nc_check('A01a_carrer_mean_'//trim(sbands_modis(iband)))
 
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)

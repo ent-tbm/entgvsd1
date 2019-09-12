@@ -4,6 +4,7 @@ set -e
 
 
 for stage in \
+        A00a_bnu_laimax.F90 \
         A00_LAI3g_modis_entpftrevcrop.F90 \
         A00b_regrid.F90 \
         A01h_veg_height.F90 \

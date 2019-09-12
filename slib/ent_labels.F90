@@ -176,6 +176,13 @@ character(*), parameter :: TITLE_LAI = &
     'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
 character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
+integer, parameter :: nallmonth = 12
+character*3, parameter :: ALLMONTH(nallmonth) = &
+     (/ &
+     "Jan","Feb","Mar","Apr","May","Jun", &
+     "Jul","Aug","Sep","Oct","Nov","Dec" &
+     /)
+
 #if 0
 integer, parameter :: nmonth = 12
 character*3, parameter :: MONTH(nmonth) = &

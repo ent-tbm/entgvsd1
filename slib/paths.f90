@@ -68,4 +68,7 @@ CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
 
 ! ===========================================================
 
+! 'LAI3g' or 'BNU'
+CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'BNU'
+
 end module paths_mod
