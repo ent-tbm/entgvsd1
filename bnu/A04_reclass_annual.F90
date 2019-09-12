@@ -107,7 +107,7 @@ subroutine do_reindex(esub)
         'SUM(lc*height)', info%units)
 
     call chunker%file_info(info, esub_p, &
-        'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
+        'BNU', 'M', 'lclaimax', 2004, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lclai_checksum(1), &
         weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
