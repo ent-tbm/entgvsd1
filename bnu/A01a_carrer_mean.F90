@@ -39,7 +39,7 @@ subroutine do_carrer_mean(iband, ndates)
 
     real, dimension(:,:), allocatable, target :: wta    ! Surmised landmask
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 100, 10, 10, (/6,5/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 10, 10, (/6,5/))
 
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 

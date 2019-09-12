@@ -24,8 +24,8 @@ implicit none
     call ent2%sub_covertype(ent20, SNOW_ICE)
     call ent2%sub_covertype(ent20, CV_WATER)
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 10, 10, 10)
-    call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'qxq', 10, 10, 10)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10)
+    call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'forplot', 10, 10, 10)
 
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))

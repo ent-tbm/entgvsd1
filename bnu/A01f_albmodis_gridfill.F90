@@ -47,7 +47,7 @@ subroutine do_gridfill(iband)
     call ent2%sub_covertype(ent20, SNOW_ICE)
     call ent2%sub_covertype(ent20, CV_WATER)
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 100, 100, 10, (/1,1/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/))
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     ! ------------- Open Input Files

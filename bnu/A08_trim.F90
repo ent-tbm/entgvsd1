@@ -38,7 +38,7 @@ subroutine outputsegment_open(this, step, esub)
     integer :: m,k
     type(FileInfo_t) :: info
 
-    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'plot', 1, 500, 30, (/1,1/))
+    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 500, 30, (/1,1/))
 
     ! ------- Allocate file handles
     allocate(this%io_ann_lc(esub%ncover,1))

@@ -26,7 +26,7 @@ integer :: imonth,ic,jc,ichunk,jchunk
 real*4 :: lai,laimax
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 20, 5, 5, (/1,15/))
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 20, 5, 5, (/1,15/))
 
 !* Input file.
 

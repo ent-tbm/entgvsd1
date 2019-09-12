@@ -784,7 +784,7 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
     # filepre:    File prefix (Vres_EntGVSD<PFTs>_<LAILdata>, e.g. V1km_EntGVSD17G_BNUM, VHXH_EntGVSD16G_BNUM 
     # datatime:   Time point of data, e.g.:  2004
     # version:    EntGVSD version, e.g.:  v0.1, v1.1
-    # filesuf:    Extra suffix for miscellaneous, e.g. "_qxq" for scaled up V1km for plotting at coarser resolution.
+    # filesuf:    Extra suffix for miscellaneous, e.g. "_forplot" for scaled up V1km for plotting at coarser resolution.
     # do.pdf = TRUE  Logical if to output pdf instead of to the screen.
     # pathplot=""     If do.pdf, then give output path for plots.
 

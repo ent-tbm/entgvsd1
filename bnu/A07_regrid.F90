@@ -116,8 +116,8 @@ subroutine regrid_lais(esub, fname)
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%ileaf),' --> ',trim(fname(idoy)%oleaf)
     end do
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 320, 20)
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'qxq', 300, 320, 20)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20)
 
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
@@ -233,8 +233,8 @@ subroutine do_regrid_all_lais
     esub_p => esub
 
     ! Chunkers just for make_fname2()
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 0,0,0)
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'qxq', 0,0,0)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 0,0,0)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 0,0,0)
 
     nf = 0
 

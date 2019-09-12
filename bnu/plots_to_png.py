@@ -19,8 +19,7 @@ for ileaf in ileaves:
 
     ifname = os.path.join(idir, ileaf)
     oleaf = ileaf
-    oleaf = oleaf.replace('_plot.nc.pdf', '.png')
-    oleaf = oleaf.replace('_qxq.nc.pdf', '.png')
+    oleaf = oleaf.replace('_forplot.nc.pdf', '.png')
     oleaf = oleaf.replace('.nc.pdf', '.png')
     ofname = os.path.join(odir, oleaf)
 

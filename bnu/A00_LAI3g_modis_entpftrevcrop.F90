@@ -388,7 +388,7 @@ RESOUT = '1kmx1km'
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
 
 !     LAI
 if (LAI_SOURCE == 'LAI3g') then

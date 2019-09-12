@@ -37,7 +37,7 @@ subroutine do_reindex(esub,m0,m1)
 
 
     esub_p => esub
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 300, 300, 20)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 300, 20)
     allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     !------------------------------------------------------------------------

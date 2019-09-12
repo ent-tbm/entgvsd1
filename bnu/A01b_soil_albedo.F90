@@ -136,8 +136,8 @@ program Carrer_soilalbedo_to_GISS
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
 
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/18,15/))
-    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 100, 10,(/18,15/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/))
+    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/))
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd_hr(chunkerhr%chunk_size(1), chunkerhr%chunk_size(2)))

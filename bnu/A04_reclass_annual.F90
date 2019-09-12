@@ -45,7 +45,7 @@ subroutine do_reindex(esub)
 
     esub_p => esub
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', &
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', &
         100, &   ! # files to >= (N_VEG + N_BARE)*(LC + LAI) + BARE_BRIGHTRATIO = 41
         120, 10)     ! # files to write >= N_LAIMAX + 3*CHECKSUMS
 

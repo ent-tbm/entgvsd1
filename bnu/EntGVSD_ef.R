@@ -66,7 +66,7 @@ if (TRUE) {
     JM=720
     filepre = "V1km_EntGVSD17G_BNUM"
     filepre = "V1km_EntGVSD17M_BNUM"
-    filesuf = "_qxq"
+    filesuf = "_forplot"
     enttyp = 1:20
     map.entgvsd.steps(entlclaidir, res=res, enttyp,varname="lc", trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res, enttyp, varname="laimax", trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
@@ -82,7 +82,7 @@ if (TRUE) {
     trimopt = "pure"
     res="qxq"
     filepre = "V1km_EntGVSD16G_BNUM"
-    filesuf = "_qxq"
+    filesuf = "_forplot"
     enttyp = 1:18
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
@@ -97,7 +97,7 @@ if (TRUE) {
     trimopt = c("trimmed", "trimmed_scaled", "trimmed_scaled_nocrops", "trimmed_scaled_crops_ext")
     res="HXH"
     filepre = "VHXH_EntGVSD16G_BNUM"
-    filesuf = "_plot"
+    filesuf = "_forplot"
     enttyp = 1:18
     for (opt in trimopt) {
         map.entgvsd.steps(entlclaidir, res=res, varname="lc", enttyp=enttyp, trimopt=opt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)

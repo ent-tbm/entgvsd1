@@ -28,7 +28,7 @@ type(FileInfo_t) :: info
 integer :: idoy,k
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'qxq', 100, 120, 10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 !* Input file.
