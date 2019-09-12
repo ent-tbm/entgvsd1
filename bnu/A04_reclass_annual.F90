@@ -112,7 +112,7 @@ subroutine do_reindex(esub)
     call chunker%nc_create(io_lclai_checksum(1), &
         weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
         info%dir, info%leaf, info%vname, &
-        'SUM(lc*LAI)', info%units)
+        'SUM(LC*LAI)', info%units)
 
     call chunker%nc_check('A04_reclass_annual')
 #ifdef JUST_DEPENDENCIES
