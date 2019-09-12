@@ -25,7 +25,7 @@ if (FALSE) {
         #If in R gui:
 	#pathplot=paste(entlclaidir, "/PLOTS/", sep="")
         #If in git clone:
-	pathplot="PLOTS/"
+	pathplot="PDFPLOTS/"
         dir.create(pathplot)
 }
 #For Nancy on gibbs:
@@ -82,7 +82,7 @@ filepre = "V1km_EntGVSD16G_BNUM"
 filesuf = "_qxq"
 enttyp = 1:18
 map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = FALSE)
+map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
 map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, filepre, datatime, version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
 for (d in c( "2004_Jan", "2004_Jul")) {
 	map.entgvsd.steps(entlclaidir, res=res, enttyp=enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version=version, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
