@@ -702,6 +702,9 @@ Ent_diags = c("vf", "Anet", "Atot", "Rd", "GCANOPY", "TRANS_SW", "LAI", "Resp_fo
 "GPP", "R_auto", "C_total", "C_lab", "C_fol", "C_sw", "C_hw", "C_froot", "C_croot", "C_soil",
 "Resp_soil", "phenofactor", "betad")
 
+Ent_diags_LUT = data.frame(entdiagname=Ent_diags, units=c("cover fraction", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "m s-1", "fraction", "m^2 m-2", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 s-1", "kgC m-2 gnd", "kgC m-2 gnd", "kgC m-2 gnd", "kgC m-2 gnd", "kgC m-2 gnd", "kgC m-2 gnd", "kgC m-2 gnd","kgC m-2 gnd", "kgC m-2 s-1", "index", "fraction") )
+
+
 EntPFTchar3 = c(paste("00",1:9,sep=""), paste("0",10:16,sep=""))
 EntGCMdiags27 = c(paste("ra", "00",1:9, sep=""), paste("ra" ,"0",10:27, sep=""))
 temp = t(matrix(rep(EntGCMdiags27, 16), 27,16))
@@ -771,7 +774,7 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
 }
 
 #-------------------------------------------------------------------------------------------------
-map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="") { 
+map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
     # Plot maps of lc, laimax, lai, or hgt
     # entlclaidir:  Directory containing subdirectories of trim options Ent GVSD files
     # res:          Grid resolution of data file.  "ent17" and "pure" V1km are plotted at qzq.  Trimmed files are at HXH.
@@ -786,7 +789,8 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
     # pathplot=""     If do.pdf, then give output path for plots.
 
    #quartz(width=11,height=6) #Open plotting window
-
+   print(varname)
+    
    if (varname == "lc") {
       zlim = c(0,1)
       restime = "_ann"
@@ -812,17 +816,19 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
         #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
         fname = paste(filepre, "_",varname,"_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
     }
+    
     fnamelc = paste(filepre, "_","lc","_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+    
     if (do.pdf) { 
         pdf(file=paste(pathplot, fname, ".pdf", sep=""), width=11, height=7) 
-    } else {
-        if (!add.new) {
+    } else if (add.new) {
             quartz(width=11,height=7) #Open plotting window
-        }
+    } else {
+        print("Printing to screen.")
     }
-    filelc = paste(entlclaidir, opt, "/", fnamelc, sep="")
+    #filelc = paste(entlclaidir, opt, "/", fnamelc, sep="")
     filevar = paste(entlclaidir, opt, "/", fname, sep="")
-    print(filelc)
+    #print(filelc)
     print(filevar)
     #par(mfrow=c(4,4), omi=c(0,0.0,.5,0.5), mar=c(1,1,2,2)+0.1)
     par(mfrow=c(4,5), omi=c(0,0.0,.5,0.5), mar=c(1,1,2,2)+0.1)
@@ -830,15 +836,41 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
         par(mfrow=c(4,5), omi=c(0,0.0,1.0,0.5), mar=c(1,1,2,2)+0.1)
     }
     titletop = paste(entlclaidir, sep="")
-    map.EntGVSD.v1.1(filelc=filelc, file=filevar, res=res, zlim=zlim, varname=varname, layersnum=enttyp, colors=colors)
+    map.EntGVSD.v1.1(file=filevar, res=res, zlim=zlim, varname=varname, layersnum=enttyp, colors=colors)
     
     entgvsd_pagetitles(titletop, fname)
-    if (do.pdf) {
+
+
+    # Checksum
+    if (do.checksum) {
+            print(varname)
+            #for (checksum in c("lai_allmonths_checksum", "lai_checksum",  "laimax_checksum", "lc_checksum", "lc_modis_checksum")) {
+#       for (checksum in c("lc", "lclai", "lclaimax", "lchgt")) { # c( "lclai_allmonth")) {
+        if (varname == "lc") {
+            checksum = "lc"
+        } else {
+            checksum = paste("lc", varname, sep="")
+        }
+        varnamecheck = paste(checksum, "_checksum", sep="")
+        print(paste("netcdf varnamecheck: ", varnamecheck))         
+        if (opt=="ent17") {  #Ent 17 PFTs
+            fname = paste(filepre, "_", varnamecheck, "_", datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+        
+        } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
+            #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
+            fname = paste(filepre, "_",varnamecheck, "_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
+        }
+        
+        filevar = paste(entlclaidir, opt, "/", fname, sep="")   
+        print(filevar)
+        map.GCM(file=filevar, varname=varnamecheck, res=res,colors=colors,  zlim=zlim, if.zeroNA=TRUE, titletype=1) 
+    
+#   } #for checksum
+    
+   } 
+   if (do.pdf) {
         dev.off()
-    }
-    
-    # Checksum TBD
-    
+    }   
   }
 }
 
@@ -895,6 +927,14 @@ make.GCM.Ent.diag.name = function(varname="vf", p="ever_br_late") {
     }
     
     return(paste("ra", v3, p3, sep=""))
+}
+
+get.GCM.Ent.diag.units = function(varname="vf") {
+    #Return units for GCM Ent diagnostic ra00#.
+    #Default returns for "vf" cover fraction.
+    vindex = which(Ent_diags %in% varname)
+    
+    return(Ent_diags_LUT[vindex,"units"])
 }
 
 #------------
@@ -1014,6 +1054,7 @@ map.GCM <- function(file, varname="tsurf", res="2x2.5",colors=giss.palette(40), 
     #file = netcdf file path and name
     #varname = netcdf variable name
     
+    print(varname)
     ncid <- open.nc(con=file, write=FALSE)
     x = var.get.nc(ncid, varname)
     if (if.zeroNA) {x[x==0]=NA}
@@ -1054,6 +1095,7 @@ map.GCM.Ent <- function(filelc=NULL, res="2x2.5", file, varname="vf", pftlist=En
         for (p in pftlist) {
             p = trim(p)
             diagname = make.GCM.Ent.diag.name(varname, p)
+            diagunits = get.GCM.Ent.diag.units(varname)
             print(diagname)
             x = var.get.nc(ncid, diagname)
             if (if.zeroNA) {x[x==0]=NA}
@@ -1070,7 +1112,7 @@ map.GCM.Ent <- function(filelc=NULL, res="2x2.5", file, varname="vf", pftlist=En
             } else if (titletype==3) {
                 mtext(paste(varname, p), line=1)
             }
-            mtext(paste("(", round(na.min(x[,]),2), round(na.mean(x[,]),2), round(na.max(x[,]),2), ")"), cex=0.6)
+            mtext(paste(diagunits, "(", round(na.min(x[,]),2), round(na.mean(x[,]),2), round(na.max(x[,]),2), ")"), cex=0.6)
 
         }
     } 
