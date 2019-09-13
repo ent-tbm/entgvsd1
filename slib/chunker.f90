@@ -807,16 +807,17 @@ end function my_nf90_inq_put_var_real32
 ! @param IM,JM Resolution of file to create.
 ! @param ncid (OUT) Returns the open NetCDF file handle here
 ! @param layer_names (OPTIONAL) The descriptive name of each layer
-function my_nf90_create_ij(filename,IM,JM, ncid, layer_names) result(status)
+function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) result(status)
 
     character(len=*), intent(in) :: filename
     integer,intent(in) :: IM,JM
     integer,intent(out) :: ncid
     integer :: status    ! Return variable
     character(len=*), dimension(:), OPTIONAL :: layer_names
+    character(len=*), dimension(:), OPTIONAL :: long_layer_names
     !--- Local ----
     integer :: idlon, idlat, varid
-    integer :: idlayer_names
+    integer :: idlayer_names, idlong_layer_names
     real*4 :: lon(IM), lat(JM)
     !character*80 :: filenc
     character*10 :: res
@@ -870,7 +871,13 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names) result(status)
         status=nf90_def_dim(ncid, 'layer_name_len', len(layer_names(1)), strdimids(1))
         if (status /= NF90_NOERR) return
 
+        status=nf90_def_dim(ncid, 'long_layer_name_len', len(long_layer_names(1)), strdimids(1))
+        if (status /= NF90_NOERR) return
+
         status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlayer_names)
+        if (status /= NF90_NOERR) return
+
+        status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlong_layer_names)
         if (status /= NF90_NOERR) return
 
     end if
@@ -920,6 +927,9 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names) result(status)
         startS = (/ 1,1 /)
         countS = (/ len(layer_names(1)), size(layer_names,1) /)
         status=nf90_put_var(ncid,idlayer_names, layer_names,startS,countS)
+
+        countS = (/ len(long_layer_names(1)), size(long_layer_names,1) /)
+        status=nf90_put_var(ncid,idlong_layer_names, long_layer_names,startS,countS)
 
         if (status /= NF90_NOERR) return
     end if
@@ -1224,7 +1234,7 @@ subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
 vname,long_name,units, &
-layer_names, create_lr)
+layer_names, long_layer_names, create_lr)
 
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
@@ -1234,6 +1244,7 @@ layer_names, create_lr)
     character*(*), intent(in), OPTIONAL :: vname  ! If not set, just create file, not variable
     character*(*), intent(in), OPTIONAL :: long_name,units
     character(len=*), dimension(:), OPTIONAL :: layer_names
+    character(len=*), dimension(:), OPTIONAL :: long_layer_names
     logical, intent(IN), OPTIONAL :: create_lr
 
     ! --------- Locals
@@ -1275,7 +1286,7 @@ layer_names, create_lr)
             err = my_nf90_create_ij(trim(cio%path), &
                 this%ngrid(1), this%ngrid(2), &
                 cio%fileid, &
-                layer_names)
+                layer_names, long_layer_names)
         else
             err = my_nf90_create_ij(trim(cio%path), &
                 this%ngrid(1), this%ngrid(2), &
@@ -1299,7 +1310,7 @@ layer_names, create_lr)
             if (present(layer_names)) then
                 err = my_nf90_create_ij(trim(path_name_lr), &
                     this%ngrid_lr(1), this%ngrid_lr(2), &
-                    cio%fileid_lr, layer_names)
+                    cio%fileid_lr, layer_names, long_layer_names)
             else
                 err = my_nf90_create_ij(trim(path_name_lr), &
                     this%ngrid_lr(1), this%ngrid_lr(2), &
@@ -1396,7 +1407,7 @@ subroutine nc_create_set( &
         weighting(this%wta1, 1d0, 0d0), &    ! Dummy; not used
         info%dir, info%leaf, var, &
         info%long_name, info%units, &
-        ents%layer_names(), create_lr)
+        ents%layer_names(), ents%long_layer_names(), create_lr)
     do k=1,ents%ncover
         call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/), wtas(k))
     end do

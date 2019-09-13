@@ -154,7 +154,7 @@ subroutine regrid_lais(esub, fname)
             weighting(chunkerlr%wta1,1d0,0d0), &
             trim(fn%odir), trim(fn%oleaf), trim(fn%vname), &
             trim(fn%long_name), trim(fn%units), &
-            esub%layer_names(), &
+            esub%layer_names(), esub%long_layer_names(), &
             create_lr=.false.)
         do k=1,esub%ncover
             call chunkerlr%nc_reuse_var(ioall_laiout(idoy), io_laiout(k,idoy), &

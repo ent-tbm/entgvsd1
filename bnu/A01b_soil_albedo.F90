@@ -71,6 +71,7 @@ program Carrer_soilalbedo_to_GISS
     integer, parameter :: BRIGHT = 1
     integer, parameter :: DARK = 2
     character*6, parameter :: sbright_dark(2) = (/"bright", "dark  "/)
+    character*11, parameter :: sbright_dark_long(2) = (/"bright soil", "dark soil  "/)
 
     ! Convert spectrum in one set of bands to another set of bands while conserving energy
     !From Judith Lean 0 km solar surface irradiance (from 2006 version)
@@ -194,7 +195,7 @@ program Carrer_soilalbedo_to_GISS
             'fracbd_'//trim(sbands_giss(iband)), &
             'fracbd_'//trim(sbands_giss(iband)), &
             'Bright/Dark Soil in GISS Bands', '1', &
-            sbright_dark)
+            sbright_dark, sbright_dark_long)
         do k=1,BRIGHT_DARK
             call chunker%nc_reuse_var( &
                 ioall_fracbd(iband), io_fracbd(k,iband), &
@@ -208,7 +209,7 @@ program Carrer_soilalbedo_to_GISS
         'fracgrey', &
         'fracgrey', &
         'Bright/Dark Soil in GISS Bands', '1', &
-        sbright_dark)
+        sbright_dark, sbright_dark_long)
     do k=1,2
         call chunker%nc_reuse_var( &
             ioall_fracgrey, io_fracgrey(k), &

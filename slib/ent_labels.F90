@@ -54,6 +54,7 @@ implicit none
 ! NOTE: Water is NOT part of these sub-sets
 
 integer, parameter :: ENT_ABBREV_LEN = 20
+integer, parameter :: ENT_TITLE_LEN = 50  ! long_layer_names
 
 ! EntSet_t encapsulates a universe of cover types used as indices.
 ! This is done with respect to the "master" set of 20 Ent cover types
@@ -92,7 +93,7 @@ type EntSet_t
 
     character*1, dimension(:), allocatable :: cttype
     character*(ENT_ABBREV_LEN), dimension(:), allocatable :: abbrev
-    character*50, dimension(:), allocatable :: title
+    character*(ENT_TITLE_LEN), dimension(:), allocatable :: title
 
     ! Set by EntSet setup 
     integer :: npft, nnonveg
@@ -106,6 +107,7 @@ type EntSet_t
 contains
     procedure :: allocate => EntSet_allocate
     procedure :: layer_names
+    procedure :: long_layer_names
 !    generic, public :: allocate => EntSet_allocate
     procedure :: add_covertype
     procedure :: add_remap
@@ -280,6 +282,17 @@ function layer_names(ents)
         layer_names(k) = trim(ents%abbrev(k))
     end do
 end function layer_names
+
+function long_layer_names(ents)
+    class(EntSet_t) :: ents
+    character*(ENT_TITLE_LEN+3) :: long_layer_names(ents%ncover)
+    ! ----- Locals
+    integer :: k
+
+    do k=1,ents%ncover
+        long_layer_names(k) = trim(ents%abbrev(k))
+    end do
+end function long_layer_names
 
 subroutine add_covertype(ents, cttype, abbrev,title)
     class(EntSet_t) :: ents

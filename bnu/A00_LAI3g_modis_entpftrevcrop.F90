@@ -474,7 +474,7 @@ call chunker%nc_create(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
     info%dir, info%leaf, info%vname, &
     info%long_name, info%units, &
-    ent20%layer_names())
+    ent20%layer_names(), ent20%long_layer_names())
 ! Open water first because it's used to weight others
 call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
     (/1,1,CV_WATER/), weighting(chunker%wta1, 1d0,0d0))
@@ -542,7 +542,7 @@ call chunker%file_info(info, ent20, 'BNU', 'M', 'laimax', 2004, 'ent17', '1.1')
 call chunker%nc_create(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
     info%dir, info%leaf, info%vname, &
-    info%long_name, info%units, ent20%layer_names())
+    info%long_name, info%units, ent20%layer_names(), ent20%long_layer_names())
 #ifdef COMPUTE_LAI
 do k=1,NENT20
 #else

@@ -56,7 +56,7 @@ subroutine do_carrer_mean(iband, ndates)
         'albmodis_'//trim(sbands_modis(iband)), &
         'albmodis_'//trim(sbands_modis(iband)), &
         'Soil albedo ('//trim(sbands_modis(iband))//' band)', &
-        '1', sstats)
+        '1', sstats, sstats)
     do id=1,NSTATS
         call chunker%nc_reuse_var(ioall_albout, io_albout(id), (/1,1,id/), &
             weighting(wta, 1d0, 0d0))
