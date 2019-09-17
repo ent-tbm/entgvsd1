@@ -1249,7 +1249,8 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
 end subroutine do_part4_nocrops
 
-subroutine do_trim(esub)
+subroutine do_trim(rw, esub)
+    type(ReadWrites_t) :: rw
     type(GcmEntSet_t), target, intent(IN) :: esub
     ! ----------- Locals
     class(EntSet_T), pointer :: esub_p
@@ -1316,11 +1317,11 @@ subroutine do_trim(esub)
     call mc%open('trimmed_scaled_crops_ext', esub_p)
     call nc%open('trimmed_scaled_nocrops', esub_p)
 
-    call chunker_pu%nc_check('A08_pu')
-    call tr%chunker%nc_check('A08_tr')
-    call ts%chunker%nc_check('A08_ts')
-    call mc%chunker%nc_check('A08_mc')
-    call nc%chunker%nc_check('A08_nc')
+    call chunker_pu%nc_check(rw=rw)
+    call tr%chunker%nc_check(rw=rw)
+    call ts%chunker%nc_check(rw=rw)
+    call mc%chunker%nc_check(rw=rw)
+    call nc%chunker%nc_check(rw=rw)
 
     ! Check for only one chunk
     if ((chunker_pu%nchunk(1)/=1).or.(chunker_pu%nchunk(2)/=1)) then
@@ -1371,9 +1372,12 @@ program regrid
     use a08_mod
 implicit none
     type(GcmEntSet_t), target :: esub
+    type(ReadWrites_t) :: rw
+    call rw%init("A08_trim", 50,50)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
 
-    call do_trim(esub)
+    call do_trim(rw, esub)
+    call rw%write_mk
 end program regrid

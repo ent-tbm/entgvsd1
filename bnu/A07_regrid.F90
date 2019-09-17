@@ -110,7 +110,9 @@ subroutine regrid_lais(esub, fname)
     integer :: ndoy,idoy
     type(IOFname_t), pointer :: fn
     logical :: need_lc
+    type(ReadWrites_t) :: rw
 
+    call rw%init("A07_regrid", 20,20)
     ndoy = size(fname,1)
     do idoy=1,ndoy
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%ileaf),' --> ',trim(fname(idoy)%oleaf)
@@ -163,8 +165,9 @@ subroutine regrid_lais(esub, fname)
 
     end do    ! idoy
 
-    call chunker%nc_check('A07_regrid_hr')
-    call chunkerlr%nc_check('A07_regrid_lr')
+    call chunker%nc_check(rw=rw)
+    call chunkerlr%nc_check(rw=rw)
+    call rw%write_mk
 
 !    call regrid_handles(chunker, chunkerlr, esub
 !

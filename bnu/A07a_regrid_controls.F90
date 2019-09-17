@@ -1,0 +1,103 @@
+module A07a_mod
+
+use chunker_mod
+use ent_labels_mod
+use geom_mod
+use paths_mod
+use gcm_labels_mod
+use hntr_mod
+
+implicit none
+CONTAINS
+
+subroutine regrid_control(rw, root, dir, leaf, vname)
+    type(ReadWrites_t), intent(INOUT) :: rw
+    character*(*), intent(in) :: root
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    character*(*), intent(in) :: vname
+
+    type(Chunker_t) :: chunker_hr
+    type(Chunker_t) :: chunker_lr
+    type(ChunkIO_t) :: io_hr, io_lr
+
+    type(HntrSpec_t) :: spec_hr, spec_lr
+    type(HntrCalc_t) :: hntr_lr    ! Preparation to regrid
+
+    integer :: ichunk,jchunk
+
+    call chunker_hr%init(im1km,jm1km,imh,jmh,'forplot',4,1,1, nchunk=(/1,5/))
+    call chunker_hr%nc_open(io_hr, root, dir, trim(leaf)//'.nc', vname, 1)
+
+    call chunker_lr%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 4, 1, (/1,5/))
+    call chunker_lr%nc_create(io_lr, weighting(chunker_lr%wta1,1d0,0d0), &
+        'regrids/', trim(leaf)//'_hxh', vname, vname, '1', create_lr=.false.)
+
+
+    spec_lr = hntr_spec(chunker_lr%chunk_size(1), chunker_lr%ngrid(2), 0d0, 180d0*60d0 / chunker_lr%ngrid(2))
+    spec_hr = hntr_spec(chunker_hr%chunk_size(1), chunker_hr%ngrid(2), 0d0, 180d0*60d0 / chunker_hr%ngrid(2))
+    hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)   ! datmis=0
+
+    call chunker_hr%nc_check(rw=rw)
+    call chunker_lr%nc_check(rw=rw)
+
+#ifdef ENTGVSD_DEBUG
+    do jchunk = 1,1
+    do ichunk = 1,1
+#else
+    do jchunk = 1,chunker_lr%nchunk(2)
+    do ichunk = 1,chunker_lr%nchunk(1)
+#endif
+        call chunker_hr%move_to(ichunk,jchunk)
+        call chunker_lr%move_to(ichunk,jchunk)
+
+        call hntr_lr%regrid4( &
+            io_lr%buf, io_hr%buf, &
+            chunker_hr%wta1, 1d0, 0d0, &   ! weighting
+            io_lr%startB(2), io_lr%chunker%chunk_size(2))
+
+        call chunker_lr%write_chunks
+    end do
+    end do
+
+    call chunker_lr%close_chunks
+    call chunker_hr%close_chunks
+end subroutine regrid_control
+
+subroutine regrid_controls(rw)
+    type(ReadWrites_t) :: rw
+
+    integer :: imonth
+
+    if (LAI_SOURCE == 'LAI3g') then
+        call regrid_control(rw, DATA_INPUT, 'LAI/', 'LAI3gMax_1kmx1km', 'laimax')
+    else if (LAI_SOURCE == 'BNU') then
+        call regrid_control(rw, LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax', 'laimax')
+    end if
+
+
+    call regrid_control(rw, &
+        DATA_INPUT, 'height/', 'simard_forest_heights', 'heights')
+
+
+    do imonth=1,NMONTH
+        call regrid_control(rw, &
+            DATA_INPUT, 'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth), 'lai')
+    end do
+end subroutine regrid_controls
+
+
+end module A07a_mod
+
+
+program A07a_regrid_controls
+    use A07a_mod
+    use chunkparams_mod
+
+implicit none
+    type(ReadWrites_t) :: rw
+    call rw%init("A07a_regrid_controls", 10,10)
+    call regrid_controls(rw)
+    call rw%write_mk
+
+end program A07a_regrid_controls

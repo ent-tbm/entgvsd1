@@ -12,7 +12,7 @@ module chunker_mod
 
 implicit none
 private
-    public :: Chunker_t,ChunkIO_t,FileInfo_t
+    public :: Chunker_t,ChunkIO_t,FileInfo_t,ReadWrites_t
     public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
     public :: FillValue
@@ -176,6 +176,20 @@ end interface
 type ChunkIO_ptr
     type(ChunkIO_t), pointer :: ptr
 end type ChunkIO_ptr
+
+
+
+
+type ReadWrites_t
+    character*(1024) :: exename
+    character*(1024), dimension(:), allocatable :: reads
+    integer :: nreads
+    character*(1024), dimension(:), allocatable :: writes
+    integer :: nwrites
+contains
+    procedure :: init => readwrites_init
+    procedure :: write_mk
+end type ReadWrites_t
 
 ! =========== Chunker_t
 ! Container class that keeps track (via ChunkIO pointers) of all files
@@ -444,6 +458,17 @@ function weighting(buf,MM,BB) result(wta)
     wta%MM = MM
     wta%BB = BB
 end function weighting
+
+subroutine readwrites_init(this, exename, max_reads, max_writes)
+    class(ReadWrites_t) :: this
+    character*(*) :: exename
+    integer :: max_reads, max_writes
+
+    this%exename = exename
+    allocate(this%reads(max_reads))
+    allocate(this%writes(max_writes))
+end subroutine readwrites_init
+
 
 ! Initializes the Chunker container.
 ! @param im,jm Size of high-resolution grid.
@@ -808,8 +833,8 @@ function get_sdate()
     CHARACTER(len=2) :: dd
     INTEGER :: values(8)
 
-    mons = ['Jan','Feb','Mar','Apr','May','Jun',&
-      'Jul','Aug','Sep','Oct','Nov','Dec']
+!    months = ['Jan','Feb','Mar','Apr','May','Jun',&
+!      'Jul','Aug','Sep','Oct','Nov','Dec']
 
     CALL DATE_AND_TIME(VALUES=values)
 
@@ -818,7 +843,7 @@ function get_sdate()
     WRITE(yyyy,'(i4)') values(1)
 
     get_sdate = yyyy//'-'//mm//'-'//dd
-END SUBROUTINE get_sdate
+END function get_sdate
 
 ! Opens/Creates just the file and dimensions
 ! Normally sets up for a file with one or more 2D (single layer) variables
@@ -1763,9 +1788,10 @@ end subroutine file_info
 ! Once all files have been opened, call this function.  If any errors
 ! were encountered opening files for reading or writing, nc_check() will
 ! indicate so and exit.
-subroutine nc_check(this, exename)
+subroutine nc_check(this, exename, rw)
     class(Chunker_t) :: this
-    character(len=*) :: exename
+    character(len=*), OPTIONAL :: exename
+    type(ReadWrites_t), OPTIONAL :: rw
     ! ------ Locals
     integer :: i
 
@@ -1774,18 +1800,40 @@ subroutine nc_check(this, exename)
         stop -1
     end if
 
-    open(17, FILE=trim(LC_LAI_ENT_DIR//trim(exename)//'.mk'))
-    write(17,'(AA)') trim(exename),'_INPUTS = \'
+    if (present(exename)) then
+        open(17, FILE=trim(LC_LAI_ENT_DIR//trim(exename)//'.mk'))
+        write(17,'(AA)') trim(exename),'_INPUTS = \'
+    end if
     do i=1,this%nreads
         if (this%reads(i)%ptr%own_fileid) then
-            write(17,*) '   ',trim(this%reads(i)%ptr%path),' \'
+            if (present(rw)) then
+                rw%nreads = rw%nreads + 1
+                if (this%nreads > this%max_reads) then
+                    write(ERROR_UNIT,*) 'write_mk Exceeded maximum number of read handles', this%reads(i)%ptr%leaf
+                    stop -1
+                end if
+                rw%reads(rw%nreads) = trim(this%reads(i)%ptr%path)
+            else
+                write(17,*) '   ',trim(this%reads(i)%ptr%path),' \'
+            end if
         end if
     end do
-    write(17,*)
-    write(17,'(AA)') trim(exename),'_OUTPUTS = \'
+    if (present(exename)) then
+        write(17,*)
+        write(17,'(AA)') trim(exename),'_OUTPUTS = \'
+    end if
     do i=1,this%nwrites
         if (this%writes(i)%ptr%own_fileid) then
-            write(17,*) '   ',trim(this%writes(i)%ptr%path),' \'
+            if (present(rw)) then
+                rw%nwrites = rw%nwrites + 1
+                if (this%nwrites > this%max_writes) then
+                    write(ERROR_UNIT,*) 'write_mk Exceeded maximum number of write handles', this%writes(i)%ptr%leaf
+                    stop -1
+                end if
+                rw%writes(rw%nwrites) = trim(this%writes(i)%ptr%path)
+            else
+                write(17,*) '   ',trim(this%writes(i)%ptr%path),' \'
+            end if
         end if
     end do
     write(17,*)
@@ -1794,6 +1842,29 @@ subroutine nc_check(this, exename)
     close(17)
 
 end subroutine nc_check
+
+subroutine write_mk(this)
+    class(ReadWrites_t) :: this
+    ! ------ Locals
+    integer :: i
+
+    open(17, FILE=trim(LC_LAI_ENT_DIR//trim(this%exename)//'.mk'))
+    write(17,'(AA)') trim(this%exename),'_INPUTS = \'
+    do i=1,this%nreads
+        write(17,*) '   ',trim(this%reads(i))
+    end do
+    write(17,*)
+    write(17,'(AA)') trim(this%exename),'_OUTPUTS = \'
+    do i=1,this%nwrites
+        write(17,*) '   ',trim(this%writes(i))
+    end do
+    write(17,*)
+    write(17,*)
+    write(17,*)
+    close(17)
+
+end subroutine write_mk
+
 
 end module chunker_mod
 ! ======================================================

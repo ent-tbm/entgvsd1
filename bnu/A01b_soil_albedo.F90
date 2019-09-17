@@ -127,6 +127,8 @@ program Carrer_soilalbedo_to_GISS
     type(EntSet_t) :: ent2
     type(FileInfo_t) :: info
     integer, parameter :: nhr(2) = (/ IM1km/IMK, JM1km/JMK /)   ! # of hi-res gridcells per lo-res
+    type(ReadWrites_t) :: rw
+    call rw%init("A08_trim", 30,30)
 
     call init_ent_labels
     call ent2%allocate(2,NENT20)
@@ -225,8 +227,8 @@ program Carrer_soilalbedo_to_GISS
         'Ratio of Bright/Dark Soil in GISS Bands', '1')
 
 MAIN_PROGRAM_FILE='A01b_soil_albedo'
-    call chunker%nc_check(MAIN_PROGRAM_FILE)
-    call chunkerhr%nc_check(trim(MAIN_PROGRAM_FILE)//'_hr')
+    call chunker%nc_check(rw=rw)
+    call chunkerhr%nc_check(rw=rw)
     ! ================== Main Loop
 
 #ifdef ENTGVSD_DEBUG
@@ -448,9 +450,6 @@ MAIN_PROGRAM_FILE='A01b_soil_albedo'
     call chunker%close_chunks
     call chunkerhr%close_chunks
 
-
-
-
-         
+    call rw%write_mk
 end program Carrer_soilalbedo_to_GISS
             
