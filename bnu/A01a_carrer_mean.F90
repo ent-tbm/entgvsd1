@@ -62,7 +62,7 @@ subroutine do_carrer_mean(iband, ndates)
             weighting(wta, 1d0, 0d0))
     end do
 
-    call chunker%nc_check('A01a_carrer_mean_'//trim(sbands_modis(iband)))
+    call chunker%nc_check(trim(MAIN_PROGRAM_FILE)//'_'//trim(sbands_modis(iband)))
 
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)
@@ -139,6 +139,7 @@ implicit none
     integer :: err,ncid,dates_dimid,ndates,iband
     character(len=NF90_MAX_NAME) :: xname
 
+    MAIN_PROGRAM_FILE = 'A01a_carrer_mean'
     err = nf90_open(DATA_INPUT_MANUAL//'carrer/carrer.nc', NF90_NOWRITE, ncid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening file at beginning'

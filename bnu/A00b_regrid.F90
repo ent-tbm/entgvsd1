@@ -19,6 +19,7 @@ implicit none
     type(EntSet_t) :: ent2      ! Master Ent categories
     integer :: ichunk,jchunk, k,ic,jc
 
+    MAIN_PROGRAM_FILE='A00b_regrid'
     call init_ent_labels
     call ent2%allocate(2,NENT20)
     call ent2%sub_covertype(ent20, SNOW_ICE)
@@ -55,9 +56,8 @@ implicit none
             weighting(chunkerlr%wta1, 1d0, 0d0))
     end do
 
-
-    call chunker%nc_check('A00b_regrid_hr')
-    call chunkerlr%nc_check('A00b_regrid_lr')
+    call chunker%nc_check(trim(main_program_file)//'_hr')
+    call chunkerlr%nc_check(trim(main_program_file)//'_lr')
 
     ! -------------- Regrid!
 #ifdef ENTGVSD_DEBUG

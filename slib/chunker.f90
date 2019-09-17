@@ -799,6 +799,27 @@ my_nf90_inq_put_var_real32 = status
 end function my_nf90_inq_put_var_real32
 
 
+! Gets the current date as a string
+function get_sdate()
+    CHARACTER(len=9) :: get_sdate
+
+    CHARACTER(len=4) :: yyyy
+    CHARACTER(len=3) :: mm
+    CHARACTER(len=2) :: dd
+    INTEGER :: values(8)
+
+    mons = ['Jan','Feb','Mar','Apr','May','Jun',&
+      'Jul','Aug','Sep','Oct','Nov','Dec']
+
+    CALL DATE_AND_TIME(VALUES=values)
+
+    WRITE(  dd,'(i2)') values(3)
+    WRITE(  mm,'(i2)') values(2)
+    WRITE(yyyy,'(i4)') values(1)
+
+    get_sdate = yyyy//'-'//mm//'-'//dd
+END SUBROUTINE get_sdate
+
 ! Opens/Creates just the file and dimensions
 ! Normally sets up for a file with one or more 2D (single layer) variables
 ! To create a file that will hold 3D (multi layer) variables, set
@@ -899,6 +920,10 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
     if (status /= NF90_NOERR) return
     len1(1) = jm
     status=nf90_def_var_chunking(ncid,idlat,NF90_CHUNKED, len1)
+    if (status /= NF90_NOERR) return
+
+    ! ---------- Global Attributes
+    status=nf90_put_att(ncid, idlon, 'date_generated', get_sdate())
     if (status /= NF90_NOERR) return
 
 
@@ -1045,9 +1070,11 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'creators','E. Fischer,C. Montes, N.Y. Kiang')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'creator_email', "elizabeth.fischer@columbia.edu,carlo.montes@nasa.gov,nancy.y.kiang@nasa.gov")
+        'creator_email', "elizabeth.fischer@columbia.edu,nancy.y.kiang@nasa.gov")
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'geospatial_lat_min', -90d0)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
@@ -1747,7 +1774,7 @@ subroutine nc_check(this, exename)
         stop -1
     end if
 
-    open(17, FILE=trim(LC_LAI_ENT_DIR//exename//'.mk'))
+    open(17, FILE=trim(LC_LAI_ENT_DIR//trim(exename)//'.mk'))
     write(17,'(AA)') trim(exename),'_INPUTS = \'
     do i=1,this%nreads
         if (this%reads(i)%ptr%own_fileid) then

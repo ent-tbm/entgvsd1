@@ -224,8 +224,9 @@ program Carrer_soilalbedo_to_GISS
         'bs_brightratio', &
         'Ratio of Bright/Dark Soil in GISS Bands', '1')
 
-    call chunker%nc_check('A01b_soil_albedo')
-    call chunkerhr%nc_check('A01b_soil_albedo_hr')
+MAIN_PROGRAM_FILE='A01b_soil_albedo'
+    call chunker%nc_check(MAIN_PROGRAM_FILE)
+    call chunkerhr%nc_check(trim(MAIN_PROGRAM_FILE)//'_hr')
     ! ================== Main Loop
 
 #ifdef ENTGVSD_DEBUG

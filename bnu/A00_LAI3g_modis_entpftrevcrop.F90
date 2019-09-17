@@ -41,6 +41,7 @@
 module modis_ent_mod
     use ent_labels_mod
     use geom_mod
+    use paths_mod
 
 implicit none
 !     private
@@ -380,6 +381,7 @@ type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
 type(ChunkIO_t) :: io_lclai_checksum
 #endif
 
+MAIN_PROGRAM_FILE='A00_LAI3g_modis_entpftrevcrop'
     call init_ent_labels
 
 RESOUT = '1kmx1km'
@@ -577,7 +579,7 @@ enddo
 
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A00_LAI3g_modis_entpftrevcrop')
+call chunker%nc_check(MAIN_PROGRAM_FILE)
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

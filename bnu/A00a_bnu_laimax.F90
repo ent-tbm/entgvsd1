@@ -25,6 +25,7 @@ type(ChunkIO_t) :: io_laimax
 integer :: imonth,ic,jc,ichunk,jchunk
 real*4 :: lai,laimax
 
+MAIN_PROGRAM_FILE='A00a_bnu_laimax'
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 20, 5, 5, (/1,15/))
 
@@ -43,8 +44,7 @@ call chunker%nc_create(io_laimax, weighting(chunker%wta1,1d0,0d0), &
     'bnu_laimax', 'laimax', &
     'Maximum of montly LAI', 'm^2 m-2')
 
-
-call chunker%nc_check('A00a_bnu_laimax')
+call chunker%nc_check(MAIN_PROGRAM_FILE)
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif
@@ -53,7 +53,6 @@ stop 0
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A03_lc_lai_monthly')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

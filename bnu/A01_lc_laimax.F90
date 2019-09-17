@@ -31,6 +31,7 @@ type(FileInfo_t) :: info
 integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
+MAIN_PROGRAM_FILE='A01_lc_laimax'
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120,10)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -66,7 +67,7 @@ call chunker%nc_create( &
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A01_lc_laimax')
+call chunker%nc_check(MAIN_PROGRAM_FILE)
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

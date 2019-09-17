@@ -78,7 +78,7 @@ subroutine do_gridfill(iband)
         'albmodis MEAN with missing values filled in', '1')
 
 
-    call chunker%nc_check('A01f_albmodis_gridfill')
+    call chunker%nc_check(MAIN_PROGRAM_FILE)
 
     ! ================= Inputs for gridfill
     ! https://ocefpaf.github.io/python4oceanographers/blog/2014/10/20/gridfill/
@@ -141,10 +141,12 @@ end module a01f_gridfill_mod
          
 program Carrer_soilalbedo_gridfill
     use a01f_gridfill_mod
+    use paths_mod
     implicit none
 
     integer :: iband
 
+    MAIN_PROGRAM_FILE = 'A01f_albmodis_gridfill'
     call init_ent_labels
     do iband=1,NBANDS_MODIS
         call do_gridfill(iband)

@@ -38,6 +38,7 @@ implicit none
     type(FileInfo_t) :: info
     integer :: k
 
+MAIN_PROGRAM_FILE='A01h_veg_heights'
 call init_ent_labels
 
 ! -----------------------------------------------------
@@ -76,7 +77,7 @@ call chunker%nc_create(io_lchgt_checksum, &
 
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A01h_veg_heights')
+call chunker%nc_check(MAIN_PROGRAM_FILE)
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

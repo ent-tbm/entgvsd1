@@ -71,4 +71,7 @@ CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
 ! 'LAI3g' or 'BNU'
 CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'BNU'
 
+! Name of main Fortran file
+character (LEN=40) :: MAIN_PROGRAM_FILE
+
 end module paths_mod
