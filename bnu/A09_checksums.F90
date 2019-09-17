@@ -1,9 +1,10 @@
 module A09_mod
 
-use A09_mod
 use chunker_mod
 use ent_labels_mod
 use geom_mod
+use paths_mod
+use gcm_labels_mod
 
 implicit none
 CONTAINS
@@ -17,7 +18,6 @@ subroutine ent_diff(chunker, &
     integer :: im,jm
     type(FileInfo_t) :: info1
     character*(*), intent(IN) :: iroot2,idir2,ileaf2,vname2
-    character*(*), intent(IN) :: odir
     logical, intent(IN), OPTIONAL :: create_lr
 
     ! -------------- Locals
@@ -32,7 +32,7 @@ subroutine ent_diff(chunker, &
 
     call chunker%nc_create(xout, weighting(chunker%wta1,1d0,0d0), &
         'checksum/', trim(info1%leaf)//'_diff', trim(info1%vname)//'_diff', &
-        'checksum', '1' create_lr=create_lr)
+        'checksum', '1', create_lr=create_lr)
     
     call chunker%nc_check('A09_checksums')  ! will get overwritten
 
@@ -58,8 +58,8 @@ subroutine ent_diff(chunker, &
 end subroutine ent_diff
 
 
-subroutine do_A09_checksums(esub)
-    type(EntSet_t), intent(IN) :: esub
+subroutine do_A09_checksums(esub_p)
+    type(EntSet_t), pointer, intent(IN) :: esub_p
     ! --------- Locals
     type(FileInfo_t) :: info
     type(Chunker_t) :: chunker
@@ -94,7 +94,7 @@ subroutine do_A09_checksums(esub)
             doytype='doy', idoy=idoy, &
             varsuffix = '_checksum')
         call ent_diff(chunker, info, &
-            LC_LAI_ENT_DIR, 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            DATA_INPUT, 'LAI/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! ----------- A03
@@ -130,9 +130,8 @@ subroutine do_A09_checksums(esub)
             'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
             varsuffix = '_checksum', &
             doytype='doy', idoy=idoy)
-
         call ent_diff(chunker, info, &
-            LC_LAI_ENT_DIR, 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            DATA_INPUT, 'LAI/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! --------------- A06
@@ -146,19 +145,20 @@ subroutine do_A09_checksums(esub)
             DATA_INPUT, 'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
             'lai')
     end do
-end do
+end subroutine
 
-subroutine do_A08_checksums(esub, step)
-    type(EntSet_t), intent(IN) :: esub
-    character*(*), intent(IN) :: segment
+subroutine do_A08_checksums(esub_p, step)
+    class(EntSet_T), pointer :: esub_p
+    character*(*), intent(IN) :: step
     ! --------- Locals
     type(FileInfo_t) :: info
     type(Chunker_t) :: chunker
     integer :: idoy, imonth
-    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 2, 1, 1, (/1,1/))
+
+    call chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 2, 1, 1, (/1,1/))
 
     ! --------------- A08_trim
-    call this%chunker%file_info(info, esub, 'BNU', 'M', 'lclaimax', 2004, step, '1.1', &
+    call chunker%file_info(info, esub_p, 'BNU', 'M', 'lclaimax', 2004, step, '1.1', &
         varsuffix = '_checksum')
     if (LAI_SOURCE == 'LAI3g') then
         call ent_diff(chunker, info, &
@@ -168,19 +168,18 @@ subroutine do_A08_checksums(esub, step)
             LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax.nc', 'laimax', create_lr=.false.)
     end if
 
-    call this%chunker%file_info(info, esub, 'BNU', 'M', 'lchgt', 2004, step, '1.1', &
+    call chunker%file_info(info, esub_p, 'BNU', 'M', 'lchgt', 2004, step, '1.1', &
         varsuffix = '_checksum')
     call ent_diff(chunker, info, &
         DATA_INPUT, 'height/', 'simard_forest_heights.nc', 'heights', create_lr=.false.)
 
-    do m=1,NMONTH
-        call this%chunker%file_info(info, esub, 'BNU', 'M', 'lclai', 2004, step, '1.1', &
-            doytype='month', idoy=m, varsuffix='_checksum')
+    do imonth=1,NMONTH
+        call chunker%file_info(info, esub_p, 'BNU', 'M', 'lclai', 2004, step, '1.1', &
+            doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(chunker, info, &
-            LC_LAI_ENT_DIR, 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai', create_lr=.false.)
+            DATA_INPUT, 'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            'lai')
     end do
-
-end do
 
 end subroutine do_A08_checksums
 
@@ -188,15 +187,22 @@ end module A09_mod
 
 
 program A09_checksums
-use A09_mod
+    use A09_mod
+    use chunkparams_mod
+
 implicit none
 
     ! -------------------------------------------------------
     type(GcmEntSet_t), target :: esub
+    class(EntSet_t), pointer :: esub_p
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
-    call do_A09_checksums(esub)
-    call do_A08_checksums(esub)
+    esub_p => esub
+    call do_A09_checksums(esub_p)
+    call do_A08_checksums(esub_p, 'trimmed')
+    call do_A08_checksums(esub_p, 'trimmed_scaled')
+    call do_A08_checksums(esub_p, 'trimmed_scaled_crops_ext')
+    call do_A08_checksums(esub_p, 'trimmed_scaled_nocrops')
 
 end program A09_checksums
