@@ -393,7 +393,7 @@ RESOUT = '1kmx1km'
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
 
 !     LAI
-if (LAI_SOURCE == 'LAI3g') then
+if (LAI_SOURCE == 'L') then
     call chunker%nc_open_gz(io_laiin, &
         DATA_DIR, DATA_INPUT, &
         'LAI/', &
@@ -471,7 +471,7 @@ call chunker%nc_open_gz(io_waterpart, &
 ! Create Output Files
 
 !      ENTPFTLC -- Land Cover
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1')
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
 call chunker%nc_create1(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
     info%dir, info%leaf, info, &
@@ -488,13 +488,13 @@ end do
 
 !     CHECKSUM
 
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_modis_checksum')
 call chunker%nc_create1(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
 
 !     CHECKSUM
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_checksum')
 call chunker%nc_create1(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
@@ -503,7 +503,7 @@ call chunker%nc_create1(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
 ! ------------------------------------------------------------
 ! Low-res version computed specially for these
 !     NPFTGRID  Number of PFTs in a gridcell
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_npftgrid')
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
@@ -511,7 +511,7 @@ call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_dompftlc')
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
     info%dir, info%leaf, info%vname, &
@@ -519,7 +519,7 @@ call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
-call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_dompft')
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
@@ -537,7 +537,7 @@ do k = 1,LCLASS
 enddo
 
 ! ENTPFTLAIMAX
-call chunker%file_info(info, ent20, 'B', 'M', 'laimax', 2004, 'ent17', '1.1')
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1')
 call chunker%nc_create1(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
     info%dir, info%leaf, info, &

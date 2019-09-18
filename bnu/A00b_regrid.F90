@@ -41,7 +41,7 @@ implicit none
 
 
     ! ---------------- Open land cover
-    call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
         LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     do k=1,2
@@ -50,7 +50,7 @@ implicit none
 
 
     ! --------------- Open output file
-    call chunkerlr%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunkerlr%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunkerlr%nc_create(ioall_lcout, &
         weighting(chunkerlr%wta1,1d0,0d0), &
         trim(info%dir), trim(info%leaf), trim(info%vname), &

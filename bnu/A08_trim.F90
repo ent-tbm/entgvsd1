@@ -49,20 +49,20 @@ subroutine outputsegment_open(this, step, esub)
     ! Open the files
     call this%chunker%nc_create_set( &
         esub, this%io_ann_lc(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
-        'B', 'M', 'lc', 2004, step, '1.1')
+        LAI_SOURCE, 'M', 'lc', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
         esub, this%io_ann_lai(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
-        'B', 'M', 'laimax', 2004, step, '1.1')
+        LAI_SOURCE, 'M', 'laimax', 2004, step, '1.1')
 
     call this%chunker%nc_create_set( &
         esub, this%io_ann_hgt(:,1), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
-        'B', 'M', 'hgt', 2004, step, '1.1')
+        LAI_SOURCE, 'M', 'hgt', 2004, step, '1.1')
 
     do m=1,NMONTH
         call this%chunker%nc_create_set( &
             esub, this%io_mon_lai(:,m), repeat_weights(esub%ncover, this%chunker%wta1, 1d0, 0d0), &
-            'B', 'M', 'lai', 2004, step, '1.1', &
+            LAI_SOURCE, 'M', 'lai', 2004, step, '1.1', &
             doytype='month', idoy=m)
     end do
 
@@ -70,14 +70,14 @@ subroutine outputsegment_open(this, step, esub)
     allocate(this%io_mon_lclai_checksum(NMONTH))
 
     ! Open checksum files
-    call this%chunker%file_info(info, esub, 'B', 'M', 'lc', 2004, step, '1.1', &
+    call this%chunker%file_info(info, esub, LAI_SOURCE, 'M', 'lc', 2004, step, '1.1', &
         varsuffix = '_checksum')
     call this%chunker%nc_create(this%io_ann_lc_checksum, &
         weighting(this%chunker%wta1,1d0,0d0), &
         info%dir, info%leaf, info%vname, &
         info%long_name, info%units)
 
-    call this%chunker%file_info(info, esub, 'B', 'M', 'lclaimax', 2004, step, '1.1', &
+    call this%chunker%file_info(info, esub, LAI_SOURCE, 'M', 'lclaimax', 2004, step, '1.1', &
         varsuffix = '_checksum')
     call this%chunker%nc_create(this%io_ann_lclaimax_checksum, &
         weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
@@ -85,7 +85,7 @@ subroutine outputsegment_open(this, step, esub)
         info%long_name, info%units)
 
 
-    call this%chunker%file_info(info, esub, 'B', 'M', 'lchgt', 2004, step, '1.1', &
+    call this%chunker%file_info(info, esub, LAI_SOURCE, 'M', 'lchgt', 2004, step, '1.1', &
         varsuffix = '_checksum')
     call this%chunker%nc_create(this%io_ann_lchgt_checksum, &
         weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
@@ -93,7 +93,7 @@ subroutine outputsegment_open(this, step, esub)
         info%long_name, info%units)
 
     do m=1,NMONTH
-        call this%chunker%file_info(info, esub, 'B', 'M', 'lclai', 2004, step, '1.1', &
+        call this%chunker%file_info(info, esub, LAI_SOURCE, 'M', 'lclai', 2004, step, '1.1', &
             doytype='month', idoy=m, varsuffix='_checksum')
         call this%chunker%nc_create(this%io_mon_lclai_checksum(m), &
             weighting(this%io_ann_lc_checksum%buf,1d0,0d0), &
@@ -1283,29 +1283,29 @@ subroutine do_trim(rw, esub)
     ! --- Inputs: Same for annual vs. monthly
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_lc, &
-        'B', 'M', 'lc', 2004, 'purelr', '1.1')
+        LAI_SOURCE, 'M', 'lc', 2004, 'purelr', '1.1')
 
     ! Bare Soil Brightness Ratio
     call chunker_pu%file_info(info, esub_p, &
-        'B', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
+        LAI_SOURCE, 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
     call chunker_pu%nc_open(io_bs, LC_LAI_ENT_DIR, &
         info%dir, 'bs_brightratio.nc', info%vname, 1)
 
     ! Simard Heights
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_hgt, &
-        'B', 'M', 'hgt', 2004, 'purelr', '1.1')
+        LAI_SOURCE, 'M', 'hgt', 2004, 'purelr', '1.1')
 
     ! laimax
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_lai(:,1), &
-        'B', 'M', 'laimax', 2004, 'purelr', '1.1')
+        LAI_SOURCE, 'M', 'laimax', 2004, 'purelr', '1.1')
 
 
     do m=1,NMONTH
         call chunker_pu%nc_open_set( &
             esub_p, io_mon_lai(:,m), &
-            'B', 'M', 'lai', 2004, 'purelr', '1.1', &
+            LAI_SOURCE, 'M', 'lai', 2004, 'purelr', '1.1', &
             doytype='month', idoy=m)
     end do
 

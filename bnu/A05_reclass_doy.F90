@@ -43,16 +43,16 @@ subroutine do_reindex(esub)
 
     ! --- ENTPFTLC: Open outputs written by A00
     call chunker%nc_open_set(ent20, io_lc_ent17, &
-        'B', 'M', 'lc', 2004, 'ent17', '1.1')
+        LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
 
     ! LC written by A04; in the esub indexing scheme
     call chunker%nc_open_set(esub_p, io_lc_pure, &
-        'B', 'M', 'lc', 2004, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'lc', 2004, 'pure', '1.1')
 
     ! lai
     do idoy = 1,ndoy
         call chunker%nc_open_set(ent20, io_laiin(:,idoy), &
-            'B', 'M', 'lai', 2004, 'ent17', '1.1', &
+            LAI_SOURCE, 'M', 'lai', 2004, 'ent17', '1.1', &
             doytype='doy', idoy=idoy)
     end do
 
@@ -66,11 +66,11 @@ subroutine do_reindex(esub)
     do idoy = 1,ndoy
         call chunker%nc_create_set( &
             esub_p, io_laiout(:,idoy), lc_weights(io_lc_pure, 1d0, 0d0), &
-            'B', 'M', 'lai', 2004, 'pure', '1.1', &
+            LAI_SOURCE, 'M', 'lai', 2004, 'pure', '1.1', &
             doytype='doy', idoy=idoy)
 
         call chunker%file_info(info, esub_p, &
-            'B', 'M', 'lclai', 2004, 'pure', '1.1', &
+            LAI_SOURCE, 'M', 'lclai', 2004, 'pure', '1.1', &
             varsuffix = '_checksum', &
             doytype='doy', idoy=idoy)
         call chunker%nc_create(io_lclai_checksum(idoy), &

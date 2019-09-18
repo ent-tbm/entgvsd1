@@ -68,7 +68,7 @@ CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
 
 ! ===========================================================
 
-! 'LAI3g' or 'B'
+! 'L' or 'B'
 CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'B'
 
 ! Name of main Fortran file
