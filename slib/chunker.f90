@@ -17,7 +17,7 @@ private
     public :: nop_regrid_lr, default_regrid_lr
     public :: FillValue
     public :: dbi0,dbi1,dbj0,dbj1
-
+    public :: get_sdate
 
 ! Chunks used when debugging
 integer, parameter :: dbj0 = 11
@@ -315,7 +315,7 @@ subroutine calc_lon_lat_4X5(IM,JM,lon,lat)
     DO J=3,(JM-1)
        XX = XX + 4.00000
        lat(J) = XX
-       write(0,*) 'Lat ',J,XX
+       !write(0,*) 'Lat ',J,XX
     END DO
     lat(JM) = 90.000000 - 1.00000
 
@@ -341,7 +341,7 @@ subroutine calc_lon_lat_2HX2(IM,JM,lon,lat)
     XX = -90.000000 + 1.00000   !  (2. * .5 = 1.0)
     DO J=1,JM
        lat(J) = XX
-       write(0,*) 'Lat ',J,XX
+       !write(0,*) 'Lat ',J,XX
        XX = XX + 2.00000
     END DO
     lat(JM) = 90.000000 - 1.00000
@@ -830,11 +830,11 @@ end function my_nf90_inq_put_var_real32
 
 ! Gets the current date as a string
 function get_sdate()
-    CHARACTER(len=9) :: get_sdate
+    character*(10) :: get_sdate
 
-    CHARACTER(len=4) :: yyyy
-    CHARACTER(len=3) :: mm
-    CHARACTER(len=2) :: dd
+    CHARACTER*(4) :: yyyy
+    CHARACTER*(2) :: mm
+    CHARACTER*(2) :: dd
     INTEGER :: values(8)
 
 !    months = ['Jan','Feb','Mar','Apr','May','Jun',&
@@ -842,9 +842,9 @@ function get_sdate()
 
     CALL DATE_AND_TIME(VALUES=values)
 
-    WRITE(  dd,'(i2)') values(3)
-    WRITE(  mm,'(i2)') values(2)
-    WRITE(yyyy,'(i4)') values(1)
+    WRITE(  dd,'(i0.2)') values(3)
+    WRITE(  mm,'(i0.2)') values(2)
+    WRITE(yyyy,'(i0.4)') values(1)
 
     get_sdate = yyyy//'-'//mm//'-'//dd
 END function get_sdate
@@ -920,14 +920,12 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
 
         status=nf90_def_dim(ncid, 'layer_name_len', len(layer_names(1)), strdimids(1))
         if (status /= NF90_NOERR) return
-
-        status=nf90_def_dim(ncid, 'long_layer_name_len', len(long_layer_names(1)), strdimids(1))
-        if (status /= NF90_NOERR) return
-
         status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlayer_names)
         if (status /= NF90_NOERR) return
 
-        status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlong_layer_names)
+        status=nf90_def_dim(ncid, 'long_layer_name_len', len(long_layer_names(1)), strdimids(1))
+        if (status /= NF90_NOERR) return
+        status=nf90_def_var(ncid, 'long_layer_names', NF90_CHAR, strdimids, idlong_layer_names)
         if (status /= NF90_NOERR) return
 
     end if
@@ -952,10 +950,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
     if (status /= NF90_NOERR) return
 
     ! ---------- Global Attributes
-    status=nf90_put_att(ncid, idlon, 'date_generated', get_sdate())
-    if (status /= NF90_NOERR) return
-
-
     status=nf90_put_att(ncid, idlon, 'long_name', 'longitude')
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlat, 'long_name', 'latitude')
@@ -964,9 +958,6 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
     if (status /= NF90_NOERR) return
     status=nf90_put_att(ncid, idlat, 'units', 'degrees_north')
     if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlon, '_FillValue', FillValue)
-    if (status /= NF90_NOERR) return
-    status=nf90_put_att(ncid, idlat, '_FillValue', FillValue)
 
     status=nf90_enddef(ncid)
     if (status /= NF90_NOERR) return
@@ -1063,9 +1054,12 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     integer, dimension(:), allocatable :: dim_sz
 
     ! Use existing variable if it exists
-
     status = nf90_redef(ncid)   ! Put into define mode
-    call handle_nf90_error(status, 'nc_redef '//trim(varname))
+    if (status == nf90_eindefine) then
+        ! pass
+    else
+        call handle_nf90_error(status, 'nc_redef '//trim(varname))
+    end if
 
     ! Lookup dimensions by string name
     if (nlayers==1) then
@@ -1096,6 +1090,8 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
 
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'long_name', long_name)
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'date_generated', get_sdate())
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
@@ -1171,7 +1167,7 @@ subroutine finish_cio_init(this, cio, alloc)
     if (cio%rw == 'w') then
         this%nwrites = this%nwrites + 1
         if (this%nwrites > this%max_writes) then
-            write(ERROR_UNIT,*) 'Exceeded maximum number of write handles', cio%leaf
+            write(ERROR_UNIT,*) 'Exceeded maximum number of write handles ', cio%leaf
             stop -1
         end if
         this%writes(this%nwrites)%ptr => cio
@@ -1457,7 +1453,6 @@ subroutine nc_create_set( &
         write(ERROR_UNIT,*) 'Exceeded maximum number of ioalls', trim(info%leaf)
         stop -1
     end if
-
 
     call this%nc_create(this%ioalls(this%nioalls), &
         weighting(this%wta1, 1d0, 0d0), &    ! Dummy; not used
@@ -1764,14 +1759,15 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         end if
     end if
 
-    if ((step/='ent17').and.(step/='pure').and.(step/='purelr').and. &
-        (step/='trimmed').and. &
-        (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
-        (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &
-    then
-        write(ERROR_UNIT,*) 'Illegal step ', step
-        stop
-    end if
+
+!    if ((step/='ent17').and.(step/='pure').and.(step/='purelr').and. &
+!        (step/='trimmed').and. &
+!        (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
+!        (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &
+!    then
+!        write(ERROR_UNIT,*) 'Illegal step ', step
+!        stop
+!    end if
 
     if (present(varsuffix)) then
         xvarsuffix = varsuffix

@@ -18,12 +18,17 @@ for stage in \
         A05_reclass_doy.F90 \
         A06_reclass_monthly.F90 \
         A07_regrid.F90 \
-        A08_trim.F90
+        A07a_regrid_controls.F90 \
+        A08_trim.F90 \
+        A09_checksums.F90 \
+        A10_modele.F90
 do
 
     echo "============================== Running $stage"
     xent $stage
 done
+
+python3 A11_to_modele_format.py
 
 # Plot everything
 Rscript EntGVSD_ef.R

@@ -290,7 +290,7 @@ function long_layer_names(ents)
     integer :: k
 
     do k=1,ents%ncover
-        long_layer_names(k) = trim(ents%abbrev(k))
+        long_layer_names(k) = trim(ents%title(k))
     end do
 end function long_layer_names
 
