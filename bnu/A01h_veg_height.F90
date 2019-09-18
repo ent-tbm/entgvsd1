@@ -58,17 +58,17 @@ call chunker%nc_open_gz(io_sim, &
 
 !     ENTPFTLC
 call chunker%nc_open_set(ent20, io_lc, &
-    'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
+    'B', 'M', 'lc', 2004, 'ent17', '1.1')
 
 ! ---------------- Outputs
 ! ENTPFT heights
 
 call chunker%nc_create_set( &
     ent20, io_out, lc_weights(io_lc, 1d0, 0d0), &
-    'BNU', 'M', 'hgt', 2004, 'ent17', '1.1')
+    'B', 'M', 'hgt', 2004, 'ent17', '1.1')
 
 ! ---------- Checksums
-call chunker%file_info(info, ent20, 'BNU', 'M', 'lchgt', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, 'B', 'M', 'lchgt', 2004, 'ent17', '1.1', &
     varsuffix='_checksum')
 call chunker%nc_create(io_lchgt_checksum, &
     weighting(chunker%wta1,1d0,0d0), &

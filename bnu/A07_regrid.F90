@@ -140,7 +140,7 @@ subroutine regrid_lais(esub, fname)
     ! LC written by A04; in the esub indexing scheme
     if (need_lc) then
         call chunker%nc_open_set(esub, io_lc_pure, &
-            'BNU', 'M', 'lc', 2004, 'pure', '1.1')
+            'B', 'M', 'lc', 2004, 'pure', '1.1')
     end if
 
     ! LAI
@@ -247,16 +247,16 @@ subroutine do_regrid_all_lais
     ! ----------- Annual
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .false., 'BNU', 'M', 'lc', 2004, 'pure', 'purelr', '1.1')
+        .false., 'B', 'M', 'lc', 2004, 'pure', 'purelr', '1.1')
 
 
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., 'BNU', 'M', 'laimax', 2004, 'pure', 'purelr', '1.1')
+        .true., 'B', 'M', 'laimax', 2004, 'pure', 'purelr', '1.1')
 
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., 'BNU', 'M', 'hgt', 2004, 'pure', 'purelr', '1.1')
+        .true., 'B', 'M', 'hgt', 2004, 'pure', 'purelr', '1.1')
 
 #if 0
 ! We only need the doy files at the ent17 and pure steps.  We do not
@@ -267,7 +267,7 @@ subroutine do_regrid_all_lais
     do idoy=1,NDOY
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-            .true., 'BNU', 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
+            .true., 'B', 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
             'doy', idoy)
     end do
 #endif
@@ -276,7 +276,7 @@ subroutine do_regrid_all_lais
     do imonth=1,NMONTH
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-            .true., 'BNU', 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
+            .true., 'B', 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
             'month', imonth)
     end do
 
@@ -296,7 +296,7 @@ subroutine do_regrid_all_lais
 
     ! Bare soil Bright Ratio
     call chunkerlr%file_info(oinfo, ent1, &
-        'BNU', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
+        'B', 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
     fnames1(1) = &
         make_fname(LC_LAI_ENT_DIR, &
             'carrer/', 'V1km_bs_brightratio', &   ! 

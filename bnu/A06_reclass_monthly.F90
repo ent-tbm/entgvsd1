@@ -45,18 +45,18 @@ subroutine do_reindex(esub,m0,m1)
 
     ! --- ENTPFTLC: Open outputs written by A00
     call chunker%nc_open_set(ent20, io_lc_ent17, &
-        'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
+        'B', 'M', 'lc', 2004, 'ent17', '1.1')
 
     ! LC written by A04; in the esub indexing scheme
     call chunker%nc_open_set(esub_p, io_lc_pure, &
-        'BNU', 'M', 'lc', 2004, 'pure', '1.1')
+        'B', 'M', 'lc', 2004, 'pure', '1.1')
 
     ! laiin
     do im = m0,m1
         imonth = im - m0 + 1
 
         call chunker%nc_open_set(ent20, io_laiin(:,imonth), &
-            'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
+            'B', 'M', 'lai', 2004, 'ent17', '1.1', &
             doytype='month', idoy=im)
     end do
 
@@ -75,11 +75,11 @@ subroutine do_reindex(esub,m0,m1)
 
         call chunker%nc_create_set( &
             esub_p, io_laiout(:,imonth), lc_weights(io_lc_pure, 1d0, 0d0), &
-            'BNU', 'M', 'lai', 2004, 'pure', '1.1', &
+            'B', 'M', 'lai', 2004, 'pure', '1.1', &
             doytype='month', idoy=im)
 
         call chunker%file_info(info, esub_p, &
-            'BNU', 'M', 'lclai', 2004, 'pure', '1.1', &
+            'B', 'M', 'lclai', 2004, 'pure', '1.1', &
             varsuffix = '_checksum', &
             doytype='month', idoy=im)
         call chunker%nc_create(io_lclai_checksum(imonth), &

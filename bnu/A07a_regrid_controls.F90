@@ -71,7 +71,7 @@ subroutine regrid_controls(rw)
 
     if (LAI_SOURCE == 'LAI3g') then
         call regrid_control(rw, DATA_INPUT, 'LAI/', 'LAI3gMax_1kmx1km', 'laimax')
-    else if (LAI_SOURCE == 'BNU') then
+    else if (LAI_SOURCE == 'B') then
         call regrid_control(rw, LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax', 'laimax')
     end if
 

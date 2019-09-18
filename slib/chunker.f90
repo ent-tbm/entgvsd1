@@ -1757,7 +1757,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     character*(10) :: time
     character*(20) :: xvarsuffix
 
-    if ((laisource/='M').and.(laisource/='BNU')) then
+    if ((laisource/='M').and.(laisource/='B')) then
         write(ERROR_UNIT,*) 'Illegal laisource', laisource
         stop
     end if

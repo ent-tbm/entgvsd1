@@ -43,16 +43,16 @@ enddo
 
 ! --- ENTPFTLC: Open outputs written by A00
 call chunker%nc_open_set(ent20, io_lc, &
-    'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
+    'B', 'M', 'lc', 2004, 'ent17', '1.1')
 
 ! =================== Output Files
 do imonth=1,nmonth
     call chunker%nc_create_set( &
         ent20, io_laiout(:,imonth), lc_weights(io_lc, 1d0, 0d0), &
-        'BNU', 'M', 'lai', 2004, 'ent17', '1.1', &
+        'B', 'M', 'lai', 2004, 'ent17', '1.1', &
         doytype='month', idoy=imonth)
 
-    call chunker%file_info(info, ent20, 'BNU', 'M', 'lclai', 2004, 'ent17', '1.1', &
+    call chunker%file_info(info, ent20, 'B', 'M', 'lclai', 2004, 'ent17', '1.1', &
         doytype='month', idoy=imonth, varsuffix='_checksum')
     call chunker%nc_create(io_lclai_checksum(imonth), &
         weighting(sum_lc,1d0,0d0), &
@@ -60,7 +60,7 @@ do imonth=1,nmonth
         info%long_name, info%units)
 enddo
 
-call chunker%file_info(info, ent20, 'BNU', 'M', 'lclai', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, 'B', 'M', 'lclai', 2004, 'ent17', '1.1', &
     varsuffix='_allmonth_checksum')
 call chunker%nc_create(io_lclai_checksum_allmonths, &
     weighting(sum_lc,1d0,0d0), &

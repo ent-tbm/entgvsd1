@@ -66,40 +66,40 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
     ! ---------------- Input Files
     call chunker0%nc_open_set( &
         esub, io0_ann_lc(:,1), &
-        'BNU', 'M', 'lc', 2004, lcpart0, '1.1')
+        'B', 'M', 'lc', 2004, lcpart0, '1.1')
 
     call chunker0%nc_open_set( &
         esub, io0_ann_lai(:,1), &
-        'BNU', 'M', 'laimax', 2004, laipart0, '1.1')
+        'B', 'M', 'laimax', 2004, laipart0, '1.1')
 
     call chunker0%nc_open_set( &
         esub, io0_ann_hgt(:,1), &
-        'BNU', 'M', 'hgt', 2004, hgtpart0, '1.1')
+        'B', 'M', 'hgt', 2004, hgtpart0, '1.1')
 
     do m=1,NMONTH
         call chunker0%nc_open_set( &
             esub, io0_mon_lai(:,m), &
-            'BNU', 'M', 'lai', 2004, laipart0, '1.1', &
+            'B', 'M', 'lai', 2004, laipart0, '1.1', &
             doytype='month', idoy=m)
     end do
 
     ! ---------------- Output Files
     call chunker1%nc_create_set( &
         esub, io1_ann_lc(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'lc', 2004, part1, '1.1', create_lr=.false., overmeta=om)
+        'B', 'M', 'lc', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     call chunker1%nc_create_set( &
         esub, io1_ann_lai(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'laimax', 2004, part1, '1.1', create_lr=.false., overmeta=om)
+        'B', 'M', 'laimax', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     call chunker1%nc_create_set( &
         esub, io1_ann_hgt(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'hgt', 2004, part1, '1.1', create_lr=.false., overmeta=om)
+        'B', 'M', 'hgt', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     do m=1,NMONTH
         call chunker1%nc_create_set( &
             esub, io1_mon_lai(:,m), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-            'BNU', 'M', 'lai', 2004, part1, '1.1', create_lr=.false., overmeta=om, &
+            'B', 'M', 'lai', 2004, part1, '1.1', create_lr=.false., overmeta=om, &
             doytype='month', idoy=m
     end do
 

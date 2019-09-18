@@ -53,7 +53,7 @@ subroutine do_gridfill(iband)
     ! ------------- Open Input Files
 
     ! --------- LC
-    call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunker%file_info(info, ent20, 'B', 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
         LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
