@@ -508,6 +508,10 @@ max_reads, max_writes,max_ioalls,nchunk,nchunk_file)
     this%ngrid(2) = jm
     do i=1,chunk_rank
         this%chunk_size(i) = this%ngrid(i) / this%nchunk(i)
+        if (this%chunk_size(i) * this%nchunk(i) /= this%ngrid(i)) then
+            write(6,*) 'Illegal nchunk in dimension i', i, this%nchunk
+            STOP
+        end if
     end do
     this%chunk_size(chunk_rank+1)=1
 
