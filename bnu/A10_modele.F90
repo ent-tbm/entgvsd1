@@ -12,7 +12,7 @@ implicit none
 CONTAINS
 
 
-subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1)
+subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mods)
     type(ReadWrites_t) :: rw
     type(EntSet_t), intent(IN) :: esub
     character(*), intent(IN) :: lcpart0
@@ -20,6 +20,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1)
     character(*), intent(IN) :: hgtpart0
     character(*), intent(IN) :: part1    ! Destination section
     integer, intent(IN) :: im1,jm1    ! Destination resolution
+    character*(*), intent(IN) :: mods
     ! ----------- Locals
     integer :: ichunk,jchunk
     integer :: m,k
@@ -38,6 +39,21 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1)
 
     type(HntrSpec_t) :: spec0, spec1
     type(HntrCalc_t) :: hntr   ! Preparation to regrid
+
+    type(FileInfo_t) :: om   ! overmeta
+
+    call clear_file_info(om)
+
+    om%modifications = ''
+! For each make_modele(), mods should be one of:
+!nocrops = crop cover set to zero and other cover scaled up to fill grid cell;  if no other cover type in grid cell, dominant cover of adjacent grid cells is used.
+!ext# = LAI of crops extended to # neighboring grid cells to provide LAI for historically changing crop cover.
+!ext1 = cover and ext LAI further extended by latitude across continental boundaries for ModelE users who use slightly different continental boundaries.
+!other = bug fix for TBD, etc. >;
+
+
+
+
 
     call chunker0%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 200, 1, 5, (/1,1/))
     call chunker1%init(im1,jm1,  im1,jm1, 'forplot', 1, 200, 5, (/1,1/))
@@ -70,21 +86,21 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1)
     ! ---------------- Output Files
     call chunker1%nc_create_set( &
         esub, io1_ann_lc(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'lc', 2004, part1, '1.1', create_lr=.false.)
+        'BNU', 'M', 'lc', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     call chunker1%nc_create_set( &
         esub, io1_ann_lai(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'laimax', 2004, part1, '1.1', create_lr=.false.)
+        'BNU', 'M', 'laimax', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     call chunker1%nc_create_set( &
         esub, io1_ann_hgt(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-        'BNU', 'M', 'hgt', 2004, part1, '1.1', create_lr=.false.)
+        'BNU', 'M', 'hgt', 2004, part1, '1.1', create_lr=.false., overmeta=om)
 
     do m=1,NMONTH
         call chunker1%nc_create_set( &
             esub, io1_mon_lai(:,m), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
-            'BNU', 'M', 'lai', 2004, part1, '1.1', create_lr=.false., &
-            doytype='month', idoy=m)
+            'BNU', 'M', 'lai', 2004, part1, '1.1', create_lr=.false., overmeta=om, &
+            doytype='month', idoy=m
     end do
 
     call chunker0%nc_check(rw=rw)
@@ -145,8 +161,8 @@ implicit none
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
-    call rw%init("A10_modele", 300,300)
 
+    call rw%init("A10_modele", 300,300)
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub
@@ -158,6 +174,8 @@ implicit none
         'trimmed_scaled', &            ! HGT
         'modele1', & ! output part
         IM2,JM2)
+
+
 
     call rw%write_mk
 end program regrid

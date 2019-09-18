@@ -472,10 +472,9 @@ call chunker%nc_open_gz(io_waterpart, &
 
 !      ENTPFTLC -- Land Cover
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1')
-call chunker%nc_create(ioall_lc, &
+call chunker%nc_create1(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
-    info%dir, info%leaf, info%vname, &
-    info%long_name, info%units, &
+    info%dir, info%leaf, info, &
     ent20%layer_names(), ent20%long_layer_names())
 ! Open water first because it's used to weight others
 call chunker%nc_reuse_var(ioall_lc, io_lc(CV_WATER), &
@@ -491,16 +490,14 @@ end do
 
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_modis_checksum')
-call chunker%nc_create(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
-    info%dir, info%leaf, info%vname, &
-    info%long_name, info%units)
+call chunker%nc_create1(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
+    info%dir, info%leaf, info)
 
 !     CHECKSUM
 call chunker%file_info(info, ent20, 'BNU', 'M', 'lc', 2004, 'ent17', '1.1', &
     varsuffix = '_checksum')
-call chunker%nc_create(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
-    info%dir, info%leaf, info%vname, &
-    info%long_name, info%units)
+call chunker%nc_create1(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
+    info%dir, info%leaf, info)
 
 
 ! ------------------------------------------------------------
@@ -541,10 +538,10 @@ enddo
 
 ! ENTPFTLAIMAX
 call chunker%file_info(info, ent20, 'BNU', 'M', 'laimax', 2004, 'ent17', '1.1')
-call chunker%nc_create(ioall_laiout, &
+call chunker%nc_create1(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
-    info%dir, info%leaf, info%vname, &
-    info%long_name, info%units, ent20%layer_names(), ent20%long_layer_names())
+    info%dir, info%leaf, info, &
+    ent20%layer_names(), ent20%long_layer_names())
 #ifdef COMPUTE_LAI
 do k=1,NENT20
 #else

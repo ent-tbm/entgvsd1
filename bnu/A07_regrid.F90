@@ -16,9 +16,7 @@ type IOFname_t
     character*(100) :: idir,odir
     character*(100) :: ileaf,oleaf
     logical :: lc_weighting
-    character*(40) :: vname
-    character*(100) :: long_name
-    character*(30) :: units
+    type(FileInfo_t) :: info   ! For metadataxs ONLY
     character*(60) :: title
 end type IOFname_t
 
@@ -38,9 +36,10 @@ function make_fname( &
     fn%odir = odir
     fn%oleaf = oleaf
     fn%lc_weighting = lc_weighting
-    fn%vname = vname
-    fn%long_name = long_name
-    fn%units = units
+    fn%info%vname = vname
+    fn%info%long_name = long_name
+    fn%info%units = units
+    fn%info%modfication = ''
 
 end function make_fname
 
@@ -82,11 +81,15 @@ result(fn)
     call ochunker%file_info(oinfo, ents, &
         laisource, cropsource, var, year, ostep, ver, doytype, idoy, varsuffix)
 
-    fn = make_fname(LC_LAI_ENT_DIR, &
-        iinfo%dir, iinfo%leaf, &
-        oinfo%dir, oinfo%leaf, &
-        lc_weighting, &
-        iinfo%vname, iinfo%long_name, iinfo%units)
+
+    fn%root = LC_LAI_ENT_DIR
+    fn%idir = iinfo%dir
+    fn%ileaf = iinfo%leaf
+    fn%odir = oinfo%dir
+    fn%oleaf = oinfo%leaf
+    fn%lc_weighting = lc_weighting
+    fn%info%modfication = iinfo
+
 end function make_fname2
 
 

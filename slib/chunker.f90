@@ -12,7 +12,7 @@ module chunker_mod
 
 implicit none
 private
-    public :: Chunker_t,ChunkIO_t,FileInfo_t,ReadWrites_t
+    public :: Chunker_t,ChunkIO_t,FileInfo_t,clear_file_info,ReadWrites_t
     public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
     public :: FillValue
@@ -265,6 +265,7 @@ contains
     procedure :: nc_reuse_var
     procedure :: nc_reuse_file
     procedure :: nc_create
+    procedure :: nc_create1
     procedure :: nc_create_set
     procedure :: nc_open_gz
     procedure :: nc_open
@@ -276,15 +277,26 @@ end type Chunker_t
 type FileInfo_t
     character*(30) :: dir
     character*(100) :: leaf
+    ! ---------- Metadata below here
     character*(20) :: vname
     character*(50) :: long_name
     character*(20) :: units
+    character*(200) :: modification
 end type FileInfo_t
 
 
     real*4, parameter :: FillValue=-1.e30
 
 CONTAINS
+
+subroutine clear_file_info(info)
+    type(FileInfo_t) :: info
+
+    info%vname = ''
+    info%long_name = ''
+    info%units = ''
+    info%modification = ''
+end subroutine clear_file_info
 
 subroutine handle_nf90_error(status, message)
     integer, intent(in) :: status
@@ -1028,21 +1040,16 @@ end function make_chunksizes
 ! @param varid (OUT) NetCDF handle of new variable
 ! @param nlayers (IN) Number of layers in the variable; if 1, then
 !        simple 2D variable will be created.
-! @param varname Name of variable to create
-! @param long_name Metadata
-! @param units Metadata: UDUnits2 unit specification
-! @param title Metadata
 subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
-    varname,long_name,units)
+    info)
+!    info%vname,info%long_name,info%units)
 !Creates a netcdf file for a single layer mapped Ent PFT cover variable.
     integer, intent(IN) :: ncid
     integer, intent(OUT) :: varid
     integer, intent(IN) :: nlayers
     integer, dimension(chunk_rank), intent(IN) :: nchunk
 
-    character*(*), intent(in) :: varname
-    character*(*), intent(in) :: long_name
-    character*(*), intent(in) :: units
+    type(FileInfo_t), intent(in) :: info  ! Metadata
 
     !-- Local --
     integer, dimension(:), allocatable :: dimids
@@ -1058,7 +1065,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     if (status == nf90_eindefine) then
         ! pass
     else
-        call handle_nf90_error(status, 'nc_redef '//trim(varname))
+        call handle_nf90_error(status, 'nc_redef '//trim(info%vname))
     end if
 
     ! Lookup dimensions by string name
@@ -1067,39 +1074,72 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     else
         status=nc_lookup_dims(ncid, (/'lon   ', 'lat   ', 'layers'/), dimids, dim_sz)
     end if
-    call handle_nf90_error(status, 'nc_lookup_dims '//trim(varname))
+    call handle_nf90_error(status, 'nc_lookup_dims '//trim(info%vname))
 
 
-    status=nf90_inq_varid(ncid, varname, varid)
+    status=nf90_inq_varid(ncid, info%vname, varid)
     if (status /= NF90_NOERR) then
-        status=nf90_def_var(ncid, varname, NF90_FLOAT, dimids, varid)
-        call handle_nf90_error(status, 'nf90_def_var '//trim(varname))
+        status=nf90_def_var(ncid, info%vname, NF90_FLOAT, dimids, varid)
+        call handle_nf90_error(status, 'nf90_def_var '//trim(info%vname))
     end if
 
     status=nf90_def_var_deflate(ncid,varid,1,1,1)
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
         make_chunksizes(dim_sz, nchunk))
 
-    status=nf90_put_att(ncid,varid,"long_name", trim(long_name))
-    call handle_nf90_error(status,  'nf90_put_att  long_name')
-    status=nf90_put_att(ncid,varid,"units", units)
+    status=nf90_put_att(ncid,varid,"info%long_name", trim(info%long_name))
+    call handle_nf90_error(status,  'nf90_put_att  info%long_name')
+    status=nf90_put_att(ncid,varid,"info%units", info%units)
     status=nf90_put_att(ncid,varid,'_FillValue',FillValue)
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
-         trim(long_name))
+         trim(info%long_name))
+
+
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'date_generated', get_sdate())
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'description', 'Ent Terrestrial Biosphere Model (Ent TBM) Global Vegetation Structure Data Set (Ent GVSD)')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'version', '1.1')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'contact', "elizabeth.fischer@columbia.edu,nancy.y.kiang@nasa.gov")
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'reference', '__ENTGVSD_TECHNICAL_PUBLICATION__')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'data_sources', &
+        'v1.1:'//NEW_LINE('A')//&
+        'lc:  Moderate Resolution Imaging Spectroradiometer (MODIS) ' // &
+            'MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et ' // &
+            'al. 2010, doi:10.1016/j.rse.2009.08.016)'//NEW_LINE('A')//&
+        'crop cover:  Monfreda et al. (2008), doi ' // &
+            '10.1029/2007gb002947.'//NEW_LINE('A')//&
+        'lai and laimax: Beijing Normal University LAI data product, ' // &
+            '1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).'//NEW_LINE('A')//&
+        'hgt:  RH100 heights (Simard et al. 2011, ' // &
+            'doi:10.1029/2011jg001708)'//NEW_LINE('A')//&
+        'temperature: Climate Research Unit (CRU) of the University ' // &
+            'of East Anglia, TS3.22, 0.5 degrees, 1901-2013, surface ' // &
+            'temperature, monthly (Harris et al. 2014, ' // &
+            'doi:10.1002/joc.3711)'//NEW_LINE('A')//&
+        'precipitation:  Global Precipitation Climatology Centre ' // &
+            '(GPCC) V6, precipitation, monthly, 0.5, 1901-2010 ' // &
+            '(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'modification', info%modification)
+
+
 
 
     status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'long_name', long_name)
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'date_generated', get_sdate())
+        'info%long_name', info%long_name)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'creators','E. Fischer,C. Montes, N.Y. Kiang')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'creator_email', "elizabeth.fischer@columbia.edu,nancy.y.kiang@nasa.gov")
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'geospatial_lat_min', -90d0)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
@@ -1239,14 +1279,12 @@ end subroutine nc_reuse_var
 ! @param units Metadata: UDUnits2 unit specification
 ! @param title Metadata
 ! @param wta Weighting to use when writing this variable
-subroutine nc_reuse_file(this, cio0, cio, &
-    vname,long_name,units, wta)
+subroutine nc_reuse_file(this, cio0, cio, info, wta)
 
     class(Chunker_t) :: this
     type(ChunkIO_t), intent(IN) :: cio0
     type(ChunkIO_t), target :: cio
-    character*(*), intent(in) :: vname
-    character*(*), intent(in) :: long_name,units
+    type(FileInfo_t), intent(IN) :: info
     type(Weighting_t), target :: wta
 
     cio%base = (/1,1/)
@@ -1262,26 +1300,14 @@ subroutine nc_reuse_file(this, cio0, cio, &
     cio%own_fileid_lr = .false.
 
     ! Create the netCDF variable
-    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk_file, &
-        vname, long_name, units)
+    call my_nf90_create_Ent_single(cio%fileid, cio%varid, 1, this%nchunk_file, info)
 
-    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk_file, &
-        vname, long_name, units)
+    call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, 1, this%nchunk_file, info)
 
     cio%create_lr = cio0%create_lr
     call finish_cio_init(this, cio, .true.)
 end subroutine nc_reuse_file
 
-! Creates a NetCDF file with a single variable.
-! The variable may be single layer or multi-layer.
-! @param cio ChunkIO to initialize
-! @param wta Weighting to use when writing this variable
-! @param Directory in which to create file (relative to LC_LAI_ENT_DIR)
-! @param leaf Filename to create, NOT INCLUDING .nc extension (eg: 'foo')
-! @param (OPTIONAL) vname Name of variable to create
-! @param (OPTIONAL) long_name Metadata
-! @param (OPTIONAL) units Metadata: UDUnits2 unit specification
-! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
 subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
@@ -1295,6 +1321,56 @@ layer_names, long_layer_names, create_lr)
     character*(*), intent(in) :: leaf
     character*(*), intent(in), OPTIONAL :: vname  ! If not set, just create file, not variable
     character*(*), intent(in), OPTIONAL :: long_name,units
+    character(len=*), dimension(:), OPTIONAL :: layer_names
+    character(len=*), dimension(:), OPTIONAL :: long_layer_names
+    logical, intent(IN), OPTIONAL :: create_lr
+
+    type(FileInfo_t) :: info
+    info%modification = ''
+
+    if (present(vname)) then
+        info%vname = vname
+    else
+        info%vname = ''
+    end if
+
+    if (present(long_name)) then
+        info%long_name = long_name
+    else
+        info%long_name = ''
+    end if
+
+    if (present(units)) then
+        info%units = units
+    else
+        info%units = ''
+    end if
+
+    call this%nc_create1(cio, wta, dir, leaf, info, layer_names, long_layer_names, create_lr)
+end subroutine nc_create
+
+
+
+! Creates a NetCDF file with a single variable.
+! The variable may be single layer or multi-layer.
+! @param cio ChunkIO to initialize
+! @param wta Weighting to use when writing this variable
+! @param Directory in which to create file (relative to LC_LAI_ENT_DIR)
+! @param leaf Filename to create, NOT INCLUDING .nc extension (eg: 'foo')
+! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
+subroutine nc_create1(this, cio, &
+wta, &   ! Weight by weights(i,j)*MM + BB
+dir, leaf, &
+info, &
+layer_names, long_layer_names, create_lr)
+
+    class(Chunker_t) :: this
+    type(ChunkIO_t), target :: cio
+    type(Weighting_t), target :: wta
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    type(FileInfo_t), intent(IN) :: info
+
     character(len=*), dimension(:), OPTIONAL :: layer_names
     character(len=*), dimension(:), OPTIONAL :: long_layer_names
     logical, intent(IN), OPTIONAL :: create_lr
@@ -1345,9 +1421,8 @@ layer_names, long_layer_names, create_lr)
                 cio%fileid)
         end if
     end if
-    if (present(vname)) then
-        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk_file, &
-            vname, long_name, units)
+    if (info%vname /= '') then
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk_file, info)
     end if
     cio%own_fileid = .true.
 
@@ -1370,16 +1445,15 @@ layer_names, long_layer_names, create_lr)
             end if
 
         end if
-        if (present(vname)) then
-            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk_file, &
-                vname, long_name, units)
+        if (info%vname /= '') then
+            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk_file, info)
         end if
         cio%own_fileid_lr = .true.
     end if
 
-    alloc_buf = (.not.present(layer_names)).and.present(vname)
+    alloc_buf = (.not.present(layer_names)).and.(info%vname /= '')
     call finish_cio_init(this, cio, alloc_buf)
-end subroutine nc_create
+end subroutine nc_create1
 
 function lc_weights(io_lc, MM, BB) result(wta)
     type(ChunkIO_t), intent(IN) :: io_lc(:)
@@ -1418,7 +1492,8 @@ subroutine nc_create_set( &
     ! filename() stuff
     doytype, idoy, &
     ! nc_create() stuff
-    create_lr, varsuffix)
+    create_lr, varsuffix, &
+    overmeta)
 
 
     class(Chunker_t) :: this
@@ -1438,6 +1513,7 @@ subroutine nc_create_set( &
     logical, intent(IN), OPTIONAL :: create_lr
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
+    type(FileInfo_t), intent(IN), OPTIONAL :: overmeta
 
     ! ----- Local Vars
     integer :: k
@@ -1446,6 +1522,13 @@ subroutine nc_create_set( &
 
     call this%file_info(info, ents, laisource, cropsource, var, year, &
         step, ver, doytype, idoy, varsuffix)
+    if (present(overmeta)) then
+        if (overmeta%vname /= '') info%vname = overmeta%vname
+        if (overmeta%long_name /= '') info%long_name = overmeta%long_name
+        if (overmeta%units /= '') info%units = overmeta%units
+        if (overmeta%modification /= '') info%modification = overmeta%modification
+    end if
+
 
     ! Allocate long-lived ChunkIO_t
     this%nioalls = this%nioalls + 1
@@ -1454,10 +1537,9 @@ subroutine nc_create_set( &
         stop -1
     end if
 
-    call this%nc_create(this%ioalls(this%nioalls), &
+    call this%nc_create1(this%ioalls(this%nioalls), &
         weighting(this%wta1, 1d0, 0d0), &    ! Dummy; not used
-        info%dir, info%leaf, var, &
-        info%long_name, info%units, &
+        info%dir, info%leaf, info, &
         ents%layer_names(), ents%long_layer_names(), create_lr)
     do k=1,ents%ncover
         call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/), wtas(k))
@@ -1657,6 +1739,16 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     call finish_cio_init(this, cio, (k>0))
 end subroutine nc_open
 
+! https://www.rosettacode.org/wiki/String_matching
+SUBROUTINE startswith(A,B)	!Text A starts with text B?
+ CHARACTER*(*) A,B
+  IF (INDEX(A,B).EQ.1) THEN	!Searches A to find B.
+    WRITE (6,*) ">",A,"< starts with >",B,"<"
+   ELSE
+    WRITE (6,*) ">",A,"< does not start with >",B,"<"
+  END IF
+END SUBROUTINE startswith
+
 subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver, doytype, idoy, varsuffix)
     class(Chunker_t), intent(IN) :: this
     type(FileInfo_t) :: info   ! Output variable
@@ -1757,6 +1849,30 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             write(ERROR_UNIT,*) 'Illegal variable ',var
             stop
         end if
+    end if
+
+    info%modification = ''
+    if (step == 'ent17') then
+        info%modification = '17 PFTs'
+    else if (step == 'pure') then
+        info%modification = 'merging of some cover types (e.g. crops, non-veg cover) without altering cover fractions'
+    else if (step == 'trimmed') then
+        info%modification = 'small cover fractions < 0.10 set to zero, total LAI preserve'
+    else if (step == 'trimmed_scaled') then
+        info%modification = 'cover fractions rescaled to so that grid cell sums to 1.0.'
+    else if (step == 'trimmed_scaled_nocrops') then
+        info%modification = 'crop cover set to zero and other cover scaled ' //&
+            'up to fill grid cell;  if no other cover type in grid cell, ' //&
+            'dominant cover of adjacent grid cells is used'
+    else if (step == 'ext') then
+        info%modification = 'LAI of crops extended to # neighboring grid ' //&
+            'cells to provide LAI for historically changing crop cover.'
+    else if (step == 'ext1') then
+        info%modification = 'cover and ext LAI further extended by latitude ' //&
+            'across continental boundaries for ModelE users who use slightly ' //&
+            'different continental boundaries.'
+    else
+        info%modification = 'bug fix for TBD, etc.'
     end if
 
 

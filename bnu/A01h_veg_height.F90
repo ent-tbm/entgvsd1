@@ -72,8 +72,7 @@ call chunker%file_info(info, ent20, 'BNU', 'M', 'lchgt', 2004, 'ent17', '1.1', &
     varsuffix='_checksum')
 call chunker%nc_create(io_lchgt_checksum, &
     weighting(chunker%wta1,1d0,0d0), &
-    info%dir, info%leaf, info%vname, &
-    info%long_name, info%units)
+    info%dir, info%leaf, info)
 
 
 ! Quit if we had any problems opening files
