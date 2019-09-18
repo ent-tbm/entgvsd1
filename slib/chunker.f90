@@ -925,19 +925,19 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
     status=nf90_def_dim(ncid, 'lat', JM, dimids(2))
     if (status /= NF90_NOERR) return
     if (nlayers > 1) then
-        status=nf90_def_dim(ncid, 'layers', nlayers, dimids(3))
+        status=nf90_def_dim(ncid, 'lctype', nlayers, dimids(3))
         if (status /= NF90_NOERR) return
         strdimids(2) = dimids(3)
         ixdimids(1) = dimids(3)
 
-        status=nf90_def_dim(ncid, 'layer_name_len', len(layer_names(1)), strdimids(1))
+        status=nf90_def_dim(ncid, 'lctype_len', len(layer_names(1)), strdimids(1))
         if (status /= NF90_NOERR) return
-        status=nf90_def_var(ncid, 'layers', NF90_CHAR, strdimids, idlayer_names)
+        status=nf90_def_var(ncid, 'lctype', NF90_CHAR, strdimids, idlayer_names)
         if (status /= NF90_NOERR) return
 
-        status=nf90_def_dim(ncid, 'long_layer_name_len', len(long_layer_names(1)), strdimids(1))
+        status=nf90_def_dim(ncid, 'lctype_longnames_len', len(long_layer_names(1)), strdimids(1))
         if (status /= NF90_NOERR) return
-        status=nf90_def_var(ncid, 'long_layer_names', NF90_CHAR, strdimids, idlong_layer_names)
+        status=nf90_def_var(ncid, 'lctype_longname', NF90_CHAR, strdimids, idlong_layer_names)
         if (status /= NF90_NOERR) return
 
     end if
@@ -1072,7 +1072,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     if (nlayers==1) then
         status=nc_lookup_dims(ncid, (/'lon', 'lat' /), dimids, dim_sz)
     else
-        status=nc_lookup_dims(ncid, (/'lon   ', 'lat   ', 'layers'/), dimids, dim_sz)
+        status=nc_lookup_dims(ncid, (/'lon   ', 'lat   ', 'lctype'/), dimids, dim_sz)
     end if
     call handle_nf90_error(status, 'nc_lookup_dims '//trim(info%vname))
 
@@ -1102,7 +1102,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'version', '1.1')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'contact', "elizabeth.fischer@columbia.edu,nancy.y.kiang@nasa.gov")
+        'contact', "Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu")
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
@@ -1129,15 +1129,6 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'modification', info%modification)
 
-
-
-
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'info%long_name', info%long_name)
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'history','Sep 2018: E. Fischer,C. Montes, N.Y. Kiang')
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'creators','E. Fischer,C. Montes, N.Y. Kiang')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
@@ -1148,8 +1139,6 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
         'geospatial_lon_min', -180d0)
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'geospatial_lon_max', 180d0)
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'EntTBM', "Ent Terrestrial Biosphere Model")
 
     status=nf90_enddef(ncid)
     call handle_nf90_error(status, 'my_nf90_create_Ent')
@@ -1756,6 +1745,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     character*(*), intent(IN) :: laisource   ! M (MODIS, Nancy’s old version), BNU (Carl and Elizabeth)
 
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
+!    character*(*), intent(IN) :: heightsource ! Sa Simard RH100 | Sb Simard RH100-stdev | Sc Simard RH100-0.5*stdev | Ha GEDI+ICESat-2 data (some day) RH100 | Hb GEDI+ICESat-2 RH100-stdev | etc.
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
     character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
@@ -1891,9 +1881,14 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         xvarsuffix = ''
     end if
 
-    info%leaf = 'V'//trim(sres(this%ngrid(1))) // '_EntGVSD' // itoa2(ents%npft) // trim(ents%nonveg) // '_' // &
-        trim(laisource) // trim(cropsource) // '_' // trim(var) // trim(xvarsuffix) // '_' // &
-        itoa4(year) // '_' // trim(time) // trim(step) // '_v' // trim(ver)
+    info%leaf = 'V'//trim(sres(this%ngrid(1))) // &
+        '_EntGVSD' //  &
+        '_v' // trim(ver) // &
+        '_' // itoa2(ents%npft) // trim(ents%nonveg) // &
+        '_' // trim(laisource) // trim(cropsource) // &
+        trim(XHEIGHTSOURCE) // &
+        '_' // trim(var) // trim(xvarsuffix) // '_' // &
+        itoa4(year) // '_' // trim(time) // trim(step)
 
     info%dir = trim(step) // '/'
     info%vname = trim(var) // trim(xvarsuffix)

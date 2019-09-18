@@ -74,4 +74,10 @@ CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'BNU'
 ! Name of main Fortran file
 character (LEN=40) :: MAIN_PROGRAM_FILE
 
+! ===========================================================
+
+! Sa Simard RH100 | Sb Simard RH100-stdev | Sc Simard RH100-0.5*stdev | Ha GEDI+ICESat-2 data (some day) RH100 | Hb GEDI+ICESat-2 RH100-stdev | etc.
+character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
+
+
 end module paths_mod
