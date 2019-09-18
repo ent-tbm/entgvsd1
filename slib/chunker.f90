@@ -1762,8 +1762,9 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         stop
     end if
 
+    time = 'ann_'
     if (var=='laimax') then
-        time = ''
+        time = 'ann_'
         info%long_name = 'Leaf Area Index, Annual Maximum'
         info%units = 'm^2 m-2'
         if (present(doytype).or.present(idoy)) then
@@ -1771,7 +1772,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             stop
         end if
     else if (var=='lclaimax') then
-        time = ''
+        time = 'ann_'
         info%long_name = 'CHECKSUM: sum(LC*LAIMAX)'
         info%units = 'm^2 m-2'
         if (present(doytype).or.present(idoy)) then
@@ -1789,7 +1790,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     else if (var == 'hgt') then
         info%long_name = 'Canopy Height'
         info%units = 'm'
-        time = ''
+        time = 'ann_'
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
             stop
@@ -1797,7 +1798,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     else if (var == 'lchgt') then
         info%long_name = 'CHECKSUM: sum(LC*HGT)'
         info%units = 'm'
-        time = ''
+        time = 'ann_'
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
             stop
@@ -1805,7 +1806,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     else if (var=='bs_brightratio') then
         info%long_name = 'Bare Soil Brightness Ratio'
         info%units = '1'
-        time = ''
+        time = 'ann_'
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
             stop
@@ -1816,7 +1817,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             stop
         else
             if (.not.present(doytype)) then
-                time = ''
+                time = 'ann_'
             else
                 if (doytype=='doy') then
                     time = DOY(idoy)//'_'

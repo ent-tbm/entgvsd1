@@ -582,7 +582,7 @@ stop 0
 #endif
 
 
-
+#if 0
    err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL, &
         'long_name','Land Cover')
    err = NF90_PUT_ATT(ioall_lc%fileid,NF90_GLOBAL,'history', &
@@ -636,7 +636,7 @@ stop 0
         'geospatial_lon_max', '180')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
         'EntTBM', 'Ent Terrestrial Biosphere Model')
-
+#endif
 
 
 !-----------------------------------------------------------------
