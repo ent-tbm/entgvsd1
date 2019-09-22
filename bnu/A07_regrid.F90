@@ -39,7 +39,7 @@ function make_fname( &
     fn%info%vname = vname
     fn%info%long_name = long_name
     fn%info%units = units
-    fn%info%modfication = ''
+    fn%info%modification = ''
 
 end function make_fname
 
@@ -88,7 +88,7 @@ result(fn)
     fn%odir = oinfo%dir
     fn%oleaf = oinfo%leaf
     fn%lc_weighting = lc_weighting
-    fn%info%modfication = iinfo
+    fn%info = iinfo   ! Copy all metadata
 
 end function make_fname2
 
@@ -148,17 +148,16 @@ subroutine regrid_lais(esub, fname)
         fn => fname(idoy)
 
         call chunker%nc_open(ioall_lai(idoy), trim(fn%root), &
-            trim(fn%idir), trim(fn%ileaf)//'.nc', trim(fn%vname), 0)
+            trim(fn%idir), trim(fn%ileaf)//'.nc', trim(fn%info%vname), 0)
         do k = 1,esub%ncover
             call chunker%nc_reuse_var(ioall_lai(idoy), io_lai(k,idoy), (/1,1,k/))
         enddo
 
         ! ----------- Output Files
         ! No weighting needed because create_lr==.false.
-        call chunkerlr%nc_create(ioall_laiout(idoy), &
+        call chunkerlr%nc_create1(ioall_laiout(idoy), &
             weighting(chunkerlr%wta1,1d0,0d0), &
-            trim(fn%odir), trim(fn%oleaf), trim(fn%vname), &
-            trim(fn%long_name), trim(fn%units), &
+            trim(fn%odir), trim(fn%oleaf), fn%info, &
             esub%layer_names(), esub%long_layer_names(), &
             create_lr=.false.)
         do k=1,esub%ncover
@@ -204,7 +203,6 @@ subroutine regrid_lais(esub, fname)
             end if
 
         end do    ! k=1,esub%ncover
-!if (esub%ncover > 1) print *,'CS',idoy,sum(io_laiout(2,1)%buf)
         end do    ! idoy
 
         call chunker%write_chunks

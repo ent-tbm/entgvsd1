@@ -255,11 +255,11 @@ implicit none
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub
-!    call do_A09_checksums(rw, esub_p)
+    call do_A09_checksums(rw, esub_p)
     call do_A08_checksums(rw, esub_p, 'trimmed')
-!    call do_A08_checksums(rw, esub_p, 'trimmed_scaled')
-!    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
-!    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_nocrops')
+    call do_A08_checksums(rw, esub_p, 'trimmed_scaled')
+    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
+    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_nocrops')
 
     call rw%write_mk
 end program A09_checksums

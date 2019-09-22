@@ -31,15 +31,23 @@ type(FileInfo_t) :: info
 integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
-MAIN_PROGRAM_FILE='A01_lc_laimax'
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120,10)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 ! ================= Input Files
 !      LAI max
-call chunker%nc_open_gz(io_laiin(1), DATA_DIR, DATA_INPUT, &
-    'LAI/', 'global_30s_2004_max.nc', 'lai', 1)
+if (LAI_SOURCE == 'L') then
+    call chunker%nc_open_gz(io_laiin(1), &
+        DATA_DIR, DATA_INPUT, &
+        'LAI/', &
+        'LAI3gMax_1kmx1km.nc', 'laimax', 1)
+else if (LAI_SOURCE == 'B') then
+    ! Result of A00a_bnu_lclai.F90
+    call chunker%nc_open(io_laiin(1), &
+        LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax.nc', &
+        'laimax', 1)
+end if
 
 ! --- ENTPFTLC: Open outputs written by A00
 call chunker%nc_open_set(ent20, io_lc, &
@@ -67,7 +75,7 @@ call chunker%nc_create( &
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check(MAIN_PROGRAM_FILE)
+call chunker%nc_check('A01_lc_laimax')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

@@ -1,5 +1,5 @@
 ! Regrids LC to 6km grid needed for Carrer albedo processing
-!
+! JUST regrids SNOW_ICE and CV_WATER.  Uses ent2 universe to do so.
 
 program A00b_regrid
     use netcdf
@@ -50,12 +50,12 @@ implicit none
 
 
     ! --------------- Open output file
-    call chunkerlr%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunkerlr%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunkerlr%nc_create(ioall_lcout, &
         weighting(chunkerlr%wta1,1d0,0d0), &
         trim(info%dir), trim(info%leaf), trim(info%vname), &
         'Land Cover Fractions', '1', &
-        ent2%layer_names(), esub%long_layer_names())!, create_lr=.false.)
+        ent2%layer_names(), ent2%long_layer_names())!, create_lr=.false.)
     do k=1,2
         call chunkerlr%nc_reuse_var( &
             ioall_lcout, io_lcout(k), (/1,1,k/), &

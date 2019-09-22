@@ -12,7 +12,7 @@ implicit none
 CONTAINS
 
 
-subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mods)
+subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, modification)
     type(ReadWrites_t) :: rw
     type(EntSet_t), intent(IN) :: esub
     character(*), intent(IN) :: lcpart0
@@ -20,7 +20,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
     character(*), intent(IN) :: hgtpart0
     character(*), intent(IN) :: part1    ! Destination section
     integer, intent(IN) :: im1,jm1    ! Destination resolution
-    character*(*), intent(IN) :: mods
+    character*(*), intent(IN) :: modification
     ! ----------- Locals
     integer :: ichunk,jchunk
     integer :: m,k
@@ -44,7 +44,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
     call clear_file_info(om)
 
-    om%modifications = ''
+    om%modification = modification
 ! For each make_modele(), mods should be one of:
 !nocrops = crop cover set to zero and other cover scaled up to fill grid cell;  if no other cover type in grid cell, dominant cover of adjacent grid cells is used.
 !ext# = LAI of crops extended to # neighboring grid cells to provide LAI for historically changing crop cover.
@@ -100,7 +100,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
         call chunker1%nc_create_set( &
             esub, io1_mon_lai(:,m), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
             LAI_SOURCE, 'M', 'lai', 2004, part1, '1.1', create_lr=.false., overmeta=om, &
-            doytype='month', idoy=m
+            doytype='month', idoy=m)
     end do
 
     call chunker0%nc_check(rw=rw)
@@ -173,7 +173,7 @@ implicit none
         'trimmed_scaled', &            ! LAIMAX, LAI
         'trimmed_scaled', &            ! HGT
         'modele1', & ! output part
-        IM2,JM2)
+        IM2,JM2, '')
 
 
 

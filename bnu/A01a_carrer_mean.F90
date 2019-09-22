@@ -20,7 +20,8 @@ implicit none
 
 CONTAINS
 
-subroutine do_carrer_mean(iband, ndates)
+subroutine do_carrer_mean(rw, iband, ndates)
+    type(ReadWrites_t) :: rw
     integer, intent(IN) :: iband
     integer, intent(IN) :: ndates
     ! ------------ Local Vars
@@ -62,7 +63,8 @@ subroutine do_carrer_mean(iband, ndates)
             weighting(wta, 1d0, 0d0))
     end do
 
-    call chunker%nc_check(trim(MAIN_PROGRAM_FILE)//'_'//trim(sbands_modis(iband)))
+    call chunker%nc_check(rw=rw)
+!    call chunker%nc_check(trim(MAIN_PROGRAM_FILE)//'_'//trim(sbands_modis(iband)))
 
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)
@@ -138,6 +140,9 @@ implicit none
 
     integer :: err,ncid,dates_dimid,ndates,iband
     character(len=NF90_MAX_NAME) :: xname
+    type(ReadWrites_t) :: rw
+
+    call rw%init("A01a_carrer_mean", 20,20)
 
     MAIN_PROGRAM_FILE = 'A01a_carrer_mean'
     err = nf90_open(DATA_INPUT_MANUAL//'carrer/carrer.nc', NF90_NOWRITE, ncid)
@@ -156,10 +161,9 @@ implicit none
     err = nf90_close(ncid)
 
     do iband=1,NBANDS_MODIS
-        call do_carrer_mean(iband, ndates)
+        call do_carrer_mean(rw, iband, ndates)
     end do
-
-print *,'ndates',ndates
+    call rw%write_mk
 
 end program carrer_mean
 

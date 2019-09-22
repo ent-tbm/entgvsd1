@@ -92,7 +92,7 @@ def convert_annual(ivname, ifname, ofname, prefix=''):
             # ------------- Define
             copydef_base(ncin, ncout)
             iv = ncin.variables[ivname]
-
+            print('variable ', ivname)
             ncout.long_name = iv.long_name
             units = iv.units
             _FillValue = iv._FillValue
@@ -110,9 +110,10 @@ def convert_annual(ivname, ifname, ofname, prefix=''):
                 ncout.variables[prefix+layer][:] = ncin.variables[ivname][i,:]
 
 # ----------------------------------------------
-def convert_monthly(ivname, mname, files):
+def convert_monthly(ivname, mname, files, ifiles, ofiles):
     print('------------------- {}'.format(mname))
     with netCDF4.Dataset(mname + '.nc3', 'w', format="NETCDF3_CLASSIC") as ncout:
+        ofiles.append(mname + '.nc3')
 
         # ----------- Define
         with netCDF4.Dataset(files[0].name+'.nc') as ncin:
@@ -145,6 +146,7 @@ def convert_monthly(ivname, mname, files):
         nctime[:] = [file.imonth for file in files]
         for itime,file in enumerate(files):
             with netCDF4.Dataset(file.name+'.nc') as ncin:
+                ifiles.append(file.name+'.nc')
                 for ilayer,(layer,long_name) in enumerate(zip(layers,long_names)):
                     ncout.variables[layer][itime,:] = ncin.variables[ivname][ilayer,:]
 
@@ -160,11 +162,25 @@ convert_fn = {
 def main():
     annual_files, month_group = snoop_A10_dir('lc_lai_ent/modele1')
 
+    ifiles = dict()
+    ofiles = dict()
     for file in annual_files:
         if file.ftype in convert_fn:
-            convert_fn[file.ftype](file.name+'.nc', file.name+'.nc3')
+            ifname = file.name+'.nc'
+            ofname = file.name+'.nc3'
+            convert_fn[file.ftype](ifname, ofname)
 
     for mname,files in month_group:
         convert_monthly('lai', mname,files)
+
+    exe = 'A11_to_modele_format'
+    with open(os.path.join('lc_lai_ent', exe+'.mk'), 'w') as out:
+        out.write('{}_INPUTS = \\\n'.format(exe))
+        for fname in ifname:
+            out.write('    {} \\'.format(fname))
+
+        out.write('{}_OUTPUTS = \\\n'.format(exe))
+        for fname in ofname:
+            out.write('    {} \\'.format(fname))
 
 main()

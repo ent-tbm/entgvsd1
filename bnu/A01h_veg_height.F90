@@ -70,7 +70,7 @@ call chunker%nc_create_set( &
 ! ---------- Checksums
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lchgt', 2004, 'ent17', '1.1', &
     varsuffix='_checksum')
-call chunker%nc_create(io_lchgt_checksum, &
+call chunker%nc_create1(io_lchgt_checksum, &
     weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
 
