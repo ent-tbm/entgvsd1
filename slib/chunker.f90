@@ -1776,7 +1776,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         time = 'ann_'
         info%long_name = 'Leaf Area Index, Annual Maximum'
         info%units = 'm^2 m-2'
-        if (LAI_SOURCE == 'BNU') then
+        if (LAI_SOURCE == 'B') then
             info%data_source = 'Beijing Normal University LAI data product, 1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)'
         else
             info%data_source = 'LAI3g something...'
@@ -1853,7 +1853,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         if (var == 'lai') then
             info%long_name = 'Leaf Area Index, ' // trim(time)
             info%units = 'm^2 m-2'
-            if (LAI_SOURCE == 'BNU') then
+            if (LAI_SOURCE == 'B') then
                 info%data_source = &
                     'Beijing Normal University LAI data product, 1 km ' // &
                     '(Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)'
