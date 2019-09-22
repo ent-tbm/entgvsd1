@@ -282,6 +282,7 @@ type FileInfo_t
     character*(50) :: long_name
     character*(20) :: units
     character*(200) :: modification
+    character*(300) :: data_source
 end type FileInfo_t
 
 
@@ -296,6 +297,7 @@ subroutine clear_file_info(info)
     info%long_name = ''
     info%units = ''
     info%modification = ''
+    info%data_source = ''
 end subroutine clear_file_info
 
 subroutine handle_nf90_error(status, message)
@@ -353,7 +355,6 @@ subroutine calc_lon_lat_2HX2(IM,JM,lon,lat)
     XX = -90.000000 + 1.00000   !  (2. * .5 = 1.0)
     DO J=1,JM
        lat(J) = XX
-       !write(0,*) 'Lat ',J,XX
        XX = XX + 2.00000
     END DO
     lat(JM) = 90.000000 - 1.00000
@@ -361,7 +362,6 @@ subroutine calc_lon_lat_2HX2(IM,JM,lon,lat)
     XX = -178.75000
     DO I=1,IM
        lon(I) = XX
-       write(0,*) 'Lon ',I,XX
        XX = XX + 2.500000
     END DO
 end subroutine calc_lon_lat_2HX2
@@ -477,6 +477,8 @@ subroutine readwrites_init(this, exename, max_reads, max_writes)
     integer :: max_reads, max_writes
 
     this%exename = exename
+    this%nreads = 0
+    this%nwrites = 0
     allocate(this%reads(max_reads))
     allocate(this%writes(max_writes))
 end subroutine readwrites_init
@@ -1087,9 +1089,12 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
         make_chunksizes(dim_sz, nchunk))
 
-    status=nf90_put_att(ncid,varid,"info%long_name", trim(info%long_name))
-    call handle_nf90_error(status,  'nf90_put_att  info%long_name')
-    status=nf90_put_att(ncid,varid,"info%units", info%units)
+    status=nf90_put_att(ncid,varid,"long_name", trim(info%long_name))
+    call handle_nf90_error(status,  'nf90_put_att  long_name')
+    status=nf90_put_att(ncid,varid,"data_source", trim(info%data_source))
+    call handle_nf90_error(status,  'nf90_put_att  data_sources')
+    status=nf90_put_att(ncid,varid,"units", info%units)
+    call handle_nf90_error(status,  'nf90_put_att  units')
     status=nf90_put_att(ncid,varid,'_FillValue',FillValue)
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
          trim(info%long_name))
@@ -1297,6 +1302,7 @@ subroutine nc_reuse_file(this, cio0, cio, info, wta)
     call finish_cio_init(this, cio, .true.)
 end subroutine nc_reuse_file
 
+! Function for backwards compatibility.  Please migrate to nc_create1()
 subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
@@ -1516,6 +1522,7 @@ subroutine nc_create_set( &
         if (overmeta%long_name /= '') info%long_name = overmeta%long_name
         if (overmeta%units /= '') info%units = overmeta%units
         if (overmeta%modification /= '') info%modification = overmeta%modification
+        if (overmeta%data_source /= '') info%data_source = overmeta%data_source
     end if
 
 
@@ -1762,11 +1769,19 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         stop
     end if
 
+    info%data_source = ''
+
     time = 'ann_'
     if (var=='laimax') then
         time = 'ann_'
         info%long_name = 'Leaf Area Index, Annual Maximum'
         info%units = 'm^2 m-2'
+        if (LAI_SOURCE == 'BNU') then
+            info%data_source = 'Beijing Normal University LAI data product, 1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)'
+        else
+            info%data_source = 'LAI3g something...'
+        end if
+
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with laimax variable'
             stop
@@ -1782,6 +1797,10 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     else if (var=='lc') then
         info%long_name = 'Land Cover Fraction'
         info%units = '1'
+        info%data_source = &
+            'Moderate Resolution Imaging Spectroradiometer (MODIS) ' // &
+            'MCD12Q1 L3 V051,, Land Cover, 500 m, annual ' // &
+            '(Friedl et al. 2010, doi:10.1016/j.rse.2009.08.016)'
         time = 'ann_'
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with lc variable'
@@ -1790,6 +1809,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     else if (var == 'hgt') then
         info%long_name = 'Canopy Height'
         info%units = 'm'
+        info%data_source = 'RH100 heights (Simard et al. 2011, doi:10.1029/2011jg001708)'
         time = 'ann_'
         if (present(doytype).or.present(idoy)) then
             write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
@@ -1833,6 +1853,13 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         if (var == 'lai') then
             info%long_name = 'Leaf Area Index, ' // trim(time)
             info%units = 'm^2 m-2'
+            if (LAI_SOURCE == 'BNU') then
+                info%data_source = &
+                    'Beijing Normal University LAI data product, 1 km ' // &
+                    '(Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)'
+            else
+            info%data_source = 'LAI3g something...'
+        end if
         else if (var == 'lclai') then
             info%long_name = 'SUM(LC*LAI), ' // trim(time)
             info%units = 'm^2 m-2'
@@ -1963,12 +1990,12 @@ subroutine write_mk(this)
     open(17, FILE=trim(LC_LAI_ENT_DIR//trim(this%exename)//'.mk'))
     write(17,'(AA)') trim(this%exename),'_INPUTS = \'
     do i=1,this%nreads
-        write(17,*) '   ',trim(this%reads(i))
+        write(17,*) '   ',trim(this%reads(i)),' \'
     end do
     write(17,*)
     write(17,'(AA)') trim(this%exename),'_OUTPUTS = \'
     do i=1,this%nwrites
-        write(17,*) '   ',trim(this%writes(i))
+        write(17,*) '   ',trim(this%writes(i)),' \'
     end do
     write(17,*)
     write(17,*)
