@@ -1089,11 +1089,11 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_def_var_chunking(ncid,varid,NF90_CHUNKED, &
         make_chunksizes(dim_sz, nchunk))
 
-    status=nf90_put_att(ncid,varid,"long_name", trim(info%long_name))
+    status=nf90_put_att(ncid,varid,'long_name', trim(info%long_name))
     call handle_nf90_error(status,  'nf90_put_att  long_name')
-    status=nf90_put_att(ncid,varid,"data_source", trim(info%data_source))
+    status=nf90_put_att(ncid,varid,'data_source', trim(info%data_source))
     call handle_nf90_error(status,  'nf90_put_att  data_sources')
-    status=nf90_put_att(ncid,varid,"units", info%units)
+    status=nf90_put_att(ncid,varid,'units', info%units)
     call handle_nf90_error(status,  'nf90_put_att  units')
     status=nf90_put_att(ncid,varid,'_FillValue',FillValue)
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
@@ -1107,7 +1107,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'version', '1.1')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'contact', "Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu")
+        'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
@@ -1321,7 +1321,7 @@ layer_names, long_layer_names, create_lr)
     logical, intent(IN), OPTIONAL :: create_lr
 
     type(FileInfo_t) :: info
-    info%modification = ''
+    call clear_file_info(info)
 
     if (present(vname)) then
         info%vname = vname

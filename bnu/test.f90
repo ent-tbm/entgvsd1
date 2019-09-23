@@ -12,6 +12,12 @@ use ent_labels_mod
 
 implicit none
 
+character*(8) :: s
+
+    s = '12345678'
+    s = ''
+    print *,'"',trim(s),'"'
+    print *,s==''
     print *,'Test program succeeded!'
 
 end program test_ent

@@ -131,9 +131,6 @@ program Carrer_soilalbedo_to_GISS
     call rw%init("A08_trim", 30,30)
 
     call init_ent_labels
-    call ent2%allocate(2,NENT20)
-    call ent2%sub_covertype(ent20, SNOW_ICE)
-    call ent2%sub_covertype(ent20, CV_WATER)
 
     !* Select spectral band irradiance fractions
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
@@ -148,6 +145,7 @@ program Carrer_soilalbedo_to_GISS
     ! ------------- Open Input Files
 
     ! --------- LC
+    ent2 = make_ent2()
     call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
         LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
