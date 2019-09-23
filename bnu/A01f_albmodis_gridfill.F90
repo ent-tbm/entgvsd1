@@ -43,17 +43,14 @@ subroutine do_gridfill(iband)
     integer :: numiter ! OUT
 
     print *,'=========== BEGIN do_gridfill',iband
-    call ent2%allocate(2,NENT20)
-    call ent2%sub_covertype(ent20, SNOW_ICE)
-    call ent2%sub_covertype(ent20, CV_WATER)
-
     call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/))
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     ! ------------- Open Input Files
 
     ! --------- LC
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    ent2 = make_ent2()
+    call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
         LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))

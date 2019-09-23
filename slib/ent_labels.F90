@@ -394,6 +394,16 @@ subroutine init_ent_labels
 
 end subroutine init_ent_labels
 
+function make_ent2() result(ent2)
+    type(EntSet_t) :: ent2
+    ! ----------- Locals
+
+    call ent2%allocate(2,NENT20)
+    call ent2%sub_covertype(ent20, SNOW_ICE)
+    call ent2%sub_covertype(ent20, CV_WATER)
+
+end function make_ent2
+
 end module ent_labels_mod
 
 ! ==========================================================================

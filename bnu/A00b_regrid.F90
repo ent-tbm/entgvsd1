@@ -27,10 +27,6 @@ implicit none
     call rw%init('A00b_regrid', 3,3)
 
     call init_ent_labels
-    call ent2%allocate(2,NENT20)
-    call ent2%sub_covertype(ent20, SNOW_ICE)
-    call ent2%sub_covertype(ent20, CV_WATER)
-
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10)
     call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'forplot', 10, 10, 10)
 
@@ -50,6 +46,7 @@ implicit none
 
 
     ! --------------- Open output file
+    ent2 = make_ent2()
     call chunkerlr%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunkerlr%nc_create(ioall_lcout, &
         weighting(chunkerlr%wta1,1d0,0d0), &
