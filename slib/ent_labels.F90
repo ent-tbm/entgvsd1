@@ -185,7 +185,7 @@ character*3, parameter :: ALLMONTH(nallmonth) = &
      "Jul","Aug","Sep","Oct","Nov","Dec" &
      /)
 
-#if 0
+#if 1
 integer, parameter :: nmonth = 12
 character*3, parameter :: MONTH(nmonth) = &
      (/ &
