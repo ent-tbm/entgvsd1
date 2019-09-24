@@ -72,8 +72,8 @@ def convert_annual(ivname, ifname, ofname):
             units = iv.units
             _FillValue = iv._FillValue
 
-            layers = decode_strs(ncin, 'layers')
-            long_names = decode_strs(ncin, 'long_layer_names')
+            layers = decode_strs(ncin, 'lctype')
+            long_names = decode_strs(ncin, 'lctype_longname')
 
             for i,(layer,long_name) in enumerate(zip(layers,long_names)):
                 ncv = ncout.createVariable(layer, 'f', ('lat', 'lon'), fill_value=_FillValue)
@@ -97,8 +97,8 @@ def convert_annual(ivname, ifname, ofname, prefix=''):
             units = iv.units
             _FillValue = iv._FillValue
 
-            layers = decode_strs(ncin, 'layers')
-            long_names = decode_strs(ncin, 'long_layer_names')
+            layers = decode_strs(ncin, 'lctype')
+            long_names = decode_strs(ncin, 'lctype_longname')
 
             for i,(layer,long_name) in enumerate(zip(layers,long_names)):
                 ncv = ncout.createVariable(prefix+layer, 'f', ('lat', 'lon'), fill_value=_FillValue)
@@ -111,6 +111,12 @@ def convert_annual(ivname, ifname, ofname, prefix=''):
 
 # ----------------------------------------------
 def convert_monthly(ivname, mname, files, ifiles, ofiles):
+    """
+    ifiles: OUT
+        Append files we opened for input to this list
+    ofoiles: OUT
+        Append files we opened for output to this list"""
+
     print('------------------- {}'.format(mname))
     with netCDF4.Dataset(mname + '.nc3', 'w', format="NETCDF3_CLASSIC") as ncout:
         ofiles.append(mname + '.nc3')
@@ -131,8 +137,8 @@ def convert_monthly(ivname, mname, files, ifiles, ofiles):
             units = iv.units
             _FillValue = iv._FillValue
 
-            layers = decode_strs(ncin, 'layers')
-            long_names = decode_strs(ncin, 'long_layer_names')
+            layers = decode_strs(ncin, 'lctype')
+            long_names = decode_strs(ncin, 'lctype_longname')
 
             for i,(layer,long_name) in enumerate(zip(layers,long_names)):
                 ncv = ncout.createVariable(layer, 'f', ('time', 'lat', 'lon'), fill_value=_FillValue)
@@ -162,8 +168,8 @@ convert_fn = {
 def main():
     annual_files, month_group = snoop_A10_dir('lc_lai_ent/modele1')
 
-    ifiles = dict()
-    ofiles = dict()
+    ifiles = list()
+    ofiles = list()
     for file in annual_files:
         if file.ftype in convert_fn:
             ifname = file.name+'.nc'
@@ -171,16 +177,18 @@ def main():
             convert_fn[file.ftype](ifname, ofname)
 
     for mname,files in month_group:
-        convert_monthly('lai', mname,files)
+        convert_monthly('lai', mname,files, ifiles,ofiles)
 
     exe = 'A11_to_modele_format'
     with open(os.path.join('lc_lai_ent', exe+'.mk'), 'w') as out:
         out.write('{}_INPUTS = \\\n'.format(exe))
-        for fname in ifname:
-            out.write('    {} \\'.format(fname))
+        for fname in ifiles:
+            out.write('    {} \\\n'.format(fname))
+        out.write('\n')
 
         out.write('{}_OUTPUTS = \\\n'.format(exe))
-        for fname in ofname:
-            out.write('    {} \\'.format(fname))
+        for fname in ofiles:
+            out.write('    {} \\\n'.format(fname))
+        out.write('\n')
 
 main()
