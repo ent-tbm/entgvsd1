@@ -11,6 +11,7 @@ library(rworldmap)
 library(SDMTools) 
 library(plotrix)
 library("RNetCDF")
+#library("animation") #For using im.convert. Not working due OS 10.14 bug with gs.
 
 Kelvin=273.15
 
@@ -486,32 +487,11 @@ plot.grid.categorical = function(mapz, res="1x1", colors=terrain.colors(40), xla
     #NOTE:  image function stretches z values over entire colors range.  Therefore, pass in colors array that
     #       matches range of your mapz values.
     #Grid centers (x,y)
-    if (res=="HxH" | res=="HXH") {
-        #0.5x0.5 degrees
-        i = -360:359 + 0.5
-        i = i*0.5
-        j = -180:179 + 0.5
-        j = j*0.5
-    } else if   (res=="1x1") {
-        i = (-180:179) + 0.5
-        j = (-90:89) + 0.5
-    } else if (res=="2x2.5") {
-        i = (-72:71)*2.5 + 1.25
-        #i= i*2.5
-        j = (-45:44)*2 + 1
-        #j = j*2
-    } else if (res=="4x5") {
-        di = 5
-        i = ((-180/di):((180-di)/di))*di + di/2
-        dj = 4
-        j = ((-90/dj):((90)/dj))*dj
-        j[1] = -89 #cannot have point at pole
-        j[length(j)] = 89
-    } else {
-        print("Oops, check res")
-        return
-    }
-    image(x=i,y=j,t(mapz), xlab=xlab, ylab=ylab, col=colors, add=ADD)
+    gridij = grid.lon.lat(res)
+    i = gridij[[1]]
+    j = gridij[[2]]
+    
+    image(x=i,y=j,mapz, xlab=xlab, ylab=ylab, col=colors, add=ADD)
 }
 
 #-----------------
@@ -600,16 +580,24 @@ modis.band.visnir = c(300, 700, 5000)
 #----------------
 
 # Function to plot color bar
-color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title='') {
+color.bar <- function(lut, min, max=-min, nticks=11,  x=0, y0=0, title='', if.add=TRUE) {
     scale = (length(lut)-1)/(max-min)
-
-    dev.new(width=1.75, height=5)
-    plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+	ticks=seq(min, max, len=nticks)
+    if (if.add) {
+	    dev.new(width=1.75, height=5)
+	    plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+	}
     axis(2, ticks, las=1)
-    for (i in 1:(length(lut)-1)) {
-     y = (i-1)/scale + min
-     rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+    if (is.null(x)) {
+    	x = 0
     }
+    if (is.null(y0)) {
+    	y0=0
+    }
+    for (i in 1:(length(lut)-1)) {
+    	 y = (i-1)/scale + min
+    	 rect(x,y,x+10,y+1/scale, col=lut[i], border=NA)
+  	}
 }
 
 #----------------
@@ -644,11 +632,11 @@ lines.gissbands = function(agiss, col="black", lty=1, lwd=1) {
 }
 
 #---------------- Ent specific functions ----------------------------------------------------
-entgvsd_pagetitles = function(paths, fname) {
-    mtext(outer=TRUE, paths, line=1.5)
-    mtext(outer=TRUE, fname, line=0)
+entgvsd_pagetitles = function(paths, fname, dy=0, cex=1) {
+    mtext(outer=TRUE, paths, line=1.5+dy, cex=cex)
+    mtext(outer=TRUE, fname, line=0+dy, cex=cex)
     #mtext(outer=TRUE, date(), line=-1,cex=0.5, adj=1)
-    mtext(outer=TRUE, date(), line=3,cex=0.5, adj=1)
+    mtext(outer=TRUE, date(), line=3+dy,cex=0.5, adj=1)
 }
 
 Ent_Type13 = c("evergreen broadleaf trees", "evergreen needleleaf trees", "cold deciduous broadleaf trees", "drought deciduous broadleaf", "deciduous needleleaf", "cold-adapted shrub", "arid-adapted shrub", "C3 grass perennial", "C4 grass", "C3 grass annual", "arctic C3 grass", "C4 herb crops", "tree crops")
@@ -710,7 +698,7 @@ EntGCMdiags27 = c(paste("ra", "00",1:9, sep=""), paste("ra" ,"0",10:27, sep=""))
 temp = t(matrix(rep(EntGCMdiags27, 16), 27,16))
 EntGCMdiags27pft = paste(temp, EntPFTchar3, sep="")
 
-Entcolors17 = as.data.frame(t(array(dim=c(5, length(EntGVSD_COVER20)),
+Entcolors17 = as.data.frame(t(array(dim=c(5, 1+length(EntGVSD_COVER20)),
 c(
 0.5, 0.5, 0.5, "grey", "water        ",
 0.0, 0.3, 0.0, "dark green", "ever_br_early",
@@ -731,28 +719,30 @@ c(
 0.8, 0.4, 0.0, "orange", "crops_c4_herb",
 0.8, 0.0, 0.0, "red", "crops_woody  ",
 0.9, 1.0, 1.0, "blue-white", "snow_ice     ",
-1.0, 0.95, 0.8, "pale tan", "bare_sparse  "
+1.0, 0.95, 0.8, "pale tan", "bare_sparse  ",
+0.5, 0.5, 0.5, "grey", "water        "
 #0.0, 0.3, 0.0, "dark green", "dummy R plotting ever_br_early",
 #0.0, 0.4, 0.4, "dark blue-green", "ever_nd_early",
 #0.0, 0.6, 0.0, "medium green", "cold_br_early"
 ))))
 
 names(Entcolors17) = c("r","g","b", "color", "lc_type")
-Entcolors17 = as.data.frame(cbind(num=1:nrow(Entcolors17), Entcolors17))
+Entcolors17 = as.data.frame(cbind(num=0:(nrow(Entcolors17)-1), Entcolors17))
 Entcolors17[,c("r")] = as.numeric(as.character(Entcolors17[,c("r")]))
 Entcolors17[,c("g")] = as.numeric(as.character(Entcolors17[,c("g")]))
 Entcolors17[,c("b")] = as.numeric(as.character(Entcolors17[,c("b")]))
 
-Ent17rgb = function() {
-    #Colors in hex for Ent 17 PFTs + 3 non-veg cover
-    rgbhex = NULL
-    for (i in 1:nrow(Entcolors17)) {
-        rgbhex = c(rgbhex, rgb(Entcolors17[i,"r"],Entcolors17[i,"g"], Entcolors17[i,"b"]))
-    }
-    return(rgbhex)
+
+Entrgbhex = function(Entcolors=Entcolors17) {
+	#Colors in hex for Ent 17 PFTs + 3 non-veg cover
+	rgbhex = NULL
+	for (i in 1:nrow(Entcolors)) {
+		rgbhex = c(rgbhex, rgb(Entcolors[i,"r"],Entcolors[i,"g"], Entcolors[i,"b"]))
+	}
+	return(rgbhex)
 }
 
-Ent17rgbhex = Ent17rgb()
+Ent17rgbhex = Entrgbhex()
 
 Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
     #Quick check of map colors
@@ -773,8 +763,17 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
     
 }
 
+EntcolorsbareGISS = as.data.frame(t(array(dim=c(6, 2),
+c(17, 1.0, 0.95, 0.8, "pale tan", "bare_sparse  ",
+  18, 0.5, 0.45, 0.4, "dark brown", "bare_dark    " ))))
+names(EntcolorsbareGISS) = names(Entcolors17)
+
+
+Entcolors16 = rbind(Entcolors17[match(1:16, Entcolors17[,"num"]),], EntcolorsbareGISS)
+
+
 #-------------------------------------------------------------------------------------------------
-map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
+map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
     # Plot maps of lc, laimax, lai, or hgt
     # entlclaidir:  Directory containing subdirectories of trim options Ent GVSD files
     # res:          Grid resolution of data file.  "ent17" and "pure" V1km are plotted at qzq.  Trimmed files are at HXH.
@@ -795,32 +794,44 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
       zlim = c(0,1)
       restime = "_ann"
       colors = giss.palette.nowhite(40)
-   } else if (varname == "laimax" | varname=="lai") {
+   } else if (varname == "laimax" ) {
+      zlim = c(0,7)
+      restime = "_ann"
+      colors=drywet(40)
+   } else if (varname=="lai" | varname=="lclai_checksum") {
       zlim = c(0,7)
       restime = ""
-      colors=drywet(40)
+      colors=drywet(40)   
+   } else if (varname=="laimax_err" ) {
+      zlim = c(-1,1)
+      restime = "_ann"
+      colors=giss.palette(40)
    } else if (varname == "hgt") {
       zlim = c(0,40)
-      restime = ""
+      restime = "_ann"
       colors=drywet(40)
    } else {
-    print("Whoops, only does lc or laimax")
+    print(paste(varname, "Whoops, only does lc or laimax"))
     return()
    }
         
   for (opt in trimopt) {
     #if (if.trim) { #TRUE only for Ent 16 PFTs
     if (opt=="ent17") {  #Ent 17 PFTs
-        fname = paste(filepre, "_",varname,"_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+#        fname = paste(filepre, "_",varname,"_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+        fname = paste(filepre, "_",version,"_", icov, "_", idat, "_", varname,"_",datatime,restime, "_", opt, filesuf,".nc", sep="")
     } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
         #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
-        fname = paste(filepre, "_",varname,"_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
+	#        fname = paste(filepre, "_",varname,"_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
+        fname = paste(filepre, "_",version,"_", icov, "_", idat, "_", varname,"_",datatime,restime, "_", opt, filesuf,".nc", sep="")	
     }
     
-    fnamelc = paste(filepre, "_","lc","_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+    #fnamelc = paste(filepre, "_","lc","_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+    fnamelc = paste(filepre, "_",version,"_", icov, "_", idat, "_", "lc","_",datatime,restime, "_", opt, filesuf,".nc", sep="")
     
     if (do.pdf) { 
-        pdf(file=paste(pathplot, fname, ".pdf", sep=""), width=11, height=7) 
+    	filepdf = paste(pathplot, fname, ".pdf", sep="")
+        pdf(file=filepdf, width=11, height=7) 
     } else if (add.new) {
             quartz(width=11,height=7) #Open plotting window
     } else {
@@ -836,10 +847,9 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
         par(mfrow=c(4,5), omi=c(0,0.0,1.0,0.5), mar=c(1,1,2,2)+0.1)
     }
     titletop = paste(entlclaidir, sep="")
-    map.EntGVSD.v1.1(file=filevar, res=res, zlim=zlim, varname=varname, layersnum=enttyp, colors=colors)
+    map.EntGVSD.v1.1(file=filevar, res=res, zlim=zlim, varname=varname, lcnum=enttyp, colors=colors)
     
     entgvsd_pagetitles(titletop, fname)
-
 
     # Checksum
     if (do.checksum) {
@@ -854,58 +864,171 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
         varnamecheck = paste(checksum, "_checksum", sep="")
         print(paste("netcdf varnamecheck: ", varnamecheck))         
         if (opt=="ent17") {  #Ent 17 PFTs
-            fname = paste(filepre, "_", varnamecheck, "_", datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
+            fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime, "_",opt, filesuf,".nc", sep="")
         
         } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
             #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
-            fname = paste(filepre, "_",varnamecheck, "_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
+            fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime,"_", opt, filesuf, ".nc", sep="")
         }
         
         filevar = paste(entlclaidir, opt, "/", fname, sep="")   
         print(filevar)
         map.GCM(file=filevar, varname=varnamecheck, res=res,colors=colors,  zlim=zlim, if.zeroNA=TRUE, titletype=1) 
-    
-#   } #for checksum
-    
-   } 
+
+   } #if do.checksum
+ 
    if (do.pdf) {
         dev.off()
+        #im.convert(filepdf, output=paste(filepdf, ".png", sep=""), extra.opts="-density 150") #Bug in Mac gs, otherwise should work
     }   
-  }
+  } #for opt
+}
+
+
+map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck, trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="") { 
+    # Plot maps of npftgrid, lc_dompft, lc_dompftlc, and add any other misc here
+
+	if (trimopt=="ent17") {
+		npft=17
+	} else {
+		npft=16
+	}
+
+	if (varnamecheck ==  "lc_dompft") {
+		zlim = c(min(enttyp), max(enttyp))
+		if (trimopt=="ent17") {
+			color = Entrgbhex(Entcolors17[1:20,])
+			leg=Entcolors17[1:20, "lc_type"]
+		} else {
+			color = Entrgbhex(Entcolors16)
+			leg=Entcolors16[,"lc_type"]
+		}
+		restime = "_ann"
+		if.cat=TRUE
+		
+    } else if (varnamecheck == "lc_npftgrid" ) {
+	   	zlim = c(0,17)
+	   	color = giss.palette.nowhite(18)
+	   	color[1] = rgb(0.5, 0.5, 0.5)
+	   	leg=zlim[1]:zlim[2]
+	   	restime="_ann"
+		if.cat=TRUE	
+	} else if (varnamecheck == "lc_dompftlc" ) {
+		zlim = c(0,1)
+		color = giss.palette.nowhite(11)
+		color[1] = rgb(0.5, 0.5, 0.5)
+		leg=(0:10)/10
+		restime = "_ann"
+		if.cat=FALSE
+	} else if (varnamecheck == "laimax_err" | varnamecheck == "lclaimax_err") {
+		zlim = c(-1,1)
+		color = giss.palette(40)
+		leg = NULL
+		restime = "_ann"
+		if.cat=FALSE
+	} else if (varnamecheck == "lclai_checksum" ) {
+		zlim = c(0,7)
+		color = drywet(40)
+		leg = NULL
+		restime = ""
+		if.cat=FALSE
+    } else if (varnamecheck == "lchgt_checksum" ) {
+		zlim = c(0,40)
+		color = drywet(40)
+		leg = NULL
+		restime = "_ann"
+		if.cat = FALSE
+    } else if (varnamecheck == "hgt_err" | varnamecheck == "lchgt_err" ) {
+		zlim = c(-5,5)
+		color = giss.palette(40)
+		leg = NULL
+		restime = "_ann"
+		if.cat = FALSE
+#    } else if (varnamecheck ==  ) {
+#		zlim = c(
+#		color = 
+#		restime =	} else {
+		print(paste(varnamecheck, "Whoops, not set up for that variable, yet."))
+		return()	
+	}
+	
+    fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime,"_", trimopt, filesuf, ".nc", sep="")
+    file = paste(entlclaidir, trimopt, "/", fname, sep="")
+	print(file)
+	
+	#ncid <- open.nc(con=file, write=FALSE)
+	#x = var.get.nc(ncid, varnamecheck)
+	#plot.grid.categorical(x, res, colors=color)
+	
+	if (do.pdf) {
+		pdf(file=paste(pathplot, fname, ".pdf", sep=""), width=8, height=5) 
+	} else if(!add.new) {
+		quartz(width=8, height=5)
+	}
+
+   map.GCM (file, varname=varnamecheck, res=res,colors=color,  zlim=zlim, if.cat=if.cat, if.zeroNA=FALSE, titletype=1) 
+   
+   if (if.cat) { #Do legend for categorical variable
+   par(xpd=NA)  #Let legend be outside the plot area
+	#legend(200, 90, legend=zlim[1]:zlim[2], col=color, pch=15, cex=0.9)	
+	legend(180, 90, legend=leg, col=color, pch=15, cex=.7, bty="n")
+	
+	#Alternative color bar or legend
+	#par(xpd=NA)
+	#legend.gradient(cbind(x = c(200,210,210,200), y = c(80,80,-80,-80)), 
+    #             cols = rgbhex, title = "", limits = zlim)
+	}
+	
+    #Ent_dompft_plot(lctype, numpft=numpft, res="qxq", legend.cex=0.6, Entcolors=Entcolors, if.new=FALSE) 
+  	
+  	cex=0.8
+  	mtext(outer=TRUE, entlclaidir, line=-1, cex=cex)
+  	mtext(outer=TRUE, fname, line=-2, cex=cex)
+  	mtext(outer=TRUE, date(), line=-1, cex=0.5, adj=1)
+#    entgvsd_pagetitles(paths=entlclaidir, fname, dy=-2.5, cex=0.9)
+
+  	if (do.pdf) {
+	  	dev.off()
+        #im.convert(file, output=paste(file, ".png", sep=""), extra.opts="-density 150") #Bug in Mac OS10.14 gs, otherwise should work
+	}
 }
 
 
 
-Ent_lctype_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, if.new=FALSE) {
-    #Plot maps of Ent GVSD dominant cover types with nice color scheme.
-    #Only works currently for Ent 17 PFTs need to update.
-    #--->>> USE PANOPLY CPT COLOR TABLE INSTEAD.
-    
-    #Screwy R skipping over drought-broad if water is last.  Annoying
-    lctype[lctype==20] = 0 #Put water first at zero to plot in R.  
-    
-    if (if.new) {
-        quartz(width=9.6, height=6)
-    }
-    #quartz(width=10.6, height=6)
-    #par(omi=c(0,0,0,1)) #(bottom, left, top, right)
-    par(omi=c(0,0,0,0), oma=c(0,0,0,4)) #(bottom, left, top, right)     #Use for single
 
-    plot.grid.categorical(t(lctype), res=res,colors=Ent17rgbhex)
-    par(xpd=NA)
-    legend.gradient(cbind(x = c(200,210,210,200), y = c(80,80,-80,-80)), 
-                 cols = Ent17rgbhex, title = "", limits = c(1,40))
-    par(xpd=TRUE)
-    pt.cex=1.5
-    legend(-180, 124, legend=Entcolors17[1:7,"lc_type"],col=Ent17rgbhex[1:7], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-    legend(-180, 113, legend=Entcolors17[8:14,"lc_type"],col=Ent17rgbhex[8:14], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-    legend(-180, 102, legend=Entcolors17[15:20,"lc_type"],col=Ent17rgbhex[15:20], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-    #Ent17legend()
-    
-    #legend(195, 80, legend=Entcolors17[1:20,"lc_type"], col=Ent17rgbhex, bty="n", cex=0.7)
-    
-    plot(coastsCoarse, add=TRUE)
+Ent_dompft_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, Entcolors=Entcolors17[1:20], if.new=FALSE) {
+	#Plot maps of Ent GVSD dominant cover types with nice color scheme.
+	#Works for any number of Ent PFTs.  MUST carefully specify the Entcolors table according to order of cover types in lctype.!!!
+	
+	rgbhex = Entrgbhex(Entcolors)
+	ncov = dim(Entcolors)[1]
+	
+	#Screwy R skipping over drought-broad if water is last.  Annoying
+	#lctype[lctype==20] = 0 #Put water first at zero to plot in R.  
+	
+	if (if.new) {
+		quartz(width=9.6, height=6)
+	}
+	#quartz(width=10.6, height=6)
+	#par(omi=c(0,0,0,1)) #(bottom, left, top, right)
+	par(omi=c(0,0,0,0), oma=c(0,0,0,4)) #(bottom, left, top, right) 	#Use for single
+
+	plot.grid.categorical(lctype, res=res,color=rgbhex)
+	par(xpd=NA)
+	legend.gradient(cbind(x = c(200,210,210,200), y = c(80,80,-80,-80)), 
+                 cols = rgbhex, title = "", limits = c(1,40))
+	par(xpd=TRUE)
+	pt.cex=1.5
+	legend(-180, 124, legend=Entcolors[1:7,"lc_type"],col=rgbhex[1:7], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+	legend(-180, 113, legend=Entcolors[8:14,"lc_type"],col=rgbhex[8:14], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+	legend(-180, 102, legend=Entcolors17[15:ncov,"lc_type"],col=rgbhex[15:ncov], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+	
+	#legend(195, 80, legend=Entcolors17[1:20,"lc_type"], col=Ent17rgbhex, bty="n", cex=0.7)
+	
+	plot(coastsCoarse, add=TRUE)
 }
+
+
 
 
 make.GCM.Ent.diag.name = function(varname="vf", p="ever_br_late") {
@@ -973,7 +1096,7 @@ map.EntGVSD <- function(filelc=NULL, file, res="2x2.5", varpre="", varlist=EntGV
 }
 
 #------------
-map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname="lc", layersnum=c(2,4,6,7:15), colors=giss.palette.nowhite(40), type="any", zlim=c(0,1), if.zeroNA=TRUE, titletype=1) {
+map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname="lc", lcnum=c(2,4,6,7:15), colors=giss.palette.nowhite(40), type="any", zlim=c(0,1), if.zeroNA=TRUE, titletype=1) {
     #This version reads files formatted as 3D arrays of var[IM,JM,layers]
     #file = netcdf file path and name
     #type = 
@@ -989,8 +1112,12 @@ map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname=
     ncid <- open.nc(con=file, write=FALSE)
     if (type=="any") {
         x = var.get.nc(ncid, varname)
-        layersnc = var.get.nc(ncid, "layers")
-        for (p in layersnum) {
+        if (grepl("err", varname)) {
+        	print("err variable")
+        	x[is.na(x)] = 0
+        }
+        lcnames = var.get.nc(ncid, "lctype")
+        for (p in lcnum) {
             print(paste(p))
             if (if.zeroNA) {x[x==0]=NA}
             plot.grid.continuous(mapz=x[,,p], res=res,colors=colors,        
@@ -1000,10 +1127,10 @@ map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname=
             if (titletype==1) {
                 long_name = att.get.nc(ncid, varname, attribute="long_name")
                 mtext(paste(long_name), cex=0.6, line=1)
-                mtext(paste(trim(layersnc[p]), "(", round(na.min(x[,,p]),2), round(na.mean(x[,,p]),2), round(na.max(x[,,p]),2), ")"), cex=0.6)
+                mtext(paste(trim(lcnames[p]), "(", round(na.min(x[,,p]),2), round(na.mean(x[,,p]),2), round(na.max(x[,,p]),2), ")"), cex=0.6)
             } else {
                 units = att.get.nc(ncid, varname, attribute="units")
-                title(paste(layersnc[p], " (",units,")", sep=""))
+                title(paste(lcname[p], " (",units,")", sep=""))
             }
         }
     } 
@@ -1049,7 +1176,7 @@ map.EntGVSD.3Darray <- function(file, res="2x2.5", varnc="lc", varlist=1:20, col
 
 
 #----------------
-map.GCM <- function(file, varname="tsurf", res="2x2.5",colors=giss.palette(40),  zlim=NULL, if.zeroNA=TRUE, titletype=1) {
+map.GCM <- function(file, varname="tsurf", res="2x2.5",colors=giss.palette(40),  zlim=NULL, if.cat=FALSE, if.zeroNA=TRUE, titletype=1) {
     #Map a single GCM diagnostic with varname
     #file = netcdf file path and name
     #varname = netcdf variable name
@@ -1058,9 +1185,14 @@ map.GCM <- function(file, varname="tsurf", res="2x2.5",colors=giss.palette(40), 
     ncid <- open.nc(con=file, write=FALSE)
     x = var.get.nc(ncid, varname)
     if (if.zeroNA) {x[x==0]=NA}
-    plot.grid.continuous(mapz=x, res=res,colors=colors,         
-        xlab="", ylab="", 
-        zlim=zlim)
+    if (!if.cat) { 
+	    plot.grid.continuous(mapz=x, res=res,colors=colors,         
+    	    xlab="", ylab="", 
+        	zlim=zlim)
+    } else {
+    	par(mar=c(5,4,4,5)+0.1)
+    	plot.grid.categorical(mapz=x, res=res, colors=colors	, xlab="", ylab="")
+    }
     plot(coastsCoarse, add=TRUE)
     if (titletype==1) {
         long_name = att.get.nc(ncid, varname, attribute="long_name")
