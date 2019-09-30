@@ -1373,7 +1373,7 @@ program regrid
 implicit none
     type(GcmEntSet_t), target :: esub
     type(ReadWrites_t) :: rw
-    call rw%init("A08_trim", 50,50)
+    call rw%init("A08_trim", 1000,1000)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)

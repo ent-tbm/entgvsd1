@@ -75,7 +75,7 @@ subroutine regrid_controls(rw)
         call regrid_control(rw, LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax', 'laimax')
     end if
 
-
+#if 1
     call regrid_control(rw, &
         DATA_INPUT, 'height/', 'simard_forest_heights', 'heights')
 
@@ -84,6 +84,8 @@ subroutine regrid_controls(rw)
         call regrid_control(rw, &
             DATA_INPUT, 'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth), 'lai')
     end do
+#endif
+
 end subroutine regrid_controls
 
 
@@ -96,7 +98,7 @@ program A07a_regrid_controls
 
 implicit none
     type(ReadWrites_t) :: rw
-    call rw%init("A07a_regrid_controls", 10,10)
+    call rw%init("A07a_regrid_controls", 100,100)
     call regrid_controls(rw)
     call rw%write_mk
 

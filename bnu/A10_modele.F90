@@ -55,8 +55,8 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
 
 
-    call chunker0%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 200, 1, 5, (/1,1/))
-    call chunker1%init(im1,jm1,  im1,jm1, 'forplot', 1, 200, 5, (/1,1/))
+    call chunker0%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 300,   1, 17, (/1,1/))
+    call chunker1%init(im1,jm1,  im1,jm1, 'forplot',       1, 300, 17, (/1,1/))
 
     spec0 = hntr_spec(chunker0%chunk_size(1), chunker0%ngrid(2), 0d0, 180d0*60d0 / chunker0%ngrid(2))
     spec1 = hntr_spec(chunker1%chunk_size(1), chunker1%ngrid(2), 0d0, 180d0*60d0 / chunker1%ngrid(2))

@@ -1209,7 +1209,7 @@ subroutine finish_cio_init(this, cio, alloc)
         ! Store pointer to this cio
         this%nreads = this%nreads + 1
         if (this%nreads > this%max_reads) then
-            write(ERROR_UNIT,*) 'Exceeded maximum number of read handles', cio%leaf
+            write(ERROR_UNIT,*) '(b) Exceeded maximum number of read handles', cio%leaf
             stop -1
         end if
         this%reads(this%nreads)%ptr => cio
