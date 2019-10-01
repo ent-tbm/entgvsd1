@@ -920,7 +920,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg=(0:10)/10
 		restime = "_ann"
 		if.cat=FALSE
-	} else if (varnamecheck == "laimax_err" | varnamecheck == "lclaimax_err") {
+	} else if (varnamecheck == "laimax_err" | varnamecheck == "lclaimax_err" | varnamecheck == "lclai_err") {
 		zlim = c(-1,1)
 		color = giss.palette(40)
 		leg = NULL
@@ -944,7 +944,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg = NULL
 		restime = "_ann"
 		if.cat = FALSE
-#    } else if (varnamecheck ==  ) {
+    } else { #if (varnamecheck ==  ) {
 #		zlim = c(
 #		color = 
 #		restime =	} else {
