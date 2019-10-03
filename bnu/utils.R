@@ -482,7 +482,7 @@ grid.lon.lat = function(res) {
 }
 
 #-------------------
-plot.grid.categorical = function(mapz, res="1x1", colors=terrain.colors(40), xlab="longitude", ylab="latitude", ADD=FALSE) {
+plot.grid.categorical = function(mapz, res="1x1", zlim=NULL, colors=terrain.colors(40), xlab="longitude", ylab="latitude", ADD=FALSE) {
     #Plot map of categorical values.  
     #NOTE:  image function stretches z values over entire colors range.  Therefore, pass in colors array that
     #       matches range of your mapz values.
@@ -698,9 +698,9 @@ EntGCMdiags27 = c(paste("ra", "00",1:9, sep=""), paste("ra" ,"0",10:27, sep=""))
 temp = t(matrix(rep(EntGCMdiags27, 16), 27,16))
 EntGCMdiags27pft = paste(temp, EntPFTchar3, sep="")
 
-Entcolors17 = as.data.frame(t(array(dim=c(5, 1+length(EntGVSD_COVER20)),
+Entcolors17 = as.data.frame(t(array(dim=c(5, 1+1+length(EntGVSD_COVER20)),
 c(
-0.5, 0.5, 0.5, "grey", "water        ",
+0.7, 0.7, 0.7, "grey",       "water        ",
 0.0, 0.3, 0.0, "dark green", "ever_br_early",
 0.0, 0.3, 0.0, "dark green", "ever_br_late ",
 0.0, 0.4, 0.4, "dark blue-green", "ever_nd_early",
@@ -720,7 +720,8 @@ c(
 0.8, 0.0, 0.0, "red", "crops_woody  ",
 0.9, 1.0, 1.0, "blue-white", "snow_ice     ",
 1.0, 0.95, 0.8, "pale tan", "bare_sparse  ",
-0.5, 0.5, 0.5, "grey", "water        "
+0.5, 0.5, 0.5, "grey",      "water        ",
+1.0, 1.0, 1.0, "white",     "undef        "
 #0.0, 0.3, 0.0, "dark green", "dummy R plotting ever_br_early",
 #0.0, 0.4, 0.4, "dark blue-green", "ever_nd_early",
 #0.0, 0.6, 0.0, "medium green", "cold_br_early"
@@ -764,13 +765,17 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
 }
 
 EntcolorsbareGISS = as.data.frame(t(array(dim=c(6, 2),
-c(17, 1.0, 0.95, 0.8, "pale tan", "bare_sparse  ",
+c(17, 1.0, 0.95, 0.8, "pale tan",   "bare_sparse  ",
   18, 0.5, 0.45, 0.4, "dark brown", "bare_dark    " ))))
 names(EntcolorsbareGISS) = names(Entcolors17)
+Entcolorsundef = 
+as.data.frame(t(array(dim=c(6, 1),
+c(0, .9, .9, .9, "white",        "undef        "))))
+names(Entcolorsundef) = names(Entcolors17)
 
-
-Entcolors16 = rbind(Entcolors17[match(1:16, Entcolors17[,"num"]),], EntcolorsbareGISS)
-
+  
+Entcolors16 = rbind( Entcolors17[match(c(21, 1:15,17), Entcolors17[,"num"]),], EntcolorsbareGISS)
+Entcolors16[pmatch("undef", Entcolors16[,"lc_type"]), "num"] = 0
 
 #-------------------------------------------------------------------------------------------------
 map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
@@ -920,26 +925,50 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg=(0:10)/10
 		restime = "_ann"
 		if.cat=FALSE
-	} else if (varnamecheck == "laimax_err" | varnamecheck == "lclaimax_err" | varnamecheck == "lclai_err") {
+	} else if (varnamecheck == "laimax_err" | varnamecheck == "lclaimax_err"  ) {
 		zlim = c(-1,1)
 		color = giss.palette(40)
 		leg = NULL
 		restime = "_ann"
 		if.cat=FALSE
+	} else if (	varnamecheck == "lclai_err" |varnamecheck == "lclai_checksum_diff") {
+		zlim = c(-1,1)
+		color = giss.palette(40)
+		leg = NULL
+		restime = ""
+		if.cat=FALSE
 	} else if (varnamecheck == "lclai_checksum" ) {
-		zlim = c(0,7)
+		if (length(grep('diff', filesuf))>0) {
+			zlim = c(-1,1)
+		} else {
+			zlim = c(0,7)
+		}
 		color = drywet(40)
 		leg = NULL
 		restime = ""
 		if.cat=FALSE
+	} else if (	varnamecheck == "lclaimax_checksum") {
+		if (length(grep('diff', filesuf))>0) {
+			zlim = c(-1,1)
+		} else {
+			zlim = c(0,7)
+		}
+		color = drywet(40)
+		leg = NULL
+		restime = "_ann"
+		if.cat=FALSE		
     } else if (varnamecheck == "lchgt_checksum" ) {
-		zlim = c(0,40)
+    	if (length(grep('diff', filesuf))>0) {
+    		zlim=c(-15,15)
+    	} else {
+			zlim = c(0,40)
+		}
 		color = drywet(40)
 		leg = NULL
 		restime = "_ann"
 		if.cat = FALSE
-    } else if (varnamecheck == "hgt_err" | varnamecheck == "lchgt_err" ) {
-		zlim = c(-5,5)
+    } else if (varnamecheck == "hgt_err" | varnamecheck == "lchgt_err" | varnamecheck=="lchgt_checksum_diff") {
+		zlim = c(-15,15)
 		color = giss.palette(40)
 		leg = NULL
 		restime = "_ann"
@@ -953,6 +982,15 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 	}
 	
     fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime,"_", trimopt, filesuf, ".nc", sep="")
+	if (length(grep('diff', filesuf))>0) {
+		if (varnamecheck=="lclaimax_checksum" ) {  #HACK because varname got cut off in file
+	    		 varnamecheck = paste(varnamecheck, '_di', sep="")
+		} else {	 
+		   varnamecheck = paste(varnamecheck, '_diff', sep="")
+		}
+	}		
+
+	
     file = paste(entlclaidir, trimopt, "/", fname, sep="")
 	print(file)
 	
@@ -993,15 +1031,63 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 	}
 }
 
+Ent_calc_npftgrid = function(file, npft=17) {
+	ncid <- open.nc(con=file, write=FALSE)
+    lcin = var.get.nc(ncid, "lc")
 
+	npftgrid = array(0, dim=dim(lcin)[1:2])
+	
+	for (p in 1:npft) {
+		for (i in 1:dim(lcin)[1]) {
+			for (j in 1:dim(lcin)[2]) {
+				if (lcin[i,j,p]>=1 | lcin[i,j,p]<=npft) {
+					npftgrid[i,j] = npftgrid[i,j] + 1
+				}
+			}
+		}
+	}
+	
+	zlim = c(0,npft)
+   	color = giss.palette.nowhite(18)
+   	color[1] = rgb(0.5, 0.5, 0.5)
+   	leg=zlim[1]:zlim[2]
 
+   	par(mar=c(5,4,4,5)+0.1)
+   	plot.grid.categorical(mapz=x, res=res, colors=colors	, xlab="", ylab="")
+    plot(coastsCoarse, add=TRUE)
+    title(paste("number of PFTs per grid cell"))
+}
+	
+Ent_calc_domlc = function(file, enttyp=1:20) {
+	
+	print(file)
+	ncid <- open.nc(con=file, write=FALSE)
+    lcin = var.get.nc(ncid, "lc")
+    lc = lcin
+	lc[is.na(lc)] = 0
+	
+	domlc = array(NA, dim(lc)[1:2])
+	for (p in enttyp) {
+		maxlc = apply(lc, c(1,2), max)
+		for (i in 1:dim(lc)[1]) {
+			for (j in 1:dim(lc)[2]) {
+				if (lc[i,j,p]>0 & lc[i,j,p]==maxlc[i,j]) {
+					domlc[i,j] = p
+				}
+			}
+		}
+	}
+	domlc[is.na(domlc)] = 0
+	#domlc[lc==0] = NA
+	return(domlc)
+}
 
 Ent_dompft_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, Entcolors=Entcolors17[1:20], if.new=FALSE) {
 	#Plot maps of Ent GVSD dominant cover types with nice color scheme.
 	#Works for any number of Ent PFTs.  MUST carefully specify the Entcolors table according to order of cover types in lctype.!!!
 	
 	rgbhex = Entrgbhex(Entcolors)
-	ncov = dim(Entcolors)[1]
+	ncov = max(Entcolors[,"num"]) #dim(Entcolors)[1]
 	
 	#Screwy R skipping over drought-broad if water is last.  Annoying
 	#lctype[lctype==20] = 0 #Put water first at zero to plot in R.  
@@ -1015,16 +1101,16 @@ Ent_dompft_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, Entcolo
 
 	plot.grid.categorical(lctype, res=res,color=rgbhex)
 	par(xpd=NA)
-	legend.gradient(cbind(x = c(200,210,210,200), y = c(80,80,-80,-80)), 
-                 cols = rgbhex, title = "", limits = c(1,40))
-	par(xpd=TRUE)
-	pt.cex=1.5
-	legend(-180, 124, legend=Entcolors[1:7,"lc_type"],col=rgbhex[1:7], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-	legend(-180, 113, legend=Entcolors[8:14,"lc_type"],col=rgbhex[8:14], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-	legend(-180, 102, legend=Entcolors17[15:ncov,"lc_type"],col=rgbhex[15:ncov], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
-	
-	#legend(195, 80, legend=Entcolors17[1:20,"lc_type"], col=Ent17rgbhex, bty="n", cex=0.7)
-	
+	#legend.gradient(cbind(x = c(200,210,210,200), y = c(80,80,-80,-80)), 
+    #             cols = rgbhex, title = "", limits = c(0,ncov))
+    legend(180, 90, legend=Entcolors[,"lc_type"], col=rgbhex, pch=15, cex=.7, bty="n")
+
+	#par(xpd=TRUE)
+	#pt.cex=1.5
+	#legend(-180, 124, legend=Entcolors[1:7,"lc_type"],col=rgbhex[1:7], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+	#legend(-180, 113, legend=Entcolors[8:14,"lc_type"],col=rgbhex[8:14], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+	#legend(-180, 102, legend=Entcolors[15:ncov,"lc_type"],col=rgbhex[15:ncov], pt.cex=pt.cex, pch=15, cex=legend.cex, horiz=TRUE, bty="n")
+		
 	plot(coastsCoarse, add=TRUE)
 }
 
