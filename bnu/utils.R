@@ -899,7 +899,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		npft=16
 	}
 
-	if (varnamecheck ==  "lc_dompft") {
+	if (varnamecheck ==  "lc_dompft" | varnamecheck == "lc_domlc") {
 		zlim = c(min(enttyp), max(enttyp))
 		if (trimopt=="ent17") {
 			color = Entrgbhex(Entcolors17[1:20,])
@@ -1077,7 +1077,7 @@ Ent_calc_domlc = function(file, enttyp=1:20) {
 			}
 		}
 	}
-	domlc[is.na(domlc)] = 0
+	#domlc[is.na(domlc)] = 0
 	#domlc[lc==0] = NA
 	return(domlc)
 }
