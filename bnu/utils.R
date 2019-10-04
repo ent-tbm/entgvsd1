@@ -765,7 +765,7 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
 }
 
 EntcolorsbareGISS = as.data.frame(t(array(dim=c(6, 2),
-c(17, 1.0, 0.95, 0.8, "pale tan",   "bare_sparse  ",
+c(17, 1.0, 0.95, 0.8, "pale tan",   "bare_bright  ",
   18, 0.5, 0.45, 0.4, "dark brown", "bare_dark    " ))))
 names(EntcolorsbareGISS) = names(Entcolors17)
 Entcolorsundef = 
