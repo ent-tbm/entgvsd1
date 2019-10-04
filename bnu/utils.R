@@ -1017,7 +1017,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
     #             cols = rgbhex, title = "", limits = zlim)
 	}
 	
-    #Ent_dompft_plot(lctype, numpft=numpft, res="qxq", legend.cex=0.6, Entcolors=Entcolors, if.new=FALSE) 
+    #Ent_domlc_plot(lctype, numpft=numpft, res="qxq", legend.cex=0.6, Entcolors=Entcolors, if.new=FALSE) 
   	
   	cex=0.8
   	mtext(outer=TRUE, entlclaidir, line=-1, cex=cex)
@@ -1082,7 +1082,7 @@ Ent_calc_domlc = function(file, enttyp=1:20) {
 	return(domlc)
 }
 
-Ent_dompft_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, Entcolors=Entcolors17[1:20], if.new=FALSE) {
+Ent_domlc_plot = function(lctype, numpft=17, res="HXH", legend.cex=0.6, Entcolors=Entcolors17[1:20], if.new=FALSE) {
 	#Plot maps of Ent GVSD dominant cover types with nice color scheme.
 	#Works for any number of Ent PFTs.  MUST carefully specify the Entcolors table according to order of cover types in lctype.!!!
 	
