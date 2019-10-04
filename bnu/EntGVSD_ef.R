@@ -100,7 +100,8 @@ if (TRUE) {
 	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
 	Ent_domlc_plot(lctype=domlc, numpft=17, res=res, legend.cex=0.6, Entcolors=Entcolors17[match(na.min(domlc), Entcolors17[,"num"]):21,], if.new=FALSE)
-   	dev.off()
+	mtext(fnameout, cex=0.8)
+	dev.off()
 
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
@@ -170,7 +171,8 @@ if (TRUE) {
 	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
 	Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
-   	dev.off()
+	mtext(fnameout, cex=0.8)
+	dev.off()
    	
 	if (FALSE) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
@@ -234,7 +236,8 @@ if (TRUE) {
 	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
 	Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
-   	dev.off()
+	mtext(fnameout, cex=0.8)
+	dev.off()
    	
 	if (FALSE) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
@@ -296,7 +299,8 @@ if (TRUE) {
 		fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 		pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
 		Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
-   	dev.off()
+		mtext(fnameout, cex=0.8)
+	   	dev.off()
 
 		if (FALSE) {
    	 	map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
