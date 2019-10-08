@@ -114,25 +114,21 @@ subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo)
     logical :: need_lc
     type(ReadWrites_t) :: rw
 
-print *,'AA1'
     call rw%init("A07_regrid_b", 20,20)
     print *,'****************** BEGIN Regrid ',trim(idir),trim(ifname),' --> ',trim(oinfo%leaf)
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
     call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
 
-print *,'AA2'
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
     spec_lr = hntr_spec(chunkerlr%chunk_size(1), chunkerlr%ngrid(2), 0d0, 180d0*60d0 / chunkerlr%ngrid(2))
     hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)   ! datmis=0
 
-print *,'AA3'
 
     ! ------------- Input Files
     call chunker%nc_open(io_valin, trim(root), &
         trim(idir), trim(ifname)//'.nc', trim(ivname), 1)
-print *,'AA4'
 
     ! ----------- Output Files
     ! No weighting needed because create_lr==.false.
@@ -141,12 +137,10 @@ print *,'AA4'
             weighting(mask,1d0,0d0), &
             trim(oinfo%dir), trim(oinfo%leaf), oinfo, &
             create_lr=.false.)
-print *,'AA5'
 
     call chunker%nc_check(rw=rw)
     call chunkerlr%nc_check(rw=rw)
     call rw%write_mk
-print *,'AA6'
 
 
 
