@@ -249,6 +249,19 @@ if (TRUE) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 
+	#lc checksum
+	fname= paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	file = paste(entlclaidir, fname, sep="")
+	lcchecksum = Ent_calc_lc_checksum(file, enttyp=enttyp)
+
+	#bs_brightratio
+	fname = 'bs_brightratio.nc'
+	file = paste(entlclaidir, trimopt,"/",fname, sep="")
+	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","bs_brightratio", "_",datatime, trimopt, filesuf, ".pdf", sep="")
+	pdf(file=fileout, width=8, height=5)
+    map.GCM(file=file, res=res, varname="bs_brightratio")  
+    title(file)
+	dev.off()
 	
   	#Checksum diff maps
   	res = "HXH"

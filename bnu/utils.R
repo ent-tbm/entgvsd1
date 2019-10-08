@@ -973,6 +973,12 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg = NULL
 		restime = "_ann"
 		if.cat = FALSE
+	} else if (varnamecheck == "bs_brightratio") {
+		zlim=NULL
+		color = giss.palette(40)
+		leg = NULL
+		restime = ""
+		if.cat = FALSE
     } else { #if (varnamecheck ==  ) {
 #		zlim = c(
 #		color = 
@@ -1058,6 +1064,24 @@ Ent_calc_npftgrid = function(file, npft=17) {
     title(paste("number of PFTs per grid cell"))
 }
 	
+Ent_calc_lc_checksum = function(file, enttyp=1:20) {
+	
+	print(file)
+	ncid <- open.nc(con=file, write=FALSE)
+    lcin = var.get.nc(ncid, "lc")
+	
+	lcchecksum = apply(lcin, c(1,2), na.sum)
+
+	
+	fileout = paste(file,"_checksum.nc", sep="")
+	create.map.template.nc(res, varname="lc_checksum", longname="cover", units="fraction", undef=-1e30, description="lc checksum", fileout, contact="Nancy.Y.Kiang@nasa.gov")
+	close.nc(ncid)
+	ncid = open.nc(fileout, write=TRUE)
+	var.put.nc(ncid, 'lc_checksum', lcchecksum)
+	return(lcchecksum)
+}
+
+
 Ent_calc_domlc = function(file, enttyp=1:20) {
 	
 	print(file)
