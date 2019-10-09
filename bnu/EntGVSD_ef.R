@@ -12,7 +12,7 @@ version = "v1.1"
 
 #Set paths:
 #For Nancy on Mac:
-if (TRUE) {
+if (FALSE) {
     path = "/Users/nkiang/NancyResearch/GISS/Models/Ent/Vegcover/Elizabeth_PLOTS/"
     path = "/Users/nkiang/NancyResearch/GISS/Models/entgvsd1/entgvsd1_1/bnu/"
     #Choose date of output
