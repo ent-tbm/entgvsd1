@@ -11,6 +11,7 @@ module a08_mod
 implicit none
 
 type OutputSegment_t
+    character*(64) :: step
     type(Chunker_t) :: chunker
 
     type(ChunkIO_t), allocatable :: io_ann_lc(:,:)          ! (esub%ncover,1)
@@ -38,6 +39,7 @@ subroutine outputsegment_open(this, step, esub)
     integer :: m,k
     type(FileInfo_t) :: info
 
+    this%step = step
     call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 500, 30, (/1,1/))
 
     ! ------- Allocate file handles

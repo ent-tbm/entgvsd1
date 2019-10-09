@@ -16,7 +16,7 @@ type IOFname_t
     character*(100) :: idir,odir
     character*(100) :: ileaf,oleaf
     logical :: lc_weighting
-    type(FileInfo_t) :: info   ! For metadataxs ONLY
+    type(FileInfo_t) :: info   ! For metadata ONLY
     character*(60) :: title
 end type IOFname_t
 
@@ -91,6 +91,98 @@ result(fn)
     fn%info = iinfo   ! Copy all metadata
 
 end function make_fname2
+
+
+! Regrids a file, using its own FillValue as a mask
+subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo)
+    character*(*), intent(IN) :: root,idir,ifname,ivname
+    type(FileInfo_t), intent(IN) :: oinfo
+    ! ------------ Local Vars
+    type(Chunker_t), target :: chunker, chunkerlr
+    type(ChunkIO_t) :: io_valin, io_valout
+
+    type(HntrSpec_t) :: spec_hr, spec_lr
+    type(HntrCalc_t) :: hntr_lr    ! Preparation to regrid
+
+
+    integer :: jchunk, ichunk    ! Index of current chunk
+    integer :: jc, ic    ! Index WITHIN current chunk
+    integer :: jj, ii            ! Index in full space
+    real*4, dimension(:,:), allocatable :: mask
+    integer :: k
+    integer :: ndoy,idoy
+    logical :: need_lc
+    type(ReadWrites_t) :: rw
+
+    call rw%init("A07_regrid_b", 20,20)
+    print *,'****************** BEGIN Regrid ',trim(idir),trim(ifname),' --> ',trim(oinfo%leaf)
+
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
+
+    ! Hntr stuff
+    spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
+    spec_lr = hntr_spec(chunkerlr%chunk_size(1), chunkerlr%ngrid(2), 0d0, 180d0*60d0 / chunkerlr%ngrid(2))
+    hntr_lr = hntr_calc(spec_lr, spec_hr, 0d0)   ! datmis=0
+
+
+    ! ------------- Input Files
+    call chunker%nc_open(io_valin, trim(root), &
+        trim(idir), trim(ifname)//'.nc', trim(ivname), 1)
+
+    ! ----------- Output Files
+    ! No weighting needed because create_lr==.false.
+    allocate(mask(chunker%chunk_size(1),chunker%chunk_size(2)))
+    call chunkerlr%nc_create1(io_valout, &
+            weighting(mask,1d0,0d0), &
+            trim(oinfo%dir), trim(oinfo%leaf), oinfo, &
+            create_lr=.false.)
+
+    call chunker%nc_check(rw=rw)
+    call chunkerlr%nc_check(rw=rw)
+    call rw%write_mk
+
+
+
+#ifdef ENTGVSD_DEBUG
+    do jchunk = dbj0,dbj1
+    do ichunk = dbi0,dbi1
+#else
+    do jchunk = 1,chunker%nchunk(2)
+    do ichunk = 1,chunker%nchunk(1)
+#endif
+
+        call chunker%move_to(ichunk,jchunk)
+        call chunkerlr%move_to(ichunk,jchunk)
+
+        do jc = 1,chunker%chunk_size(2)
+        do ic = 1,chunker%chunk_size(1)
+            mask(ic,jc) = 1
+            if (io_valin%buf(ic,jc) == FillValue.or.io_valin%buf(ic,jc) /= io_valin%buf(ic,jc)) then
+                mask(ic,jc) = 0.
+                io_valin%buf(ic,jc) = FillValue
+            end if
+        end do
+        end do
+
+
+        call hntr_lr%regrid4( &
+            io_valout%buf, io_valin%buf, &
+            mask, 1d0, 0d0, &   ! weighting
+            io_valout%startB(2), io_valout%chunker%chunk_size(2))
+
+        ! call chunker%write_chunks
+        call chunkerlr%write_chunks
+
+    end do
+    end do
+
+    call chunker%close_chunks
+    call chunkerlr%close_chunks
+
+end subroutine regrid_selfmask
+
+
 
 
 subroutine regrid_lais(esub, fname)
@@ -289,20 +381,14 @@ subroutine do_regrid_all_lais
 
     ! ---------------------------------
     ! Create single-layer EntSet_t
-    call ent1%allocate(1,1)
-    call ent1%add_covertype('n', 'bs_brightratio', 'Bare Soil Brightness Ratio')
-
     ! Bare soil Bright Ratio
     call chunkerlr%file_info(oinfo, ent1, &
         LAI_SOURCE, 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
-    fnames1(1) = &
-        make_fname(LC_LAI_ENT_DIR, &
-            'carrer/', 'V1km_bs_brightratio', &   ! 
-            'purelr/', 'bs_brightratio', &
-            .false., &
-            oinfo%vname, oinfo%long_name, oinfo%units)
 
-    call regrid_lais(ent1, fnames1)
+    oinfo%leaf = 'bs_brightratio'
+    call regrid_selfmask( &
+        LC_LAI_ENT_DIR, 'carrer/', 'V1km_bs_brightratio', 'bs_brightratio', &
+        oinfo)
     ! ---------------------------------
 
     esub_p => esub

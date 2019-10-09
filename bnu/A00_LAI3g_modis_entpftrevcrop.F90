@@ -961,6 +961,8 @@ subroutine accum_lr_stats(this)
         DOMPFT = 0
         DOMPFTLC = 0.0
         do k=1,NENT20
+            if (k == SNOW_ICE) cycle
+            if (k == BARE_SPARSE) cycle
             if (k == CV_WATER) cycle
 
             lc = io_lc(k)%buf_lr(ic,jc) 
