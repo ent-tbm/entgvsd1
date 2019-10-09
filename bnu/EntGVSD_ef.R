@@ -263,7 +263,7 @@ if (TRUE) {
 	pdf(file=fileout, width=8, height=5)
     #map.GCM(file=paste(file,"_checksum.nc", sep=""), res=res, varname="lc_checksum")  
     map.GCM(file=lcchecksum.list$file.nc, res=res, varname="lc_checksum")  
-    title(file)
+    title(lcchecksum.list$file.nc)
 	dev.off()
 	
 	#bs_brightratio
@@ -271,7 +271,7 @@ if (TRUE) {
 	file = paste(entlclaidir, trimopt,"/",fname, sep="")
 	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","bs_brightratio", "_",datatime, trimopt, filesuf, ".pdf", sep="")
 	pdf(file=fileout, width=8, height=5)
-    map.GCM(file=file, res=res, varname="bs_brightratio")  
+    map.GCM(file=file, res=res, colrs=giss.palette.nowhite(40), varname="bs_brightratio")  
     title(file)
 	dev.off()
 	
