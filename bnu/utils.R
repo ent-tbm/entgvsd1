@@ -1038,19 +1038,21 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 }
 
 Ent_calc_npftgrid = function(pathin, fname, pathout, npft=17) {
-	ncid <- open.nc(con=file, write=FALSE)
-    lcin = var.get.nc(ncid, "lc")
-
 	file = paste(pathin, fname, sep="")
 	print(file)
 	
+	ncid <- open.nc(con=file, write=FALSE)
+    lcin = var.get.nc(ncid, "lc")
+
 	npftgrid = array(0, dim=dim(lcin)[1:2])
 	
 	for (p in 1:npft) {
 		for (i in 1:dim(lcin)[1]) {
 			for (j in 1:dim(lcin)[2]) {
-				if (lcin[i,j,p]>0.0 ) {
-					npftgrid[i,j] = npftgrid[i,j] + 1
+				if (!is.na(lcin[i,j,p])) {
+					if (lcin[i,j,p]>0.0 ) {
+						npftgrid[i,j] = npftgrid[i,j] + 1
+					}
 				}
 			}
 		}

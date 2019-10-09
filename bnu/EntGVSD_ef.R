@@ -12,7 +12,7 @@ version = "v1.1"
 
 #Set paths:
 #For Nancy on Mac:
-if (FALSE) {
+if (TRUE) {
     path = "/Users/nkiang/NancyResearch/GISS/Models/Ent/Vegcover/Elizabeth_PLOTS/"
     path = "/Users/nkiang/NancyResearch/GISS/Models/entgvsd1/entgvsd1_1/bnu/"
     #Choose date of output
@@ -61,7 +61,7 @@ do.checksum = TRUE
 #   If linux command line:  R CMD BATCH EntGVSD_ef.R 
 
 # ent17
-if (TRUE) {
+if (FALSE) {
     trimopt = "ent17"
     res="qxq"
     IM=1440
@@ -201,7 +201,7 @@ if (TRUE) {
 } #pure
  
 # purelr
-if (TRUE) {
+if (purelr) {
     trimopt = "purelr"
     res="HXH"
     filepre = "VHXH_EntGVSD"
@@ -210,7 +210,7 @@ if (TRUE) {
     filesuf = ""
     enttyp = 1:18     
   	do.checksum=FALSE
-  	
+
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
@@ -244,7 +244,6 @@ if (TRUE) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 	} #--------
 
-			
 	# Totals
 	# Dominant lc
 	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
@@ -271,7 +270,7 @@ if (TRUE) {
 	file = paste(entlclaidir, trimopt,"/",fname, sep="")
 	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","bs_brightratio", "_",datatime, trimopt, filesuf, ".pdf", sep="")
 	pdf(file=fileout, width=8, height=5)
-    map.GCM(file=file, res=res, colrs=giss.palette.nowhite(40), varname="bs_brightratio")  
+    map.GCM(file=file, res=res, colors=giss.palette.nowhite(40), varname="bs_brightratio")  
     title(file)
 	dev.off()
 	
@@ -316,22 +315,24 @@ if (TRUE) {
     enttyp = 1:18
     
     for (trimopt in trimopts) {
-    	for (varname in c("lc", "laimax", "hgt")) {
+    		
+  	  	for (varname in c("lc", "laimax", "hgt")) {
 	        map.entgvsd.steps(entlclaidir, res=res, varname, enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
 	        #map.entgvsd.steps(entlclaidir, res=res, varname="lc", enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     	    #map.entgvsd.steps(entlclaidir, res=res, varname="laimax", enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
         	#map.entgvsd.steps(entlclaidir, res=res, varname="hgt",enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    	}
+    		}
     	
-    	for (d in paste(datatime, "_", MON, sep="")) {
-    	    map.entgvsd.steps(entlclaidir, res=res, enttyp=enttyp, varname="lai", trimopt, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    	}
+    		for (d in paste(datatime, "_", MON, sep="")) {
+    	    		map.entgvsd.steps(entlclaidir, res=res, enttyp=enttyp, varname="lai", trimopt, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    		}
     
    		#Single layer checks
-    	# Monthly
-    	for (d in paste(datatime, "_", MON, sep="")) {
-    		map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
+   	 	# Monthly
+    		for (d in paste(datatime, "_", MON, sep="")) {
+    			map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
 		}
+
 	    	
 		# Totals
 		fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
@@ -340,15 +341,14 @@ if (TRUE) {
 		pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
 		Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
 		mtext(fnameout, cex=0.8)
-	   	dev.off()
+		dev.off()
 
 		#npftgrid
-		fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-		file = paste(entlclaidir, fname, sep="")
+		fname = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 		fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
 		pdf(file=fileout, width=8, height=5)
-		npftgrid = Ent_calc_npftgrid(file, npft=16)
-   	 	title(file)
+		npftgrid.list = Ent_calc_npftgrid(pathin=paste(entlclaidir,trimopt,"/", sep=""), fname, pathout=pathplot, npft=16)
+	    title(npftgrid.list$file.nc)
 		dev.off()
 	
 		if (FALSE) {
