@@ -1037,10 +1037,13 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 	}
 }
 
-Ent_calc_npftgrid = function(file, npft=17) {
+Ent_calc_npftgrid = function(pathin, fname, pathout, npft=17) {
 	ncid <- open.nc(con=file, write=FALSE)
     lcin = var.get.nc(ncid, "lc")
 
+	file = paste(pathin, fname, sep="")
+	print(file)
+	
 	npftgrid = array(0, dim=dim(lcin)[1:2])
 	
 	for (p in 1:npft) {
@@ -1066,17 +1069,18 @@ Ent_calc_npftgrid = function(file, npft=17) {
     legend(180, 90, legend=0:max(npftgrid), col=color, pch=15, cex=.7, bty="n")
     mtext(paste("number of PFTs per grid cell"))
  
- 	fileout = paste(file,"_npftgrid.nc", sep="")
+ 	fileout = paste(pathout, fname,"_npftgrid.nc", sep="")
 	create.map.template.nc(res, varname="npftgrid", longname="number_of_PFTs", units="fraction", undef=-1e30, description="number of PFTs in grid cell", fileout, contact="Nancy.Y.Kiang@nasa.gov")
 	close.nc(ncid)
 	ncid = open.nc(fileout, write=TRUE)
 	var.put.nc(ncid, 'npftgrid', npftgrid)
    
-    return(npftgrid)
+    return(npftgrid.list=list(npftgrid=npftgrid, file.nc=fileout) )
 }
 	
-Ent_calc_lc_checksum = function(file, enttyp=1:20) {
+Ent_calc_lc_checksum = function(pathin, fname, pathout, enttyp=1:20) {
 	
+	file = paste(pathin, fname, sep="")
 	print(file)
 	ncid <- open.nc(con=file, write=FALSE)
     lcin = var.get.nc(ncid, "lc")
@@ -1084,12 +1088,12 @@ Ent_calc_lc_checksum = function(file, enttyp=1:20) {
 	lcchecksum = apply(lcin, c(1,2), na.sum)
 
 	
-	fileout = paste(file,"_checksum.nc", sep="")
+	fileout = paste(pathout, fname,"_checksum.nc", sep="")
 	create.map.template.nc(res, varname="lc_checksum", longname="cover", units="fraction", undef=-1e30, description="lc checksum", fileout, contact="Nancy.Y.Kiang@nasa.gov")
 	close.nc(ncid)
 	ncid = open.nc(fileout, write=TRUE)
 	var.put.nc(ncid, 'lc_checksum', lcchecksum)
-	return(lcchecksum)
+	return(lcchecksum.list = list(lcchecksum=lcchecksum, file.nc=fileout))
 }
 
 

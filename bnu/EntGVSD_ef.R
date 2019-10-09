@@ -33,7 +33,7 @@ if (FALSE) {
 #For Nancy on gibbs:
 if (FALSE) {
     entlclaidir = "/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent/"
-    pathplot = "PLOTS/" 
+    pathplot = "lc_lai_ent/PLOTS/" 
     # Create output directory if it doesn't already exist
     dir.create(pathplot)
 }
@@ -256,12 +256,13 @@ if (TRUE) {
 	dev.off()
 	
 	#lc checksum in R
-	fname= paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	file = paste(entlclaidir, fname, sep="")
-	lcchecksum = Ent_calc_lc_checksum(file, enttyp=enttyp)
+	fname= paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	#file = paste(entlclaidir, fname, sep="")
+	lcchecksum.list = Ent_calc_lc_checksum(pathin=paste(entlclaidir, trimopt,"/", sep=""), fname, pathout=pathplot, enttyp=enttyp)
 	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","lc_checksum", "_",datatime, trimopt, filesuf, ".pdf", sep="")
 	pdf(file=fileout, width=8, height=5)
-    map.GCM(file=paste(file,"_checksum.nc", sep=""), res=res, varname="lc_checksum")  
+    #map.GCM(file=paste(file,"_checksum.nc", sep=""), res=res, varname="lc_checksum")  
+    map.GCM(file=lcchecksum.list$file.nc, res=res, varname="lc_checksum")  
     title(file)
 	dev.off()
 	
@@ -275,12 +276,12 @@ if (TRUE) {
 	dev.off()
 	
 	#npftgrid
-	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	file = paste(entlclaidir, fname, sep="")
+	fname = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	#file = paste(entlclaidir, fname, sep="")
 	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
 	pdf(file=fileout, width=8, height=5)
-	npftgrid = Ent_calc_npftgrid(file, npft=16)
-    title(file)
+	npftgrid.list = Ent_calc_npftgrid(pathin=paste(entlclaidir,trimopt,"/", sep=""), fname, pathout=pathplot, npft=16)
+    title(npftgrid.list$file.nc)
 	dev.off()
 	
 
