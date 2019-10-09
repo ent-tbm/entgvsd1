@@ -73,7 +73,7 @@ if (TRUE) {
     
     filesuf = "_forplot"
     enttyp = 1:20
-  
+
     map.entgvsd.steps(entlclaidir, res=res, enttyp,varname="lc", trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res, enttyp, varname="laimax", trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp, varname="hgt", trimopt=trimopt, filepre, datatime, version,  icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
@@ -208,8 +208,9 @@ if (TRUE) {
     icov = "16G"
     idat = "BMSa"
     filesuf = ""
-    enttyp = 1:18
-    
+    enttyp = 1:18     
+  	do.checksum=FALSE
+  	
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     map.entgvsd.steps(entlclaidir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
@@ -239,21 +240,28 @@ if (TRUE) {
 	mtext(fnameout, cex=0.8)
 	dev.off()
    	
-	if (FALSE) {
+	if (FALSE) { #-------
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	} #if (FALSE)
+ 	} #if (FALSE) ---------
  	
+ 	if (do.checksum) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+	} #--------
 
-	#lc checksum
+	#lc checksum in R
 	fname= paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 	file = paste(entlclaidir, fname, sep="")
 	lcchecksum = Ent_calc_lc_checksum(file, enttyp=enttyp)
-
+	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","lc_checksum", "_",datatime, trimopt, filesuf, ".pdf", sep="")
+	pdf(file=fileout, width=8, height=5)
+    map.GCM(file=paste(file,"_checksum.nc", sep=""), res=res, varname="lc_checksum")  
+    title(file)
+	dev.off()
+	
 	#bs_brightratio
 	fname = 'bs_brightratio.nc'
 	file = paste(entlclaidir, trimopt,"/",fname, sep="")
@@ -264,6 +272,7 @@ if (TRUE) {
 	dev.off()
 	
   	#Checksum diff maps
+  	if (FALSE) { #---------------------
   	res = "HXH"
   	checksumdir = paste(entlclaidir, "checksum/",  sep="")
   	checksuff = paste("_diff", filesuf, sep="")
@@ -275,9 +284,13 @@ if (TRUE) {
   	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
   	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 
+  	 } # if FALSE -----------------
 
 } #purelr
 
+
+do.checksum = TRUE
 # trimmming
 if (TRUE) {
    trimopts = c("trimmed", "trimmed_scaled", "trimmed_scaled_nocrops", "trimmed_scaled_crops_ext")
