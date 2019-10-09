@@ -201,7 +201,7 @@ if (TRUE) {
 } #pure
  
 # purelr
-if (purelr) {
+if (TRUE) {
     trimopt = "purelr"
     res="HXH"
     filepre = "VHXH_EntGVSD"
