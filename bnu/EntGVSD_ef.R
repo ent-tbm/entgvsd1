@@ -224,21 +224,13 @@ if (TRUE) {
     }
 
     #Single layer checks
+    if (FALSE) { #----
     # Monthly
     for (d in paste(datatime, "_", MON, sep="")) {
     	map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
 	}
+	} #if FALSE ----
 
-		
-	# Totals
-	# Dominant lc
-	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	domlc = Ent_calc_domlc(file=paste(entlclaidir, fname, sep=""), enttyp)
-	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
-	Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
-	mtext(fnameout, cex=0.8)
-	dev.off()
    	
 	if (FALSE) { #-------
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
@@ -252,6 +244,17 @@ if (TRUE) {
     map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 	} #--------
 
+			
+	# Totals
+	# Dominant lc
+	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	domlc = Ent_calc_domlc(file=paste(entlclaidir, fname, sep=""), enttyp)
+	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
+	Ent_domlc_plot(lctype=domlc, numpft=16, res=res, legend.cex=0.6, Entcolors=Entcolors16[match(na.min(domlc), Entcolors16[,"num"]):dim(Entcolors16)[1],], if.new=FALSE)
+	mtext(fnameout, cex=0.8)
+	dev.off()
+	
 	#lc checksum in R
 	fname= paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
 	file = paste(entlclaidir, fname, sep="")
@@ -271,6 +274,16 @@ if (TRUE) {
     title(file)
 	dev.off()
 	
+	#npftgrid
+	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	file = paste(entlclaidir, fname, sep="")
+	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
+	pdf(file=fileout, width=8, height=5)
+	npftgrid = Ent_calc_npftgrid(file, npft=16)
+    title(file)
+	dev.off()
+	
+
   	#Checksum diff maps
   	if (FALSE) { #---------------------
   	res = "HXH"
@@ -328,6 +341,15 @@ if (TRUE) {
 		mtext(fnameout, cex=0.8)
 	   	dev.off()
 
+		#npftgrid
+		fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+		file = paste(entlclaidir, fname, sep="")
+		fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
+		pdf(file=fileout, width=8, height=5)
+		npftgrid = Ent_calc_npftgrid(file, npft=16)
+   	 	title(file)
+		dev.off()
+	
 		if (FALSE) {
    	 	map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
     	map.entgvsd.check.misc(entlclaidir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 

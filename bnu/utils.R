@@ -1046,7 +1046,7 @@ Ent_calc_npftgrid = function(file, npft=17) {
 	for (p in 1:npft) {
 		for (i in 1:dim(lcin)[1]) {
 			for (j in 1:dim(lcin)[2]) {
-				if (lcin[i,j,p]>=1 | lcin[i,j,p]<=npft) {
+				if (lcin[i,j,p]>0.0 ) {
 					npftgrid[i,j] = npftgrid[i,j] + 1
 				}
 			}
@@ -1054,14 +1054,25 @@ Ent_calc_npftgrid = function(file, npft=17) {
 	}
 	
 	zlim = c(0,npft)
-   	color = giss.palette.nowhite(18)
+   	color = giss.palette.nowhite(max(npftgrid)-min(npftgrid)+1)
    	color[1] = rgb(0.5, 0.5, 0.5)
    	leg=zlim[1]:zlim[2]
 
    	par(mar=c(5,4,4,5)+0.1)
-   	plot.grid.categorical(mapz=x, res=res, colors=colors	, xlab="", ylab="")
+   	plot.grid.categorical(mapz=npftgrid, res=res, colors=color	, xlab="", ylab="")
+   	#plot.grid.continuous(mapz=npftgrid, res=res, colors=color	, xlab="", ylab="")
     plot(coastsCoarse, add=TRUE)
-    title(paste("number of PFTs per grid cell"))
+	par(xpd=NA)
+    legend(180, 90, legend=0:max(npftgrid), col=color, pch=15, cex=.7, bty="n")
+    mtext(paste("number of PFTs per grid cell"))
+ 
+ 	fileout = paste(file,"_npftgrid.nc", sep="")
+	create.map.template.nc(res, varname="npftgrid", longname="number_of_PFTs", units="fraction", undef=-1e30, description="number of PFTs in grid cell", fileout, contact="Nancy.Y.Kiang@nasa.gov")
+	close.nc(ncid)
+	ncid = open.nc(fileout, write=TRUE)
+	var.put.nc(ncid, 'npftgrid', npftgrid)
+   
+    return(npftgrid)
 }
 	
 Ent_calc_lc_checksum = function(file, enttyp=1:20) {
