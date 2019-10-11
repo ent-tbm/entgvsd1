@@ -61,7 +61,7 @@ do.checksum = TRUE
 #   If linux command line:  R CMD BATCH EntGVSD_ef.R 
 
 # ent17
-if (FALSE) {
+if (TRUE) {
     trimopt = "ent17"
     res="qxq"
     IM=1440
