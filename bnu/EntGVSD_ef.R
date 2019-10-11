@@ -31,7 +31,7 @@ if (FALSE) {
         dir.create(pathplot)
 }
 #For Nancy on gibbs:
-if (TRUE) {
+if (FALSE) {
     entlclaidir = "/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent/"
     pathplot = "lc_lai_ent/PLOTS/" 
     # Create output directory if it doesn't already exist
@@ -40,7 +40,7 @@ if (TRUE) {
     
     
 #For running within the BNU/ directory as part of the generation process:
-if (FALSE) {
+if (TRUE) {
     entlclaidir = "lc_lai_ent/"
     pathplot=paste(entlclaidir, "plots/", sep="")
     # Create output directory if it doesn't already exist

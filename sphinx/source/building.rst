@@ -88,6 +88,15 @@ connected to the NASA network for this to work (replace
 
 Run CMake
 ---------
+1. mkdir build
+2. cd build
+3. .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
+4. FC=`which gfortran` cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
+5. make install
+6. bin/xent ../bnu/test.f90
+7. cd ../bnu
+8. ./run_all.sh
+
 
 CMake works by a two-step process:
 
