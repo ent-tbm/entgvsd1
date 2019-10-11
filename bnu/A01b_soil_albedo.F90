@@ -1,16 +1,18 @@
 ! Carrer_soilalbedo_to_GISS.f
 ! @auth 10/14/2018 N.Y.Kiang
       
-!     Takes Carrer soil albedo annual (min,mean,max, and std) already interpolated to desired spatial resolution and generates GISS GCM boundary conditions input versions.
+!     Takes Carrer soil albedo annual (min,mean,max, and std) already interpolated to desired spatial resolution and generates GISS GCM boundary conditions input versions.  Creates downscaled 1 km bare soil bright fraction ('bs_brightratio.nc') for ModelE grey bare soil albedo scheme.
 !     Versions:
-!     1) Spectral albedo TOA, GISS 6 bands.  This is the Carrer albedos from MODIS VIS (300-700 nm) and NIR (700-5000 nm) translated to GISS 6 bands, utilizing Judith Lean's top-of-the-atmosphere 1850 preindustrial solar irradiance spectrum(S0=1360.6718 W/m2).
-!     2) Spectral albedo Surf, GISS 6 bands.  Like TOA, but using a surface irradiance spectrum from
+!  1) Spectral albedo TOA, GISS 6 bands.  This is the Carrer albedos from MODIS VIS (300-700 nm) and NIR (700-5000 nm) translated to GISS 6 bands, utilizing Judith Lean's top-of-the-atmosphere 1850 preindustrial solar irradiance spectrum(S0=1360.6718 W/m2).
+!  2) Spectral albedo Surf, GISS 6 bands.  Like TOA, but using a surface irradiance spectrum from
 !     a) NREL's Direct+circumsolar irradiance
 !     b) Brian Cairns (GISS) annual averages for: i) 60S-60N, ii) arctic zonal, iii) mid-latitude zonal, and iv) tropical zonal.
+!  3) Bare soil bright fraction 'bs_brightratio.nc' for GISS ModelE grey soil
+!        albedo scheme.
 
 !###  To do:  Need to pull out the spectral code from hntr4_Carrer_nc.f
 !###  To do:  Doublecheck MODIS NIR 700-4000 nm vs. Carrer 700-5000 nm??      
-!###  To do:  May want to correct spectral waiting for 300-400 nm to be lower.
+!###  To do:  May want to correct spectral weighting for 300-400 nm to be lower.
 !###  To do:  Get Brian Cairns zonal spectral irradiances.
 
 ! Use the filled-in version of Carrer MODIS albedo

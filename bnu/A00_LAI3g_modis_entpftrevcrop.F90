@@ -1,19 +1,26 @@
-!     modis_entpftg.f
-!     Nancy Kiang, updated by Carlo Montes (August 2015)
-!     Process LAI3g, Monfreda, CRU and GPCC climate files into Ent PFT
-!     cover and LAI annual maximum.
-!     Set longin and latin for 1km resolution and
-!     edit file names.
+!     Program to make 20 land cover type maps of 17 Ent PFTs and 3 non-vegetation cover types.
+!     Authors:     Nancy Kiang, updated by Carlo Montes (August 2015), Elizabeth Fischer (2019)
+!     Inputs: MODIS IGBP and PFT 29-type land cover partition, Monfreda et al. (2008) crop cover, 
+!     and climate statistcs
+!     Outputs:     
+!        Land cover subgrid 17 Ent PFTs and 3 non-vegetation cover types (water, 
+!     permanent ice, bare/sparsely vegetated) for total 20 land cover classes.
+!        Annual maximum LAI assigned to PFTs in grid cell.
+!
+!     Customize: Set longin and latin for 1km resolution and edit file names.
+!
 !     Modified from modis_entpftg.f, which had used the MODIS PFT crop partition
 !     of "cereal crop" and "broadleaf crop" to estimate C3 and C4 crops, 
 !     but correlation is rough.  Here, sum all MODIS crop cover, and use
 !     Monfreda to partition MODIS total crop cover into C3, C4, and growth form.
 !     8/26/13 - Added FIX_MODIS29_SOUTHPOLE_BUG to fix error in MODIS29.
 !     9/5/13 - Added FIX_MODIS29_NORTHPOLE_BUG to fix error in MODIS29.
+!     2019 - Implemented chunker tile scheme for processing 1 km data. Added
+!     checksums.
 
 ! This produces the following checksums:
 !
-!# Checksom on original MODIS LAI??  LC??
+!# Checksum on original MODIS LAI??  LC??
 !io_lc_modis_checksum = EntMM29lc_lai_for_1kmx1km
 !   sum_{1...MODIS28 LCLASS} partit_io(k) + io_waterpart
 !    partit_io = 2004/PART_SUB_1km_2004_geo.PARTITION/...

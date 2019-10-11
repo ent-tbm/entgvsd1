@@ -1,3 +1,10 @@
+! Program takes 20-cover classes (Ent 17 PFTs + 3 non-veg) and converts to
+! 18-cover classes (Ent 16 PFTs and bright and dark bare soil fractions).
+! Merges C3 and C4 crops into one crop cover type for Ent 16 PFTs, excludes water
+! and permanent ice, and converts barse/sparse cover into equivalent veg type and
+! bare soil bright and dark fractions, preserving total LAI of grid cell.
+!
+! ##THE COMMENTS BELOW look obsolete after splitting up a program.
 ! Trims off tiny fractions and preserves total LAI for the gridcell.
 ! Alters the cover amount if the LAI is smaller than the main one.
 ! If LAI is a little biger, might increase.

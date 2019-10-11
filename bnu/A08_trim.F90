@@ -1,4 +1,14 @@
 module a08_mod
+!  Performs several steps toward producing files suitable for input the GISS GCM
+!  ModelE:
+!   trimmed:  trim out small subgrid fractions, and conserve total grid LAI.
+!   trimmed_scaled:  recale subgrid cover fractions to ensure they sum to 1 over
+!   land.
+!   trimmed_scaled_nocrops:  scale out crop cover for version with all natural
+!   vegetation cover, used for rescaling with historical crop cover change.
+!   trimmed_scaled_crops_ext:  crops LAI and height extended a few grid cells
+!   out to ensure availability of non-zero values for crops when cover changes.
+
     use netcdf
     use chunker_mod
     use chunkparams_mod

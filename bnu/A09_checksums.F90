@@ -1,4 +1,8 @@
 module A09_mod
+!Author:  Elizabeth Fischer
+!
+! Calculates miscellaneous checksums: error checks, differences from
+! observations, sums of lc, sums over PFTs or lc for grid totals, etc.
 
 use chunker_mod
 use ent_labels_mod

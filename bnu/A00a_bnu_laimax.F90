@@ -1,4 +1,5 @@
-! Program computes LAIMax from BNU montly data
+! Program computes annual maximum LAI from BNU monthly LAI.
+! Authors:  Elizabeth Fischer, Carlo Montes
 !------------------------------------------------------------------------
 
 program bnu_laimax

@@ -1,4 +1,8 @@
 module a10_mod
+!Author: Elizabeth Fischer
+!
+! Regrids higher spatial resolution (e.g. HXH) files to GISS GCM ModelE 2HX2 grid.
+
     use netcdf
     use chunker_mod
     use chunkparams_mod
