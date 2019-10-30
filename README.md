@@ -23,3 +23,8 @@ TODO
 10. Need to include Sonali’s crops LAI (and compare to BNU crops LAI).
 
 11. Need to compare Sonali’s Natveg to BNU nocrops after we fixed the dg thing.
+
+TODO-annoyances
+===============
+1.  Nancy re-interpolate crops from the original 5 min source.
+
