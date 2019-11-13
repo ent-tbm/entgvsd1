@@ -388,7 +388,7 @@ type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
 type(ChunkIO_t) :: io_lclai_checksum
 #endif
 
-MAIN_PROGRAM_FILE='A00_LAI3g_modis_entpftrevcrop'
+MAIN_PROGRAM_FILE='B02_lc_laimax_modis_entpftrevcrop'
     call init_ent_labels
 
 RESOUT = '1kmx1km'
@@ -401,14 +401,15 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
 
 !     LAI
 if (LAI_SOURCE == 'L') then
-    call chunker%nc_open_gz(io_laiin, &
-        DATA_DIR, DATA_INPUT, &
+    ! This file does not currently exist...
+    call chunker%nc_open_input(io_laiin, &
+        INPUTS_URL, INPUTS_DIR, &
         'LAI/', &
         'LAI3gMax_1kmx1km.nc', 'laimax', 1)
 else if (LAI_SOURCE == 'B') then
     ! Result of A00a_bnu_lclai.F90
     call chunker%nc_open(io_laiin, &
-        LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax.nc', &
+        OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', &
         'laimax', 1)
 end if
 
@@ -420,57 +421,62 @@ write(*,*) err, 'variables IDs'
 
 !     CROPS
 
-call chunker%nc_open_gz(io_04crops, &
-    DATA_DIR, DATA_INPUT,  &
-    'crops/', &
+call chunker%nc_open_input(io_04crops, &
+    INPUTS_URL, INPUTS_DIR,  &
+    'lc_crops/Monfreda2008/', &
     '04_Monfreda_herb_crops_1kmx1km.nc', 'crops', 1)
 
-call chunker%nc_open_gz(io_05crops, &
-    DATA_DIR, DATA_INPUT,  &
-    'crops/', &
+call chunker%nc_open_input(io_05crops, &
+    INPUTS_URL, INPUTS_DIR,  &
+    'lc_crops/Monfreda2008/', &
     '05_Monfreda_shrub_crops_1kmx1km.nc', 'crops', 1)
 
-call chunker%nc_open_gz(io_06crops, &
-    DATA_DIR, DATA_INPUT,  &
-    'crops/', &
+call chunker%nc_open_input(io_06crops, &
+    INPUTS_URL, INPUTS_DIR,  &
+    'lc_crops/Monfreda2008/', &
     '06_Monfreda_tree_crops_1kmx1km.nc', 'crops', 1)
 
-call chunker%nc_open_gz(io_04cropsm, &
-    DATA_DIR, DATA_INPUT,  &
-    'crops/', &
+call chunker%nc_open_input(io_04cropsm, &
+    INPUTS_URL, INPUTS_DIR,  &
+    'lc_crops/Monfreda2008/', &
     '08_Monfreda_c4_crops_multi1_1kmx1km.nc', 'crops', 1)
 
 !     CLIMSTATS
 
-call chunker%nc_open_gz(io_C4norm, &
-     DATA_DIR, DATA_INPUT,  &
-     'climstats/', &
+call chunker%nc_open_input(io_C4norm, &
+     INPUTS_URL, INPUTS_DIR,  &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
      'CRU_GPCC_C4norm_1981-2010_1kmx1km.nc', 'C4climate', 1)
 
-call chunker%nc_open_gz(io_Tcold, &
-     DATA_DIR, DATA_INPUT, &
-     'climstats/', 'Tcold.nc', 'Tcold', 1)
+call chunker%nc_open_input(io_Tcold, &
+     INPUTS_URL, INPUTS_DIR, &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
+     'Tcold.nc', 'Tcold', 1)
 
-call chunker%nc_open_gz(io_Pdry, &
-     DATA_DIR, DATA_INPUT,  &
-     'climstats/', 'Pdry.nc', 'Pdry', 1)
+call chunker%nc_open_input(io_Pdry, &
+     INPUTS_URL, INPUTS_DIR,  &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
+     'Pdry.nc', 'Pdry', 1)
      
-call chunker%nc_open_gz(io_Pmave, &
-     DATA_DIR, DATA_INPUT, &
-     'climstats/', 'Pmave.nc', 'Pmave', 1)
+call chunker%nc_open_input(io_Pmave, &
+     INPUTS_URL, INPUTS_DIR, &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
+     'Pmave.nc', 'Pmave', 1)
 
-call chunker%nc_open_gz(io_TCinave, &
-      DATA_DIR, DATA_INPUT, &
-      'climstats/', 'TCinave.nc', 'TCinave', 1)
+call chunker%nc_open_input(io_TCinave, &
+     INPUTS_URL, INPUTS_DIR, &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
+     'TCinave.nc', 'TCinave', 1)
 
-call chunker%nc_open_gz(io_CMedit, &
-     DATA_DIR, DATA_INPUT,  &
-     'climstats/', 'ClimMedit.nc', 'ClimMedit', 1)
+call chunker%nc_open_input(io_CMedit, &
+     INPUTS_URL, INPUTS_DIR,  &
+     'climstats/CRU-TS3.22_GPCC-V6/', &
+     'ClimMedit.nc', 'ClimMedit', 1)
 
 !     WATERLC MODIS PARTITION
-call chunker%nc_open_gz(io_waterpart, &
-     LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT, &
-     '2004/', &
+call chunker%nc_open_input(io_waterpart, &
+     INPUTS_URL, INPUTS_DIR, &
+     'lc/MODIS/2004/', &
      'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0', 1)
 
 
@@ -536,7 +542,7 @@ io_dompft%regrid_lr => nop_regrid_lr
 
 ! MODIS PARTITION FILES
 do k = 1,LCLASS
-   call chunker%nc_open_gz(partit_io(k), &
+   call chunker%nc_open_input(partit_io(k), &
         LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT, &
         '2004/',  &
         'PART_SUB_1km_2004_geo.PARTITION_'//itoa2(k)//'.nc', &

@@ -18,6 +18,7 @@ private
     public :: FillValue
     public :: dbi0,dbi1,dbj0,dbj1
     public :: get_sdate
+    public :: download_input_file
 
 ! Chunks used when debugging
 integer, parameter :: dbj0 = 11
@@ -196,7 +197,7 @@ end type ReadWrites_t
 ! that have been opened for reading or writing.  It uses the following lifecycle:
 
 !   * Initialize via chunker%init()
-!   * Open files for reading and writing via nc_create(), nc_open(), nc_open_gz(), etc.
+!   * Open files for reading and writing via nc_create(), nc_open(), nc_open_input(), etc.
 !   * Outer loop through chunks:
 !     - move_to() the current chunk.  This loads read buffers with the
 !       given chunk, and clears write buffers.
@@ -209,7 +210,7 @@ end type ReadWrites_t
 ! ======== Reading:
 !
 !    case 1: Open with nc_open() (if the file is the result of a
-!            previous EntGVSD stage); or nc_open_gz() (if the file is
+!            previous EntGVSD stage); or nc_open_input() (if the file is
 !            an original gzipped file).
 !
 !    case 2: Open with nc_open().  Don't worry that the same NetCDF
@@ -267,7 +268,7 @@ contains
     procedure :: nc_create
     procedure :: nc_create1
     procedure :: nc_create_set
-    procedure :: nc_open_gz
+    procedure :: nc_open_input
     procedure :: nc_open
     procedure :: nc_open_set
     procedure :: file_info
@@ -1401,7 +1402,7 @@ layer_names, long_layer_names, create_lr)
         .true., err)
 
     ! ------ Open/Create hi-res file
-    cio%path = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'.nc'
+    cio%path = OUTPUTS_DIR//trim(dir)//trim(leaf)//'.nc'
     print *,'Writing ',trim(cio%path)
     err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
     if (err /= NF90_NOERR) then
@@ -1632,7 +1633,82 @@ function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
 
 end function gunzip_input_file
 
-! Open a (possibly gzipped) original input file for reading
+! HTTP/1.1 200 OK
+
+function check_http_code(fname) result(ok)
+    character(*), intent(in) :: fname
+    logical :: ok
+    ! ------------------------
+    character*(100) :: line
+
+    ok = .false.
+    open(unit=15, file=trim(fname))
+    read(15, '(A)', end=99) line
+99  continue
+    close(15)
+
+    ok = (line == 'HTTP/1.1 200 OK')
+
+end function check_http_code
+
+function download_input_file(this, iurl, oroot, dir, leaf) result(err)
+    type(Chunker_t) :: this
+    character*(*), intent(in) :: iurl   ! URL root from which to download
+    character*(*), intent(in) :: oroot   ! Write or link to here, then open
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    integer :: err
+    ! -------- Locals
+    character(4192) :: cmd
+    character(200) :: ofname
+    logical :: exist
+    integer :: stat
+
+    ! -------- Decompress / link the file if it doesn't exist
+    inquire(FILE=oroot//dir//leaf, EXIST=exist)
+    if (exist) then
+        err = 0   ! Success
+!        return
+    end if
+
+    call execute_command_line('mkdir -p '//trim(oroot)//trim(dir))
+
+    ! Download the gzipped version
+    ofname = trim(oroot)//trim(dir)//trim(leaf)
+    cmd = 'curl --create-dirs ' // &
+        '--output '//trim(ofname)//'.gz ' // &
+        '-D '//trim(ofname)//'.header ' // &
+        trim(iurl)//trim(dir)//trim(leaf)//'.gz'
+    print *,'Downloading ',trim(iurl)//trim(dir)//trim(leaf)//'.gz'
+
+    ! Check the download
+    call execute_command_line(cmd, .true., err)
+    if (err /= 0 .or..not. check_http_code(trim(ofname)//'.header')) then
+        if (err == 0) err = 440
+        write(ERROR_UNIT,*) 'Error downloading file ',leaf,err
+        this%nerr = this%nerr + 1
+
+        ! https://stackoverflow.com/questions/18668832/how-delete-file-from-fortran-code
+        ! Delete files
+        open(unit=1234, iostat=stat, file=trim(ofname)//'.gz', status='old')
+        if (stat == 0) close(1234, status='delete')
+    end if
+
+    ! Delete the .header file
+    open(unit=1234, iostat=stat, file=trim(ofname)//'.header', status='old')
+    if (stat == 0) close(1234, status='delete')
+
+    ! Unzip the download
+    if (err == 0) then
+        print *,'Uncompressing ',trim(ofname)//'.gz'
+        cmd = 'gunzip '//trim(ofname)//'.gz'
+        call execute_command_line(cmd, .true., err)
+    end if
+
+end function download_input_file
+
+
+! Open a file for reading; but it might need to be downloaed first
 ! @param cio ChunkIO to initialize
 ! @param iroot Original root dir of (read-only) compressed file
 ! @param oroot Destination root dir of uncompressed file
@@ -1642,10 +1718,10 @@ end function gunzip_input_file
 ! @param k Index of layer within variable to associated with this ChunkIO
 !        If the NetCDF variable is 2D, then set k=1
 !        If you don't want a buffer allocated, then set k=0
-subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname, k)
+subroutine nc_open_input(this, cio, iurl, oroot, dir, leaf, vname, k)
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
-    character*(*), intent(in) :: iroot   ! Read (maybe compressed) file from here
+    character*(*), intent(in) :: iurl   ! Read (maybe compressed) file from here
     character*(*), intent(in) :: oroot   ! Write or link to here, then open
     character*(*), intent(in) :: dir
     character*(*), intent(in) :: leaf
@@ -1656,9 +1732,9 @@ subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname, k)
 
     cio%fileid = -1
 
-    err = gunzip_input_file(this, iroot, oroot, dir, leaf)
+    err = download_input_file(this, iurl, oroot, dir, leaf)
     if (err /= 0) then
-        write(ERROR_UNIT,*) 'Error unzipping ',trim(iroot)//trim(dir)//trim(leaf)
+        write(ERROR_UNIT,*) 'Error unzipping ',trim(iurl)//trim(dir)//trim(leaf)
         this%nerr = this%nerr + 1
         return
     end if
@@ -1666,13 +1742,12 @@ subroutine nc_open_gz(this, cio, iroot, oroot, dir, leaf, vname, k)
     ! ------- Now open the file
     call this%nc_open(cio, oroot, dir, leaf, vname, k)
 
-end subroutine nc_open_gz
+end subroutine nc_open_input
 
 ! Open a (possibly gzipped) original input file for reading
 ! @param cio ChunkIO to initialize
-! @param iroot Original root dir of (read-only) compressed file
 ! @param oroot Destination root dir of uncompressed file
-! @param dir Directory (relative to iroot) to find unzipped file
+! @param dir Directory (relative to input) to find unzipped file
 ! @param leaf Filename to create, INCLUDING .nc extension (eg: 'foo.nc')
 ! @param vname Name of variable to open within the file
 ! @param k Index of layer within variable to associated with this ChunkIO

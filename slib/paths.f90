@@ -1,4 +1,5 @@
 module paths_mod
+    use entgvsd_config_mod
 implicit none
 
 ! This file lists the input and output directories used by EntGVSD.
@@ -26,34 +27,43 @@ implicit none
 !    XYZ_INPUT is the corresponding decompressed input directory
 
 
+character(*), parameter :: INPUTS_URL= &
+    'https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/inputs/'
 
-CHARACTER (LEN=*), PARAMETER :: DATA_DIR= &
-   '/home2/rpfische/entgvsd0/discover/Vegcover_1km/data/'
-CHARACTER (LEN=*), PARAMETER :: DATA_INPUT= &
-   '/home2/rpfische/git/entgvsd1/inputs/data/'
-CHARACTER (LEN=*), PARAMETER :: DATA_INPUT_MANUAL= &
-   '/home2/rpfische/git/entgvsd1/inputs_manual/'
+character(*), parameter :: INPUTS_DIR= &
+    ENTGVSD_PROJECT_SOURCE_DIR//'inputs_new/'
 
-
-
-CHARACTER (LEN=*), PARAMETER :: LAI3G_DIR= &
-   '/home2/rpfische/entgvsd0/discover/Vegcover_1km/LAI3g/'
-CHARACTER (LEN=*), PARAMETER :: LAI3G_INPUT= &
-   '/home2/rpfische/git/entgvsd1/inputs/LAI3g/'
+character(*), parameter :: OUTPUTS_DIR= &
+    ENTGVSD_PROJECT_SOURCE_DIR//'outputs/'
 
 
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_DIR= &
-   '/home2/rpfische/entgvsd0/discover/Vegcover_1km/BNU/lc_lai_giss/'
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_INPUT= &
-   '/home2/rpfische/git/entgvsd1/inputs/lc_lai_giss/'
-
-
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_DIR= &
-    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/lc_lai_for_1kmx1km/'
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_INPUT= &
-   '/home2/rpfische/git/entgvsd1/inputs/lc_lai_giss/lc_lai_for_1kmx1km/'
+! CHARACTER (LEN=*), PARAMETER :: DATA_DIR= &
+!    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/data/'
+! CHARACTER (LEN=*), PARAMETER :: DATA_INPUT= &
+!    '/home2/rpfische/git/entgvsd1/inputs/data/'
+! CHARACTER (LEN=*), PARAMETER :: DATA_INPUT_MANUAL= &
+!    '/home2/rpfische/git/entgvsd1/inputs_manual/'
+! 
+! 
+! 
+! CHARACTER (LEN=*), PARAMETER :: LAI3G_DIR= &
+!    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/LAI3g/'
+! CHARACTER (LEN=*), PARAMETER :: LAI3G_INPUT= &
+!    '/home2/rpfische/git/entgvsd1/inputs/LAI3g/'
+! 
+! 
+! 
+! CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_DIR= &
+!    '/home2/rpfische/entgvsd0/discover/Vegcover_1km/BNU/lc_lai_giss/'
+! CHARACTER (LEN=*), PARAMETER :: LC_LAI_GISS_INPUT= &
+!    '/home2/rpfische/git/entgvsd1/inputs/lc_lai_giss/'
+! 
+! 
+! 
+! CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_DIR= &
+!     '/home2/rpfische/entgvsd0/discover/Vegcover_1km/lc_lai_for_1kmx1km/'
+! CHARACTER (LEN=*), PARAMETER :: LC_LAI_FOR_1KM1KM_INPUT= &
+!    '/home2/rpfische/git/entgvsd1/inputs/lc_lai_giss/lc_lai_for_1kmx1km/'
 
 
 

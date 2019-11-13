@@ -130,7 +130,7 @@ program Carrer_soilalbedo_to_GISS
     type(FileInfo_t) :: info
     integer, parameter :: nhr(2) = (/ IM1km/IMK, JM1km/JMK /)   ! # of hi-res gridcells per lo-res
     type(ReadWrites_t) :: rw
-    call rw%init("A08_trim", 30,30)
+    call rw%init("A01b_soil_albedo", 30,30)
 
     call init_ent_labels
 
