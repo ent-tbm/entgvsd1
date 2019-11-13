@@ -105,9 +105,20 @@
       end function IJDIV
 
       function IJDIV4(I0,I1,J0,J1,num, denom) Result(DIVres)
+      ! Divides the numerator by the denomantor, cell-by-cell
+      ! 
+      ! I0,I1,J0,J1:
+      !     range of array to process
+      ! num: (:,:)
+      !     Numerator
+      ! denom: (:,:)
+      !     Denominator
+      ! Returns (DIVres):
+      !     Numerator / Denominator
       integer,intent(in) :: I0,I1,J0,J1
       real*4 :: num(I0:I1,J0:J1),denom(I0:I1,J0:J1)
       real*4 :: DIVres(I0:I1,J0:J1)
+      ! ------- Local Vars
       integer :: i,j
 
       do i=I0,I1
