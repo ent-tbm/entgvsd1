@@ -3,13 +3,15 @@
 set -e
 
 B01_bnu_laimax.F90 \
+B02_lc_laimax_modis_entpftrevcrop.F90 \
+B03_regrid.F90 \
+B04_veg_height.F90 \
+B05_carrer_mean.F90 \
 
-
-
-#        A00a_bnu_laimax.F90 \
-#        A00_LAI3g_modis_entpftrevcrop.F90 \
-#        A00b_regrid.F90 \
-#        A01h_veg_height.F90 \
+##        A00a_bnu_laimax.F90 \
+##        A00_LAI3g_modis_entpftrevcrop.F90 \
+##        A00b_regrid.F90 \
+##        A01h_veg_height.F90 \
 #        A01a_carrer_mean.F90 \
 #        A01f_albmodis_gridfill.F90 \
 #        A01b_soil_albedo.F90 \

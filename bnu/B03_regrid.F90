@@ -24,7 +24,7 @@ implicit none
 
 
     type(ReadWrites_t) :: rw
-    call rw%init('A00b_regrid', 3,3)
+    call rw%init('B03_regrid', 3,3)
 
     call init_ent_labels
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10)
@@ -40,7 +40,7 @@ implicit none
     ent2 = make_ent2()
     call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     do k=1,2
         call chunker%nc_reuse_var(ioall_lc, io_lc(k), (/1,1,ent2%mvs(k)/))
     end do

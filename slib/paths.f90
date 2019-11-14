@@ -69,12 +69,11 @@ character(*), parameter :: OUTPUTS_DIR= &
 
 ! ================ Output Files
 ! Output files are written to multiple roots, listed here.
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_DIR= &
-   '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent/'
-
-CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
-   '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent16/'
+!@CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT_DIR= &
+!   '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent/'
+!
+!CHARACTER (LEN=*), PARAMETER :: LC_LAI_ENT16_DIR= &
+!   '/home2/rpfische/git/entgvsd1/bnu/lc_lai_ent16/'
 
 ! ===========================================================
 

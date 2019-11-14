@@ -1351,7 +1351,7 @@ end subroutine nc_create
 ! The variable may be single layer or multi-layer.
 ! @param cio ChunkIO to initialize
 ! @param wta Weighting to use when writing this variable
-! @param Directory in which to create file (relative to LC_LAI_ENT_DIR)
+! @param Directory in which to create file (relative to OUTPUTS_DIR)
 ! @param leaf Filename to create, NOT INCLUDING .nc extension (eg: 'foo')
 ! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
 subroutine nc_create1(this, cio, &
@@ -1398,7 +1398,7 @@ layer_names, long_layer_names, create_lr)
     end if
 
     ! ------ Create directory
-    call execute_command_line('mkdir -p '//LC_LAI_ENT_DIR//trim(dir), &
+    call execute_command_line('mkdir -p '//OUTPUTS_DIR//trim(dir), &
         .true., err)
 
     ! ------ Open/Create hi-res file
@@ -1426,7 +1426,7 @@ layer_names, long_layer_names, create_lr)
     if (.not.cio%create_lr) then
         cio%own_fileid_lr = .false.
     else
-        path_name_lr = LC_LAI_ENT_DIR//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        path_name_lr = OUTPUTS_DIR//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
         print *,'Writing ',trim(path_name_lr)
         err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
         if (err /= NF90_NOERR) then
@@ -1585,7 +1585,7 @@ subroutine nc_open_set( &
         stop -1
     end if
 
-    call this%nc_open(this%ioalls(this%nioalls), LC_LAI_ENT_DIR, &
+    call this%nc_open(this%ioalls(this%nioalls), OUTPUTS_DIR, &
         step//'/', trim(info%leaf)//'.nc', info%vname, 0)
     do k=1,ents%ncover
         call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/))
@@ -1665,16 +1665,16 @@ function download_input_file(this, iurl, oroot, dir, leaf) result(err)
     integer :: stat
 
     ! -------- Decompress / link the file if it doesn't exist
-    inquire(FILE=oroot//dir//leaf, EXIST=exist)
+    ofname = trim(oroot)//trim(dir)//trim(leaf)
+    inquire(FILE=trim(ofname), EXIST=exist)
     if (exist) then
         err = 0   ! Success
-!        return
+        return
     end if
 
     call execute_command_line('mkdir -p '//trim(oroot)//trim(dir))
 
     ! Download the gzipped version
-    ofname = trim(oroot)//trim(dir)//trim(leaf)
     cmd = 'curl --create-dirs ' // &
         '--output '//trim(ofname)//'.gz ' // &
         '-D '//trim(ofname)//'.header ' // &
@@ -1685,6 +1685,7 @@ function download_input_file(this, iurl, oroot, dir, leaf) result(err)
     call execute_command_line(cmd, .true., err)
     if (err /= 0 .or..not. check_http_code(trim(ofname)//'.header')) then
         if (err == 0) err = 440
+        write(ERROR_UNIT,*) trim(cmd)
         write(ERROR_UNIT,*) 'Error downloading file ',leaf,err
         this%nerr = this%nerr + 1
 
@@ -2015,7 +2016,7 @@ subroutine nc_check(this, exename, rw)
     end if
 
     if (present(exename)) then
-        open(17, FILE=trim(LC_LAI_ENT_DIR//trim(exename)//'.mk'))
+        open(17, FILE=trim(OUTPUTS_DIR//trim(exename)//'.mk'))
         write(17,'(AA)') trim(exename),'_INPUTS = \'
     end if
     do i=1,this%nreads
@@ -2062,7 +2063,7 @@ subroutine write_mk(this)
     ! ------ Locals
     integer :: i
 
-    open(17, FILE=trim(LC_LAI_ENT_DIR//trim(this%exename)//'.mk'))
+    open(17, FILE=trim(OUTPUTS_DIR//trim(this%exename)//'.mk'))
     write(17,'(AA)') trim(this%exename),'_INPUTS = \'
     do i=1,this%nreads
         write(17,*) '   ',trim(this%reads(i)),' \'

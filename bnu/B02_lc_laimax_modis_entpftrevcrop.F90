@@ -543,8 +543,8 @@ io_dompft%regrid_lr => nop_regrid_lr
 ! MODIS PARTITION FILES
 do k = 1,LCLASS
    call chunker%nc_open_input(partit_io(k), &
-        LC_LAI_FOR_1KM1KM_DIR, LC_LAI_FOR_1KM1KM_INPUT, &
-        '2004/',  &
+        INPUTS_URL, INPUTS_DIR, &
+        'lc/MODIS/2004/',  &
         'PART_SUB_1km_2004_geo.PARTITION_'//itoa2(k)//'.nc', &
         'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo

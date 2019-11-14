@@ -38,7 +38,7 @@ implicit none
     type(FileInfo_t) :: info
     integer :: k
 
-MAIN_PROGRAM_FILE='A01h_veg_heights'
+MAIN_PROGRAM_FILE='B04_veg_height'
 call init_ent_labels
 
 ! -----------------------------------------------------
@@ -51,8 +51,8 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
 
 ! ------------- Inputs     
 !     SIMARD HEIGHTS
-call chunker%nc_open_gz(io_sim, &
-    DATA_DIR, DATA_INPUT, &
+call chunker%nc_open_input(io_sim, &
+    INPUTS_URL, INPUTS_DIR, &
     'height/', &
     'simard_forest_heights.nc', 'heights', 1)
 
