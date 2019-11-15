@@ -82,7 +82,7 @@ result(fn)
         laisource, cropsource, var, year, ostep, ver, doytype, idoy, varsuffix)
 
 
-    fn%root = LC_LAI_ENT_DIR
+    fn%root = OUTPUTS_DIR
     fn%idir = iinfo%dir
     fn%ileaf = iinfo%leaf
     fn%odir = oinfo%dir
@@ -94,9 +94,10 @@ end function make_fname2
 
 
 ! Regrids a file, using its own FillValue as a mask
-subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo)
+subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo, rw)
     character*(*), intent(IN) :: root,idir,ifname,ivname
     type(FileInfo_t), intent(IN) :: oinfo
+    type(ReadWrites_t) :: rw
     ! ------------ Local Vars
     type(Chunker_t), target :: chunker, chunkerlr
     type(ChunkIO_t) :: io_valin, io_valout
@@ -112,9 +113,7 @@ subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo)
     integer :: k
     integer :: ndoy,idoy
     logical :: need_lc
-    type(ReadWrites_t) :: rw
 
-    call rw%init("A07_regrid_b", 20,20)
     print *,'****************** BEGIN Regrid ',trim(idir),trim(ifname),' --> ',trim(oinfo%leaf)
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
@@ -140,13 +139,12 @@ subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo)
 
     call chunker%nc_check(rw=rw)
     call chunkerlr%nc_check(rw=rw)
-    call rw%write_mk
 
 
 
 #ifdef ENTGVSD_DEBUG
-    do jchunk = dbj0,dbj1
-    do ichunk = dbi0,dbi1
+    do jchunk = dbj0_lc,dbj1_lc
+    do ichunk = dbi0_lc,dbi1_lc
 #else
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)
@@ -185,9 +183,10 @@ end subroutine regrid_selfmask
 
 
 
-subroutine regrid_lais(esub, fname)
+subroutine regrid_lais(esub, fname, rw)
     type(EntSet_t), intent(IN) :: esub
     type(IOFname_t),intent(IN), target :: fname(:)
+    type(ReadWrites_t) :: rw
     ! ------------ Local Vars
     type(Chunker_t), target :: chunker, chunkerlr
     type(ChunkIO_t), target :: io_lc_pure(esub%ncover)
@@ -205,9 +204,7 @@ subroutine regrid_lais(esub, fname)
     integer :: ndoy,idoy
     type(IOFname_t), pointer :: fn
     logical :: need_lc
-    type(ReadWrites_t) :: rw
 
-    call rw%init('B14_regrid', 20,20)
     ndoy = size(fname,1)
     do idoy=1,ndoy
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%ileaf),' --> ',trim(fname(idoy)%oleaf)
@@ -261,7 +258,6 @@ subroutine regrid_lais(esub, fname)
 
     call chunker%nc_check(rw=rw)
     call chunkerlr%nc_check(rw=rw)
-    call rw%write_mk
 
 !    call regrid_handles(chunker, chunkerlr, esub
 !
@@ -308,12 +304,12 @@ subroutine regrid_lais(esub, fname)
 end subroutine regrid_lais
 
 
-subroutine do_regrid_all_lais
-
+subroutine do_regrid_all_lais(rw)
     use ent_labels_mod
     use gcm_labels_mod
     use chunkparams_mod
-
+    type(ReadWrites_t) :: rw
+    ! --------------- Locals
     type(EntSet_t) :: ent1
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
@@ -387,15 +383,15 @@ subroutine do_regrid_all_lais
 
     oinfo%leaf = 'bs_brightratio'
     call regrid_selfmask( &
-        LC_LAI_ENT_DIR, 'carrer/', 'V1km_bs_brightratio', 'bs_brightratio', &
-        oinfo)
+        OUTPUTS_DIR, 'carrer/', 'V1km_bs_brightratio', 'bs_brightratio', &
+        oinfo, rw)
     ! ---------------------------------
 
     esub_p => esub
     do i0=1,nf,10
         i1 = min(nf,i0 + 10 - 1)
 
-        call regrid_lais(esub_p, fname(i0:i1))
+        call regrid_lais(esub_p, fname(i0:i1), rw)
     end do
 
 end subroutine do_regrid_all_lais
@@ -408,5 +404,10 @@ end module b14_mod
 program regrid
     use b14_mod
 implicit none
-    call do_regrid_all_lais
+    type(ReadWrites_t) :: rw
+
+    call rw%init("B14_regrid", 40,40)
+    call do_regrid_all_lais(rw)
+    call rw%write_mk
+
 end program regrid

@@ -17,6 +17,7 @@ private
     public :: nop_regrid_lr, default_regrid_lr
     public :: FillValue
     public :: dbi0,dbi1,dbj0,dbj1
+    public :: dbi0_lc,dbi1_lc,dbj0_lc,dbj1_lc
     public :: get_sdate
     public :: download_input_file
 
@@ -25,6 +26,12 @@ integer, parameter :: dbj0 = 11
 integer, parameter :: dbj1 = 12
 integer, parameter :: dbi0 = 5
 integer, parameter :: dbi1 = 5
+
+! ....and when debugging with large chunks (_lc)
+integer, parameter :: dbj0_lc = 3
+integer, parameter :: dbj1_lc = 4
+integer, parameter :: dbi0_lc = 1
+integer, parameter :: dbi1_lc = 1
 
 ! Controls how variabls are weighted when regridded to low resolution.
 ! The variable buf points to a buffer, of same shape as ChunkIO_t

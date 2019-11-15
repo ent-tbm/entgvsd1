@@ -1,4 +1,4 @@
-module A07a_mod
+module B15_mod
 
 use chunker_mod
 use ent_labels_mod
@@ -31,7 +31,7 @@ subroutine regrid_control(rw, root, dir, leaf, vname)
 
     call chunker_lr%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 4, 1, (/1,5/))
     call chunker_lr%nc_create(io_lr, weighting(chunker_lr%wta1,1d0,0d0), &
-        'regrids/', trim(leaf)//'_hxh', vname, vname, '1', create_lr=.false.)
+        'tmp/regrids/', trim(leaf)//'_hxh', vname, vname, '1', create_lr=.false.)
 
 
     spec_lr = hntr_spec(chunker_lr%chunk_size(1), chunker_lr%ngrid(2), 0d0, 180d0*60d0 / chunker_lr%ngrid(2))
@@ -70,30 +70,30 @@ subroutine regrid_controls(rw)
     integer :: imonth
 
     if (LAI_SOURCE == 'L') then
-        call regrid_control(rw, DATA_INPUT, 'LAI/', 'LAI3gMax_1kmx1km', 'laimax')
+        call regrid_control(rw, INPUTS_DIR, 'LAI/', 'LAI3gMax_1kmx1km', 'laimax')
     else if (LAI_SOURCE == 'B') then
-        call regrid_control(rw, LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax', 'laimax')
+        call regrid_control(rw, OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax', 'laimax')
     end if
 
 #if 1
     call regrid_control(rw, &
-        DATA_INPUT, 'height/', 'simard_forest_heights', 'heights')
+        INPUTS_DIR, 'height/', 'simard_forest_heights', 'heights')
 
 
     do imonth=1,NMONTH
         call regrid_control(rw, &
-            DATA_INPUT, 'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth), 'lai')
+            INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth), 'lai')
     end do
 #endif
 
 end subroutine regrid_controls
 
 
-end module A07a_mod
+end module B15_mod
 
 
 program A07a_regrid_controls
-    use A07a_mod
+    use B15_mod
     use chunkparams_mod
 
 implicit none

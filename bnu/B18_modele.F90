@@ -166,7 +166,7 @@ implicit none
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
 
-    call rw%init("b18_modele", 300,300)
+    call rw%init("B18_modele", 300,300)
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub

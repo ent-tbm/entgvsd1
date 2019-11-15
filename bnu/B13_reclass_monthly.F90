@@ -61,11 +61,8 @@ subroutine do_reindex(esub,m0,m1)
     end do
 
     ! bs ratio
-    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, 'carrer/', &
+    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'carrer/', &
         'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
-    ! For now at least, use BS BrightRatio from LAI3G dataset
-    ! call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, &
-    !     '', 'bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES

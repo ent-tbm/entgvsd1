@@ -1300,7 +1300,7 @@ subroutine do_trim(rw, esub)
     ! Bare Soil Brightness Ratio
     call chunker_pu%file_info(info, esub_p, &
         LAI_SOURCE, 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
-    call chunker_pu%nc_open(io_bs, LC_LAI_ENT_DIR, &
+    call chunker_pu%nc_open(io_bs, OUTPUTS_DIR, &
         info%dir, 'bs_brightratio.nc', info%vname, 1)
 
     ! Simard Heights
