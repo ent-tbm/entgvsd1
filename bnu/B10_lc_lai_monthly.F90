@@ -37,8 +37,9 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 ! ===================== Input Files
 ! Monthly LAI
 do imonth = 1,nmonth
-    call chunker%nc_open_gz(io_lai(imonth), DATA_DIR, DATA_INPUT, &
-        'LAI/BNUMonthly/', 'global_30s_2004_'//MONTH(imonth)//'.nc', 'lai', 1)
+    call chunker%nc_open_input(io_lai(imonth), &
+        INPUTS_URL, INPUTS_DIR, &
+        'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', 'lai', 1)
 enddo
 
 ! --- ENTPFTLC: Open outputs written by A00
@@ -68,19 +69,13 @@ call chunker%nc_create(io_lclai_checksum_allmonths, &
     info%long_name, info%units)
 
 
-call chunker%nc_check('A03_lc_lai_monthly')
+! Quit if we had any problems opening files
+call chunker%nc_check('B10_lc_lai_monthly')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif
-
 
 ! ====================== Done Opening Files
-
-! Quit if we had any problems opening files
-call chunker%nc_check('A03_lc_lai_monthly')
-#ifdef JUST_DEPENDENCIES
-stop 0
-#endif
 
 call assign_laimax(chunker, &
 #ifdef ENTGVSD_DEBUG

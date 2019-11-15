@@ -13,7 +13,7 @@
 
 ! A04 only creates the pure dataset.  It does NOT trim.
 
-module a04_mod
+module b11_mod
     use netcdf
     use chunker_mod
     use chunkparams_mod
@@ -121,7 +121,7 @@ subroutine do_reindex(esub)
         info%dir, info%leaf, info%vname, &
         'SUM(LC*LAI)', info%units)
 
-    call chunker%nc_check('A04_reclass_annual')
+    call chunker%nc_check('B11_reclass_annual')
 #ifdef JUST_DEPENDENCIES
     stop 0
 #endif
@@ -147,12 +147,12 @@ subroutine do_reindex(esub)
     call chunker%close_chunks
 
 end subroutine do_reindex
-end module a04_mod
+end module b11_mod
 
 ! ====================================================================
 
 program convert
-    use a04_mod
+    use b11_mod
     use ent_labels_mod
     use gcm_labels_mod
 implicit none

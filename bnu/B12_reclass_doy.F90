@@ -1,4 +1,4 @@
-module a05_mod
+module b12_mod
 
     use netcdf
     use chunker_mod
@@ -57,7 +57,7 @@ subroutine do_reindex(esub)
     end do
 
     ! Bare Soil Brightness Ratio
-    call chunker%nc_open(io_bs, LC_LAI_ENT_DIR, 'carrer/', &
+    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'carrer/', &
         'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------
@@ -79,7 +79,7 @@ subroutine do_reindex(esub)
             'SUM(LC*LAI)', info%units)
     end do   ! idoy
 
-    call chunker%nc_check('A05_reclass_doy')
+    call chunker%nc_check('B12_reclass_doy')
 #ifdef JUST_DEPENDENCIES
     stop 0
 #endif
@@ -101,12 +101,12 @@ subroutine do_reindex(esub)
     call chunker%close_chunks
 
 end subroutine do_reindex
-end module a05_mod
+end module b12_mod
 
 ! ====================================================================
 
 program convert
-    use a05_mod
+    use b12_mod
     use ent_labels_mod
     use gcm_labels_mod
 implicit none

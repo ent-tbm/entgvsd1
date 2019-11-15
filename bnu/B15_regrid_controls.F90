@@ -98,7 +98,7 @@ program A07a_regrid_controls
 
 implicit none
     type(ReadWrites_t) :: rw
-    call rw%init("A07a_regrid_controls", 100,100)
+    call rw%init('B15_regrid_controls', 100,100)
     call regrid_controls(rw)
     call rw%write_mk
 

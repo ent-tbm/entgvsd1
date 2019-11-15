@@ -1,4 +1,4 @@
-module a08_mod
+module b16_mod
 !  Performs several steps toward producing files suitable for input the GISS GCM
 !  ModelE:
 !   trimmed:  trim out small subgrid fractions, and conserve total grid LAI.
@@ -1377,15 +1377,15 @@ subroutine do_trim(rw, esub)
 
 end subroutine do_trim
 
-end module a08_mod
+end module b16_mod
 
 ! =========================================================
 program regrid
-    use a08_mod
+    use b16_mod
 implicit none
     type(GcmEntSet_t), target :: esub
     type(ReadWrites_t) :: rw
-    call rw%init("A08_trim", 1000,1000)
+    call rw%init('B16_trim', 1000,1000)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)

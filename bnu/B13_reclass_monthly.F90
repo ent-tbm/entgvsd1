@@ -1,4 +1,4 @@
-module a06_mod
+module b13_mod
 
     use netcdf
     use chunker_mod
@@ -88,7 +88,7 @@ subroutine do_reindex(esub,m0,m1)
             'SUM(LC*LAI)', info%units)
     end do   ! imonth
 
-    call chunker%nc_check('A06_reclass_monthly')
+    call chunker%nc_check('B13_reclass_monthly')
     print *,'Done opening files: nreads',chunker%nreads,'nwrite',chunker%nwrites
 #ifdef JUST_DEPENDENCIES
     stop 0
@@ -112,11 +112,11 @@ subroutine do_reindex(esub,m0,m1)
     call chunker%close_chunks
 
 end subroutine do_reindex
-end module a06_mod
+end module b13_mod
 ! ====================================================================
 
 program convert
-    use a06_mod
+    use b13_mod
     use ent_labels_mod
     use gcm_labels_mod
 implicit none

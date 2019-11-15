@@ -1,4 +1,4 @@
-module a07_mod
+module b14_mod
     use netcdf
     use chunker_mod
     use chunkparams_mod
@@ -207,7 +207,7 @@ subroutine regrid_lais(esub, fname)
     logical :: need_lc
     type(ReadWrites_t) :: rw
 
-    call rw%init("A07_regrid", 20,20)
+    call rw%init('B14_regrid', 20,20)
     ndoy = size(fname,1)
     do idoy=1,ndoy
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%ileaf),' --> ',trim(fname(idoy)%oleaf)
@@ -402,11 +402,11 @@ end subroutine do_regrid_all_lais
 
 
 
-end module a07_mod
+end module b14_mod
 
 ! =========================================================
 program regrid
-    use a07_mod
+    use b14_mod
 implicit none
     call do_regrid_all_lais
 end program regrid

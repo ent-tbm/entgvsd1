@@ -40,7 +40,7 @@ do
     xent $stage
 done
 
-python3 A11_to_modele_format.py
+python3 B19_to_modele_format.py
 
 # Plot everything
 Rscript EntGVSD_ef.R

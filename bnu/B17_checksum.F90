@@ -1,4 +1,4 @@
-module A09_mod
+module B17_mod
 !Author:  Elizabeth Fischer
 !
 ! Calculates miscellaneous checksums: error checks, differences from
@@ -83,7 +83,7 @@ subroutine init_hr(chunker)
 end subroutine
 
 
-subroutine do_A09_checksums(rw, esub_p)
+subroutine do_B17_checksums(rw, esub_p)
     type(ReadWrites_t) :: rw
     type(EntSet_t), pointer, intent(IN) :: esub_p
     ! --------- Locals
@@ -196,7 +196,7 @@ subroutine init_lr(chunker)
     call chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 2, 1, 1, nchunk=(/1,1/))
 end subroutine
 
-subroutine do_A08_checksums(rw, esub_p, step)
+subroutine do_B16_checksums(rw, esub_p, step)
     type(ReadWrites_t) :: rw
     class(EntSet_T), pointer :: esub_p
     character*(*), intent(IN) :: step
@@ -206,8 +206,8 @@ subroutine do_A08_checksums(rw, esub_p, step)
     integer :: idoy, imonth
 
 
-    ! --------------- A08_trim
-    print *,'========================= A08 ',trim(step)
+    ! --------------- B16_trim
+    print *,'========================= B16 ',trim(step)
     call init_lr(chunker)
     call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclaimax', 2004, step, '1.1', &
         varsuffix = '_checksum')
@@ -239,13 +239,13 @@ subroutine do_A08_checksums(rw, esub_p, step)
             'lai', create_lr=.false.)
     end do
 
-end subroutine do_A08_checksums
+end subroutine do_B16_checksums
 
-end module A09_mod
+end module B17_mod
 
 
-program A09_checksums
-    use A09_mod
+program B17_checksums
+    use B17_mod
     use chunkparams_mod
 
 implicit none
@@ -254,16 +254,16 @@ implicit none
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
-    call rw%init("A09_checksums", 300,300)
+    call rw%init('B17_checksum', 300,300)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub
-    call do_A09_checksums(rw, esub_p)
-    call do_A08_checksums(rw, esub_p, 'trimmed')
-    call do_A08_checksums(rw, esub_p, 'trimmed_scaled')
-    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
-    call do_A08_checksums(rw, esub_p, 'trimmed_scaled_nocrops')
+    call do_B17_checksums(rw, esub_p)
+    call do_B16_checksums(rw, esub_p, 'trimmed')
+    call do_B16_checksums(rw, esub_p, 'trimmed_scaled')
+    call do_B16_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
+    call do_B16_checksums(rw, esub_p, 'trimmed_scaled_nocrops')
 
     call rw%write_mk
-end program A09_checksums
+end program B17_checksums

@@ -1,4 +1,4 @@
-module a10_mod
+module b18_mod
 !Author: Elizabeth Fischer
 !
 ! Regrids higher spatial resolution (e.g. HXH) files to GISS GCM ModelE 2HX2 grid.
@@ -156,17 +156,17 @@ end subroutine make_modele
 
 
 
-end module a10_mod
+end module b18_mod
 
 ! =========================================================
 program regrid
-    use a10_mod
+    use b18_mod
 implicit none
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
 
-    call rw%init("A10_modele", 300,300)
+    call rw%init("b18_modele", 300,300)
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub

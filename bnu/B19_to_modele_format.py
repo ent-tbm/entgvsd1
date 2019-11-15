@@ -179,7 +179,8 @@ def main():
     for mname,files in month_group:
         convert_monthly('lai', mname,files, ifiles,ofiles)
 
-    exe = 'A11_to_modele_format'
+    # Write the .mk file, to be compatible with the rest of this suite
+    exe = 'B19_to_modele_format'
     with open(os.path.join('lc_lai_ent', exe+'.mk'), 'w') as out:
         out.write('{}_INPUTS = \\\n'.format(exe))
         for fname in ifiles:
