@@ -61,7 +61,7 @@ subroutine do_reindex(esub,m0,m1)
     end do
 
     ! bs ratio
-    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'carrer/', &
+    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'soilalbedo/', &
         'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------

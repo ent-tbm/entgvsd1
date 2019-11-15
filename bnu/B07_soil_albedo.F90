@@ -177,14 +177,14 @@ program Carrer_soilalbedo_to_GISS
 
     ! ------------ albsw
     call chunker%nc_create(io_albsw, weighting(wta,1d0,0d0), &
-        'carrer/', &
+        'soilalbedo/', &
         'albsw', 'albsw', &
         'Total shortwave soil albedo', '1')
 
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
         call chunker%nc_create(io_albgiss(iband), weighting(wta,1d0,0d0), &
-            'carrer/', &
+            'soilalbedo/', &
             'albgiss_'//trim(sbands_giss(iband)), &
             'albgiss_'//trim(sbands_giss(iband)), &
             'Soil albedo in GISS bands', '1')
@@ -193,7 +193,7 @@ program Carrer_soilalbedo_to_GISS
     ! ----------- fracbd
     do iband=1,NBANDS_GISS
         call chunker%nc_create(ioall_fracbd(iband), weighting(wta_fracbd,1d0,0d0), &
-            'carrer/', &
+            'soilalbedo/', &
             'fracbd_'//trim(sbands_giss(iband)), &
             'fracbd_'//trim(sbands_giss(iband)), &
             'Bright/Dark Soil in GISS Bands', '1', &
@@ -207,7 +207,7 @@ program Carrer_soilalbedo_to_GISS
 
     ! -------------- fracgrey
     call chunker%nc_create(ioall_fracgrey, weighting(wta_fracbd,1d0,0d0), &
-        'carrer/', &
+        'soilalbedo/', &
         'fracgrey', &
         'fracgrey', &
         'Bright/Dark Soil in GISS Bands', '1', &
@@ -221,7 +221,7 @@ program Carrer_soilalbedo_to_GISS
     ! ---------------- bs_brightratio_hr (1km resolution)
     call chunkerhr%nc_create( &
         io_bs_brightratio_hr, weighting(wta_fracbd_hr,1d0,0d0), &
-        'carrer/', &
+        'soilalbedo/', &
         'V1km_bs_brightratio', &
         'bs_brightratio', &
         'Ratio of Bright/Dark Soil in GISS Bands', '1')

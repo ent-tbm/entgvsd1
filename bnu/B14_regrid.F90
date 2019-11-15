@@ -383,7 +383,7 @@ subroutine do_regrid_all_lais(rw)
 
     oinfo%leaf = 'bs_brightratio'
     call regrid_selfmask( &
-        OUTPUTS_DIR, 'carrer/', 'V1km_bs_brightratio', 'bs_brightratio', &
+        OUTPUTS_DIR, 'soilalbedo/', 'V1km_bs_brightratio', 'bs_brightratio', &
         oinfo, rw)
     ! ---------------------------------
 
