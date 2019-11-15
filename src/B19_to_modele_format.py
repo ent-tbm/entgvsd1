@@ -166,7 +166,7 @@ convert_fn = {
 }
 
 def main():
-    annual_files, month_group = snoop_A10_dir('lc_lai_ent/modele1')
+    annual_files, month_group = snoop_A10_dir('../outputs/modele1')
 
     ifiles = list()
     ofiles = list()
@@ -181,7 +181,7 @@ def main():
 
     # Write the .mk file, to be compatible with the rest of this suite
     exe = 'B19_to_modele_format'
-    with open(os.path.join('lc_lai_ent', exe+'.mk'), 'w') as out:
+    with open(os.path.join('../outputs', exe+'.mk'), 'w') as out:
         out.write('{}_INPUTS = \\\n'.format(exe))
         for fname in ifiles:
             out.write('    {} \\\n'.format(fname))

@@ -41,7 +41,7 @@ if (FALSE) {
     
 #For running within the BNU/ directory as part of the generation process:
 if (TRUE) {
-    entlclaidir = "lc_lai_ent/"
+    entlclaidir = "../outputs/"
     pathplot=paste(entlclaidir, "plots/", sep="")
     # Create output directory if it doesn't already exist
     dir.create(pathplot)
