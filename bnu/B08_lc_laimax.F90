@@ -38,14 +38,14 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 ! ================= Input Files
 !      LAI max
 if (LAI_SOURCE == 'L') then
-    call chunker%nc_open_gz(io_laiin(1), &
-        DATA_DIR, DATA_INPUT, &
+    call chunker%nc_open_input(io_laiin(1), &
+        INPUTS_URL, INPUTS_DIR, &
         'LAI/', &
         'LAI3gMax_1kmx1km.nc', 'laimax', 1)
 else if (LAI_SOURCE == 'B') then
     ! Result of A00a_bnu_lclai.F90
     call chunker%nc_open(io_laiin(1), &
-        LC_LAI_ENT_DIR, 'bnu/', 'bnu_laimax.nc', &
+        OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', &
         'laimax', 1)
 end if
 
@@ -75,7 +75,7 @@ call chunker%nc_create( &
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A01_lc_laimax')
+call chunker%nc_check('B08_lc_laimax')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

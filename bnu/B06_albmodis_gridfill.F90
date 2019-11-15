@@ -1,4 +1,4 @@
-module a01f_gridfill_mod
+module b06_gridfill_mod
 
     use carrer_mod
     use netcdf
@@ -13,7 +13,8 @@ module a01f_gridfill_mod
     implicit none
 CONTAINS
 
-subroutine do_gridfill(iband)
+subroutine do_gridfill(rw, iband)
+    type(ReadWrites_t) :: rw
     integer :: iband
 
     ! ---------- Locals
@@ -52,13 +53,13 @@ subroutine do_gridfill(iband)
     ent2 = make_ent2()
     call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
     ! ------------ albmodis
-    call chunker%nc_open(ioall_albmodis, LC_LAI_ENT_DIR, &
-        'carrer/', &
+    call chunker%nc_open(ioall_albmodis, OUTPUTS_DIR, &
+        'tmp/carrer/', &
         'albmodis_'//trim(sbands_modis(iband))//'.nc', &
         'albmodis_'//trim(sbands_modis(iband)), 0)
     call chunker%nc_reuse_var( &
@@ -69,13 +70,16 @@ subroutine do_gridfill(iband)
 
     ! ------------ albfill
     call chunker%nc_create(io_albfill, weighting(wta,1d0,0d0), &
-        'carrer/', &
+        'tmp/carrer/', &
         'albfill_'//trim(sbands_modis(iband)), &
         'albfill_'//trim(sbands_modis(iband))//'_MEAN', &
         'albmodis MEAN with missing values filled in', '1')
 
 
-    call chunker%nc_check(MAIN_PROGRAM_FILE)
+    call chunker%nc_check(rw=rw)
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
 
     ! ================= Inputs for gridfill
     ! https://ocefpaf.github.io/python4oceanographers/blog/2014/10/20/gridfill/
@@ -134,21 +138,23 @@ subroutine do_gridfill(iband)
 
 end subroutine do_gridfill
 
-end module a01f_gridfill_mod
+end module b06_gridfill_mod
          
 program Carrer_soilalbedo_gridfill
-    use a01f_gridfill_mod
+    use b06_gridfill_mod
     use paths_mod
     implicit none
 
     integer :: iband
+    type(ReadWrites_t) :: rw
 
-    MAIN_PROGRAM_FILE = 'A01f_albmodis_gridfill'
+    MAIN_PROGRAM_FILE = 'B06_albmodis_gridfill'
+    call rw%init(MAIN_PROGRAM_FILE, 20,20)
+
     call init_ent_labels
     do iband=1,NBANDS_MODIS
-        call do_gridfill(iband)
+        call do_gridfill(rw, iband)
     end do
-
-TODO: mk file problem
+    call rw%write_mk
 
 end program Carrer_soilalbedo_gridfill

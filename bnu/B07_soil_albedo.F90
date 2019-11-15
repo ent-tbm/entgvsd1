@@ -150,7 +150,7 @@ program Carrer_soilalbedo_to_GISS
     ent2 = make_ent2()
     call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        LC_LAI_ENT_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
@@ -158,16 +158,16 @@ program Carrer_soilalbedo_to_GISS
 #ifdef USE_FILLED
     do iband=1,NBANDS_MODIS
         ! Read from 2D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), LC_LAI_ENT_DIR, &
-            'carrer/', &
+        call chunker%nc_open(io_albmodis(iband), OUTPUTS_DIR, &
+            'tmp/carrer/', &
             'albfill_'//trim(sbands_modis(iband))//'.nc', &
             'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
     end do
 #else
     do iband=1,NBANDS_MODIS
         ! Read from 3D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), LC_LAI_ENT_DIR, &
-            'carrer/', &
+        call chunker%nc_open(io_albmodis(iband), OUTPUTS_DIR, &
+            'tmp/carrer/', &
             'albmodis_'//trim(sbands_modis(iband))//'.nc', &
             'albmodis_'//trim(sbands_modis(iband)), SMEAN)
     end do
@@ -226,7 +226,7 @@ program Carrer_soilalbedo_to_GISS
         'bs_brightratio', &
         'Ratio of Bright/Dark Soil in GISS Bands', '1')
 
-MAIN_PROGRAM_FILE='A01b_soil_albedo'
+MAIN_PROGRAM_FILE='B07_soil_albedo'
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
     ! ================== Main Loop

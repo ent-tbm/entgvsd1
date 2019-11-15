@@ -36,7 +36,8 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 ! ================= Input Files
 !     DOY LAI
 do idoy=1,ndoy
-    call chunker%nc_open_gz(io_lai(idoy), DATA_DIR, DATA_INPUT, &
+    call chunker%nc_open_input(io_lai(idoy), &
+        INPUTS_URL, INPUTS_DIR, &
         'LAI/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai', 1)
 enddo
 
@@ -62,7 +63,7 @@ enddo
 ! ====================== Done Opening Files
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('A02_lc_lai_doy')
+call chunker%nc_check('B09_lc_lai_doy')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

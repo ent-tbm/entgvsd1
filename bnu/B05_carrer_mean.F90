@@ -45,7 +45,9 @@ subroutine do_carrer_mean(rw, iband, ndates)
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     ! ====================== Input files
-    call chunker%nc_open(ioall_albin, DATA_INPUT_MANUAL, 'carrer/', 'carrer.nc', &
+    call chunker%nc_open_input(ioall_albin, &
+        INPUTS_URL, INPUTS_DIR, &
+        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc', &
         'soilalb_'//trim(sbands_modis(iband)), 0)
     do id=1,ndates
         call chunker%nc_reuse_var(ioall_albin, io_albin(id), (/1,1,id/))
@@ -53,7 +55,7 @@ subroutine do_carrer_mean(rw, iband, ndates)
 
     ! ======================== Output Files
     call chunker%nc_create(ioall_albout, weighting(wta,1d0,0d0), &
-        'carrer/', &
+        'tmp/carrer/', &
         'albmodis_'//trim(sbands_modis(iband)), &
         'albmodis_'//trim(sbands_modis(iband)), &
         'Soil albedo ('//trim(sbands_modis(iband))//' band)', &
@@ -64,7 +66,9 @@ subroutine do_carrer_mean(rw, iband, ndates)
     end do
 
     call chunker%nc_check(rw=rw)
-!    call chunker%nc_check(trim(MAIN_PROGRAM_FILE)//'_'//trim(sbands_modis(iband)))
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
 
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)
@@ -141,11 +145,18 @@ implicit none
     integer :: err,ncid,dates_dimid,ndates,iband
     character(len=NF90_MAX_NAME) :: xname
     type(ReadWrites_t) :: rw
+    integer :: nerr
 
-    call rw%init("A01a_carrer_mean", 20,20)
+    MAIN_PROGRAM_FILE = 'B05_carrer_mean'
+    call rw%init(MAIN_PROGRAM_FILE, 20,20)
 
-    MAIN_PROGRAM_FILE = 'A01a_carrer_mean'
-    err = nf90_open(DATA_INPUT_MANUAL//'carrer/carrer.nc', NF90_NOWRITE, ncid)
+    ! Dummy open file to make sure it's downloaded
+    nerr = 0
+    err = download_input_file(nerr, &
+        INPUTS_URL, INPUTS_DIR, &
+        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc')
+
+    err = nf90_open(INPUTS_DIR//'soilalbedo/Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc', NF90_NOWRITE, ncid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening file at beginning'
         return

@@ -1651,8 +1651,8 @@ function check_http_code(fname) result(ok)
 
 end function check_http_code
 
-function download_input_file(this, iurl, oroot, dir, leaf) result(err)
-    type(Chunker_t) :: this
+function download_input_file(nerr, iurl, oroot, dir, leaf) result(err)
+    integer :: nerr
     character*(*), intent(in) :: iurl   ! URL root from which to download
     character*(*), intent(in) :: oroot   ! Write or link to here, then open
     character*(*), intent(in) :: dir
@@ -1687,7 +1687,7 @@ function download_input_file(this, iurl, oroot, dir, leaf) result(err)
         if (err == 0) err = 440
         write(ERROR_UNIT,*) trim(cmd)
         write(ERROR_UNIT,*) 'Error downloading file ',leaf,err
-        this%nerr = this%nerr + 1
+        nerr = nerr + 1
 
         ! https://stackoverflow.com/questions/18668832/how-delete-file-from-fortran-code
         ! Delete files
@@ -1733,7 +1733,7 @@ subroutine nc_open_input(this, cio, iurl, oroot, dir, leaf, vname, k)
 
     cio%fileid = -1
 
-    err = download_input_file(this, iurl, oroot, dir, leaf)
+    err = download_input_file(this%nerr, iurl, oroot, dir, leaf)
     if (err /= 0) then
         write(ERROR_UNIT,*) 'Error unzipping ',trim(iurl)//trim(dir)//trim(leaf)
         this%nerr = this%nerr + 1
