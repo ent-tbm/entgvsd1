@@ -5,7 +5,6 @@ module chunker_mod
     use ent_labels_mod
     use, intrinsic :: iso_fortran_env
     use netcdf
-    use paths_mod
     use ent_params_mod
     use hntr_mod
 !    use entgvsd_netcdf_util

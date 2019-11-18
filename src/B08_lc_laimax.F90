@@ -5,13 +5,12 @@ program lc_laimax
 
 use netcdf
 use chunker_mod
-use paths_mod
 use ent_labels_mod
-use geom_mod
+use ent_params_mod
 use assign_laimax_mod
 
- ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
- ! interpolate to coarser resolutions.
+! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
+! interpolate to coarser resolutions.
 implicit none
 
 integer, parameter :: one = 1

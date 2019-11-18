@@ -6,10 +6,8 @@ program bnu_laimax
 
 use netcdf
 use chunker_mod
-use paths_mod
+use ent_params_mod
 use ent_labels_mod
-use geom_modg
-use assign_laimax_mod
 
  ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 
  ! interpolate to coarser resolutions.
@@ -25,7 +23,6 @@ type(ChunkIO_t) :: io_laimax
 integer :: imonth,ic,jc,ichunk,jchunk
 real*4 :: lai,laimax
 
-MAIN_PROGRAM_FILE='B01_bnu_laimax'
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 20, 5, 5, (/1,15/))
 
@@ -43,7 +40,7 @@ call chunker%nc_create(io_laimax, weighting(chunker%wta1,1d0,0d0), &
     'tmp/bnu/', 'bnu_laimax', &
     'laimax', 'Maximum of montly LAI', 'm^2 m-2')
 
-call chunker%nc_check(MAIN_PROGRAM_FILE)
+call chunker%nc_check('B01_bnu_laimax')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

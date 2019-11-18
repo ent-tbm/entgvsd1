@@ -2,11 +2,9 @@ module b12_mod
 
     use netcdf
     use chunker_mod
-    use ent_params_mod
-    use paths_mod
     use ent_labels_mod
     use gcm_labels_mod
-    use geom_mod
+    use ent_params_mod
     use cropmerge_laisparse_splitbare_mod
 
 implicit none

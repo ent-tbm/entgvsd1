@@ -26,9 +26,8 @@ program Carrer_soilalbedo_to_GISS
     use carrer_mod
     use netcdf
     use chunker_mod
-    use paths_mod
     use ent_labels_mod
-    use geom_mod
+    use ent_params_mod
     use assign_laimax_mod
 
 
@@ -225,7 +224,6 @@ program Carrer_soilalbedo_to_GISS
         'bs_brightratio', &
         'Ratio of Bright/Dark Soil in GISS Bands', '1')
 
-MAIN_PROGRAM_FILE='B07_soil_albedo'
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
     ! ================== Main Loop

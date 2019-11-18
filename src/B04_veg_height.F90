@@ -15,9 +15,8 @@ program simard
 
     use netcdf
     use chunker_mod
-    use paths_mod
     use ent_labels_mod
-    use geom_mod
+    use ent_params_mod
 
 implicit none
       
@@ -37,7 +36,6 @@ implicit none
     type(FileInfo_t) :: info
     integer :: k
 
-MAIN_PROGRAM_FILE='B04_veg_height'
 call init_ent_labels
 
 ! -----------------------------------------------------
@@ -75,7 +73,7 @@ call chunker%nc_create1(io_lchgt_checksum, &
 
 
 ! Quit if we had any problems opening files
-call chunker%nc_check(MAIN_PROGRAM_FILE)
+call chunker%nc_check('B04_veg_height')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

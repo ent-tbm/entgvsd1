@@ -3,9 +3,8 @@ module b06_gridfill_mod
     use carrer_mod
     use netcdf
     use chunker_mod
-    use paths_mod
     use ent_labels_mod
-    use geom_mod
+    use ent_params_mod
     use assign_laimax_mod
     use gridfill_mod
     
@@ -141,14 +140,13 @@ end module b06_gridfill_mod
          
 program Carrer_soilalbedo_gridfill
     use b06_gridfill_mod
-    use paths_mod
+    use ent_params_mod
     implicit none
 
     integer :: iband
     type(ReadWrites_t) :: rw
 
-    MAIN_PROGRAM_FILE = 'B06_albmodis_gridfill'
-    call rw%init(MAIN_PROGRAM_FILE, 20,20)
+    call rw%init('B06_albmodis_gridfill', 20,20)
 
     call init_ent_labels
     do iband=1,NBANDS_MODIS

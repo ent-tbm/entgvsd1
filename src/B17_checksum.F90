@@ -6,9 +6,8 @@ module B17_mod
 
 use chunker_mod
 use ent_labels_mod
-use geom_mod
-use paths_mod
 use gcm_labels_mod
+use ent_params_mod
 use hntr_mod
 
 implicit none

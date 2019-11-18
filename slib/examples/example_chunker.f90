@@ -1,6 +1,5 @@
 program example_ioutil
 
-use paths_mod
 use chunker_mod
 use ent_params_mod
 implicit none

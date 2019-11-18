@@ -2,13 +2,12 @@
 ! Elizabeth Fischer <elizabeth.fischer@columbia.edu>
 ! August 15, 2019
 
-module A01a_mod
+module B05_mod
 
     use netcdf
     use chunker_mod
-    use paths_mod
     use ent_labels_mod
-    use geom_mod
+    use ent_params_mod
     use assign_laimax_mod
     use carrer_mod
 
@@ -132,11 +131,11 @@ end if
     call chunker%close_chunks
 end subroutine do_carrer_mean
 
-end module A01a_mod
+end module B05_mod
 ! ================================================================
 program carrer_mean
     use carrer_mod
-    use A01a_mod
+    use B05_mod
 
 implicit none
 
@@ -146,8 +145,7 @@ implicit none
     type(ReadWrites_t) :: rw
     integer :: nerr
 
-    MAIN_PROGRAM_FILE = 'B05_carrer_mean'
-    call rw%init(MAIN_PROGRAM_FILE, 20,20)
+    call rw%init('B05_carrer_mean', 20,20)
 
     ! Dummy open file to make sure it's downloaded
     nerr = 0
