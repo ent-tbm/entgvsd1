@@ -8,6 +8,52 @@ module cropmerge_laisparse_splitbare_mod
 implicit none
 CONTAINS
 
+! This is the common "guts" of B11_reclass_annual, B12_reclass_doy and B13_reclass_doy
+! Arguments:
+!
+! esub:
+!    Sub-universe, created with
+!    esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
+! chunker:
+!    Overall I/O control
+! jc0,jc1,ic0,ic1:
+!    Chunk indices, loop bounds
+! ndoy:
+!    Number of separate "days" or months to process
+!    ndoy = (B11: 1 annual instance; B12: 2 specific days of year; B13: 12 months)
+! jc0,jc1,ic0,ic1:
+!    Chunk indices, loop bounds
+! combine_crops_c3_c4:
+!    Combine C3 and C4 crops into one PFT, for ModelE?
+! split_bare_soil:
+!    Split the bare soil into dark and light, to get the right albedo?
+! ---------------- INPUT
+! io_lcin(NENT20):
+!    Land cover franctions (on master universe)
+! io_laiin(NENT20, ndoy):
+!    LAI (on master universe)
+! io_bs:
+!    Bare soil brightness ratio (V1km_bs_brightratio.nc)
+! ---------------- OUTPUT
+! io_laiout(esub%ncover, ndoy):
+!    LAI (on sub universe, esub)
+! -------------- INPUT (optional)
+! io_simin(NENT20, ndoy)
+!    (Simard) heights, produced from earlier step.
+! -------------- OUTPUT (optional)
+! sum_lc:
+!    A single buffer, fill with sum_{land cover types} LC
+!    To be used elsewhere by calling function.
+! io_lclai_checksum(ndoy):
+!    \sum_{land cover types} LC * LAI, for each of ndoy
+! io_lc_checksum(ndoy):
+!    \sum_{land cover types} LC, for each of ndoy; should be 1
+! io_lcout(esub%ncover, ndoy)
+!    Land cover fractions (on esub universe)
+! io_simout(esub%ncover, ncdoy)
+!    Heights, remapped from io_simin to esub universe
+! io_lchgt_checksum(ndoy)
+!    \sum_{land cover types} LC * height
 subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     jc0,jc1, &
     ic0,ic1, &

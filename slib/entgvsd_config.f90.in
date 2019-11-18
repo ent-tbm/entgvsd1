@@ -1,3 +1,5 @@
+! Paths, etc. specific to this installation of EntGVSD1
+! These are set based on CMake parameters.
 module entgvsd_config_mod
 
 CHARACTER(LEN=*), PARAMETER :: NETCDF4_C_BINARY_DIR=&

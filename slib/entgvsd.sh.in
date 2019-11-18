@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# Script to build an run an EntGVSD Fortran "script", eg like in src/ directory.
+
 set -e
 
 # https://archive.is/TRzn4
