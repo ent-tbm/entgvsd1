@@ -5,7 +5,7 @@ include_directories(
 set(entgvsd_SOURCES
     arrayutil.f
     paths.f90
-    chunkparams.f90
+    entparams.f90
     chunker.f90
     hntr.f90
     ent_labels.F90

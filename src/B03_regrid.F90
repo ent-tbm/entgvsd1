@@ -4,7 +4,6 @@
 program A00b_regrid
     use netcdf
     use chunker_mod
-    use chunkparams_mod
     use paths_mod
     use ent_labels_mod
     use gcm_labels_mod

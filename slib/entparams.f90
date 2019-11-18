@@ -1,4 +1,4 @@
-module chunkparams_mod
+module entparams_mod
 implicit none
 
     ! ============== Parameters that might be made more variable
@@ -11,4 +11,4 @@ implicit none
 
 CONTAINS
 
-end module chunkparams_mod
+end module entparams_mod

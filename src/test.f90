@@ -6,7 +6,7 @@ program test_ent
 !     Output is files prefixed "EntMM" for Ent-MODIS-Monfreda.
 use netcdf
 use chunker_mod
-use chunkparams_mod
+use entparams_mod
 use paths_mod
 use ent_labels_mod
 use geom_mod

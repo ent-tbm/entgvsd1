@@ -1,6 +1,6 @@
 module assign_laimax_mod
     use chunker_mod
-    use chunkparams_mod
+    use entparams_mod
     use ent_labels_mod
 
 implicit none

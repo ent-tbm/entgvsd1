@@ -11,7 +11,7 @@ implicit none
 !
 ! pure/, trimmed/, etc.
 ! make_ent_gcm_subset(combine_crops_c3_c4=.true., split_bare_soil=.true.)
-! (see chunkparams.f90 for definitions of these parameters)
+! (see entparams.f90 for definitions of these parameters)
 !
 !     01  ever_br_early
 !     02  ever_br_late

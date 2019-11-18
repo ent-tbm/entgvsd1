@@ -2,7 +2,7 @@ program example_ioutil
 
 use paths_mod
 use chunker_mod
-use chunkparams_mod
+use entparams_mod
 implicit none
 
 integer :: ncid

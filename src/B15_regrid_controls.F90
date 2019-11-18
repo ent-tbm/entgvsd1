@@ -94,7 +94,7 @@ end module B15_mod
 
 program A07a_regrid_controls
     use B15_mod
-    use chunkparams_mod
+    use entparams_mod
 
 implicit none
     type(ReadWrites_t) :: rw

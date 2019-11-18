@@ -15,7 +15,6 @@ program simard
 
     use netcdf
     use chunker_mod
-    use chunkparams_mod
     use paths_mod
     use ent_labels_mod
     use geom_mod

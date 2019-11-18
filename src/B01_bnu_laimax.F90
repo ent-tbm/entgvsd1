@@ -6,10 +6,9 @@ program bnu_laimax
 
 use netcdf
 use chunker_mod
-use chunkparams_mod
 use paths_mod
 use ent_labels_mod
-use geom_mod
+use geom_modg
 use assign_laimax_mod
 
  ! Read in GISS layer 0.5x0.5 degree files, and use HNTRP* to 

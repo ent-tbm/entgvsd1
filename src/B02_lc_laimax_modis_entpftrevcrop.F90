@@ -300,7 +300,6 @@ program modis_ent
 use modis_ent_mod
 use netcdf
 use chunker_mod
-use chunkparams_mod
 use paths_mod
 use ent_labels_mod
 
