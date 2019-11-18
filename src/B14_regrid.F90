@@ -1,7 +1,7 @@
 module b14_mod
     use netcdf
     use chunker_mod
-    use entparams_mod
+    use ent_params_mod
     use paths_mod
     use ent_labels_mod
     use gcm_labels_mod
@@ -307,7 +307,7 @@ end subroutine regrid_lais
 subroutine do_regrid_all_lais(rw)
     use ent_labels_mod
     use gcm_labels_mod
-    use entparams_mod
+    use ent_params_mod
     type(ReadWrites_t) :: rw
     ! --------------- Locals
     type(EntSet_t) :: ent1

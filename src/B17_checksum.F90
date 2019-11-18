@@ -246,7 +246,7 @@ end module B17_mod
 
 program B17_checksums
     use B17_mod
-    use entparams_mod
+    use ent_params_mod
 
 implicit none
 

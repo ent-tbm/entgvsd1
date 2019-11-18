@@ -5,7 +5,7 @@ program lc_lai_monthly
 
 use netcdf
 use chunker_mod
-use entparams_mod
+use ent_params_mod
 use paths_mod
 use ent_labels_mod
 use geom_mod

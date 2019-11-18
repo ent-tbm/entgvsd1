@@ -1,4 +1,4 @@
-module entparams_mod
+module ent_params_mod
     use entgvsd_config_mod
 implicit none
 
@@ -32,4 +32,4 @@ character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
 CONTAINS
 
-end module entparams_mod
+end module ent_params_mod

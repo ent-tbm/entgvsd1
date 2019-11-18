@@ -1,6 +1,6 @@
 module cropmerge_laisparse_splitbare_mod
     use chunker_mod
-    use entparams_mod
+    use ent_params_mod
     use ent_labels_mod
     use gcm_labels_mod
     use conversions, only : convert_vf
