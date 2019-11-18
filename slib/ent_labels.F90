@@ -99,7 +99,11 @@ type EntSet_t
     integer :: npft, nnonveg
     ! Computed
     integer :: ncover
-    character*(1) :: nonveg  ! M (M for MODIS, permanent snow/ice, bare/sparse, water), G (G for GISS, bare_bright, bare_dark)
+    ! Type of non-vegetation covertypes in this EntSet
+    ! 'M' = MODIS: permanent snow/ice, bare/sparse, water
+    ! 'G' = GISS: bare_bright, bare_dark
+    ! 'X' = Other
+    character*(1) :: nonveg
 
     ! Set of master indexes to be remapped
     integer, dimension(:,:), allocatable :: remap
@@ -185,6 +189,8 @@ character*3, parameter :: ALLMONTH(nallmonth) = &
      "Jul","Aug","Sep","Oct","Nov","Dec" &
      /)
 
+
+! --------- List of months
 #if 0
 integer, parameter :: nmonth = 12
 character*3, parameter :: MONTH(nmonth) = &
@@ -194,6 +200,7 @@ character*3, parameter :: MONTH(nmonth) = &
      /)
 
 #else
+! For testing, use reduced set of 2 months (Jan and Jul)
 integer, parameter :: nmonth = 2
 character*3, parameter :: MONTH(nmonth) = &
      (/ &
@@ -202,6 +209,7 @@ character*3, parameter :: MONTH(nmonth) = &
 
 #endif
 
+! ----------- Specific days of the year we will select data ("DOY")
 integer, parameter :: ndoy = 2
 character*3, parameter :: DOY(ndoy) = &
      (/ &
@@ -211,6 +219,13 @@ character*3, parameter :: DOY(ndoy) = &
 
 CONTAINS
 
+! Allocate a new EntSet
+! ents
+!    The EntSet to allocate
+! maxcover
+!    Maximum number of cover types to allocate
+! ncover_master
+!    If this is a sub-set of the master EntSet (NENT20 = 17 PFTs + 3)
 subroutine EntSet_allocate(ents, maxcover, ncover_master)
     class(EntSet_t) :: ents
     integer :: maxcover
@@ -243,6 +258,7 @@ subroutine EntSet_allocate(ents, maxcover, ncover_master)
     end if
 end subroutine EntSet_allocate
 
+! Simple function, convert integer to 2-digit string
 function itoa2(i) result(ret)
     integer,intent(IN) :: i
     character(2) :: ret
@@ -250,6 +266,7 @@ function itoa2(i) result(ret)
     write(ret,'(i2.2)') i
 end function
 
+! Simple function, convert integer to 3-digit string
 function itoa3(i) result(ret)
     integer,intent(IN) :: i
     character(3) :: ret
@@ -257,6 +274,7 @@ function itoa3(i) result(ret)
     write(ret,'(i3.3)') i
 end function
 
+! Simple function, convert integer to 4-digit string
 function itoa4(i) result(ret)
     integer,intent(IN) :: i
     character(4) :: ret
@@ -264,6 +282,7 @@ function itoa4(i) result(ret)
     write(ret,'(i4.4)') i
 end function
 
+! Simple function, convert integer to variable length string
 function itoa(i) result(ret)
     integer,intent(IN) :: i
     character(2) :: ret
@@ -272,8 +291,10 @@ function itoa(i) result(ret)
     ret = adjustl(ret)
 end function
 
+! Utility function: Extras an array of layer
+! names (ents%abbrev) from an EntSet
 function layer_names(ents)
-    class(EntSet_t) :: ents
+    class(EntSet_t), intent(IN) :: ents
     character*(ENT_ABBREV_LEN+3) :: layer_names(ents%ncover)
     ! ----- Locals
     integer :: k
@@ -283,8 +304,10 @@ function layer_names(ents)
     end do
 end function layer_names
 
+! Utility function: Extras an array of long layer
+! names (ents%title) from an EntSet
 function long_layer_names(ents)
-    class(EntSet_t) :: ents
+    class(EntSet_t), intent(IN) :: ents
     character*(ENT_TITLE_LEN+3) :: long_layer_names(ents%ncover)
     ! ----- Locals
     integer :: k
@@ -294,6 +317,14 @@ function long_layer_names(ents)
     end do
 end function long_layer_names
 
+! Adds a new land cover type to an EntSet; used to construct an EntSet.
+! cttype:
+!    General class of covertypes this one is:
+!    'v' for vegatation, 'n' for non-vegetation (ocean, bare/sparse, etc)
+! abbrev:
+!    Short name of the covertype
+! title:
+!    Long name of the covertype
 subroutine add_covertype(ents, cttype, abbrev,title)
     class(EntSet_t) :: ents
     character, intent(IN) :: cttype    ! 'v' for vegetation, 'n' for nonveg
@@ -324,11 +355,16 @@ subroutine add_covertype(ents, cttype, abbrev,title)
     else if (ents%nnonveg == 2) then
         ents%nonveg = 'G'
     else
+        ! We currently don't know whether this is 'M' or 'G'.
         ents%nonveg = 'X'
     end if
 
 end subroutine add_covertype
 
+! Equates the last-added covertype in an EntSet to a particular
+! covertype in the master set (NENT20).
+! index20:
+!    Covertype in the master set to which this should correspond.
 subroutine add_remap(ents, index20)
     class(EntSet_t) :: ents
     integer:: index20
@@ -347,6 +383,14 @@ subroutine add_remap(ents, index20)
     ents%remap(2,ents%nremap) = index20
 end subroutine add_remap
 
+! Adds a new covertype to ents that is equal to a particular covertype
+! in ent20.  (And that remaps to it).
+! ents:
+!     The EntSet to which to add a new covertype
+! ent20:
+!     The EntSet from which to borrow the covertype
+! index20:
+!     Index in the covertype in ent20 to borrow.
 subroutine sub_covertype(ents, ent20, index20)
     class(EntSet_t) :: ents
     type(EntSet_t), intent(IN) :: ent20
@@ -356,10 +400,12 @@ subroutine sub_covertype(ents, ent20, index20)
     call ents%add_remap(index20)
 end subroutine sub_covertype
 
-
+! Intialize commonly used global variables describing standard
+! universes of covertypes: ent20 and ent19 (ent20 minus water)
 subroutine init_ent_labels
     integer :: k
 
+    ! ent20 = Standard "master" universe from which others are derived.
     call ent20%allocate(20,20)
     call ent20%add_covertype('v', 'ever_br_early ', 'evergreen broadleaf early successional      ') !  1
     call ent20%add_covertype('v', 'ever_br_late  ', 'evergreen broadleaf late successional       ') !  2
@@ -394,6 +440,8 @@ subroutine init_ent_labels
 
 end subroutine init_ent_labels
 
+! Creates the "ent2" universe; which contains just SNOW_ICE and CV_WATER.
+! (this is used by B07_soilalbedo)
 function make_ent2() result(ent2)
     type(EntSet_t) :: ent2
     ! ----------- Locals
@@ -412,6 +460,8 @@ module gcm_labels_mod
     use ent_labels_mod
 implicit none
 
+    ! An EntSet with some extra covertypes not normally found in the
+    ! master ent20 universe.
     type, extends(EntSet_t) :: GcmEntSet_t
         ! Indices of non-standard cover types
         integer :: crops_herb
@@ -420,7 +470,6 @@ implicit none
         integer :: bare_dark
     contains
         procedure :: allocate => GcmEntSet_allocate
-    !    generic, public :: allocate => GcmEntSet_allocate
     end type GcmEntSet_t
 
 CONTAINS
@@ -432,6 +481,7 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
 
     call EntSet_allocate(ents, maxcover, ncover_master)
 
+    ! Set the special indices to -1, meaning they aren't yet in the EntSet.
     ents%crops_herb = -1
     ents%bare_bright = -1
     ents%bare_dark = -1
@@ -439,12 +489,13 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
 end subroutine GcmEntSet_allocate
 
 ! Produces cover a cover type subset, depending on user options.
+! This allows flexible "subset" universes, depending on particular choices of a run.
 ! Parameters:
 !    combine_crops_c3_c4
 !         Should C3 and C4 crop types be combined into one cover type?
 !    split_bare_soil
 !         Should the bare soil cover type be split into bright and dark sub-types?
-! Returns:
+! Returns: GCMEntSet_t
 !    The Ent covertype subset
 function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
     logical, intent(IN) :: combine_crops_c3_c4
@@ -507,10 +558,11 @@ module geom_mod
 
 implicit none
 
-! Various standard ModelE (and related) resolutions for lon/lat grids
+! ======== Some standard ModelE (and related) resolutions for lon/lat grids
+
+! 1kmx1km grid
 integer, parameter :: X1km = 43200 !long at 1 km
 integer, parameter :: Y1km = 21600 !lat at 1 km
-
 integer, parameter :: IM1km = X1km !long at 1 km
 integer, parameter :: JM1km = Y1km !lat at 1 km
 

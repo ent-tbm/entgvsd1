@@ -16,6 +16,21 @@ type HntrSpec_t
     real*8 :: dlat
 end type HntrSpec_t
 
+!
+! To regrid PART of the globe (from grid A to B)
+!   --------- Set Up (once)
+!   1. Create HntrSpec grid specification for grids A and B
+!   2. Call constructor hntr=hntr_calc(specB, specA, ...)
+!
+!   --------- Regrid PART of the globe (once per regrid)
+!   1. Allocate buffers A(i=lon,j=lat) and B(i=lon,j=lat), of
+!      corresponding size
+!   2. Determine:
+!        jb0 = latitude index in grid B corresponding to the start of
+!            buffer B, i.e. B(:,1)
+!        njb = size(B,2)
+!   3. Call hntr%regrid4(B, A, WTA, MM, BB, jb0, njb)
+!      (see regrid4() for definition of WTA, MM and BB)
 type HntrCalc_t
     type(HntrSpec_t) :: specA, specB
     real*8, dimension(:), allocatable :: dxypA, dxypB
@@ -210,11 +225,19 @@ end subroutine partition_north_south
 ! Interpolate the A grid onto the B grid
 ! Interpolates just a LATITUDE segment of the grid
 ! @param B
-!    Destination; must be right size to hold REGRIDDED stuff from A
-! @param A(this%im, jb0:jb0+njb-1)
-!    Source
-! @param jb0 Index of first latitude to start regridding (B grid)
-! @param njb Number of latitude grid cells to regrid (B grid)
+!    Destination buffer; must be right size to hold REGRIDDED stuff from A
+! @param A
+!    Source buffer
+! @param WTA
+!    Weights: fraction of each gridcell used
+! @param MM, BB
+!    Linear transformation to apply to A when regridding into B
+!       B = MM*A + BB
+!    This allows for some flexibility
+! @param jb0
+!    Index of first latitude in B grid corresponding to point in buffer B(:,1)
+! @param njb
+!    Number of latitude grid cells to regrid (B grid)
 subroutine regrid4(this, B,A,WTA,MM,BB,jb0,njb)
     class(HntrCalc_t) :: this
     real*4, dimension(:,:), intent(INOUT) :: B

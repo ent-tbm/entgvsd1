@@ -1,4 +1,3 @@
-! Called by A01,A02,A03
 module assign_laimax_mod
     use chunker_mod
     use chunkparams_mod
@@ -7,6 +6,37 @@ module assign_laimax_mod
 implicit none
 CONTAINS
 
+! This subroutine is the common "guts" of
+!    B08_lc_laimax, B09_lc_lai_doy, B10_lc_lai_monthly
+! It is called by all three, after they open their (different) files
+!
+! Arguments:
+!
+! chunker:
+!    Overall I/O control
+! jc0,jc1,ic0,ic1:
+!    Chunk indices, loop bounds
+! ---------------- INPUT
+! io_lai(ndoy):
+!    File handles for LAImax (B08) or LAI (B09, B10)
+!    Indexed by "ndoy", the number of separate "days" (or months) to process.
+!    ndoy = (B08: 1 annual instance; B09: 2 specific days of year; B10: 12 months)
+! io_lc(NENT20):
+!    Fractional area for each land cover type (see ent_labels)
+! --------------- OUTPUT
+! io_laiout(NENT20, ndoy):
+!    Per-LC LAI, for each of ndoy
+! io_lclai_checksum(ndoy):
+!    \sum_{land cover types} LC * LAI, for each of ndoy
+! -------------- OUTPUT (optional)
+! sum_lc:
+!    A single buffer, fill with sum_{land cover types} LC
+!    To be used elsewhere by calling function.
+! io_lclai_checksum_alldoy:
+!    \sum{doy} io_lclai_checksum, can be used for annual checksum over all months
+!    NOTE: Not used
+! io_err(NENT20, ndoy)   (used only for B08)
+!    Indicates if LC>0 but LAIMmax == 0
 subroutine assign_laimax(chunker, &
     jc0,jc1, &
     ic0,ic1, &
