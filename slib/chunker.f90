@@ -21,6 +21,9 @@ private
     public :: get_sdate
     public :: download_input_file
 
+! We are dealing with 2D chunked variables
+integer, parameter :: chunk_rank=2
+
 ! Chunks used when debugging
 integer, parameter :: dbj0 = 11
 integer, parameter :: dbj1 = 12
