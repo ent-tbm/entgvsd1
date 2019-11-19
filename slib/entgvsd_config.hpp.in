@@ -8,8 +8,8 @@
 
 namespace entgvsd {
     std::string const NETCDF4_C_BINARY_DIR = "@NETCDF4_C_BINARY_DIR@";
-    std::string const ENTGVSD_PROJECT_SOURCE_DIR = "@PROJECT_SOURCE_DIR@";
-    std::string const ENTGVSD_INSTALL_PREFIX = "@CMAKE_INSTALL_PREFIX";
+    std::string const ENTGVSD_PROJECT_ROOT = "@PROJECT_SOURCE_DIR@";
+    std::string const ENTGVSD_INSTALL_ROOT = "@CMAKE_INSTALL_PREFIX";
 }
 
 #endif
