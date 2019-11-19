@@ -1,3 +1,6 @@
+! Program Fills in small regions of missing data in the soil albedo
+! files.
+
 module b06_gridfill_mod
 
     use carrer_mod
@@ -90,6 +93,9 @@ subroutine do_gridfill(rw, iband)
 
     ! ================== Main Loop
 
+    ! Just one chunk, but we "loop" anyway.
+    ! There is one chunk because the Poisson gridfill doesn't work
+    ! across boundaries
     do jchunk = 1,chunker%nchunk(2)
     do ichunk = 1,chunker%nchunk(1)
 
