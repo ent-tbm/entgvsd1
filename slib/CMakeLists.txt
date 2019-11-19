@@ -4,8 +4,7 @@ include_directories(
 
 set(entgvsd_SOURCES
     arrayutil.f
-    paths.f90
-    entparams.f90
+    ent_params.f90
     chunker.f90
     hntr.f90
     ent_labels.F90
@@ -50,7 +49,4 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/slib/ DESTINATION include
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh DESTINATION bin RENAME entgvsd)
 install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/xent.py DESTINATION bin RENAME xent)
-install(PROGRAMS entgvsd_create_nc.sh DESTINATION bin RENAME entgvsd_create_nc)
-install(PROGRAMS entgvsd_link_input.py DESTINATION bin RENAME entgvsd_link_input)
-install(PROGRAMS cdlparser.py DESTINATION bin)
 

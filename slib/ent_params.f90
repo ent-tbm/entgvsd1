@@ -15,7 +15,7 @@ logical, parameter :: split_bare_soil = .true.
 CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'B'
 
 ! Sa Simard RH100 | Sb Simard RH100-stdev | Sc Simard RH100-0.5*stdev | Ha GEDI+ICESat-2 data (some day) RH100 | Hb GEDI+ICESat-2 RH100-stdev | etc.
-acter*(*), parameter :: XHEIGHTSOURCE = 'Sa'
+character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
 ! =================== Paths
 
