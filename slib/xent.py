@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 #
+# Top-level script, to be used to build-and-run EntGVSD Fortran
+# "scripts" in the src/ directory.  This script builds each Fortran
+# program with the correct libentgvsd1.so for the EntGVSD1 clone in
+# which it is located.  Therefore, this script can be installed in
+# your general path and used, even if you work with multiple EntGVSD
+# clones.
 
 from __future__ import print_function
 import os
