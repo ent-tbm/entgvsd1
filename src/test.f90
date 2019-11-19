@@ -1,9 +1,6 @@
 program test_ent
-!     Read in MODIS GISS layer and Monfreda 0.5x0.5,1x1,or 4x5 degree files, 
-!     and convert veg types to Ent PFTs as GISS layers.
-!     To convert to Ent data structures with mixed canopies, use program
-!     in Ent repository.
-!     Output is files prefixed "EntMM" for Ent-MODIS-Monfreda.
+! Program tests the chunker infrastructure, a little bit.
+
 use netcdf
 use chunker_mod
 use ent_params_mod

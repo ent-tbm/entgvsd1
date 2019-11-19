@@ -1,8 +1,10 @@
 import subprocess
 import os
 
+"""Convert R-generated PDF plots to PNG format, for easy display"""
+
 NTASKS=10    # Number of Ghostscript tasks to spawn at once
-root = 'lc_lai_ent'
+root = '../outputs'
 idir = os.path.join(root, 'plots')
 odir = os.path.join(root, 'png')
 

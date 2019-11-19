@@ -11,6 +11,8 @@ import collections
 import psutil
 import fcntl
 
+"""OBSOLETE Python plotting"""
+
 def plot_file(ifname, ofname):
     """region.center_ll:
         (lat, lon) of center of region to plot"""

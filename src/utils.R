@@ -1,3 +1,6 @@
+# Utilites need as part of R plotting
+# From Nancy Kiang
+
 #utils.R
 #source("entdiag995fn.R")
 #source("mvn.R")

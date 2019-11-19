@@ -11,6 +11,8 @@ import psutil
 import fcntl
 import collections
 
+"""OBSOLETE program: plot certain portions of the globe."""
+
 PlotSpec = collections.namedtuple('PlotSpec', ('ifname', 'vname', 'layer', 'algo', 'ofname'))
 Region = collections.namedtuple('Region',
     ('name',        # Descriptive name of the region

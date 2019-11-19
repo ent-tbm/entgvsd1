@@ -11,6 +11,8 @@ import collections
 import psutil
 import fcntl
 
+"""OBSOLETE Python plotting"""
+
 Region = collections.namedtuple('Region',
     ('name',        # Descriptive name of the region
     'shortname',    # Used in filenames
