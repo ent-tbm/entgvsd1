@@ -108,6 +108,10 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
     call chunker0%nc_check(rw=rw)
     call chunker1%nc_check(rw=rw)
 
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
+
 #ifdef ENTGVSD_DEBUG
     do jchunk = 1,1
     do ichunk = 1,1

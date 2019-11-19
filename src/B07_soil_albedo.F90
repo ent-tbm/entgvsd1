@@ -226,6 +226,11 @@ program Carrer_soilalbedo_to_GISS
 
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
+
+#ifdef JUST_DEPENDENCIES
+stop 0
+#endif
+
     ! ================== Main Loop
 
 #ifdef ENTGVSD_DEBUG

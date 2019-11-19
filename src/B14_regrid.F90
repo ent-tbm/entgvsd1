@@ -138,6 +138,9 @@ subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo, rw)
     call chunker%nc_check(rw=rw)
     call chunkerlr%nc_check(rw=rw)
 
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
 
 
 #ifdef ENTGVSD_DEBUG
@@ -257,11 +260,9 @@ subroutine regrid_lais(esub, fname, rw)
     call chunker%nc_check(rw=rw)
     call chunkerlr%nc_check(rw=rw)
 
-!    call regrid_handles(chunker, chunkerlr, esub
-!
-!end subroutine regrid_lais
-!
-!subroutine regrid_handles()
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
 
 #ifdef ENTGVSD_DEBUG
     do jchunk = dbj0,dbj1

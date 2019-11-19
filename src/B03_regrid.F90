@@ -61,6 +61,10 @@ implicit none
     call chunkerlr%nc_check(rw=rw)
     call rw%write_mk
 
+#ifdef JUST_DEPENDENCIES
+    stop 0
+#endif
+
     ! -------------- Regrid!
 #ifdef ENTGVSD_DEBUG
     do jchunk = dbj0,dbj1

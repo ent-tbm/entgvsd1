@@ -42,6 +42,10 @@ subroutine ent_diff(rw, chunker, &
     
     call chunker%nc_check(rw=rw)
 
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
+
 #ifdef ENTGVSD_DEBUG
     do jchunk = 1,1
     do ichunk = 1,1

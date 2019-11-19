@@ -48,11 +48,6 @@ stop 0
 
 ! ====================== Done Opening Files
 
-! Quit if we had any problems opening files
-#ifdef JUST_DEPENDENCIES
-stop 0
-#endif
-
 do jchunk = 1,chunker%nchunk(2)
 do ichunk = 1,chunker%nchunk(1)
 

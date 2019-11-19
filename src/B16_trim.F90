@@ -1339,6 +1339,10 @@ subroutine do_trim(rw, esub)
         STOP
     end if
 
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
+
     ! --------------------- Process things: only one chunk
     call chunker_pu%move_to(1,1)
     call tr%chunker%move_to(1,1)

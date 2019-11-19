@@ -40,6 +40,11 @@ subroutine regrid_control(rw, root, dir, leaf, vname)
     call chunker_hr%nc_check(rw=rw)
     call chunker_lr%nc_check(rw=rw)
 
+#ifdef JUST_DEPENDENCIES
+    return
+#endif
+
+
 #ifdef ENTGVSD_DEBUG
     do jchunk = 1,1
     do ichunk = 1,1
