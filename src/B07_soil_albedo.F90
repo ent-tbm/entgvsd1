@@ -228,7 +228,7 @@ program Carrer_soilalbedo_to_GISS
     call chunkerhr%nc_check(rw=rw)
 
 #ifdef JUST_DEPENDENCIES
-stop 0
+    return
 #endif
 
     ! ================== Main Loop
