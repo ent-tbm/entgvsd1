@@ -19,7 +19,7 @@ File = collections.namedtuple('File', ('ftype', 'name', 'imonth', 'mname'))
 fileRE = re.compile(r'(.*)_((lai)|(laimax)|(hgt)|(lc))_(.*)\.nc')
 monthRE = re.compile(r'(.*)_(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)_(.*)\.nc')
 def snoop_A10_dir(idir):
-    """Snoops output of A10 to determine the different relevant files in it"""
+    """Snoops output of B18_modele to determine the different relevant files in it"""
     files = []
     for fname in os.listdir(idir):
         if fname.endswith('.nc3'):
@@ -106,6 +106,7 @@ def convert_annual(ivname, ifname, ofname, prefix=''):
                 ncv.long_name = '{} - {}'.format(i+1, long_name)
 
             # -------------- Copy
+            copy_base(ncin, ncout)
             for i,layer in enumerate(layers):
                 ncout.variables[prefix+layer][:] = ncin.variables[ivname][i,:]
 
@@ -165,8 +166,10 @@ convert_fn = {
     'hgt' : lambda ifname,ofname: convert_annual('hgt', ifname, ofname, prefix='hgt_')
 }
 
+OUTPUTS_DIR = '../outputs'
+
 def main():
-    annual_files, month_group = snoop_A10_dir('../outputs/modele1')
+    annual_files, month_group = snoop_A10_dir(os.path.join(OUTPUTS_DIR, 'modele1'))
 
     ifiles = list()
     ofiles = list()
@@ -181,7 +184,7 @@ def main():
 
     # Write the .mk file, to be compatible with the rest of this suite
     exe = 'B19_to_modele_format'
-    with open(os.path.join('../outputs', exe+'.mk'), 'w') as out:
+    with open(os.path.join(OUTPUTS_DIR, exe+'.mk'), 'w') as out:
         out.write('{}_INPUTS = \\\n'.format(exe))
         for fname in ifiles:
             out.write('    {} \\\n'.format(fname))
