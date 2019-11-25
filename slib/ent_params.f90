@@ -43,8 +43,8 @@ integer, parameter :: JM1km = Y1km !lat at 1 km
 integer, parameter :: IMH = 720 !long at 0.5 degrees
 integer, parameter :: JMH = 360 !lat at 0.5 degrees
 
-integer, parameter :: IMK = 7200 !long at 0.05 degrees ~ 1 km
-integer, parameter :: JMK = 3600 !lat at 0.05 degrees ~ 1 im
+integer, parameter :: IMK = 7200 !long at 0.05 degrees ~ 6 km
+integer, parameter :: JMK = 3600 !lat at 0.05 degrees ~ 6 km
 
 integer, parameter :: IM1 = 360 !long at 1 degrees
 integer, parameter :: JM1 = 180 !lat at 1 degrees
