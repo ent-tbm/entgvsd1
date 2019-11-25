@@ -5,7 +5,7 @@ set -e
 for stage in \
     B01_bnu_laimax.F90 \
     B02_lc_laimax_modis_entpftrevcrop.F90 \
-    B03_regrid.F90 \
+    B03_regrid_snowice.F90 \
     B04_veg_height.F90 \
     B05_carrer_mean.F90 \
     B06_albmodis_gridfill.F90 \
