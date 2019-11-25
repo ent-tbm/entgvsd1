@@ -62,7 +62,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
     spec0 = hntr_spec(chunker0%chunk_size(1), chunker0%ngrid(2), 0d0, 180d0*60d0 / chunker0%ngrid(2))
     spec1 = hntr_spec(chunker1%chunk_size(1), chunker1%ngrid(2), 0d0, 180d0*60d0 / chunker1%ngrid(2))
-    hntr = hntr_calc(spec0, spec1, 0d0)   ! datmis=0
+    hntr = hntr_calc(spec1, spec0, 0d0)   ! datmis=0
 
 
     ! ---------------- Input Files
@@ -124,25 +124,25 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
         do k=1,esub%ncover
             call hntr%regrid4( &
-                io0_ann_lc(k,1)%buf, io1_ann_lc(k,1)%buf, &
+                io1_ann_lc(k,1)%buf, io0_ann_lc(k,1)%buf, &
                 chunker0%wta1, 1d0, 0d0, &   ! weighting
-                io0_ann_lc(k,1)%startB(2), io0_ann_lc(k,1)%chunker%chunk_size(2))
+                io1_ann_lc(k,1)%startB(2), io1_ann_lc(k,1)%chunker%chunk_size(2))
 
             call hntr%regrid4( &
-                io0_ann_lai(k,1)%buf, io1_ann_lai(k,1)%buf, &
+                io1_ann_lai(k,1)%buf, io0_ann_lai(k,1)%buf, &
                 chunker0%wta1, 1d0, 0d0, &   ! weighting
-                io0_ann_lai(k,1)%startB(2), io0_ann_lai(k,1)%chunker%chunk_size(2))
+                io1_ann_lai(k,1)%startB(2), io1_ann_lai(k,1)%chunker%chunk_size(2))
 
             call hntr%regrid4( &
-                io0_ann_hgt(k,1)%buf, io1_ann_hgt(k,1)%buf, &
+                io1_ann_hgt(k,1)%buf, io0_ann_hgt(k,1)%buf, &
                 chunker0%wta1, 1d0, 0d0, &   ! weighting
-                io0_ann_hgt(k,1)%startB(2), io0_ann_hgt(k,1)%chunker%chunk_size(2))
+                io1_ann_hgt(k,1)%startB(2), io1_ann_hgt(k,1)%chunker%chunk_size(2))
 
             do m=1,NMONTH
                 call hntr%regrid4( &
-                    io0_mon_lai(k,m)%buf, io1_mon_lai(k,m)%buf, &
+                    io1_mon_lai(k,m)%buf, io0_mon_lai(k,m)%buf, &
                     chunker0%wta1, 1d0, 0d0, &   ! weighting
-                    io0_mon_lai(k,m)%startB(2), io0_mon_lai(k,m)%chunker%chunk_size(2))
+                    io1_mon_lai(k,m)%startB(2), io1_mon_lai(k,m)%chunker%chunk_size(2))
             end do
         end do
 
