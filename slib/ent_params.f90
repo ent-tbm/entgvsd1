@@ -21,7 +21,7 @@ character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
 ! Donwload input files from here
 character(*), parameter :: INPUTS_URL= &
-    'https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/inputs/'
+    'https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs/'
 
 ! Put downloaded input files here
 character(*), parameter :: INPUTS_DIR= &
