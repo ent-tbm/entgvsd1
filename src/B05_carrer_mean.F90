@@ -2,6 +2,12 @@
 ! Elizabeth Fischer <elizabeth.fischer@columbia.edu>
 ! August 15, 2019
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module B05_mod
 
     use netcdf
@@ -38,7 +44,7 @@ subroutine do_carrer_mean(rw, iband, ndates)
 
     real, dimension(:,:), allocatable, target :: wta    ! Surmised landmask
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 10, 10, (/6,5/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 10, 10, (/6,5/), outputs_dir=THIS_OUTPUTS_DIR)
 
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 

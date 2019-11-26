@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b14_mod
     use netcdf
     use chunker_mod
@@ -80,7 +86,7 @@ result(fn)
         laisource, cropsource, var, year, ostep, ver, doytype, idoy, varsuffix)
 
 
-    fn%root = OUTPUTS_DIR
+    fn%root = ochunker%outputs_dir
     fn%idir = iinfo%dir
     fn%ileaf = iinfo%leaf
     fn%odir = oinfo%dir
@@ -114,8 +120,8 @@ subroutine regrid_selfmask(root, idir,ifname,ivname,oinfo, rw)
 
     print *,'****************** BEGIN Regrid ',trim(idir),trim(ifname),' --> ',trim(oinfo%leaf)
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/))
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/), outputs_dir=THIS_OUTPUTS_DIR)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20, (/6,5/), outputs_dir=THIS_OUTPUTS_DIR)
 
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
@@ -211,8 +217,8 @@ subroutine regrid_lais(esub, fname, rw)
         print *,'****************** BEGIN Regrid ',trim(fname(idoy)%ileaf),' --> ',trim(fname(idoy)%oleaf)
     end do
 
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20)
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 300, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
 
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
@@ -324,8 +330,8 @@ subroutine do_regrid_all_lais(rw)
     esub_p => esub
 
     ! Chunkers just for make_fname2()
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 0,0,0)
-    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 0,0,0)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 0,0,0, outputs_dir=THIS_OUTPUTS_DIR)
+    call chunkerlr%init(IMLR,JMLR, IMH*2,JMH*2, 'forplot', 0,0,0, outputs_dir=THIS_OUTPUTS_DIR)
 
     nf = 0
 
@@ -382,7 +388,7 @@ subroutine do_regrid_all_lais(rw)
 
     oinfo%leaf = 'bs_brightratio'
     call regrid_selfmask( &
-        OUTPUTS_DIR, 'soilalbedo/', 'V1km_bs_brightratio', 'bs_brightratio', &
+        chunkerlr%outputs_dir, 'soilalbedo/', 'V1km_bs_brightratio', 'bs_brightratio', &
         oinfo, rw)
     ! ---------------------------------
 

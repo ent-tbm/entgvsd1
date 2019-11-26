@@ -191,6 +191,7 @@ end type ChunkIO_ptr
 
 
 type ReadWrites_t
+    character*(200) :: outputs_dir
     character*(1024) :: exename
     character*(1024), dimension(:), allocatable :: reads
     integer :: nreads
@@ -241,7 +242,9 @@ end type ReadWrites_t
 !    case 3: This format is not preferred; writing it is not currently
 !            supported by EntGVSD.
 !
-type Chunker_t
+type :: Chunker_t
+    character*(200) :: outputs_dir
+
     integer :: ngrid(chunk_rank)         ! Size of fine grid. (IM,JM) for grid
     integer :: nchunk(chunk_rank)    ! Number of chunks in im,jm direction (buffer)
     integer :: nchunk_file(chunk_rank)    ! Number of chunks in im,jm direction (on-disk compression)
@@ -481,11 +484,13 @@ function weighting(buf,MM,BB) result(wta)
     wta%BB = BB
 end function weighting
 
-subroutine readwrites_init(this, exename, max_reads, max_writes)
+subroutine readwrites_init(this, outputs_dir, exename, max_reads, max_writes)
     class(ReadWrites_t) :: this
+    character*(*) :: outputs_dir
     character*(*) :: exename
     integer :: max_reads, max_writes
 
+    this%outputs_dir = outputs_dir
     this%exename = exename
     this%nreads = 0
     this%nwrites = 0
@@ -500,7 +505,7 @@ end subroutine readwrites_init
 ! @param max_reads Maximum number of files one can open for reading.
 ! @param max_writes Maximum number of files one can open for writing.
 subroutine init(this, im, jm, im_lr, jm_lr, lr_suffix, &
-max_reads, max_writes,max_ioalls,nchunk,nchunk_file)
+max_reads, max_writes,max_ioalls,nchunk,nchunk_file,outputs_dir)
     class(Chunker_t) :: this
     integer, intent(IN) :: im,jm
     integer, intent(IN) :: im_lr,jm_lr
@@ -509,11 +514,18 @@ max_reads, max_writes,max_ioalls,nchunk,nchunk_file)
 !    integer, parameter :: nchunk(chunk_rank)=(/18,15/)   ! (lon, lat) (IM, JM) for chunks
     integer, intent(IN), OPTIONAL :: nchunk(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
     integer, intent(IN), OPTIONAL :: nchunk_file(chunk_rank)  ! (lon, lat) (IM, JM) for chunks
+    character*(*), intent(IN), OPTIONAL :: outputs_dir
 
     ! ------ Locals
     integer :: i
     type(HntrSpec_t) :: spec_hr, spec_lr
     integer :: nchunk_x(chunk_rank)
+
+    if (present(outputs_dir)) then
+        this%outputs_dir = outputs_dir
+    else
+        this%outputs_dir = DEFAULT_OUTPUTS_DIR
+    end if
 
     if (present(nchunk)) then
         this%nchunk = nchunk
@@ -1407,11 +1419,11 @@ layer_names, long_layer_names, create_lr)
     end if
 
     ! ------ Create directory
-    call execute_command_line('mkdir -p '//OUTPUTS_DIR//trim(dir), &
+    call execute_command_line('mkdir -p '//this%outputs_dir//trim(dir), &
         .true., err)
 
     ! ------ Open/Create hi-res file
-    cio%path = OUTPUTS_DIR//trim(dir)//trim(leaf)//'.nc'
+    cio%path = this%outputs_dir//trim(dir)//trim(leaf)//'.nc'
     print *,'Writing ',trim(cio%path)
     err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
     if (err /= NF90_NOERR) then
@@ -1435,7 +1447,7 @@ layer_names, long_layer_names, create_lr)
     if (.not.cio%create_lr) then
         cio%own_fileid_lr = .false.
     else
-        path_name_lr = OUTPUTS_DIR//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        path_name_lr = this%outputs_dir//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
         print *,'Writing ',trim(path_name_lr)
         err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
         if (err /= NF90_NOERR) then
@@ -1594,7 +1606,7 @@ subroutine nc_open_set( &
         stop -1
     end if
 
-    call this%nc_open(this%ioalls(this%nioalls), OUTPUTS_DIR, &
+    call this%nc_open(this%ioalls(this%nioalls), this%outputs_dir, &
         step//'/', trim(info%leaf)//'.nc', info%vname, 0)
     do k=1,ents%ncover
         call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/))
@@ -1787,6 +1799,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
 
     ! ------- Now open the file
     cio%path = trim(oroot)//trim(dir)//trim(leaf)
+
     err = nf90_open(trim(cio%path),NF90_NOWRITE,cio%fileid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening ',trim(leaf),err
@@ -2025,7 +2038,7 @@ subroutine nc_check(this, exename, rw)
     end if
 
     if (present(exename)) then
-        open(17, FILE=trim(OUTPUTS_DIR//trim(exename)//'.mk'))
+        open(17, FILE=trim(this%outputs_dir//trim(exename)//'.mk'))
         write(17,'(AA)') trim(exename),'_INPUTS = \'
     end if
     do i=1,this%nreads
@@ -2072,7 +2085,7 @@ subroutine write_mk(this)
     ! ------ Locals
     integer :: i
 
-    open(17, FILE=trim(OUTPUTS_DIR//trim(this%exename)//'.mk'))
+    open(17, FILE=trim(this%outputs_dir)//trim(this%exename)//'.mk')
     write(17,'(AA)') trim(this%exename),'_INPUTS = \'
     do i=1,this%nreads
         write(17,*) '   ',trim(this%reads(i)),' \'

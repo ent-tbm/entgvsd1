@@ -42,6 +42,11 @@
 !# Index of dominant PFT
 !io_dompft = EntdominantPFT_check_sum_Jun_1kmx1mk
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
 
 
 
@@ -394,7 +399,7 @@ RESOUT = '1kmx1km'
 !     GET FILES AND VARS IDs
 
 !**   INPUT Files at 1km x 1km 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_dir=THIS_OUTPUTS_DIR)
 
 !     LAI
 if (LAI_SOURCE == 'L') then
@@ -406,7 +411,7 @@ if (LAI_SOURCE == 'L') then
 else if (LAI_SOURCE == 'B') then
     ! Result of A00a_bnu_lclai.F90
     call chunker%nc_open(io_laiin, &
-        OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', &
+        chunker%outputs_dir, 'tmp/bnu/', 'bnu_laimax.nc', &
         'laimax', 1)
 end if
 

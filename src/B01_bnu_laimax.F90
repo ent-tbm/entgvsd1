@@ -2,6 +2,12 @@
 ! Authors:  Elizabeth Fischer, Carlo Montes
 !------------------------------------------------------------------------
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 program bnu_laimax
 
 use netcdf
@@ -24,7 +30,7 @@ integer :: imonth,ic,jc,ichunk,jchunk
 real*4 :: lai,laimax
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 20, 5, 5, (/1,15/))
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 20, 5, 5, (/1,15/), outputs_dir=THIS_OUTPUTS_DIR)
 
 !* Input file.
 

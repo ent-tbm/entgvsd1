@@ -1,6 +1,12 @@
 ! Regrids LC to 6km grid needed for Carrer albedo processing
 ! JUST regrids SNOW_ICE and CV_WATER.  Uses ent2 universe to do so.
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 program B03_regrid
     use netcdf
     use chunker_mod
@@ -25,8 +31,8 @@ implicit none
     call rw%init('B03_regrid', 3,3)
 
     call init_ent_labels
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10)!forplot at 0.25 degrees.
-    call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'forplot', 10, 10, 10)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10, outputs_dir=THIS_OUTPUTS_DIR)!forplot at 0.25 degrees.
+    call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'forplot', 10, 10, 10, outputs_dir=THIS_OUTPUTS_DIR)
 
     ! Hntr stuff
     spec_hr = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
@@ -40,7 +46,7 @@ implicit none
     call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1') 
     !Open the file
     call chunker%nc_open(ioall_lc, &
-        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     !Get handles to snow and ice land cover, mvs translates indices from full
     !list of lc indices.  Assumes 3D array (IM, JM, #lc types); /1,1 are just
     !placeholders for 3D.

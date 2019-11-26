@@ -25,11 +25,13 @@ character(*), parameter :: INPUTS_URL= &
 
 ! Put downloaded input files here
 character(*), parameter :: INPUTS_DIR= &
-    ENTGVSD_PROJECT_ROOT//'inputs_new/'
+    ENTGVSD_PROJECT_ROOT//'inputs/'
 
 ! Any EntGVSD1-generated output files go here
-character(*), parameter :: OUTPUTS_DIR= &
+character(*), parameter :: DEFAULT_OUTPUTS_DIR= &
     ENTGVSD_PROJECT_ROOT//'outputs/'
+character(*), parameter :: MKFILES_DIR= &
+    ENTGVSD_PROJECT_ROOT//'mkfiles/'
 
 
 ! ======== Some standard ModelE (and related) resolutions for lon/lat grids

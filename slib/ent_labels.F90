@@ -191,7 +191,7 @@ character*3, parameter :: ALLMONTH(nallmonth) = &
 
 
 ! --------- List of months
-#if 0
+#if 1
 integer, parameter :: nmonth = 12
 character*3, parameter :: MONTH(nmonth) = &
      (/ &

@@ -1,6 +1,12 @@
 
 !  Program to assign 1kmx1km BNU LAI of selected DOY to EntPFTs
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 !------------------------------------------------------------------------
 
 program lc_lai_doy
@@ -26,7 +32,7 @@ type(FileInfo_t) :: info
 integer :: idoy,k
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_dir=THIS_OUTPUTS_DIR)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 !* Input file.
