@@ -1,0 +1,11 @@
+netcdf Tcold  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Tcold(lat, lon) ;
+              Tcold:long_name = "Temperature of coldest month (C) 1x1" ;
+	      Tcold:_FillValue = -1e30 ;
+}

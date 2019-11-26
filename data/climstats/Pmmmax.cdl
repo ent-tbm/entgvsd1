@@ -1,0 +1,11 @@
+netcdf Pmmmax  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Pmmmax(lat, lon) ;
+              Pmmmax:long_name = "Precip of wettest month (mm/month)" ;
+	      Pmmmax:_FillValue = -1e30 ;
+}

@@ -1,0 +1,11 @@
+netcdf TC10C  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float TC10C(lat, lon) ;
+              TC10C:long_name = "TC>10 C (#months of year)" ;
+	      TC10C:_FillValue = -1e30 ;
+}

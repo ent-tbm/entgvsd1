@@ -1,0 +1,11 @@
+netcdf Pmave  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Pmave(lat, lon) ;
+              Pmave:long_name = "Mean Annual Precip (cm/yr)  GPCC 1km x 1km" ;
+	      Pmave:_FillValue = -1e30 ;
+}

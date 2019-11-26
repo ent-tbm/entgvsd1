@@ -1,0 +1,11 @@
+netcdf TCinave  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float TCinave(lat, lon) ;
+              TCinave:long_name = "Mean Annual Temperature (C)  CRU 1km x 1km" ;
+	      TCinave:_FillValue = -1e30 ;	     
+}

@@ -1,0 +1,30 @@
+netcdf CRU_GPCC_C4frac_1981-2010_1kmx1km  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float C4FRAC(lat, lon) ;
+        C4FRAC:standard_name = "C4FRAC" ;
+        C4FRAC:long_name = "Fraction of C4 species" ;
+        C4FRAC:units = "fractions %/100" ;
+        C4FRAC:_FillValue =  -1e30 ;
+// global attributes:
+        :EntGVSD = "Ent Terrestrial Biosphere Model Global Vegetation Structure Dataset " ;
+        :history = "Jul 2015: C. Montes, N.Y. Kiang " ;
+        :institution = "Original data: CRU and GPCC cliamte data. Scaling: NASA Goddard Institute for Space Studies" ;
+        :title = "Fraction of C4 plant species" ;
+        :keywords = "precipitation climatology,gpcc,global,gpcp," ;
+        :creator_name = "NASA GISS" ;
+        :creator_email = "carlo.montes@nasa.gov, nancy.y.kiang@nasa.gov" ;
+        :date_created = "August 2015" ;
+        :time_coverage_start = "1951-01-01" ;
+        :time_coverage_end = "1980-12-31" ;
+        :geospatial_lat_min = "-90." ;
+        :geospatial_lat_max = "90." ;
+        :geospatial_lon_min = "-180." ;
+        :geospatial_lon_max = "180." ;
+        :EntTBM = "Ent Terrestrial Biosphere Model" ;
+
+}

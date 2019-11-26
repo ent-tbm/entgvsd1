@@ -1,0 +1,11 @@
+netcdf Pdry  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Pdry(lat, lon) ;
+              Pdry:long_name = "Precip (# of months < 7.5 mm)  1x1" ;
+	      Pdry:_FillValue = -1e30 ;
+}

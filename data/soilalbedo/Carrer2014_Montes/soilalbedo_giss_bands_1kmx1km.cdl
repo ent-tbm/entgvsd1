@@ -1,0 +1,45 @@
+netcdf soilalbedo_giss_bands_1kmx1km {
+
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+ 
+variables:
+        float lon(lon) ;
+            lon:units = "degrees_east" ;
+
+        float lat(lat) ;
+            lat:units = "degrees_north" ;
+
+        float soilalb_VIS0(lat, lon) ;
+		soilalb_VIS0:long_name = "soil albedo VIS (330-770 nm)" ;
+		soilalb_VIS0:units = "fraction" ;
+
+	float soilalb_NIR1(lat, lon) ;
+		soilalb_NIR1:long_name = "soil albedo NIR1 (770-860 nm)" ;
+		soilalb_NIR1:units = "fraction" ;
+
+	float soilalb_NIR2(lat, lon) ;
+		soilalb_NIR2:long_name = "soil albedo NIR2 (860-1250 nm)" ;
+		soilalb_NIR2:units = "fraction" ;
+
+	float soilalb_NIR3(lat, lon) ;
+		soilalb_NIR3:long_name = "soil albedo NIR3 (1250-1500 nm)" ;
+		soilalb_NIR3:units = "fraction" ;
+
+	float soilalb_NIR4(lat, lon) ;
+		soilalb_NIR4:long_name = "soil albedo NIR4 (1500-2200 nm)" ;
+		soilalb_NIR4:units = "fraction" ;
+
+	float soilalb_NIR5(lat, lon) ;
+		soilalb_NIR5:long_name = "soil albedo NIR5 (2200-4000 nm)" ;
+		soilalb_NIR5:units = "fraction" ;
+
+
+// global attributes:
+	:title = "Annual average soil albedo in GISS GCM 6 bands for the year 2004 calculated from files sent by Dominique Carrer sent Fall 2015." ;
+	:history = "MODIS-derived soil albedo (Carrer et al 2014 RSE) interpolated to 1km resolution" ;
+        :institution = "NASA/GISS  C.Montes, N.Kiang, I.Aleinov" ;
+
+}
+

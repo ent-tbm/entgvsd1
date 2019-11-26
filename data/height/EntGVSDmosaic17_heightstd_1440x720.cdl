@@ -1,0 +1,38 @@
+netcdf EntGVSDmosaic17_height_1440x720 {
+dimensions:
+        lon = 1440 ;
+        lat = 720 ;
+        layers = 19 ;
+
+variables:
+        float lon(lon) ;
+        float lat(lat) ;
+        float SimardHeights(lat, lon, layers) ;
+                SimardHeights:long_name = "Ent 19 Vegetation Height Standard Deviation" ;
+                SimardHeights:units = "m" ;
+
+// global attributes:
+                :EntGVSD = "Ent Terrestrial Biosphere Model Global Vegetation Structure Dataset " ;
+
+                :LC2 = "1 - evergreen broadleaf early successional " ;
+                :LC3 = "2 - evergreen broadleaf late successional " ;
+                :LC4 = "3 - evergreen needleleaf early successional " ;
+                :LC5 = "4 - evergreen needleleaf late successional " ;
+                :LC6 = "5 - cold deciduous broadleaf early successional " ;
+                :LC7 = "6 - cold deciduous broadleaf late successional " ;
+                :LC8 = "7 - drought deciduous broadleaf " ;
+                :LC9 = "8 - deciduous needleleaf " ;
+                :LC10 = "9 - cold adapted shrub " ;
+                :LC11 = "10 - arid adapted shrub " ;
+                :LC12 = "11 - C3 grass perennial " ;
+                :LC13 = "12 - C4 grass " ;
+                :LC14 = "13 - C3 grass - annual " ;
+                :LC15 = "14 - arctic C3 grass " ;
+                :LC16 = "15 - crops C3 herb " ;
+                :LC17 = "16 - crops C4 herb " ;
+                :LC18 = "17 - crops woody " ;
+                :LC19 = "18 - Permanent snow/ice " ;
+                :LC20 = "19 - Bare or sparsely vegetated, urban " ;
+
+}
+

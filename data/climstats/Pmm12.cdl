@@ -1,0 +1,11 @@
+netcdf Pmm12  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Pmm12(lat, lon) ;
+              Pmm12:long_name = "Precip (fraction of months > 25 mm)  1x1" ;
+	      Pmm12:_FillValue = -1e30 ;
+}

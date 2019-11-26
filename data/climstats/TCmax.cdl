@@ -1,0 +1,11 @@
+netcdf TCmax  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float TCmax(lat, lon) ;
+              TCmax:long_name = "TC_maxh (Cesius)" ;
+	      TCmax:_FillValue = -1e30 ;
+}

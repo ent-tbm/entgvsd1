@@ -1,0 +1,15 @@
+netcdf Monfreda_crops_1kmx1km_norm {
+
+dimensions:
+	lon = 43200 ;
+        lat = 21600 ;
+
+variables:
+	float lon(lon);
+
+	float lat(lat) ;
+
+	float crops(lat, lon) ;
+
+
+}
