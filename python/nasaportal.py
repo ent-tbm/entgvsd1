@@ -40,6 +40,7 @@ def curl(curl_args):
         header_file = os.path.join(tmp, '_header')
 
         cmd = ['curl', '-D', header_file] + list(curl_args)
+        # print(' '.join(cmd))
         proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, stderr = proc.communicate()
         try:

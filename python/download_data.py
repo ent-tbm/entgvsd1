@@ -24,6 +24,13 @@ def search_up(path, condition_fn):
             return None
         path = new_path
 
+def any_isfile(fnames):
+    """Returns the filename if any exist; otherwise none"""
+    for fname in fnames:
+        if os.path.isfile(fname):
+            return fname
+    return None
+
 
 def _condition(path):
     root,leaf = os.path.split(path)
@@ -44,27 +51,14 @@ for root, dirs, files in nasaportal.walk(portal_dir):
         iname = '/'.join((root, name))
         oname = '.' + iname[len(portal_dir):]
 
+        # Possible output names to look for
+        possible_onames = [oname]
         if oname.endswith('.gz'):
-            oname_download = oname
-            oname_final = oname[:-3]
-            gzip = True
+            possible_onames.append(oname[:-3])
+
+        exists = any_isfile(possible_onames)
+        if (exists is not None):
+            sys.stderr.write('File exists: {}\n'.format(exists))
         else:
-            oname_download = oname
-            oname_final = oname
-            gzip = False
-
-        if os.path.isfile(oname_final):
-            sys.stderr.write('File exists: {}\n'.format(oname_final))
-        else:
-            if not os.path.isfile(oname_download):
-                sys.stderr.write('Downloading {}\n'.format(oname_download))
-                nasaportal.download(iname, ofile=oname)
-
-            if not os.path.isfile(oname_final):
-                sys.stderr.write('Uncompressing to {}\n'.format(oname_final))
-                cmd = ['gunzip', oname_download]
-                ret = subprocess.run(cmd)
-                if ret.returncode != 0:
-                    raise Exception('Error ungzipping: {}'.format(ret.returncode))
-
-
+            sys.stderr.write('Downloading {}\n'.format(oname))
+            nasaportal.download(iname, ofile=oname)
