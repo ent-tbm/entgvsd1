@@ -20,10 +20,10 @@ def tempdir(prefix='tmp'):
     finally:
         shutil.rmtree(tmpdir)
 
-def dir_to_url(dir):
+def dir_to_url(dir, trailing=False):
     url = PORTAL_ROOT + dir
-#    if url[-1] != '/':
-#        url = url + '/'
+    if trailing and url[-1] != '/':
+        url = url + '/'
     return url
 
 headerRE = re.compile(r'HTTP/[^\s]+\s*(\d+)\s*(.*)')
@@ -89,7 +89,7 @@ PORTAL_ROOT = 'https://portal.nccs.nasa.gov/datashare'
 def list_hrefs(dir):
     """dir:
         Directory on portal to list; must start with /"""
-    html = curl(['--location', dir_to_url(dir)]).decode()
+    html = curl(['--location', dir_to_url(dir, trailing=True)]).decode()
 
     for matches in hrefRE.finditer(html):
         yield matches.group(1)
@@ -133,6 +133,8 @@ def list_entries(dir):
 
 # =====================================================================
 
+# NOTE: This subroutine is copied from CPython's os.walk()
+# See licensing at: https://github.com/python/cpython/blob/master/LICENSE
 def walk(top, topdown=True, onerror=None, followlinks=False):
     """Directory tree generator.
     For each directory in the directory tree rooted at top (including top
@@ -232,7 +234,7 @@ def walk(top, topdown=True, onerror=None, followlinks=False):
         # Yield after recursion if going bottom up
         yield top, dirs, nondirs
 
-def download(src, odir):
+def download(src, odir=None, ofile=None):
     """Copies file from NASA portal to destination directory on local machine.
     This is atomic; partial files will not be left around if it fails in the middle.
     src:
@@ -241,12 +243,13 @@ def download(src, odir):
         Directory on local machine where file will be stored (under the same name)."""
     url = dir_to_url(src)
     leaf = src.split('/')[-1]
-    ofname = os.path.join(odir, leaf)
-    sys.stderr.write('Downloading {} to {}\n'.format(url, ofname))
-    tmpout = ofname + '.download'
+    if ofile is None:
+        ofile = os.path.join(odir, leaf)
+    # sys.stderr.write('Downloading {} to {}\n'.format(url, ofile))
+    tmpout = ofile + '.download'
     try:
         _ = curl(['--create-dirs', '--output', tmpout, url])
-        os.rename(tmpout, ofname)
+        os.rename(tmpout, ofile)
     finally:
         try:
             os.remove(tmpout)
