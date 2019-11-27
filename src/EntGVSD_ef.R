@@ -355,7 +355,7 @@ if (TRUE) {
 
 #modelE
 if (TRUE) {
-   trimopt = c("modele1")
+   trimopt = c("modelE")
     res="2HX2"
     filepre = "V2HX2_EntGVSD"
     icov = "16G"
@@ -421,9 +421,9 @@ if (TRUE) {
                     xlab="", ylab="", zlim=c(0,7))
               plot(coastsCoarse, add=TRUE, lwd=0.25)
               long_name = att.get.nc(ncid, p, attribute="long_name")
-              mtext(paste(long_name), cex=0.6)
               units = att.get.nc(ncid, p, attribute="units")
-              title(paste(p, " (",units,")", sep=""))
+              mtext(paste(long_name, " (",units,")", sep=""), cex=0.6)
+              #title(paste(p, " (",units,")", sep=""))
            }
               mtext(outer=TRUE, fname, line=1)
               mtext(outer=TRUE, MON[timevec[m]], line=-1)
@@ -444,9 +444,9 @@ if (TRUE) {
                     xlab="", ylab="", zlim=c(0,7))
               plot(coastsCoarse, add=TRUE, lwd=0.25)
               long_name = att.get.nc(ncid, p, attribute="long_name")
-              mtext(paste(long_name), cex=0.6)
               units = att.get.nc(ncid, p, attribute="units")
-              title(paste(p, " (",units,")", sep=""))
+              mtext(paste(long_name, " (",units,")", sep=""), cex=0.6)
+              #title(paste(p, " (",units,")", sep=""))
            }
               mtext(outer=TRUE, fname, line=1)
               mtext(outer=TRUE, MON[timevec[m]], line=-1)
