@@ -411,7 +411,7 @@ program regrid
 implicit none
     type(ReadWrites_t) :: rw
 
-    call rw%init("B14_regrid", 40,40)
+    call rw%init(THIS_OUTPUTS_DIR, "B14_regrid", 40,40)
     call do_regrid_all_lais(rw)
     call rw%write_mk
 

@@ -151,7 +151,7 @@ implicit none
     type(ReadWrites_t) :: rw
     integer :: nerr
 
-    call rw%init('B05_carrer_mean', 20,20)
+    call rw%init(THIS_OUTPUTS_DIR, 'B05_carrer_mean', 20,20)
 
     ! Dummy open file to make sure it's downloaded
     nerr = 0

@@ -158,7 +158,7 @@ program Carrer_soilalbedo_gridfill
     integer :: iband
     type(ReadWrites_t) :: rw
 
-    call rw%init('B06_albmodis_gridfill', 20,20)
+    call rw%init(THIS_OUTPUTS_DIR, 'B06_albmodis_gridfill', 20,20)
 
     call init_ent_labels
     do iband=1,NBANDS_MODIS

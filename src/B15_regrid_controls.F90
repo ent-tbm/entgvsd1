@@ -109,7 +109,7 @@ program A07a_regrid_controls
 
 implicit none
     type(ReadWrites_t) :: rw
-    call rw%init('B15_regrid_controls', 100,100)
+    call rw%init(THIS_OUTPUTS_DIR, 'B15_regrid_controls', 100,100)
 #if JUST_DEPENDENCIES
     call regrid_controls(rw, MKFILES_DIR)
 #else

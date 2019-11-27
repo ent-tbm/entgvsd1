@@ -1419,11 +1419,12 @@ layer_names, long_layer_names, create_lr)
     end if
 
     ! ------ Create directory
-    call execute_command_line('mkdir -p '//this%outputs_dir//trim(dir), &
+    call execute_command_line('mkdir -p '//trim(this%outputs_dir)//trim(dir), &
         .true., err)
+    if (err /= 0) STOP 1
 
     ! ------ Open/Create hi-res file
-    cio%path = this%outputs_dir//trim(dir)//trim(leaf)//'.nc'
+    cio%path = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'.nc'
     print *,'Writing ',trim(cio%path)
     err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
     if (err /= NF90_NOERR) then
@@ -1447,7 +1448,7 @@ layer_names, long_layer_names, create_lr)
     if (.not.cio%create_lr) then
         cio%own_fileid_lr = .false.
     else
-        path_name_lr = this%outputs_dir//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        path_name_lr = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
         print *,'Writing ',trim(path_name_lr)
         err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
         if (err /= NF90_NOERR) then
@@ -1606,7 +1607,7 @@ subroutine nc_open_set( &
         stop -1
     end if
 
-    call this%nc_open(this%ioalls(this%nioalls), this%outputs_dir, &
+    call this%nc_open(this%ioalls(this%nioalls), trim(this%outputs_dir), &
         step//'/', trim(info%leaf)//'.nc', info%vname, 0)
     do k=1,ents%ncover
         call this%nc_reuse_var(this%ioalls(this%nioalls), cios(k), (/1,1,k/))
@@ -1649,7 +1650,7 @@ function gunzip_input_file(this, iroot, oroot, dir, leaf) result(err)
     if (err /= 0) then
         write(ERROR_UNIT,*) 'Error running entgvsd_link_input',leaf,err
         this%nerr = this%nerr + 1
-        return 
+        STOP 1
     end if
 
 end function gunzip_input_file
@@ -1708,6 +1709,7 @@ function download_input_file(nerr, iurl, oroot, dir, leaf) result(err)
         if (err == 0) err = 440
         write(ERROR_UNIT,*) trim(cmd)
         write(ERROR_UNIT,*) 'Error downloading file ',leaf,err
+        STOP 1
         nerr = nerr + 1
 
         ! https://stackoverflow.com/questions/18668832/how-delete-file-from-fortran-code
@@ -1725,6 +1727,7 @@ function download_input_file(nerr, iurl, oroot, dir, leaf) result(err)
         print *,'Uncompressing ',trim(ofname)//'.gz'
         cmd = 'gunzip '//trim(ofname)//'.gz'
         call execute_command_line(cmd, .true., err)
+        if (err /= 0) STOP 1
     end if
 
 end function download_input_file
@@ -2038,7 +2041,7 @@ subroutine nc_check(this, exename, rw)
     end if
 
     if (present(exename)) then
-        open(17, FILE=trim(this%outputs_dir//trim(exename)//'.mk'))
+        open(17, FILE=trim(this%outputs_dir)//trim(exename)//'.mk')
         write(17,'(AA)') trim(exename),'_INPUTS = \'
     end if
     do i=1,this%nreads

@@ -263,7 +263,7 @@ implicit none
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
-    call rw%init('B17_checksum', 300,300)
+    call rw%init(THIS_OUTPUTS_DIR, 'B17_checksum', 300,300)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
