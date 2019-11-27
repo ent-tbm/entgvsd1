@@ -23,6 +23,7 @@ for ileaf in ileaves:
     oleaf = ileaf
     oleaf = oleaf.replace('_forplot.nc.pdf', '.png')
     oleaf = oleaf.replace('.nc.pdf', '.png')
+    oleaf = oleaf.replace('.pdf', '.png')
     ofname = os.path.join(odir, oleaf)
 
     itime = os.path.getmtime(ifname)
