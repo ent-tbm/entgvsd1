@@ -1,0 +1,11 @@
+netcdf TC22P25  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float TC22P25(lat, lon) ;
+              TC22P25:long_name = "C4 climate (#months with T>22 C and P>25 mm) 1x1" ;
+	      TC22P25:_FillValue = -1e30 ;	      
+}

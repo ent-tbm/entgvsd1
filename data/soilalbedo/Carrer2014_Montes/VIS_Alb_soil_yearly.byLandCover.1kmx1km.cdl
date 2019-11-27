@@ -1,0 +1,96 @@
+netcdf VIS_Alb_soil_yearly.byLandCover.1kmx1km {
+
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+ 
+variables:
+        float lon(lon) ;
+            lon:units = "degrees_east" ;
+
+        float lat(lat) ;
+            lat:units = "degrees_north" ;
+
+        float ever_br_early(lat, lon) ;
+            ever_br_early:long_name = "1 - Evergreen Broadleaf Early Succ - Soil Albedo" ;
+            ever_br_early:units = "fraction" ;
+
+        float ever_br_late(lat, lon) ;
+            ever_br_late:long_name = "2 - Evergreen Broadleaf Late Succ - Soil Albedo" ;
+            ever_br_late:units = "fraction" ;
+
+        float ever_nd_early(lat, lon) ;
+            ever_nd_early:long_name = "3 - Evergreen Needleleaf Early Succ - Soil Albedo" ;
+            ever_nd_early:units = "fraction" ;
+        
+        float ever_nd_late(lat, lon) ;
+            ever_nd_late:long_name = "4 - Evergreen Needleleaf Late Succ - Soil Albedo" ;
+            ever_nd_late:units = "fraction" ;
+
+        float cold_br_early(lat, lon) ;
+            cold_br_early:long_name = "5 - Cold Deciduous Broadleaf Early Succ - Soil Albedo" ;
+            cold_br_early:units = "fraction" ;
+
+        float cold_br_late(lat, lon) ;
+            cold_br_late:long_name = "6 - Cold Deciduous Broadleaf Late Succ - Soil Albedo" ;
+            cold_br_late:units = "fraction" ;
+
+        float drought_br(lat, lon) ;
+            drought_br:long_name = "7 - Drought Deciduous Broadleaf - Soil Albedo" ;
+            drought_br:units = "fraction" ;
+        
+        float decid_nd(lat, lon) ;
+            decid_nd:long_name = "8 - Deciduous Needleleaf - Soil Albedo" ;
+            decid_nd:units = "fraction" ;
+
+        float cold_shrub(lat, lon) ;
+            cold_shrub:long_name = "9 - Cold Adapted Shrub - Soil Albedo" ;
+            cold_shrub:units = "fraction" ;
+
+        float arid_shrub(lat, lon) ;
+            arid_shrub:long_name = "10 - Arid Adapted Shrub - Soil Albedo" ;
+            arid_shrub:units = "fraction" ;
+
+        float c3_grass_per(lat, lon) ;
+            c3_grass_per:long_name = "11 - C3 Grass Perennial - Soil Albedo" ;
+            c3_grass_per:units = "fraction" ;
+        
+        float c4_grass(lat, lon) ;
+            c4_grass:long_name = "12 - C4 Grass - Soil Albedo" ;
+            c4_grass:units = "fraction" ;
+
+        float c3_grass_ann(lat, lon) ;
+            c3_grass_ann:long_name = "13 - C3 Grass Annual - Soil Albedo" ;
+            c3_grass_ann:units = "fraction" ;
+
+        float c3_grass_arct(lat, lon) ;
+            c3_grass_arct:long_name = "14 - Arctic C3 Grass - Soil Albedo" ;
+            c3_grass_arct:units = "fraction" ;
+
+        float crops_herb(lat, lon) ;
+            crops_herb:long_name = "15 - Crops Herb - Soil Albedo" ;
+            crops_herb:units = "fraction" ;
+        
+        float crops_woody(lat, lon) ;
+            crops_woody:long_name = "16 - Crops Woody - Soil Albedo" ;
+            crops_woody:units = "fraction" ;
+
+        float snow_ice(lat, lon) ;
+            snow_ice:long_name = "17 - Bright Bare Soil - Soil Albedo" ;
+            snow_ice:units = "fraction" ;
+
+        float bare_sparse(lat, lon) ;
+            bare_sparse:long_name = "18 - Dark Bare Soil - Soil Albedo" ;
+            bare_sparse:units = "fraction" ;
+
+        float water(lat, lon) ;
+            water:long_name = "19 - Water - Soil Albedo" ;
+            water:units = "fraction" ;
+         
+// global attributes:
+
+      :xlabel = "VIS soil albedo by Ent PFT Land Cover, 16 plant types, snow, bare soil, water; fraction of grid cell" ;
+      :history = "MODIS-derived soil albedo (Carrer et al 2014 RSE)" ;
+      :institution = "NASA/GISS  C.Montes, N.Kiang, I.Aleinov" ;
+}
+

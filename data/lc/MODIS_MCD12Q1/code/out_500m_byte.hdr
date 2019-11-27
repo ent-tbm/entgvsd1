@@ -1,0 +1,16 @@
+ENVI
+description = {
+  File Imported into ENVI.}
+samples = 86400
+lines   = 43200
+bands   = 1
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bsq
+sensor type = Unknown
+byte order = 0
+map info = {Sinusoidal, 1.0000, 1.0000, -20015109.3540, 10007554.6770, 463.3127165277778, 463.3127165277778, WGS-84, units=Meters}
+projection info = {16, 6371007.181, 0.000000, 0.0, 0.0, WGS-84, Sinusoidal, units=Meters}
+coordinate system string = {PROJCS["Sinusoidal",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6371007.181,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Sinusoidal"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]}
+wavelength units = Unknown

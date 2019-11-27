@@ -11,6 +11,12 @@
 !
 !-----------------------------------------------------------------
       
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 program simard
 
     use netcdf
@@ -41,7 +47,7 @@ call init_ent_labels
 ! -----------------------------------------------------
 ! -----------------------------------------------------
 
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_dir=THIS_OUTPUTS_DIR)
 
 ! ----------------------------------------------------------------------
 !     GET NC FILES IDs

@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b16_mod
 !  Performs several steps toward producing files suitable for input the GISS GCM
 !  ModelE:
@@ -48,7 +54,7 @@ subroutine outputsegment_open(this, step, esub)
     type(FileInfo_t) :: info
 
     this%step = step
-    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 500, 30, (/1,1/))
+    call this%chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 500, 30, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
 
     ! ------- Allocate file handles
     allocate(this%io_ann_lc(esub%ncover,1))
@@ -1288,7 +1294,7 @@ subroutine do_trim(rw, esub)
 
     esub_p => esub
 
-    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/))
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
 
     ! --- Inputs: Same for annual vs. monthly
     call chunker_pu%nc_open_set( &
@@ -1298,7 +1304,7 @@ subroutine do_trim(rw, esub)
     ! Bare Soil Brightness Ratio
     call chunker_pu%file_info(info, esub_p, &
         LAI_SOURCE, 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
-    call chunker_pu%nc_open(io_bs, OUTPUTS_DIR, &
+    call chunker_pu%nc_open(io_bs, chunker_pu%outputs_dir, &
         info%dir, 'bs_brightratio.nc', info%vname, 1)
 
     ! Simard Heights

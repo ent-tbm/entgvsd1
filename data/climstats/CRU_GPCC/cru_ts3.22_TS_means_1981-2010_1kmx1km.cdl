@@ -1,0 +1,13 @@
+netcdf cru_ts3.22_TS_means_1981-2010_1kmx1km {
+dimensions:
+        time = 13 ;
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+        double lon(lon) ;
+        double lat(lat) ;
+        double time(time) ;
+        double tmp(lat,lon,time);
+	       tmp:_FillValue = -1e30;
+}
+

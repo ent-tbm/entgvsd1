@@ -15,6 +15,12 @@
 !###  To do:  May want to correct spectral weighting for 300-400 nm to be lower.
 !###  To do:  Get Brian Cairns zonal spectral irradiances.
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 ! Use the filled-in version of Carrer MODIS albedo
 #define USE_FILLED
 
@@ -136,8 +142,8 @@ program Carrer_soilalbedo_to_GISS
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
 
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/))
-    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
+    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd_hr(chunkerhr%chunk_size(1), chunkerhr%chunk_size(2)))
@@ -148,7 +154,7 @@ program Carrer_soilalbedo_to_GISS
     ent2 = make_ent2()
     call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
@@ -156,7 +162,7 @@ program Carrer_soilalbedo_to_GISS
 #ifdef USE_FILLED
     do iband=1,NBANDS_MODIS
         ! Read from 2D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), OUTPUTS_DIR, &
+        call chunker%nc_open(io_albmodis(iband), chunker%outputs_dir, &
             'tmp/carrer/', &
             'albfill_'//trim(sbands_modis(iband))//'.nc', &
             'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
@@ -164,7 +170,7 @@ program Carrer_soilalbedo_to_GISS
 #else
     do iband=1,NBANDS_MODIS
         ! Read from 3D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), OUTPUTS_DIR, &
+        call chunker%nc_open(io_albmodis(iband), chunker%outputs_dir, &
             'tmp/carrer/', &
             'albmodis_'//trim(sbands_modis(iband))//'.nc', &
             'albmodis_'//trim(sbands_modis(iband)), SMEAN)

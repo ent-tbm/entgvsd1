@@ -1,0 +1,13 @@
+netcdf GPCC_v6_PREC_means_1981-2010_1kmx1km {
+dimensions:
+        time = 13 ;
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+        double lon(lon) ;
+        double lat(lat) ;
+        double time(time) ;
+        double prec(lat,lon,time) ;
+	       prec:_FillValue = -1e30;
+}
+

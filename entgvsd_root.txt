@@ -1,1 +1,1 @@
-EntGVSD Root Directory
+This file marks the root of the EntGVSD tree

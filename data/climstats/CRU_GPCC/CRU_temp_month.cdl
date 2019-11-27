@@ -1,0 +1,11 @@
+netcdf CRU_temp_month {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+        double lon(lon) ;
+        double lat(lat) ;
+        double tmp(lat,lon);
+	       tmp:_FillValue = -1e30;
+}
+

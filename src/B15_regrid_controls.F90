@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module B15_mod
 
 use chunker_mod
@@ -25,10 +31,10 @@ subroutine regrid_control(rw, root, dir, leaf, vname)
 
     integer :: ichunk,jchunk
 
-    call chunker_hr%init(im1km,jm1km,imh,jmh,'forplot',4,1,1, nchunk=(/1,5/))
+    call chunker_hr%init(im1km,jm1km,imh,jmh,'forplot',4,1,1, nchunk=(/1,5/), outputs_dir=THIS_OUTPUTS_DIR)
     call chunker_hr%nc_open(io_hr, root, dir, trim(leaf)//'.nc', vname, 1)
 
-    call chunker_lr%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 4, 1, (/1,5/))
+    call chunker_lr%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 1, 4, 1, (/1,5/), outputs_dir=THIS_OUTPUTS_DIR)
     call chunker_lr%nc_create(io_lr, weighting(chunker_lr%wta1,1d0,0d0), &
         'tmp/regrids/', trim(leaf)//'_hxh', vname, vname, '1', create_lr=.false.)
 
@@ -68,15 +74,16 @@ subroutine regrid_control(rw, root, dir, leaf, vname)
     call chunker_hr%close_chunks
 end subroutine regrid_control
 
-subroutine regrid_controls(rw)
+subroutine regrid_controls(rw, root)
     type(ReadWrites_t) :: rw
+    character*(*) :: root
 
     integer :: imonth
 
     if (LAI_SOURCE == 'L') then
         call regrid_control(rw, INPUTS_DIR, 'LAI/', 'LAI3gMax_1kmx1km', 'laimax')
     else if (LAI_SOURCE == 'B') then
-        call regrid_control(rw, OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax', 'laimax')
+        call regrid_control(rw, root, 'tmp/bnu/', 'bnu_laimax', 'laimax')
     end if
 
 #if 1
@@ -103,7 +110,11 @@ program A07a_regrid_controls
 implicit none
     type(ReadWrites_t) :: rw
     call rw%init('B15_regrid_controls', 100,100)
-    call regrid_controls(rw)
+#if JUST_DEPENDENCIES
+    call regrid_controls(rw, MKFILES_DIR)
+#else
+    call regrid_controls(rw, DEFAULT_OUTPUTS_DIR)
+#endif
     call rw%write_mk
 
 end program A07a_regrid_controls

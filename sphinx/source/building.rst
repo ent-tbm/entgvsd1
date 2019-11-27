@@ -14,7 +14,7 @@ EntGVSD requires the following prerequisites:
 
 * `NetCDF-Fortran <https://www.unidata.ucar.edu/software/netcdf/docs/building_netcdf_fortran.html>`_, version 4 or later
 
-* (For now) `Python <https://www.python.org>`_ version 3.5 or later
+* (Optional) `Python <https://www.python.org>`_ version 3.5 or later
 
 There are a variety of ways these prerequisites can be installed.
 Some suggestions are provided below; assuming you have already
@@ -24,54 +24,34 @@ Spack
 `````
 
 The easiest way to install these prerequisites is with `Spack
-<https://spack.io>`_ (Linux or MacOS).  If you need to install Spack,
-do:
+<https://spack.io>`_ (Linux or MacOS), using a pre-configured Spack Environment.
+
 
 .. code-block:: bash
 
-   git clone https://github.com/spack/spack.git
+   cd ~
+   git clone git@github.com:citibeth/spack.git -b efischer/giss2
    . spack/share/spack/setup-env.sh
+   spack -e entgvsd-gibbs concretize -f
+   spack -e entgvsd-gibbs install
+   spack -e entgvsd-gibbs env loads
 
-Now you can build the packages:
-
-.. code-block:: bash
-
-   spack install netcdf-fortran
-   spack install python@3:
-   spack install py-netcdf^python@3:
-   spack install cmake
-   spack load netcdf-fortran
-   spack load netcdf
-   spack load python@3:
-   spack load cmake
-
-If needed, locations can be identified as follows:
+These commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  Those environment modules may be loaded with:
 
 .. code-block:: bash
 
-   NETCDF4_FORTRAN_ROOT=`spack location -i netcdf-fortran`
-   NETCDF4_C_ROOT=`spack location -i netcdf`
+   source ~/spack/var/spack/environments/entgvsd-gibbs/loads-x
 
-MacPorts
-````````
+.. note::
 
-If you're on a Macintosh, MacPorts may be used as an alternative to
-Spack.  If you need to install MacPorts, follow instructions for
-`user-level MacPorts <https://github.com/citibeth/usermacports>`_.
-Then:
+   1. Spack can be cloned into any location.  From here on, we will
+      assume WLOG it has been installed in ``~/spack``.
 
-.. code-block:: bash
-
-   port install python37
-   port select -- set python3 python37
-   port install py37-netcdf4
-   port install netcdf-fortran
-   port install cmake
-
-Locations can be identified as follows:
-
-   NETCDF4_FORTRAN_ROOT=`which port`/../..
-   NETCDF4_C_ROOT=$NETCDF4_FORTRAN_ROOT
+   1. If you have trouble installing prerequisites with Spack, *please*
+      and ask questions on the `Spack discussion
+      group<https://groups.google.com/forum/#!forum/spack>`.  This will
+      get you better help, faster, than contacting the EntGVSD authors
+      directly.
 
 
 Download EntGVSD Source
@@ -83,19 +63,68 @@ connected to the NASA network for this to work (replace
 
 .. code-block:: bash
 
+   cd ~/git
    git clone <ndcusername>@simplex.giss.nasa.gov:/giss/gitrepo/entgvsd1.git -b develop
-   cd entgvsd1
 
-Run CMake
----------
-1. mkdir build
-2. cd build
-3. .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
-4. FC=`which gfortran` cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
-5. make install
-6. bin/xent ../bnu/test.f90
-7. cd ../bnu
-8. ./run_all.sh
+.. note::
+
+   1. EntGVSD can be cloned into any location.  From here on, we will
+      assume WLOG it has been installed in ``~/git/entgvsd``.
+
+   1. To gain access to Simplex, contact Igor Aleinov
+      *igor.aleinov@nasa.gov*.
+
+
+Build EntGVSD Library
+---------------------
+
+EntGVSD is structured as a set of Fortran programs that can be run
+from the command line, to perform each step in the process.  These
+programs, in the ``src/`` directory, can be thought of as "scripts"
+because each one is self-contained in a single source file; and as
+with a scripting language, they can be edited and run immediately,
+without explicit compilation.
+
+Supporting the scripts is the EntGVSD library, which is built and
+"installed" within the EntGVSD directory structure.  This is built as
+follows:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1
+   mkdir build
+   cd build
+   FC=`which gfortran` cmake .. -DCMAKE_INSTALL_PREFIX:PATH=`pwd`
+   make install
+
+.. admonition:: OPTIONAL:
+
+   The ``xent`` may be used to conviently launch Fortran scritpts.  It
+   should be added to your ``.bashrc`` file as follows:
+
+   .. code-block:: bash
+
+      export PATH=$PATH:~/git/entgvsd1/build/bin
+
+   Alternately, you can just copy it to an existing directory in your
+   ``PATH`` (eg ``~/sh``):
+
+   .. code-block:: bash
+
+      cp ~/git/entgvsd1/build/bin/xent ~/sh
+
+
+   .. note::
+
+      If you clone EntGVSD more than once, you still only need one
+      copy of ``xent``, they are all the same.
+
+
+
+
+bin/xent ../bnu/test.f90
+cd ../bnu
+./run_all.sh
 
 
 CMake works by a two-step process:

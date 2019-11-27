@@ -1,0 +1,11 @@
+netcdf GPCC_prec_month {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+        double lon(lon) ;
+        double lat(lat) ;
+        double prec(lat,lon);
+	       prec:_FillValue = -1e30;
+}
+

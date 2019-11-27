@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module B17_mod
 !Author:  Elizabeth Fischer
 !
@@ -31,7 +37,7 @@ subroutine ent_diff(rw, chunker, &
     integer :: ichunk,jchunk, ic,jc
 
     call chunker%nc_open(xin1, &
-        OUTPUTS_DIR, info1%dir, trim(info1%leaf)//'.nc', info1%vname, 1)
+        chunker%outputs_dir, info1%dir, trim(info1%leaf)//'.nc', info1%vname, 1)
 
     call chunker%nc_open(xin2, &
         iroot2, idir2, ileaf2, vname2, 1)
@@ -82,7 +88,7 @@ end subroutine ent_diff
 
 subroutine init_hr(chunker)
     type(Chunker_t) :: chunker
-    call chunker%init(im1km,jm1km,imh,jmh,'forplot',2,1,1, nchunk=(/1,15/))
+    call chunker%init(im1km,jm1km,imh,jmh,'forplot',2,1,1, nchunk=(/1,15/), outputs_dir=THIS_OUTPUTS_DIR)
 end subroutine
 
 
@@ -106,7 +112,7 @@ subroutine do_B17_checksums(rw, esub_p)
             INPUTS_DIR, 'LAI/', 'LAI3gMax_1kmx1km.nc', 'laimax')
     else if (LAI_SOURCE == 'B') then
         call ent_diff(rw, chunker, info, &
-            OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', 'laimax')
+            chunker%outputs_dir, 'tmp/bnu/', 'bnu_laimax.nc', 'laimax')
     end if
 
     ! ------------ B04
@@ -163,7 +169,7 @@ subroutine do_B17_checksums(rw, esub_p)
             INPUTS_DIR, 'LAI/', 'LAI3gMax_1kmx1km.nc', 'laimax')
     else if (LAI_SOURCE == LAI_SOURCE) then
         call ent_diff(rw, chunker, info, &
-            OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', 'laimax')
+            chunker%outputs_dir, 'tmp/bnu/', 'bnu_laimax.nc', 'laimax')
     end if
 #endif
 
@@ -196,7 +202,7 @@ end subroutine
 
 subroutine init_lr(chunker)
     type(Chunker_t) :: chunker
-    call chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 2, 1, 1, nchunk=(/1,1/))
+    call chunker%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 2, 1, 1, nchunk=(/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
 end subroutine
 
 subroutine do_B16_checksums(rw, esub_p, step)
@@ -216,11 +222,11 @@ subroutine do_B16_checksums(rw, esub_p, step)
         varsuffix = '_checksum')
     if (LAI_SOURCE == 'L') then
         call ent_diff(rw, chunker, info, &
-            OUTPUTS_DIR, 'tmp/regrids/', 'LAI3gMax_1kmx1km_hxh.nc', 'laimax', &
+            chunker%outputs_dir, 'tmp/regrids/', 'LAI3gMax_1kmx1km_hxh.nc', 'laimax', &
             create_lr=.false.)
     else if (LAI_SOURCE == 'B') then
         call ent_diff(rw, chunker, info, &
-            OUTPUTS_DIR, 'tmp/regrids/', 'bnu_laimax_hxh.nc', 'laimax', create_lr=.false.)
+            chunker%outputs_dir, 'tmp/regrids/', 'bnu_laimax_hxh.nc', 'laimax', create_lr=.false.)
     end if
 
 
@@ -228,7 +234,7 @@ subroutine do_B16_checksums(rw, esub_p, step)
     call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lchgt', 2004, step, '1.1', &
         varsuffix = '_checksum')
     call ent_diff(rw, chunker, info, &
-        OUTPUTS_DIR, 'tmp/regrids/', 'simard_forest_heights_hxh.nc', 'heights', &
+        chunker%outputs_dir, 'tmp/regrids/', 'simard_forest_heights_hxh.nc', 'heights', &
         create_lr=.false.)
 
 
@@ -238,7 +244,7 @@ subroutine do_B16_checksums(rw, esub_p, step)
         call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclai', 2004, step, '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            OUTPUTS_DIR, 'tmp/regrids/', 'global_30s_2004_'//MONTH(imonth)//'_hxh.nc', &
+            chunker%outputs_dir, 'tmp/regrids/', 'global_30s_2004_'//MONTH(imonth)//'_hxh.nc', &
             'lai', create_lr=.false.)
     end do
 

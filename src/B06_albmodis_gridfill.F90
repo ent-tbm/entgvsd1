@@ -1,6 +1,12 @@
 ! Program Fills in small regions of missing data in the soil albedo
 ! files.
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b06_gridfill_mod
 
     use carrer_mod
@@ -45,7 +51,7 @@ subroutine do_gridfill(rw, iband)
     integer :: numiter ! OUT
 
     print *,'=========== BEGIN do_gridfill',iband
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/))
+    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     ! ------------- Open Input Files
@@ -54,12 +60,12 @@ subroutine do_gridfill(rw, iband)
     ent2 = make_ent2()
     call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
-        OUTPUTS_DIR, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+        chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
     ! ------------ albmodis
-    call chunker%nc_open(ioall_albmodis, OUTPUTS_DIR, &
+    call chunker%nc_open(ioall_albmodis, chunkerx%outputs_dir, &
         'tmp/carrer/', &
         'albmodis_'//trim(sbands_modis(iband))//'.nc', &
         'albmodis_'//trim(sbands_modis(iband)), 0)

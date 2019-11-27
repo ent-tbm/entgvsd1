@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b13_mod
 
     use netcdf
@@ -35,7 +41,7 @@ subroutine do_reindex(esub,m0,m1)
 
 
     esub_p => esub
-    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 300, 20)
+    call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 300, 300, 20, outputs_dir=THIS_OUTPUTS_DIR)
     allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
     !------------------------------------------------------------------------
@@ -59,7 +65,7 @@ subroutine do_reindex(esub,m0,m1)
     end do
 
     ! bs ratio
-    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'soilalbedo/', &
+    call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
         'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------

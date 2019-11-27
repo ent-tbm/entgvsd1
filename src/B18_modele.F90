@@ -1,3 +1,9 @@
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b18_mod
 !Author: Elizabeth Fischer
 !
@@ -57,8 +63,8 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
 
 
-    call chunker0%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 300,   1, 17, (/1,1/))
-    call chunker1%init(im1,jm1,  im1,jm1, 'forplot',       1, 300, 17, (/1,1/))
+    call chunker0%init(IMLR,JMLR,  IMLR,JMLR, 'forplot', 300,   1, 17, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
+    call chunker1%init(im1,jm1,  im1,jm1, 'forplot',       1, 300, 17, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
 
     spec0 = hntr_spec(chunker0%chunk_size(1), chunker0%ngrid(2), 0d0, 180d0*60d0 / chunker0%ngrid(2))
     spec1 = hntr_spec(chunker1%chunk_size(1), chunker1%ngrid(2), 0d0, 180d0*60d0 / chunker1%ngrid(2))
@@ -176,9 +182,9 @@ implicit none
     ! Here we put different combinations for ModelE consumption
     call make_modele(rw, esub_p, &
         'trimmed_scaled_nocrops', &    ! LC
-        'trimmed_scaled', &            ! LAIMAX, LAI
-        'trimmed_scaled', &            ! HGT
-        'modele1', & ! output part
+        'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
+        'trimmed_scaled_nocrops', &            ! HGT
+        'modelE_nocrops', & ! output part
         IM2,JM2, '')
 
 

@@ -11,3 +11,6 @@ log
 *~
 #*#
 *.bak
+*.nc
+*.asc
+*.bin

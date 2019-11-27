@@ -13,6 +13,12 @@
 
 ! A04 only creates the pure dataset.  It does NOT trim.
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 module b11_mod
     use netcdf
     use chunker_mod
@@ -52,7 +58,8 @@ subroutine do_reindex(esub)
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', &
         100, &   ! # files to >= (N_VEG + N_BARE)*(LC + LAI) + BARE_BRIGHTRATIO = 41
-        120, 10)     ! # files to write >= N_LAIMAX + 3*CHECKSUMS
+        120, 10, &     ! # files to write >= N_LAIMAX + 3*CHECKSUMS
+        outputs_dir=THIS_OUTPUTS_DIR)
 
     !------------------------------------------------------------------------
     ! OPEN INPUT FILES
@@ -66,7 +73,7 @@ subroutine do_reindex(esub)
         LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1')
 
     ! Bare Soil Brightness Ratio
-    call chunker%nc_open(io_bs, OUTPUTS_DIR, 'soilalbedo/', &
+    call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
         'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     ! Simard heights

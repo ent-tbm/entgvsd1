@@ -21,15 +21,17 @@ character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
 ! Donwload input files from here
 character(*), parameter :: INPUTS_URL= &
-    'https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/inputs/'
+    'https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs/'
 
 ! Put downloaded input files here
 character(*), parameter :: INPUTS_DIR= &
-    ENTGVSD_PROJECT_ROOT//'inputs_new/'
+    ENTGVSD_PROJECT_ROOT//'inputs/'
 
 ! Any EntGVSD1-generated output files go here
-character(*), parameter :: OUTPUTS_DIR= &
+character(*), parameter :: DEFAULT_OUTPUTS_DIR= &
     ENTGVSD_PROJECT_ROOT//'outputs/'
+character(*), parameter :: MKFILES_DIR= &
+    ENTGVSD_PROJECT_ROOT//'mkfiles/'
 
 
 ! ======== Some standard ModelE (and related) resolutions for lon/lat grids

@@ -1,0 +1,93 @@
+netcdf Ent_veg_height_1kmx1km {
+
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+ 
+variables:
+        float lon(lon) ;
+            lon:units = "degrees_east" ;
+
+        float lat(lat) ;
+            lat:units = "degrees_north" ;
+
+        float hgt_ever_br_early(lat, lon) ;
+            hgt_ever_br_early:long_name = "1 - Evergreen Broadleaf Early Succ - Height" ;
+            hgt_ever_br_early:units = "m" ;
+
+        float hgt_ever_br_late(lat, lon) ;
+            hgt_ever_br_late:long_name = "2 - Evergreen Broadleaf Late Succ - Height" ;
+            hgt_ever_br_late:units = "m" ;
+
+        float hgt_ever_nd_early(lat, lon) ;
+            hgt_ever_nd_early:long_name = "3 - Evergreen Needleleaf Early Succ - Height" ;
+            hgt_ever_nd_early:units = "m" ;
+        
+        float hgt_ever_nd_late(lat, lon) ;
+            hgt_ever_nd_late:long_name = "4 - Evergreen Needleleaf Late Succ - Height" ;
+            hgt_ever_nd_late:units = "m" ;
+
+        float hgt_cold_br_early(lat, lon) ;
+            hgt_cold_br_early:long_name = "5 - Cold Deciduous Broadleaf Early Succ - Height" ;
+            hgt_cold_br_early:units = "m" ;
+
+        float hgt_cold_br_late(lat, lon) ;
+            hgt_cold_br_late:long_name = "6 - Cold Deciduous Broadleaf Late Succ - Height" ;
+            hgt_cold_br_late:units = "m" ;
+
+        float hgt_drought_br(lat, lon) ;
+            hgt_drought_br:long_name = "7 - Drought Deciduous Broadleaf - Height" ;
+            hgt_drought_br:units = "m" ;
+        
+        float hgt_decid_nd(lat, lon) ;
+            hgt_decid_nd:long_name = "8 - Deciduous Needleleaf - Height" ;
+            hgt_decid_nd:units = "m" ;
+
+        float hgt_cold_shrub(lat, lon) ;
+            hgt_cold_shrub:long_name = "9 - Cold Adapted Shrub - Height" ;
+            hgt_cold_shrub:units = "m" ;
+
+        float hgt_arid_shrub(lat, lon) ;
+            hgt_arid_shrub:long_name = "10 - Arid Adapted Shrub - Height" ;
+            hgt_arid_shrub:units = "m" ;
+
+        float hgt_c3_grass_per(lat, lon) ;
+            hgt_c3_grass_per:long_name = "11 - C3 Grass Perennial - Height" ;
+            hgt_c3_grass_per:units = "m" ;
+        
+        float hgt_c4_grass(lat, lon) ;
+            hgt_c4_grass:long_name = "12 - C4 Grass - Height" ;
+            hgt_c4_grass:units = "m" ;
+
+        float hgt_c3_grass_ann(lat, lon) ;
+            hgt_c3_grass_ann:long_name = "13 - C3 Grass Annual - Height" ;
+            hgt_c3_grass_ann:units = "m" ;
+
+        float hgt_c3_grass_arct(lat, lon) ;
+            hgt_c3_grass_arct:long_name = "14 - Arctic C3 Grass - Height" ;
+            hgt_c3_grass_arct:units = "m" ;
+
+        float hgt_crops_herb(lat, lon) ;
+            hgt_crops_herb:long_name = "15 - Crops Herb - Height" ;
+            hgt_crops_herb:units = "m" ;
+        
+        float hgt_crops_woody(lat, lon) ;
+            hgt_crops_woody:long_name = "16 - Crops Woody - Height" ;
+            hgt_crops_woody:units = "m" ;
+
+        float hgt_snow_ice(lat, lon) ;
+            hgt_snow_ice:long_name = "17 - Bright Bare Soil - Height" ;
+            hgt_snow_ice:units = "m" ;
+
+        float hgt_bare_sparse(lat, lon) ;
+            hgt_bare_sparse:long_name = "18 - Dark Bare Soil - Height" ;
+            hgt_bare_sparse:units = "m" ;
+
+// global attributes:
+
+     :xlabel = "Veg/Forest Heights, Standard Deviations, EXT1, 16 plant types, 2 soil types" ;
+      :history = "MODIS, Average of 2001-2005, also GLAS aboard ICESat, Version 4, March 2014" ;
+      :institution = "NASA/GISS  N.Kiang, I.Aleinov, C.Montes" ;
+                
+}
+

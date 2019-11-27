@@ -1,0 +1,11 @@
+netcdf ClimMedit  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float ClimMedit(lat, lon) ;
+              ClimMedit:long_name = "Mediterranean climate" ;
+	      ClimMedit:_Fillvalue = -1e30 ;
+}

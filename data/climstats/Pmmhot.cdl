@@ -1,0 +1,11 @@
+netcdf Pmmhot  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float Pmmhot(lat, lon) ;
+              Pmmhot:long_name = "Pmm_hot (mm/month)" ;
+	      Pmmhot:_FillValue = -1e30 ;
+}

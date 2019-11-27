@@ -1,0 +1,11 @@
+netcdf TCmaxmonth  {
+dimensions:
+        lon = 43200 ;
+        lat = 21600 ;
+variables:
+	float lon(lon) ;
+	float lat(lat) ;
+	float TCmaxmonth(lat, lon) ;
+              TCmaxmonth:long_name = "TC_max_month (month)" ;
+	      TCmaxmonth:_FIllValue = -1e30 ;
+}

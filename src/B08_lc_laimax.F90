@@ -1,5 +1,11 @@
 !  Program to assign 1kmx1km BNU LAImax to EntPFTs lc
 
+#ifdef JUST_DEPENDENCIES
+#    define THIS_OUTPUTS_DIR MKFILES_DIR
+#else
+#    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
+#endif
+
 !------------------------------------------------------------------------
 program lc_laimax
 
@@ -30,7 +36,7 @@ integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
 call init_ent_labels
-call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120,10)
+call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120,10, outputs_dir=THIS_OUTPUTS_DIR)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 ! ================= Input Files
@@ -43,7 +49,7 @@ if (LAI_SOURCE == 'L') then
 else if (LAI_SOURCE == 'B') then
     ! Result of A00a_bnu_lclai.F90
     call chunker%nc_open(io_laiin(1), &
-        OUTPUTS_DIR, 'tmp/bnu/', 'bnu_laimax.nc', &
+        chunker%outputs_dir, 'tmp/bnu/', 'bnu_laimax.nc', &
         'laimax', 1)
 end if
 
