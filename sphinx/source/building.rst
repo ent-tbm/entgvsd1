@@ -49,7 +49,7 @@ These commands build all the prerequisites needed for working with EntGVSD, and 
 
    1. If you have trouble installing prerequisites with Spack, *please*
       and ask questions on the `Spack discussion
-      group<https://groups.google.com/forum/#!forum/spack>`.  This will
+      group<https://groups.google.com/forum/#!forum/spack>`_.  This will
       get you better help, faster, than contacting the EntGVSD authors
       directly.
 
@@ -120,6 +120,49 @@ follows:
       copy of ``xent``, they are all the same.
 
 
+Download Data Files
+-------------------
+
+The main EntGVSD process is structured as a series of Fortran scripts,
+to be run in order, starting with the capital letter `B`.  For example:
+| B01_bnu_laimax.F90
+| B02_lc_laimax_modis_entpftrevcrop.F90
+|  ...
+
+Before these scripts can be run, EntGVSD must download the input files
+they require.  This is done using the ``mkgen`` script, which runs
+each EntGVSD script in turn in preliminary mode (``xent -p``):
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/src
+   ./mkgen
+
+.. note::
+
+   1. The input files are stored in the EntGVSD inputs directory of
+      the `NCCS Dataportal at
+      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs>`_
+
+   1. Input files are stored in compressed form on the dataportal
+      (gzip format), and are uncompressed immediately after
+      downloading.  Uncompressed files can be markedly larger than
+      their compressed form, sometimes up to 50-100X.
+
+   1. ``mkgen`` may take a long time, due to downloading the files.
+      If it is stopped in the middle, simple restart it agian.
+
+   1. In addition to downloading datafiles, the ``mkgen`` script
+      generates dependency files, which indicate the input and ouput
+      files of each EntGVSD script.
+
+
+
+
+
+
+
+ ending in ``.mk``, which indicate the input and output files of evey
 
 
 bin/xent ../bnu/test.f90
