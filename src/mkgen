@@ -29,17 +29,17 @@ stages = (
 
 def run_stages():
     for stage in stages:
-        cmd = ['xent', '-p', stage+'.F90']
+        cmd = [os.path.join(ROOT_DIR, 'build', 'bin', 'entgvsd'), '-p', stage+'.F90']
         ret = subprocess.run(cmd, check=True)
 
 
 def generate_makefile():
     makefile = []    # Makefile we are assembling
     makefile.append("""
-XENT=xent
+XENT={}/build/bin/entgvsd
 ../outputs/B18_modele.txt :
 
-""")
+""".format(ROOT_DIR))
 
     prev_stage = None
     for stage in stages:
