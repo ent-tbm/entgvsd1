@@ -17,9 +17,10 @@ implicit none
 
 CONTAINS
 
-subroutine do_reindex(esub,m0,m1)
+subroutine do_reindex(esub,m0,m1,rw)
     type(GcmEntSet_t), intent(IN), target :: esub
     integer :: m0,m1    ! First and last month to work on
+    type(ReadWrites_t) :: rw
 
     class(EntSet_t), pointer :: esub_p
     type(Chunker_t) :: chunker
@@ -89,10 +90,10 @@ subroutine do_reindex(esub,m0,m1)
             'SUM(LC*LAI)', info%units)
     end do   ! imonth
 
-    call chunker%nc_check('B13_reclass_monthly')
+    call chunker%nc_check(rw=rw)
     print *,'Done opening files: nreads',chunker%nreads,'nwrite',chunker%nwrites
 #ifdef JUST_DEPENDENCIES
-    stop 0
+    return
 #endif
 
     call cropmerge_laisparse_splitbare(esub, chunker, m1-m0+1, &
@@ -126,6 +127,9 @@ implicit none
     type(GcmEntSet_t), target :: esub
     integer, parameter :: monthchunk = 6
     integer :: m0,m1
+    type(ReadWrites_t) :: rw
+
+    call rw%init(THIS_OUTPUTS_DIR, 'B13_reclass_monthly', 300,300)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
@@ -133,8 +137,10 @@ implicit none
     do m0=1,nmonth,monthchunk
         m1 = min(m0+monthchunk-1, nmonth)
 
-        call do_reindex(esub,m0,m1)
+        call do_reindex(esub,m0,m1,rw)
     end do
+
+    call rw%write_mk
 
 
 end program convert

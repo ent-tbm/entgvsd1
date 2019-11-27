@@ -232,9 +232,10 @@ program Carrer_soilalbedo_to_GISS
 
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
+    call rw%write_mk
 
 #ifdef JUST_DEPENDENCIES
-    return
+    STOP 0
 #endif
 
     ! ================== Main Loop
@@ -458,6 +459,5 @@ program Carrer_soilalbedo_to_GISS
     call chunker%close_chunks
     call chunkerhr%close_chunks
 
-    call rw%write_mk
 end program Carrer_soilalbedo_to_GISS
             

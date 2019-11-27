@@ -65,7 +65,7 @@ subroutine do_gridfill(rw, iband)
     call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
 
     ! ------------ albmodis
-    call chunker%nc_open(ioall_albmodis, chunkerx%outputs_dir, &
+    call chunker%nc_open(ioall_albmodis, chunker%outputs_dir, &
         'tmp/carrer/', &
         'albmodis_'//trim(sbands_modis(iband))//'.nc', &
         'albmodis_'//trim(sbands_modis(iband)), 0)

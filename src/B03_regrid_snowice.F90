@@ -7,7 +7,7 @@
 #    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
 #endif
 
-program B03_regrid
+program B03_regrid_snowice
     use netcdf
     use chunker_mod
     use ent_params_mod
@@ -29,7 +29,7 @@ implicit none
 
     type(ReadWrites_t) :: rw
 
-    call rw%init(THIS_OUTPUTS_DIR, 'B03_regrid', 3,3)
+    call rw%init(THIS_OUTPUTS_DIR, 'B03_regrid_snowice', 3,3)
     call init_ent_labels
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 10, 10, 10, outputs_dir=THIS_OUTPUTS_DIR)!forplot at 0.25 degrees.
     call chunkerlr%init(IMK,JMK, IMH*2,JMH*2, 'forplot', 10, 10, 10, outputs_dir=THIS_OUTPUTS_DIR)
@@ -128,4 +128,4 @@ implicit none
     end do
 
 
-end program B03_regrid
+end program B03_regrid_snowice
