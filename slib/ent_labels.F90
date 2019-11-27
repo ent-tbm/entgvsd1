@@ -536,11 +536,11 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
     if (split_bare_soil) then
         ! Change bare_spares to bare-bright
-        call esub%add_covertype('n', 'bare_bright', 'Bare or sparsely vegated, urban, bright')
+        call esub%add_covertype('n', 'bare_bright', 'Bare bright')
         esub%bare_bright = esub%ncover
         call esub%add_remap(BARE_SPARSE)
 
-        call esub%add_covertype('n', 'bare_dark', 'Bare or sparsely vegated, urban, dark')
+        call esub%add_covertype('n', 'bare_dark', 'Bare dark')
         esub%bare_dark = esub%ncover
         esub%NONVEG = 'G'
     else
