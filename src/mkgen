@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+#
+
+import subprocess
+import os
+import re
+
+ROOT_DIR = os.path.abspath('..')
+
+stages = (
+    'B01_bnu_laimax',
+    'B02_lc_laimax_modis_entpftrevcrop',
+    'B03_regrid_snowice',
+    'B04_veg_height',
+    'B05_carrer_mean',
+    'B06_albmodis_gridfill',
+    'B07_soil_albedo',
+    'B08_lc_laimax',
+    'B09_lc_lai_doy',
+    'B10_lc_lai_monthly',
+    'B11_reclass_annual',
+    'B12_reclass_doy',
+    'B13_reclass_monthly',
+    'B14_regrid',
+    'B15_regrid_controls',
+    'B16_trim',
+    'B17_checksum',
+    'B18_modele')
+
+def run_stages():
+    for stage in stages:
+        cmd = ['xent', '-p', stage+'.F90']
+        ret = subprocess.run(cmd, check=True)
+
+
+def generate_makefile():
+    makefile = []    # Makefile we are assembling
+    makefile.append("""
+XENT=xent
+../outputs/B18_modele.txt :
+
+""")
+
+    prev_stage = None
+    for stage in stages:
+        if prev_stage is None:
+            makefile.append('../outputs/{}.txt :'.format(stage))
+            makefile.append('\tmkdir -p ../outputs')
+        else:
+            makefile.append('../outputs/{}.txt : ../outputs/{}.txt'.format(stage, prev_stage))
+        makefile.append('\t$(XENT) {}.F90'.format(stage))
+        makefile.append('\techo Finished Stage >../outputs/{}.txt'.format(stage))
+        makefile.append('')
+        prev_stage = stage
+
+    # Write it out
+    with open('Makefile', 'w') as out:
+        out.write('\n'.join(makefile))
+
+def main():
+    run_stages()
+    generate_makefile()
+
+main()
