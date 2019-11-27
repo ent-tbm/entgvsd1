@@ -183,3 +183,20 @@ This will rerun the desired step, plus all subsequent steps (which are
 assumed to depend on all previous steps).
 
 
+Data Files
+==========
+
+Code to produce data files (many of which serve as input to EntGVSD)
+are in the ``data/`` directory.  These codes have been run in the
+past; but unlike the scripts in ``src/``, they do not come with a
+curated build system.  They are provided as-is, for reference.
+
+Accompanying the code are a number of data files received by our
+group.  They may be downloaded by running the ``entdata'' script in
+each subdirectory of ``data/``.  For example:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/data/climstats
+   ./entdata
+
