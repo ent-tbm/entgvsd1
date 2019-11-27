@@ -30,7 +30,7 @@ The easiest way to install these prerequisites is with `Spack
 .. code-block:: bash
 
    cd ~
-   git clone git@github.com:citibeth/spack.git -b efischer/giss2
+   git clone https://github.com/spack/spack.git -b efischer/giss2
    . spack/share/spack/setup-env.sh
    spack -e entgvsd-gibbs concretize -f
    spack -e entgvsd-gibbs install
