@@ -120,8 +120,8 @@ follows:
       copy of ``xent``, they are all the same.
 
 
-Create the Makefile
--------------------
+Fetch Input Data and Create the Makefile
+----------------------------------------
 
 The main EntGVSD process is structured as a series of Fortran scripts,
 to be run in order, starting with the capital letter `B`.  For example:
@@ -129,33 +129,35 @@ to be run in order, starting with the capital letter `B`.  For example:
 | B02_lc_laimax_modis_entpftrevcrop.F90
 |  ...
 
-Before these scripts can be run, EntGVSD creates a Makefile to run
-them in sequence.  This is done using the ``mkgen`` script.
+
+The EntGVSD creates a Makefile to run these in sequence.  To download all necessary input data and
+create the Makefile, run the ``mkgen`` script.
 
 .. code-block:: bash
 
    cd ~/git/entgvsd1/src
    ./mkgen
 
-This step also downloads all required input files for EntGVSD from the
-NCCS Dataportal.  Downloading input files can take a while; and can
-also get stuck, depending on the condition of the network and NCCS.
+Downloading input files can take a while; and can also get stuck, depending on the condition of 
+the network and NCCS.
 
 .. note::
 
-   1. The input files are stored in the EntGVSD inputs directory of
-      the `NCCS Dataportal at
-      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs>`_
+   1. The source data files and their directory structures used to produce the Ent GVSD, are mirrored at 
+      the 'NCCS Data Portal. 
+      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD>'_
 
-   1. Input files are stored in compressed form on the dataportal
+   2.  The source data files are not automatically downloaded with a git clone of the code, due to their size.  The files are organized separately in two subdirectories, "data" for the original raw source data with pre-processing codes, and "inputs" for the pre-processed data files that are directly input to the B*.F90 fortran programs that generate the Ent GVSD.  
+
+   3. Input files are stored in compressed form on the dataportal
       (gzip format), and are uncompressed immediately after
       downloading.  Uncompressed files can be markedly larger than
       their compressed form, sometimes up to 50-100X.
 
-   1. ``mkgen`` may take a long time, due to downloading the files.
+   4. ``mkgen`` may take a long time, due to downloading the files.
       If it is stopped in the middle, simple restart it agian.
 
-   1. In addition to downloading datafiles, the ``mkgen`` script
+   5. In addition to downloading datafiles, the ``mkgen`` script
       generates dependency files in the ``mkfiles/`` directory, which
       indicate the input and ouput files of each EntGVSD script.
       These are not used for the ``Makefile``.
@@ -186,7 +188,7 @@ assumed to depend on all previous steps).
 Data Files
 ==========
 
-Code to produce data files (many of which serve as input to EntGVSD)
+Code to pre-proess original source data files (many of which serve as input to EntGVSD)
 are in the ``data/`` directory.  These codes have been run in the
 past; but unlike the scripts in ``src/``, they do not come with a
 curated build system.  They are provided as-is, for reference.
@@ -199,4 +201,3 @@ each subdirectory of ``data/``.  For example:
 
    cd ~/git/entgvsd1/data/climstats
    ./entdata
-
