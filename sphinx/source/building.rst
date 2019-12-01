@@ -147,7 +147,7 @@ the network and NCCS.
       the 'NCCS Data Portal. 
       <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD>'_
 
-   2.  The source data files are not automatically downloaded with a git clone of the code, due to their size.  The files are organized separately in two subdirectories, "data" for the original raw source data with pre-processing codes, and "inputs" for the pre-processed data files that are directly input to the B*.F90 fortran programs that generate the Ent GVSD.  
+   2.  The source data files are not automatically downloaded with a git clone of the code, due to their size.  The files are organized separately in two subdirectories, "data" for the original raw source data with pre-processing codes, and "inputs" for the pre-processed data files that are directly input to the B*.F90 fortran programs that generate the Ent GVSD. The ``mkgen`` script downloads the data and input files to their correct directories in your EntGVSD clone and also avoids repeating if previously downloaded. 
 
    3. Input files are stored in compressed form on the dataportal
       (gzip format), and are uncompressed immediately after
