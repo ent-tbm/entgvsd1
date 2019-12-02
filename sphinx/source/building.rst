@@ -57,8 +57,13 @@ These commands build all the prerequisites needed for working with EntGVSD, and 
 Download EntGVSD Source
 -----------------------
 
-Download the EntGVSD source from the Simplex git server.  One must be
-connected to the NASA network for this to work (replace
+Download the EntGVSD source from the Simplex git server.  
+
+If you are outside the NASA network, download a snapshot of the code from:
+* link TBA on NASA-approved git site.
+
+
+If you are inside the NASA network, (replace
 ``<ndcusername>`` with your NDC username):
 
 .. code-block:: bash
@@ -68,10 +73,9 @@ connected to the NASA network for this to work (replace
 
 .. note::
 
-   1. EntGVSD can be cloned into any location.  From here on, we will
-      assume WLOG it has been installed in ``~/git/entgvsd``.
+   1. The git clone will automatically be put into a directory named entgvsd1.  You can move the entgvsd1 clone into any location. or rename it as desired.  From here on, we will assume WLOG has been installed in ``~/git/entgvsd1``.
 
-   1. To gain access to Simplex, contact Igor Aleinov
+   2. To gain access to Simplex, contact Igor Aleinov
       *igor.aleinov@nasa.gov*.
 
 
@@ -143,11 +147,14 @@ the network and NCCS.
 
 .. note::
 
-   1. The source data files and their directory structures used to produce the Ent GVSD, are mirrored at 
+   1. The input data files and their subdirectory structures used to produce the Ent GVSD, are mirrored at 
       the 'NCCS Data Portal. 
-      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD>'_
+      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs/>'_
 
-   2.  The source data files are not automatically downloaded with a git clone of the code, due to their size.  The files are organized separately in two subdirectories, "data" for the original raw source data with pre-processing codes, and "inputs" for the pre-processed data files that are directly input to the B*.F90 fortran programs that generate the Ent GVSD. The ``mkgen`` script downloads the data and input files to their correct directories in your EntGVSD clone and also avoids repeating if previously downloaded. 
+   2.  The input files are not automatically downloaded with a git clone of the code, due to their size.  
+       These are pre-processed data files that are read by the B*.F90 fortran programs that generate the 
+       Ent GVSD. The ``mkgen`` script downloads the input files to their correct directories in your 
+       EntGVSD clone and also avoids repeating if previously downloaded. 
 
    3. Input files are stored in compressed form on the dataportal
       (gzip format), and are uncompressed immediately after
@@ -165,7 +172,7 @@ the network and NCCS.
 Run EntGVSD
 ============
 
-Once EntGVSD has been built, it can be run, with simply:
+Once EntGVSD has been built, the fortran programs can be run, with simply:
 
 .. code-block:: bash
 
@@ -185,19 +192,23 @@ This will rerun the desired step, plus all subsequent steps (which are
 assumed to depend on all previous steps).
 
 
-Data Files
-==========
+Pre-Processsed Raw Data Files
+============================
 
-Code to pre-proess original source data files (many of which serve as input to EntGVSD)
-are in the ``data/`` directory.  These codes have been run in the
-past; but unlike the scripts in ``src/``, they do not come with a
+Code to pre-process original source data files (many of which serve as input to EntGVSD)
+are in the ``data/`` directory, created and downloaded by the ``mkgen`` script.  These codes 
+have been run previously and their output pre-processed files are provided; but unlike the 
+scripts in ``src/``, the codes do not come with a
 curated build system.  They are provided as-is, for reference.
 
-Accompanying the code are a number of data files received by our
-group.  They may be downloaded by running the ``entdata'' script in
-each subdirectory of ``data/``.  For example:
+Accompanying the code are a number of data files from the original data sources.  
+They may be downloaded by running the ``entdata'' script in each subdirectory of ``data/``.  For example:
 
 .. code-block:: bash
 
    cd ~/git/entgvsd1/data/climstats
    ./entdata
+
+The contents of the data directory are described here.
+##Add link to new page named data.rst to describe the data directory ##
+
