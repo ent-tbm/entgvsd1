@@ -20,8 +20,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'EntGVSD'
-copyright = '2018, Nancy Kiang, Elizabeth Fischer, Carlo Monte'
-author = 'Nancy Kiang, Elizabeth Fischer, Carlo Monte'
+copyright = '2018, Nancy Kiang, Elizabeth Fischer, Carlo Montes'
+author = 'Nancy Kiang, Elizabeth Fischer, Carlo Montes'
 
 # The short X.Y version
 version = ''
@@ -131,7 +131,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'EntGVSD.tex', 'EntGVSD Documentation',
-     'Nancy Kiang, Elizabeth Fischer, Carlo Monte', 'manual'),
+     'Nancy Kiang, Elizabeth Fischer, Carlo Montes', 'manual'),
 ]
 
 

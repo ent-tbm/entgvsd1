@@ -45,7 +45,7 @@ These commands build all the prerequisites needed for working with EntGVSD, and 
 .. note::
 
    1. Spack can be cloned into any location.  From here on, we will
-      assume WLOG it has been installed in ``~/spack``.
+      assume without loss of generality it has been installed in ``~/spack``.
 
    1. If you have trouble installing prerequisites with Spack, *please*
       and ask questions on the `Spack discussion
@@ -73,7 +73,8 @@ If you are inside the NASA network, (replace
 
 .. note::
 
-   1. The git clone will automatically be put into a directory named entgvsd1.  You can move the entgvsd1 clone into any location. or rename it as desired.  From here on, we will assume WLOG has been installed in ``~/git/entgvsd1``.
+   1. EntGVSD can be cloned into any location.  From here on, we will
+      assume without loss of generality it has been installed in ``~/git/entgvsd``.
 
    2. To gain access to Simplex, contact Igor Aleinov
       *igor.aleinov@nasa.gov*.
