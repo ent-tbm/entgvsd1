@@ -802,11 +802,11 @@ subroutine close0(this, files, nfiles)
     nerr = 0
     do i=1,nfiles
         if (files(i)%ptr%own_fileid) then
-            print *,'Closing ',trim(files(i)%ptr%leaf)
+            print *,'Closing file ', trim(files(i)%ptr%leaf), files(i)%ptr%fileid
             err = nf90_close(files(i)%ptr%fileid)
             if (err /= NF90_NOERR) then
                 write(ERROR_UNIT,*) 'Error closing ',trim(files(i)%ptr%leaf),files(i)%ptr%fileid_lr,err
-                nerr = nerr + 1
+                if (err /= NF90_EHDFERR) nerr = nerr + 1
             end if
         end if
         if (files(i)%ptr%own_fileid_lr) then
