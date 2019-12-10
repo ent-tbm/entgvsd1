@@ -1388,7 +1388,7 @@ end subroutine do_trim
 end module b16_mod
 
 ! =========================================================
-program regrid
+program trimming
     use b16_mod
 implicit none
     type(GcmEntSet_t), target :: esub
@@ -1400,4 +1400,4 @@ implicit none
 
     call do_trim(rw, esub)
     call rw%write_mk
-end program regrid
+end program trimming
