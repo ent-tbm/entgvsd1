@@ -290,6 +290,7 @@ end type Chunker_t
 type FileInfo_t
     character*(30) :: dir
     character*(100) :: leaf
+    logical :: use_outputs_dir   ! Use chunker%output_dir//dir, or just dir directly?
     ! ---------- Metadata below here
     character*(20) :: vname
     character*(50) :: long_name
@@ -306,6 +307,7 @@ CONTAINS
 subroutine clear_file_info(info)
     type(FileInfo_t) :: info
 
+    info%use_outputs_dir = .true.
     info%vname = ''
     info%long_name = ''
     info%units = ''
@@ -800,6 +802,7 @@ subroutine close0(this, files, nfiles)
     nerr = 0
     do i=1,nfiles
         if (files(i)%ptr%own_fileid) then
+            print *,'Closing ',trim(files(i)%ptr%leaf)
             err = nf90_close(files(i)%ptr%fileid)
             if (err /= NF90_NOERR) then
                 write(ERROR_UNIT,*) 'Error closing ',trim(files(i)%ptr%leaf),files(i)%ptr%fileid_lr,err
@@ -1345,6 +1348,7 @@ layer_names, long_layer_names, create_lr)
     type(FileInfo_t) :: info
     call clear_file_info(info)
 
+    info%use_outputs_dir = .true.
     if (present(vname)) then
         info%vname = vname
     else
@@ -1419,12 +1423,21 @@ layer_names, long_layer_names, create_lr)
     end if
 
     ! ------ Create directory
-    call execute_command_line('mkdir -p '//trim(this%outputs_dir)//trim(dir), &
-        .true., err)
+    if (info%use_outputs_dir) then
+        call execute_command_line('mkdir -p '//trim(this%outputs_dir)//trim(dir), &
+            .true., err)
+    else
+        call execute_command_line('mkdir -p '//trim(dir), &
+            .true., err)
+    end if
     if (err /= 0) STOP 1
 
     ! ------ Open/Create hi-res file
-    cio%path = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'.nc'
+    if (info%use_outputs_dir) then
+        cio%path = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'.nc'
+    else
+        cio%path = trim(dir)//trim(leaf)//'.nc'
+    end if
     print *,'Writing ',trim(cio%path)
     err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
     if (err /= NF90_NOERR) then
@@ -1448,7 +1461,11 @@ layer_names, long_layer_names, create_lr)
     if (.not.cio%create_lr) then
         cio%own_fileid_lr = .false.
     else
-        path_name_lr = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        if (info%use_outputs_dir) then
+            path_name_lr = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        else
+            path_name_lr = trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        end if
         print *,'Writing ',trim(path_name_lr)
         err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
         if (err /= NF90_NOERR) then
@@ -1798,7 +1815,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     cio%own_fileid_lr = .false.
     cio%fileid_lr = 0
 
-    print *,'Reading ', trim(oroot)//trim(dir)//trim(leaf)
+    print *,'Reading ', trim(oroot)//trim(dir)//trim(leaf), ' var=',trim(vname)
 
     ! ------- Now open the file
     cio%path = trim(oroot)//trim(dir)//trim(leaf)
@@ -1870,6 +1887,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         stop
     end if
 
+    info%use_outputs_dir = .true.
     info%data_source = ''
 
     time = 'ann_'

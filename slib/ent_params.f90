@@ -39,6 +39,10 @@ character(*), parameter :: MKFILES_DIR= &
 ! 1kmx1km grid
 integer, parameter :: X1km = 43200 !long at 1 km
 integer, parameter :: Y1km = 21600 !lat at 1 km
+
+integer, parameter :: IM5m = 4320   ! 5 minutes
+integer, parameter :: JM5m = 2160
+
 integer, parameter :: IM1km = X1km !long at 1 km
 integer, parameter :: JM1km = Y1km !lat at 1 km
 
