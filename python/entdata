@@ -52,9 +52,10 @@ def do_main(action):
     cwd = os.path.abspath('.')
     project_root = search_up(cwd, _condition)
     portal_dir = '/GISS/Ent_TBM/EntGVSD' + cwd[len(project_root):]
-
+    exclude_dirs = {'todel'}
     sys.stderr.write('Looking for files to {}...\n'.format(action))
     for root, dirs, files in nasaportal.walk(portal_dir):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
         for name in files:
             iname = '/'.join((root, name))
             oname = '.' + iname[len(portal_dir):]
