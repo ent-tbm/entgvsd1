@@ -16,8 +16,7 @@ C****  that fraction of grid cell area.  These ratios then can be used to
 C****  to apportion satellite-observed crop cover.
 
 !* To compile on MacBook Pro, follow config file in Ent code.
-!  g95 -fno-second-underscore -O2 -fendian=big -cpp hntr4_monfreda2008.f
-!  gfortran -cpp -fconvert=big-endian -O0 -fno-range-check hntr4_monfreda2008.f
+!  gfortran -cpp -fconvert=big-endian -O0 -fno-range-check asc_to_bin.f
 !* To avoid memory problems:
 !  > ulimit -s 64000
 
@@ -288,7 +287,10 @@ C****
             if (LAYERIN(i,j).le.undef_out) WTIN(i,j) = 0.
          end do
       end do
-      call HNTR4P(WTIN, LAYERIN, LAYEROUT)
+
+! No regridding!
+!      call HNTR4P(WTIN, LAYERIN, LAYEROUT)
+      LAYEROUT = LAYERIN
 
       close(10)
       end subroutine read_layer
@@ -361,8 +363,11 @@ C****
       !* EDIT OUTPUT RESOLUTION *!
       !integer, parameter :: longout = IM1
       !integer, parameter :: latout = JM1
-      integer, parameter :: longout = IMH
-      integer, parameter :: latout = JMH
+!      integer, parameter :: longout = IMH
+!      integer, parameter :: latout = JMH
+      ! No regridding....
+      integer, parameter :: longout = longin
+      integer, parameter :: latout = latin
 
       real*4, parameter :: undef_in = -9999.0
       real*4, parameter :: undef_A = -1.e30 !AViewer undef value
@@ -421,6 +426,8 @@ C****
          RESOUT = '05x05'
       elseif (longout.eq.IM1) then
          RESOUT= '1x1'
+      elseif (longout.eq.IM5M) then
+         RESOUT = '5min'
       else
          write(*,*) 'Not set up for this resolution,',longout,latout
          return
@@ -436,11 +443,11 @@ C****
      &     trim(RESOUT)//'_norm.bin'
       write(*,*) fileoutnorm
       open(30, file=fileoutnorm, form='unformatted')
-      fileoutAviewer =
-     &     pathout//'Monfreda_crops_'//
-     &     trim(RESOUT)// '_normA.bin'
-      write(*,*) fileoutAviewer
-      open(50, file=fileoutAviewer, form='unformatted')
+!      fileoutAviewer =
+!     &     pathout//'Monfreda_crops_'//
+!     &     trim(RESOUT)// '_normA.bin'
+!      write(*,*) fileoutAviewer
+!      open(50, file=fileoutAviewer, form='unformatted')
 
       !* Weights, if any
 !      do i=1,longin
@@ -457,62 +464,70 @@ C****
       call read_layer(filein, 6,
      &     latin,longin,latout,longout,undef_in,undef_A,LAYEROUT)
       call Set_val(LAYEROUT,longout,latout,undef_A,0.)
-      TITLE = 'C3 CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      !TITLE = 'C3 CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      TITLE = 'c3crop_cf:C3 CROPS 2000 (cover fraction)'//
+     &     '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       C3CROP(:,:) = LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       !* C4
       filein = pathin//'C3C4/L2C3C4.asc'
       call read_layer(filein, 6,
      &     latin,longin,latout,longout,undef_in,undef_A,LAYEROUT)
       call Set_val(LAYEROUT,longout,latout,undef_A,0.)
-      TITLE = 'C4 CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      !TITLE = 'C4 CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      TITLE = 'c4crop_cf:C4 CROPS 2000 (cover fraction)'//
+     &     '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       C4CROP(:,:) = LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       !* Herbaceous
       filein = pathin//'form/L1form.asc'
       call read_layer(filein, 6,
      &     latin,longin,latout,longout,undef_in,undef_A,LAYEROUT)
       call Set_val(LAYEROUT,longout,latout,undef_A,0.)
-      TITLE = 'HERB CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      TITLE = 'herbcrop_cf:HERB CROPS 2000 (cover fraction)'//
+     &    '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       HERBCROP(:,:) = LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
       
       !* Shrub crops
       filein = pathin//'form/L2form.asc'
       call read_layer(filein, 6,
      &     latin,longin,latout,longout,undef_in,undef_A,LAYEROUT)
       call Set_val(LAYEROUT,longout,latout,undef_A,0.)
-      TITLE = 'SHRUB CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      TITLE = 'shrubcrop_cf:SHRUB CROPS 2000 (cover fraction)'//
+     &     '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       SHRUBCROP(:,:) = LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       !* Tree crops
       filein = pathin//'form/L3form.asc'
       call read_layer(filein, 6,
      &     latin,longin,latout,longout,undef_in,undef_A,LAYEROUT)
       call Set_val(LAYEROUT,longout,latout,undef_A,0.)
-      TITLE = 'TREE CROPS 2000 (cover fraction) (Monfreda et al. 2008)'
+      TITLE = 'treecrop_cf:TREE CROPS 2000 (cover fraction)'//
+     &     '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       TREECROP(:,:) = LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
       
 
       !* Sum up C3 + C4.
       LAYEROUT(:,:) = 0.d0
       LAYEROUT(:,:) = C3CROP(:,:) + C4CROP(:,:) !Will sum>1
       TITLE = 
-     & 'C3+C4 CROPS 2000 (cover fraction multi) (Monfreda et al. 2008)'
+     & 'c3c4tot_cf:C3+C4 CROPS 2000 (cover fraction multi)'//
+     &  '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       CROPTOT(:,:) = LAYEROUT(:,:)
       do i=1,longout
@@ -531,28 +546,28 @@ C****
          enddo
       enddo
       TITLE = 
-     &   'C3 CROPS (crop cover fraction) '//
-     &' (normalized Monfreda et al. 2008)'
+     &   'c3norm_ccf:C3 CROPS (crop cover fraction) '//
+     &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C3NORM
       LAYEROUT = C3NORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     &   'C4 CROPS (crop cover fraction)'//
-     &' (normalized Monfreda et al. 2008)'
+     &   'c4norm_ccf:C4 CROPS (crop cover fraction)'//
+     &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C4NORM
       LAYEROUT = C4NORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'C3+C4 CROPS (crop cover fraction)'//
-     &' (normalized Monfreda et al. 2008)'
+     & 'c3c4normtot_ccf:C3+C4 CROPS (crop cover fraction)'//
+     &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C3NORM + C4NORM
       LAYEROUT = C3NORM + C4NORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
 
 
@@ -560,8 +575,9 @@ C****
       LAYEROUT(:,:) = 0.d0
       LAYEROUT(:,:) = HERBCROP(:,:) + SHRUBCROP(:,:)+ TREECROP(:,:)
       TITLE = 
-     & 'HERB+SHRUB+TREE CROPS 2000 (crop cover fraction)'//
-     & ' (Monfreda et al. 2008)'
+     & 'herbshrubtreecrop_ccf:HERB+SHRUB+TREE CROPS 2000 '//
+     & '(crop cover fraction)'//
+     & '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
       CROPTOT(:,:) = LAYEROUT(:,:)
       do i=1,longout
@@ -583,36 +599,37 @@ C****
          enddo
       enddo
       TITLE = 
-     & 'HERB CROPS (crop cover fraction)'//
+     & 'herbnorm_ccf:HERB CROPS (crop cover fraction)'//
      &' (normalized Monfreda et al. 2008)'
       write(30) TITLE, HERBNORM
       LAYEROUT = HERBNORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'SHRUB CROPS (crop cover fraction)'//
-     &'(normalized Monfreda et al. 2008)'
+     & 'shrubnorm_ccf:SHRUB CROPS (crop cover fraction)'//
+     &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, SHRUBNORM
       LAYEROUT = SHRUBNORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'TREE CROPS (crop cover fraction)'//
-     &'  (normalized Monfreda et al. 2008)'
+     & 'treenorm_ccf:TREE CROPS (crop cover fraction)'//
+     & '  (normalized Monfreda et al. 2008)'
       write(30) TITLE, TREENORM
       LAYEROUT = TREENORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'HERB+SHRUB+TREE CROPS (crop cover fraction)'//
-     &'  (normalized Monfreda et al. 2008)'
+     & 'herbshrubtreenorm_ccf:HERB+SHRUB+TREE CROPS'//
+     & ' (crop cover fraction)'//
+     & '  (normalized Monfreda et al. 2008)'
       write(30) TITLE, HERBNORM + SHRUBNORM + TREENORM
       LAYEROUT = HERBNORM + SHRUBNORM + TREENORM
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       LAYEROUT(:,:) = 0.
       do i=1,longout
@@ -639,8 +656,9 @@ C****
             endif
          enddo
       enddo
-      TITLE = 'C4 CROPS (multi-harvest herb cover fraction) '// 
-     &'(Monfreda et al. 2008)'
+      TITLE = 'c4multi_hcf:C4 CROPS'//
+     &' (multi-harvest herb cover fraction) '// 
+     &'  (Monfreda et al. 2008)'
       write(30) TITLE, LAYEROUT
 
       do i=1,longout
@@ -650,17 +668,18 @@ C****
       enddo
       write(30) TITLE, LAYEROUT
 
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
-      TITLE = 'C3 HERB CROPS (cover fraction,multi-harvest)'//
-     &'(Monfreda et al. 2008)'
+      TITLE = 'c3multi_cf:C3 HERB CROPS'//
+     &' (cover fraction,multi-harvest)'//
+     &'  (Monfreda et al. 2008)'
       LAYEROUT = HERBCROP - C4CROP
       write(30) TITLE, LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
-      TITLE = 'C3 HERB CROPS (fraction of herb crop cover,'//
+      TITLE = 'c3crop_hcf:C3 HERB CROPS (fraction of herb crop cover,'//
      &     'multi-harvest)'
       do i=1,longout
          do j=1,latout
@@ -675,10 +694,10 @@ C****
          enddo
       enddo
       write(30) TITLE, LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
-      TITLE = 'SHRUB + TREE CROPS (cover fraction)'
+      TITLE = 'shrubtreecrop_cf:SHRUB + TREE CROPS (cover fraction)'
       do i=1,longout
          do j=1,latout
             if (SHRUBCROP(i,j).eq.undef_A) then
@@ -691,8 +710,8 @@ C****
          enddo
       enddo
       write(30) TITLE, LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       do i=1,longout
          do j=1,latout
@@ -708,15 +727,16 @@ C****
             endif
          enddo
       enddo
-      TITLE = 'C3 + C4 crops (cover fraction capped at 1)'//
-     &     ' CANNOT DO THIS, >1'
+      TITLE = 'c3c4crop_capped:C3 + C4 crops '//
+     & '(cover fraction capped at 1)'//
+     &     '  CANNOT DO THIS, >1'
       LAYEROUT(:,:) = C3CAP1(:,:) + C4CAP1(:,:)
       write(30) TITLE, LAYEROUT
-      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
-      write(50) TITLE, LAYEROUT
+!      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
+!      write(50) TITLE, LAYEROUT
 
       close(20)
       close(30)
-      close(50)
+!      close(50)
       end program hntr4_monfreda
       
