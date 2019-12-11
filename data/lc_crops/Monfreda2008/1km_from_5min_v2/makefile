@@ -44,7 +44,7 @@ Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc : Monfreda_crops_5min.nc Monfre
 # -------------------------------------------------
 
 deploy : Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc
-	rsync Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc discover:/discover/nobackup/projects/giss_ana/pub/Ent_TBM/EntGVSD/data/lc_crops/Monfreda2008/1km_from_5min_v2/
+	rsync Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc *_forplot.nc discover:/discover/nobackup/projects/giss_ana/pub/Ent_TBM/EntGVSD/data/lc_crops/Monfreda2008/1km_from_5min_v2/
 
 clean :
 	rm *.bin *.nc a.out fort.*
