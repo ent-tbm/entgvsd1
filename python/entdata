@@ -93,6 +93,7 @@ def main():
     parser = argparse.ArgumentParser(description='Download corresponding EntGVSD data files')
     parser.add_argument('action', type=str, default='fetch',
         help='Action to take: list, fetch, or clean')
+    if (len(sys.argv) == 1): sys.argv.append('-h')
     args = parser.parse_args()
     do_main(args.action)
 
