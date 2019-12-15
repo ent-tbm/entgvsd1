@@ -89,8 +89,32 @@ def do_main(action):
             else:
                 raise ValueError('Illegal action: {}'.format(action))
 
+description= \
+"""Download corresponding EntGVSD data files.  Run this script from
+*any* directory within <entgvsd1>/data, and it will download data
+files from the data portal that accompanying the git-provided files in
+that directory.  Examples:
+
+    $ cd data.soilalbedo
+
+    # List files available on server, that would be downloaded
+    # Already-downloaded files are indicated by a star.
+    $ ./entdata list
+      ./Carrer2014/carrer/carrer.nc.gz
+    * ./Carrer2014/carrer/Carrer2014_VIS_v2_redo_sent2016/Alb_soil_2004_VIS_v2-002.tar.gz
+    * ./Carrer2014/carrer/NIR_New/Alb_soil_a.20040101.006.gz
+      ./Carrer2014/carrer/NIR_New/Alb_soil_a.20040109.006.gz
+      ...
+
+    # Fetch all files indicated by `entdata list`
+    $ ./entdata fetch
+
+    # Delete all files, if downloaded, indicated by `entdata list`
+    $ ./entdata clean
+"""
+
 def main():
-    parser = argparse.ArgumentParser(description='Download corresponding EntGVSD data files')
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('action', type=str, default='fetch',
         help='Action to take: list, fetch, or clean')
     if (len(sys.argv) == 1): sys.argv.append('-h')
