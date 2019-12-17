@@ -35,7 +35,7 @@ program Carrer_soilalbedo_to_GISS
     use ent_labels_mod
     use ent_params_mod
     use assign_laimax_mod
-
+    use hntr_mod
 
 !    use convertnc
 !    use netcdf
@@ -108,7 +108,7 @@ program Carrer_soilalbedo_to_GISS
     integer :: dg
     real*4 :: s
 
-    type(Chunker_t) :: chunker,chunkerhr
+    type(Chunker_t) :: chunker,chunkerhr,chunkere
     ! Input files
     type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
     real*4 :: lcice, lcwater
@@ -117,19 +117,26 @@ program Carrer_soilalbedo_to_GISS
     ! Output Files
     type(ChunkIO_t) :: io_albsw
     real*4 :: albsw
-    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS)
+    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS), io_albgisse(NBANDS_GISS)
     real*4 :: albgiss(NBANDS_GISS)
     integer, parameter :: BRIGHT_DARK = 2
     type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
     type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
+    type(ChunkIO_t) :: ioall_fracgreye, io_fracgreye(BRIGHT_DARK)
     !type(ChunkIO_t) :: ioall_fracgrey_hr, io_fracgrey_hr(BRIGHT_DARK)
     type(ChunkIO_t) :: io_bs_brightratio_hr
     real*4 :: bsbr
+
+    ! Regrid to ModelE
+    type(HntrSpec_t) :: spec_e, spec_k
+    type(HntrCalc_t) :: hntr_e    ! Preparation to regrid
+
 
     INTEGER :: ichunk,jchunk,ic,jc
     integer :: i1km,j1km   ! Indexing into hi-res 1km variable
     integer :: iband,istat
     real, dimension(:,:), allocatable, target :: wta,wta_fracbd,wta_fracbd_hr    ! Surmised landmask
+    real, dimension(:,:), allocatable, target :: wta1
     type(EntSet_t) :: ent2
     type(FileInfo_t) :: info
     integer, parameter :: nhr(2) = (/ IM1km/IMK, JM1km/JMK /)   ! # of hi-res gridcells per lo-res
@@ -143,10 +150,20 @@ program Carrer_soilalbedo_to_GISS
 
 
     call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
+    call chunkere%init(IM2, JM2, IM2,JM2, 'forplot', 100, 100, 10,(/18,15/), &
+        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution
     call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
+
+    spec_e = hntr_spec(chunkere%chunk_size(1), chunkere%ngrid(2), 0d0, 180d0*60d0 / chunkere%ngrid(2))
+    spec_k = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
+    hntr_e = hntr_calc(spec_e, spec_k, 0d0)   ! datmis=0
+
+
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
+    allocate(wta1(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd(chunker%chunk_size(1), chunker%chunk_size(2)))
     allocate(wta_fracbd_hr(chunkerhr%chunk_size(1), chunkerhr%chunk_size(2)))
+    wta1 = 1d0
 
     ! ------------- Open Input Files
 
@@ -192,6 +209,11 @@ program Carrer_soilalbedo_to_GISS
             'albgiss_'//trim(sbands_giss(iband)), &
             'albgiss_'//trim(sbands_giss(iband)), &
             'Soil albedo in GISS bands', '1')
+        call chunkere%nc_create(io_albgisse(iband), weighting(wta,1d0,0d0), &
+            'soilalbedo/', &
+            'V2_albgiss_'//trim(sbands_giss(iband)), &
+            'albgiss_'//trim(sbands_giss(iband)), &
+            'Soil albedo in GISS bands', '1', create_lr=.false.)
     end do
 
     ! ----------- fracbd
@@ -222,6 +244,18 @@ program Carrer_soilalbedo_to_GISS
             (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
     end do
 
+    call chunkere%nc_create(ioall_fracgreye, weighting(wta_fracbd,1d0,0d0), &
+        'soilalbedo/', &
+        'V2_fracgrey', &
+        'fracgrey', &
+        'Bright/Dark Soil in GISS Bands', '1', &
+        sbright_dark, sbright_dark_long, create_lr=.false.)
+    do k=1,2
+        call chunkere%nc_reuse_var( &
+            ioall_fracgreye, io_fracgreye(k), &
+            (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
+    end do
+
     ! ---------------- bs_brightratio_hr (1km resolution)
     call chunkerhr%nc_create( &
         io_bs_brightratio_hr, weighting(wta_fracbd_hr,1d0,0d0), &
@@ -232,6 +266,7 @@ program Carrer_soilalbedo_to_GISS
 
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
+    call chunkere%nc_check(rw=rw)
     call rw%write_mk
 
 #ifdef JUST_DEPENDENCIES
@@ -250,6 +285,7 @@ program Carrer_soilalbedo_to_GISS
 
         call chunker%move_to(ichunk,jchunk)
         call chunkerhr%move_to(ichunk,jchunk)
+        call chunkere%move_to(ichunk,jchunk)
         wta = 0
 
         do jc = 1,chunker%chunk_size(2)
@@ -441,6 +477,7 @@ program Carrer_soilalbedo_to_GISS
             end do
             end do
 
+
             ! ---------- Store outputs
             io_albsw%buf(ic,jc) = albsw
             do k=1,NBANDS_GISS
@@ -450,14 +487,35 @@ program Carrer_soilalbedo_to_GISS
 
         end do
         end do
+
+        ! ------------ Regrid to GISS resolution
+print *,'AA1'
+        do k=1,NBANDS_GISS
+            call hntr_e%regrid4( &
+                io_albgisse(k)%buf, io_albgiss(k)%buf, &
+                wta1, 1d0, 0d0, &    ! weighting,
+                io_albgisse(k)%startB(2), io_albgisse(k)%chunker%chunk_size(2))
+        end do
+print *,'AA2'
+        do k=1,2
+            call hntr_e%regrid4( &
+                io_fracgreye(k)%buf, io_fracgrey(k)%buf, &
+                wta1, 1d0, 0d0, &    ! weighting,
+                io_fracgreye(k)%startB(2), io_fracgreye(k)%chunker%chunk_size(2))
+        end do
+print *,'AA3'
+
+
         call chunker%write_chunks
         call chunkerhr%write_chunks
+        call chunkere%write_chunks
     end do
     end do
 
 
     call chunker%close_chunks
     call chunkerhr%close_chunks
+    call chunkere%close_chunks
 
 end program Carrer_soilalbedo_to_GISS
             
