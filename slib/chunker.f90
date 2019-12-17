@@ -292,7 +292,7 @@ type FileInfo_t
     character*(100) :: leaf
     logical :: use_outputs_dir   ! Use chunker%output_dir//dir, or just dir directly?
     ! ---------- Metadata below here
-    character*(20) :: vname
+    character*(40) :: vname
     character*(50) :: long_name
     character*(20) :: units
     character*(200) :: modification
