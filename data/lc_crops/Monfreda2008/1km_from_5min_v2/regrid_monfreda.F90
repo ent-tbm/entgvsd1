@@ -51,7 +51,7 @@ subroutine regrid_control(rw, root, dir, ileaf, oleaf, vnames)
     do i=1,nvnames
         info%vname = vnames(i)
         info%long_name = vnames(i)
-        info%data_source = 'Monfreda'
+        info%data_source = 'Monfreda et al. (2008)'
         info%units = '1'
         call chunker_out%nc_reuse_file(ioall_out, io_out(i), info, weighting(chunker_out%wta1,1d0,0d0))
     end do

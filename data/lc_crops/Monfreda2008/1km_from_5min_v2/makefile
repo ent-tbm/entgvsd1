@@ -39,7 +39,7 @@ Monfreda_crops_5min_norm.nc :
 
 
 Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc : Monfreda_crops_5min.nc Monfreda_crops_5min_norm.nc
-	xent regrid_monfreda.F90
+	xent regrid_monfreda.F90; python3 copy_metadata.py
 
 # -------------------------------------------------
 
