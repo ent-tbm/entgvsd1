@@ -3,10 +3,10 @@ import netCDF4
 exclude = {'source'}
 
 for fname0,fname1 in (
-    ('Monfreda_crops_5min.nc', 'Monfreda_crops_1km.nc'),
-    ('Monfreda_crops_5min_norm.nc', 'Monfreda_crops_1km_norm.nc'),
-    ('Monfreda_crops_5min.nc', 'Monfreda_crops_1km_forplot.nc'),
-    ('Monfreda_crops_5min_norm.nc', 'Monfreda_crops_1km_norm_forplot.nc')):
+    ('EntGVSD_v1.1_Monfreda_crops_5min.nc', 'EntGVSD_v1.1_Monfreda_crops_1km.nc'),
+    ('EntGVSD_v1.1_Monfreda_crops_5min_norm.nc', 'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc'),
+    ('EntGVSD_v1.1_Monfreda_crops_5min.nc', 'EntGVSD_v1.1_Monfreda_crops_1km_forplot.nc'),
+    ('EntGVSD_v1.1_Monfreda_crops_5min_norm.nc', 'EntGVSD_v1.1_Monfreda_crops_1km_norm_forplot.nc')):
 
 
     print('------------ {} {}'.format(fname0, fname1))

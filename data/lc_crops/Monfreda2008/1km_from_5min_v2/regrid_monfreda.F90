@@ -116,7 +116,7 @@ implicit none
     call rw%init(THIS_OUTPUTS_DIR, 'regrid_monfreda', 100,100)
 
     call regrid_control(rw, './', '', &
-        'Monfreda_crops_5min', 'Monfreda_crops_1km', (/ &
+        'EntGVSD_v1.1_Monfreda_crops_5min', 'EntGVSD_v1.1_Monfreda_crops_1km', (/ &
         'c3crop_cf            ', &
         'c4crop_cf            ', &
         'herbcrop_cf          ', &
@@ -126,7 +126,7 @@ implicit none
         'herbshrubtreecrop_ccf' /) )
 
     call regrid_control(rw, './', '', &
-        'Monfreda_crops_5min_norm', 'Monfreda_crops_1km_norm', (/ &
+        'EntGVSD_v1.1_Monfreda_crops_5min_norm', 'EntGVSD_v1.1_Monfreda_crops_1km_norm', (/ &
         'c3norm_ccf           ', &
         'c4norm_ccf           ', &
         'c3c4normtot_ccf      ', &

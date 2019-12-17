@@ -434,12 +434,12 @@ C****
       endif
 
       fileout = 
-     &     pathout//'Monfreda_crops_'//
+     &     pathout//'EntGVSD_v1.1_Monfreda_crops_'//
      &     trim(RESOUT)//'.bin'
       write(*,*) fileout
       open(20, file=fileout, form='unformatted')
       fileoutnorm = 
-     &     pathout//'Monfreda_crops_'//
+     &     pathout//'EntGVSD_v1.1_Monfreda_crops_'//
      &     trim(RESOUT)//'_norm.bin'
       write(*,*) fileoutnorm
       open(30, file=fileoutnorm, form='unformatted')
