@@ -262,7 +262,7 @@ program Carrer_soilalbedo_to_GISS
         'soilalbedo/', &
         'V1km_bs_brightratio', &
         'bs_brightratio', &
-        'Ratio of Bright/Dark Soil in GISS Bands', '1')
+        'Bright Fraction of Soil', '1')
 
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)
