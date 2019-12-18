@@ -129,12 +129,13 @@ subroutine do_gridfill(rw, iband)
                 
         do jc = 1,chunker%chunk_size(2)
         do ic = 1,chunker%chunk_size(1)
-!            if (abs(1.0 - io_lcice%buf(ic,jc) + io_lcwater%buf(ic,jc)) < 1.e-5) then
-!                ! Cell is all ice or land; Albedo calculator doesn't need a filled-in value
-!                io_albfill%buf(ic,jc) = FillValue
-!            else
+            ! poisson_fill() created albedo of 0 at the poles, for latitudes
+            ! with no data at all.  Replace this with FilLValue.
+            if (grid(ic,jc) == 0) then
+                io_albfill%buf(ic,jc) = FillValue
+            else
                 io_albfill%buf(ic,jc) = grid(jc,ic)
-!            end if
+            end if
         end do
         end do
 
