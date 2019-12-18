@@ -426,22 +426,22 @@ write(*,*) err, 'variables IDs'
 call chunker%nc_open_input(io_04crops, &
     INPUTS_URL, INPUTS_DIR,  &
     'lc_crops/Monfreda2008/', &
-    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'herbnorm_ccf', 1)
+    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'herbnorm', 1)
 
 call chunker%nc_open_input(io_05crops, &
     INPUTS_URL, INPUTS_DIR,  &
     'lc_crops/Monfreda2008/', &
-    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'shrubnorm_ccf', 1)
+    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'shrubnorm', 1)
 
 call chunker%nc_open_input(io_06crops, &
     INPUTS_URL, INPUTS_DIR,  &
     'lc_crops/Monfreda2008/', &
-    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'treenorm_ccf', 1)
+    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'treenorm', 1)
 
 call chunker%nc_open_input(io_04cropsm, &
     INPUTS_URL, INPUTS_DIR,  &
     'lc_crops/Monfreda2008/', &
-    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'c4multi_hcf', 1)
+    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'c4_multi', 1)
 
 !     CLIMSTATS
 

@@ -546,7 +546,7 @@ C****
          enddo
       enddo
       TITLE = 
-     &   'c3norm_ccf:C3 CROPS (crop cover fraction) '//
+     &   'c3norm:C3 CROPS (crop cover fraction) '//
      &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C3NORM
       LAYEROUT = C3NORM
@@ -554,7 +554,7 @@ C****
 !      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     &   'c4norm_ccf:C4 CROPS (crop cover fraction)'//
+     &   'c4norm:C4 CROPS (crop cover fraction)'//
      &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C4NORM
       LAYEROUT = C4NORM
@@ -562,7 +562,7 @@ C****
 !      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'c3c4normtot_ccf:C3+C4 CROPS (crop cover fraction)'//
+     & 'c3c4normtot:C3+C4 CROPS (crop cover fraction)'//
      &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, C3NORM + C4NORM
       LAYEROUT = C3NORM + C4NORM
@@ -575,7 +575,7 @@ C****
       LAYEROUT(:,:) = 0.d0
       LAYEROUT(:,:) = HERBCROP(:,:) + SHRUBCROP(:,:)+ TREECROP(:,:)
       TITLE = 
-     & 'herbshrubtreecrop_ccf:HERB+SHRUB+TREE CROPS 2000 '//
+     & 'herbshrubtreecrop:HERB+SHRUB+TREE CROPS 2000 '//
      & '(crop cover fraction)'//
      & '  (Monfreda et al. 2008)'
       write(20) TITLE, LAYEROUT
@@ -599,7 +599,7 @@ C****
          enddo
       enddo
       TITLE = 
-     & 'herbnorm_ccf:HERB CROPS (crop cover fraction)'//
+     & 'herbnorm:HERB CROPS (crop cover fraction)'//
      &' (normalized Monfreda et al. 2008)'
       write(30) TITLE, HERBNORM
       LAYEROUT = HERBNORM
@@ -607,7 +607,7 @@ C****
 !      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'shrubnorm_ccf:SHRUB CROPS (crop cover fraction)'//
+     & 'shrubnorm:SHRUB CROPS (crop cover fraction)'//
      &'  (normalized Monfreda et al. 2008)'
       write(30) TITLE, SHRUBNORM
       LAYEROUT = SHRUBNORM
@@ -615,7 +615,7 @@ C****
 !      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'treenorm_ccf:TREE CROPS (crop cover fraction)'//
+     & 'treenorm:TREE CROPS (crop cover fraction)'//
      & '  (normalized Monfreda et al. 2008)'
       write(30) TITLE, TREENORM
       LAYEROUT = TREENORM
@@ -623,7 +623,7 @@ C****
 !      write(50) TITLE, LAYEROUT
 
       TITLE = 
-     & 'herbshrubtreenorm_ccf:HERB+SHRUB+TREE CROPS'//
+     & 'herbshrubtreenorm:HERB+SHRUB+TREE CROPS'//
      & ' (crop cover fraction)'//
      & '  (normalized Monfreda et al. 2008)'
       write(30) TITLE, HERBNORM + SHRUBNORM + TREENORM
@@ -656,7 +656,7 @@ C****
             endif
          enddo
       enddo
-      TITLE = 'c4multi_hcf:C4 CROPS'//
+      TITLE = 'c4crop_multi:C4 CROPS'//
      &' (multi-harvest herb cover fraction) '// 
      &'  (Monfreda et al. 2008)'
       write(30) TITLE, LAYEROUT
@@ -679,7 +679,7 @@ C****
 !      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
 !      write(50) TITLE, LAYEROUT
 
-      TITLE = 'c3crop_hcf:C3 HERB CROPS (fraction of herb crop cover,'//
+      TITLE = 'c3crop_multi:C3 HERB CROPS (fraction of herb crop cover,'//
      &     'multi-harvest)'
       do i=1,longout
          do j=1,latout
