@@ -444,7 +444,7 @@ C****
       write(*,*) fileoutnorm
       open(30, file=fileoutnorm, form='unformatted')
 !      fileoutAviewer =
-!     &     pathout//'Monfreda_crops_'//
+!     &     pathout//'EntGVSD_v1.1_Monfreda_crops_'//
 !     &     trim(RESOUT)// '_normA.bin'
 !      write(*,*) fileoutAviewer
 !      open(50, file=fileoutAviewer, form='unformatted')
@@ -679,8 +679,8 @@ C****
 !      call Set_val(LAYEROUT,longout,latout,0.,undef_A)
 !      write(50) TITLE, LAYEROUT
 
-      TITLE = 'c3crop_multi:C3 HERB CROPS (fraction of herb crop cover,'//
-     &     'multi-harvest)'
+      TITLE = 'c3crop_multi:C3 HERB CROPS '//
+     &  '(fraction of herb crop cover, multi-harvest)'
       do i=1,longout
          do j=1,latout
             if (HERBCROP(i,j).le.0.0) then

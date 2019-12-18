@@ -123,22 +123,22 @@ implicit none
         'shrubcrop_cf         ', &
         'treecrop_cf          ', &
         'c3c4tot_cf           ', &
-        'herbshrubtreecrop_ccf' /) )
+        'herbshrubtreecrop    ' /) )
 
     call regrid_control(rw, './', '', &
         'EntGVSD_v1.1_Monfreda_crops_5min_norm', 'EntGVSD_v1.1_Monfreda_crops_1km_norm', (/ &
-        'c3norm_ccf           ', &
-        'c4norm_ccf           ', &
-        'c3c4normtot_ccf      ', &
-        'herbnorm_ccf         ', &
-        'shrubnorm_ccf        ', &
-        'treenorm_ccf         ', &
-        'herbshrubtreenorm_ccf', &
-        'c4multi_hcf          ', &
-        'c3multi_cf           ', &
-        'c3crop_hcf           ', &
-        'shrubtreecrop_cf     ', &
-        'c3c4crop_capped      ' /) )
+        'c3norm           ', &
+        'c4norm           ', &
+        'c3c4normtot      ', &
+        'herbnorm         ', &
+        'shrubnorm        ', &
+        'treenorm         ', &
+        'herbshrubtreenorm', &
+        'c4crop_multi     ', &
+        'c3multi_cf       ', &
+        'c3crop_multi     ', &
+        'shrubtreecrop_cf ', &
+        'c3c4crop_capped  ' /) )
 
 end program A07a_regrid_controls
 

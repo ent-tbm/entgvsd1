@@ -28,23 +28,23 @@ $(ASC_FILES) :
 	cd ../5min_origdata; ../../entdata fetch; gunzip `find . -name '*.asc.gz'`
 
 
-Monfreda_crops_5min.bin Monfreda_crops_5min_norm.bin : $(ASC_FILES)
+EntGVSD_v1.1_Monfreda_crops_5min.bin EntGVSD_v1.1_Monfreda_crops_5min_norm.bin : $(ASC_FILES)
 	gfortran -cpp -fconvert=big-endian -O0 -fno-range-check asc_to_bin.f; ./a.out
 
-Monfreda_crops_5min.nc :
-	giss2nc --input-file Monfreda_crops_5min.bin --output-file Monfreda_crops_5min.nc --endian=big
+EntGVSD_v1.1_Monfreda_crops_5min.nc :
+	giss2nc --input-file EntGVSD_v1.1_Monfreda_crops_5min.bin --output-file EntGVSD_v1.1_Monfreda_crops_5min.nc --endian=big
 
-Monfreda_crops_5min_norm.nc :
-	giss2nc --input-file Monfreda_crops_5min_norm.bin --output-file Monfreda_crops_5min_norm.nc --endian=big
+EntGVSD_v1.1_Monfreda_crops_5min_norm.nc :
+	giss2nc --input-file EntGVSD_v1.1_Monfreda_crops_5min_norm.bin --output-file EntGVSD_v1.1_Monfreda_crops_5min_norm.nc --endian=big
 
 
-Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc : Monfreda_crops_5min.nc Monfreda_crops_5min_norm.nc
+EntGVSD_v1.1_Monfreda_crops_1km.nc EntGVSD_v1.1_Monfreda_crops_1km_norm.nc : EntGVSD_v1.1_Monfreda_crops_5min.nc EntGVSD_v1.1_Monfreda_crops_5min_norm.nc
 	xent regrid_monfreda.F90; python3 copy_metadata.py
 
 # -------------------------------------------------
 
-deploy : Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc
-	rsync Monfreda_crops_1km.nc Monfreda_crops_1km_norm.nc *_forplot.nc discover:/discover/nobackup/projects/giss_ana/pub/Ent_TBM/EntGVSD/data/lc_crops/Monfreda2008/1km_from_5min_v2/
+deploy : EntGVSD_v1.1_Monfreda_crops_1km.nc EntGVSD_v1.1_Monfreda_crops_1km_norm.nc
+	rsync EntGVSD_v1.1_Monfreda_crops_1km.nc EntGVSD_v1.1_Monfreda_crops_1km_norm.nc *_forplot.nc discover:/discover/nobackup/projects/giss_ana/pub/Ent_TBM/EntGVSD/data/lc_crops/Monfreda2008/1km_from_5min_v2/
 
 clean :
 	rm *.bin *.nc a.out fort.*
