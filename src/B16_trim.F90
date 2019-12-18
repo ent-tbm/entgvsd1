@@ -770,7 +770,7 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
     ! Monthly LC and LAI (NOTE: Monthly LC is set to same as annual)
     real*4, dimension(esub%ncover,NMONTH) :: vfm,laim
     real*4 :: bs_brightratio
-    integer :: arid_shrub_s,cold_shrub_s,c3herb_s   ! Shortcut indices
+    integer :: arid_shrub_s   ! Shortcut indices
 
     logical :: isgood
     real*4 :: sum_vfc,sum_vfm
@@ -779,12 +779,6 @@ subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_
     ! Wow, that <0.05 threshold sure cleans out a lot of that dark
     ! blue.  I think we can go to a threshold of < 0.1.
     real*4, parameter :: lc_trim_threshold = .1
-
-    integer :: maxpft
-    real*4 :: s
-    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    arid_shrub_s = esub%svm(ARID_SHRUB)   ! shortcut
-        cold_shrub_s = esub%svm(COLD_SHRUB)
 
     print *,'========================= Part 1&2: trimmed, trimmed_scaled'
 
@@ -815,7 +809,6 @@ call check_laim(laim, 'check1')
             hsd(k) = 0
 
         end do    ! k=1,esub%ncover
-
         ! Bare soil brightness ratiaafo
         bs_brightratio = io_bs%buf(i,j)
 
@@ -832,133 +825,10 @@ call check_laim(laim, 'check1')
 
         ! ========== Part 1: trimmed
 
-        ! convert sparse veg to cold adapted shrub 9 if present
-        s = sum(vfc(1:N_BARE))
-        if (abs(s-sum(vfm(1,1:N_BARE))) > 1.e-5) then !#DEBUG
-             write(*,*) 'ERROR orig:  max and monthly lc different' &
-                 ,i,j ,s,sum(vfm(1,1:N_BARE))
-             write(*,*) vfc(1:N_BARE)
-             write(*,*) vfm(1,1:N_BARE)
-        endif
-
-        if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-              .and. laic(N_BARE) > .0 &
-              .and. vfc(cold_shrub_s) > .0 ) then
-            !convert_vf(vf1, lai1, vf2, lai2, laimin)
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(cold_shrub_s), laic(cold_shrub_s), laic(cold_shrub_s) )
-                                ! lai >= lai(cold_shrub_s)
-            do m=1,NMONTH
-               !subroutine convert_vfm(vf1, lai1, vf2, lai2, vfc)
-               call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE), &
-                   !! vfm(m,cold_shrub_s),vfm(m,cold_shrub_s), vfc(cold_shrub_s))!BUG??
-                   vfm(m,cold_shrub_s),laim(m,cold_shrub_s), vfc(cold_shrub_s))
-             
-            enddo
-
-            call convert_vfh( &
-                vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                vfh(cold_shrub_s),hm(cold_shrub_s),hsd(cold_shrub_s), vfc(cold_shrub_s))
-        endif
-
-        s = sum(vfc(1:N_BARE))
-        if (abs(s-sum(vfm(1,1:N_BARE))) > 1.e-5) then !#DEBUG
-            write(*,*) 'ERROR sparse:  max and monthly lc different' &
-                 , s,sum(vfm(1,1:N_BARE))
-            write(*,*) vfc(1:N_BARE)
-            write(*,*) vfm(1,1:N_BARE)
-        endif
-
-
-        ! convert sparse veg to arid adapted shrub 10 if present
-        if( vfc(N_BARE) > .0 .and. vfc(N_BARE) < .15 &
-            .and. laic(N_BARE) > .0 &
-            .and. vfc(arid_shrub_s) > .0 ) then
-
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(arid_shrub_s), laic(arid_shrub_s), laic(arid_shrub_s) )
-                                ! lai >= lai(arid_shrub_s)
-            do m=1,NMONTH
-                call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE), &
-                   vfm(m,arid_shrub_s),laim(m,arid_shrub_s),vfc(arid_shrub_s))
-            enddo
-
-            call convert_vfh( &
-                vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                vfh(arid_shrub_s),hm(arid_shrub_s),hsd(arid_shrub_s), vfc(arid_shrub_s))
-        endif
-
-        ! convert the rest of sparse veg to crop 15 if present
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 &
-              .and. vfc(c3herb_s) > .0 ) then
-            ! print *, 'Converting spare to crop/bare', &
-            !     vfc(N_BARE), laic(N_BARE), vfc(c3herb_s)
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                 vfc(c3herb_s), laic(c3herb_s), laic(c3herb_s))
-            if (vfc(N_BARE)<0.0)  print *,  &
-                'After conversion:            ', &
-                 vfc(N_BARE), laic(N_BARE),  &
-                 vfc(c3herb_s), laic(c3herb_s)
-            do m=1,NMONTH
-                call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE), &
-                    vfm(m,c3herb_s),laim(m,c3herb_s),vfc(c3herb_s))
-            end do
-            call convert_vfh( &
-                 vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                 vfh(c3herb_s),hm(c3herb_s),hsd(c3herb_s), vfc(c3herb_s))
-        end if
-
-        ! convert the rest of sparse veg to pft with biggest fraction
-        ! (if present)
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-
-            maxpft = maxloc( vfc(1:16), 1 )
-            !print *, "max pft is ",maxpft
-            if ( vfc(maxpft) >= .0001 ) then
-            
-                call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                    vfc(maxpft), laic(maxpft), laic(maxpft))
-                do m=1,NMONTH
-                    call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE) &
-                        ,vfm(m,maxpft),laim(m,maxpft),vfc(maxpft))
-                end do
-
-                call convert_vfh( &
-                    vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                    vfh(maxpft),hm(maxpft),hsd(maxpft), &
-                    vfc(maxpft))
-            end if
-        end if
-
-      ! convert the rest of sparse veg to arid adapted shrub 10
-        if( vfc(N_BARE) > .0 .and. laic(N_BARE) > .0 ) then
-
-            call convert_vf(vfc(N_BARE), laic(N_BARE), &
-                vfc(arid_shrub_s), laic(arid_shrub_s), .0 )
-            do m=1,NMONTH
-               call convert_vfm(vfm(m,N_BARE),laim(m,N_BARE), &
-                   vfm(m,arid_shrub_s),laim(m,arid_shrub_s),vfc(arid_shrub_s))
-               if ((vfm(m,arid_shrub_s).lt.0.).or. &
-                   (vfm(m,N_BARE).lt.0.)) then
-                  write(*,*) 'vfm<0: ',m,vfm(m,arid_shrub_s) &
-                      ,vfm(m,N_BARE),vfc(arid_shrub_s),vfc(N_BARE)
-                  STOP
-               end if
-            end do
-
-            if (vfc(arid_shrub_s) > 0.) then
-               hm(arid_shrub_s) = 2.0 !Check simard.f Set_shrub_height for value!
-               hsd(arid_shrub_s) = FillValue
-            endif
-            call convert_vfh( &
-                vfh(N_BARE),hm(N_BARE),hsd(N_BARE), &
-                vfh(arid_shrub_s),hm(arid_shrub_s),hsd(arid_shrub_s), vfc(arid_shrub_s))
-
-        end if
-
         ! ------------------------------------------------------
         ! convert arid adapted shrub with lai < .15 to bare soil
         ! and restrict lai >= .15 
+        arid_shrub_s = esub%svm(ARID_SHRUB)   ! shortcut
         if( vfc(arid_shrub_s) > .0 .and. laic(arid_shrub_s) < .15 ) then
 
             call convert_vf(vfc(N_BARE), laic(N_BARE), &
@@ -1017,7 +887,7 @@ call check_laim(laim, 'check1')
         ! Things over Antarctica, also over the ocean
         ! Should be getting rid of those; maybe not because there's nothing else to replace them with.
         !
-        !   At 1/2 degree: if lc<.1 and laimax==0 or FillValue  ==> zero it out
+        !   At 1/2 degree: if lc<.1 and laimax==0 or undef  ==> zero it out
         ! if laimax is nonzero, then... must make sure some lai of that gridcell is preserved when zero out that cover
         ! if there is vegetation in some other PFT in the same cell...
         !      ==>  zero it out
