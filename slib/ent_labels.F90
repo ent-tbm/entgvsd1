@@ -150,7 +150,7 @@ type(EntSet_t) :: ent19
 
 
 ! Table assigns standard height, based on Simard Height and PFT index
-! <Assigned height>(i) = SHEIGHT * std_heights(i*2) + std_heights(i*2+1)
+! <Assigned height>(i) = SHEIGHT * heights_forms(i*2) + heights_forms(i*2+1)
 !  ...where SHEIGHT is the Simard height from the input file.
 real*8, parameter :: heights_form(2,NENT20) = RESHAPE( (/ &
     1d0, 0d0,    & ! TREE    1 - evergreen broadleaf early successional
