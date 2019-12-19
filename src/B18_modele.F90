@@ -184,7 +184,7 @@ implicit none
         'trimmed_scaled_nocrops', &    ! LC
         'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
         'trimmed_scaled_nocrops', &            ! HGT
-        'modelE_nocrops', & ! output part
+        'modelE', & ! output part
         IM2,JM2, '')
 
 

@@ -34,7 +34,7 @@ def snoop_A10_dir(idir):
                 mname = None
             else:
                 imonth = imonths[match.group(2)]
-                mname = os.path.join(idir, '{}_{}'.format(match.group(1),match.group(3)))
+                mname = os.path.join(idir, '{}_monthly_{}'.format(match.group(1),match.group(3)))
             files.append(File(ftype,name,imonth,mname))
 
     annual_files = list(file for file in files if file.imonth is None)
@@ -169,7 +169,7 @@ convert_fn = {
 OUTPUTS_DIR = '../outputs'
 
 def main():
-    annual_files, month_group = snoop_A10_dir(os.path.join(OUTPUTS_DIR, 'modele1'))
+    annual_files, month_group = snoop_A10_dir(os.path.join(OUTPUTS_DIR, 'modelE'))
 
     ifiles = list()
     ofiles = list()
