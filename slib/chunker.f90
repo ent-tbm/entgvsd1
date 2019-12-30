@@ -297,6 +297,7 @@ type FileInfo_t
     character*(20) :: units
     character*(200) :: modification
     character*(300) :: data_source
+    character*(20) :: file_metadata_type
 end type FileInfo_t
 
 
@@ -313,6 +314,7 @@ subroutine clear_file_info(info)
     info%units = ''
     info%modification = ''
     info%data_source = ''
+    info%file_metadata_type = 'entgvsd'
 end subroutine clear_file_info
 
 subroutine handle_nf90_error(status, message)
@@ -1062,6 +1064,96 @@ function make_chunksizes(imjm, nchunk) result(chunksizes)
     end do
 end function make_chunksizes
 
+! Creates file-level metadata for standard EntGVSD files
+subroutine file_metadata_entgvsd(ncid, modification)
+    integer :: ncid
+    character*(*) :: modification
+    ! -------------- Local Vars
+    integer :: status
+
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'date_generated', get_sdate())
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'description', 'Ent Terrestrial Biosphere Model (Ent TBM) Global Vegetation Structure Data Set (Ent GVSD)')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'version', '1.1')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'reference', '__ENTGVSD_TECHNICAL_PUBLICATION__')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'data_sources', &
+        'v1.1:'//NEW_LINE('A')//&
+        'lc:  Moderate Resolution Imaging Spectroradiometer (MODIS) ' // &
+            'MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et ' // &
+            'al. 2010, doi:10.1016/j.rse.2009.08.016)'//NEW_LINE('A')//&
+        'crop cover:  Monfreda et al. (2008), doi ' // &
+            '10.1029/2007gb002947.'//NEW_LINE('A')//&
+        'lai and laimax: Beijing Normal University LAI data product, ' // &
+            '1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).'//NEW_LINE('A')//&
+        'hgt:  RH100 heights (Simard et al. 2011, ' // &
+            'doi:10.1029/2011jg001708)'//NEW_LINE('A')//&
+        'temperature: Climate Research Unit (CRU) of the University ' // &
+            'of East Anglia, TS3.22, 0.5 degrees, 1901-2013, surface ' // &
+            'temperature, monthly (Harris et al. 2014, ' // &
+            'doi:10.1002/joc.3711)'//NEW_LINE('A')//&
+        'precipitation:  Global Precipitation Climatology Centre ' // &
+            '(GPCC) V6, precipitation, monthly, 0.5, 1901-2010 ' // &
+            '(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'modification', trim(modification))
+
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'creator_name', 'NASA GISS')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_min', -90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_max', 90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_min', -180d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_max', 180d0)
+end subroutine file_metadata_entgvsd
+
+! Creates file-level metadata for standard EntGVSD files
+subroutine file_metadata_carrer(ncid)
+    integer :: ncid
+    ! -------------- Local Vars
+    integer :: status
+
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'date_generated', get_sdate())
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'description', &
+        'Ent Global Vegetation Structure Dataset (Ent GVSD) Soil albedo derived from D. Carrer et al. ' // &
+        '(2014) MODIS soil albedos.  Created concurrently with Ent GVSD v1.1.')
+
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'version', '1.1')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'reference', '__ENTGVSD_TECHNICAL_PUBLICATION__')
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'data_sources', &
+        'D. Carrer et al. (2014) MODIS soil albedos')
+
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'creator_name', 'NASA GISS')
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_min', -90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lat_max', 90d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_min', -180d0)
+    status=nf90_put_att(ncid,NF90_GLOBAL, &
+        'geospatial_lon_max', 180d0)
+end subroutine file_metadata_carrer
+
 ! Creates a variable in an already-open NetCDF file with dimensions defined
 ! @param ncid (IN) NetCDF file handle
 ! @param varid (OUT) NetCDF handle of new variable
@@ -1124,51 +1216,13 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     call handle_nf90_error(status, 'nf90_put_att Ent vars '// &
          trim(info%long_name))
 
-
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'date_generated', get_sdate())
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'description', 'Ent Terrestrial Biosphere Model (Ent TBM) Global Vegetation Structure Data Set (Ent GVSD)')
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'version', '1.1')
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'reference', '__ENTGVSD_TECHNICAL_PUBLICATION__')
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'data_sources', &
-        'v1.1:'//NEW_LINE('A')//&
-        'lc:  Moderate Resolution Imaging Spectroradiometer (MODIS) ' // &
-            'MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et ' // &
-            'al. 2010, doi:10.1016/j.rse.2009.08.016)'//NEW_LINE('A')//&
-        'crop cover:  Monfreda et al. (2008), doi ' // &
-            '10.1029/2007gb002947.'//NEW_LINE('A')//&
-        'lai and laimax: Beijing Normal University LAI data product, ' // &
-            '1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).'//NEW_LINE('A')//&
-        'hgt:  RH100 heights (Simard et al. 2011, ' // &
-            'doi:10.1029/2011jg001708)'//NEW_LINE('A')//&
-        'temperature: Climate Research Unit (CRU) of the University ' // &
-            'of East Anglia, TS3.22, 0.5 degrees, 1901-2013, surface ' // &
-            'temperature, monthly (Harris et al. 2014, ' // &
-            'doi:10.1002/joc.3711)'//NEW_LINE('A')//&
-        'precipitation:  Global Precipitation Climatology Centre ' // &
-            '(GPCC) V6, precipitation, monthly, 0.5, 1901-2010 ' // &
-            '(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)')
-    status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'modification', info%modification)
-
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'creator_name', 'NASA GISS')
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'geospatial_lat_min', -90d0)
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'geospatial_lat_max', 90d0)
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'geospatial_lon_min', -180d0)
-    status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'geospatial_lon_max', 180d0)
+    if (trim(info%file_metadata_type) == 'entgvsd') then
+        call file_metadata_entgvsd(ncid, info%modification)
+    elseif (trim(info%file_metadata_type) == 'carrer') then
+        call file_metadata_carrer(ncid)
+    else
+        write(ERROR_UNIT,*) 'Unknown file_metadata_type ',info%file_metadata_type
+    end if
 
     status=nf90_enddef(ncid)
     call handle_nf90_error(status, 'my_nf90_create_Ent')

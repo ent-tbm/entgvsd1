@@ -197,32 +197,42 @@ program Carrer_soilalbedo_to_GISS
     ! ===================== Open Output Files
 
     ! ------------ albsw
-    call chunker%nc_create(io_albsw, weighting(wta,1d0,0d0), &
-        'soilalbedo/', &
-        'albsw', 'albsw', &
-        'Total shortwave soil albedo', '1')
+    call clear_file_info(info)
+    info%vname = 'albsw'
+    info%long_name = 'Shortwave soil albedo (300-4000 nm) 2004'
+    info%units = '1'
+    info%file_metadata_type = 'carrer'
+    call chunker%nc_create1(io_albsw, weighting(wta,1d0,0d0), &
+        'soilalbedo/', 'soilalbedo_2HX2_v1.1_CarrerGISS_SW_annual_2004', info)
 
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
-        call chunker%nc_create(io_albgiss(iband), weighting(wta,1d0,0d0), &
+        call clear_file_info(info)
+        info%vname = 'albgiss_'//trim(sbands_giss(iband))
+        info%long_name = 'Soil albedo (GISS '//trim(sbands_giss(iband))//' band)'
+        info%units = '1'
+        info%file_metadata_type = 'carrer'
+        call chunker%nc_create1(io_albgiss(iband), weighting(wta,1d0,0d0), &
             'soilalbedo/', &
-            'albgiss_'//trim(sbands_giss(iband)), &
-            'albgiss_'//trim(sbands_giss(iband)), &
-            'Soil albedo in GISS bands', '1')
-        call chunkere%nc_create(io_albgisse(iband), weighting(wta,1d0,0d0), &
+            'soilalbedo_5km_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info)
+
+        call chunkere%nc_create1(io_albgisse(iband), weighting(wta,1d0,0d0), &
             'soilalbedo/', &
-            'V2_albgiss_'//trim(sbands_giss(iband)), &
-            'albgiss_'//trim(sbands_giss(iband)), &
-            'Soil albedo in GISS bands', '1', create_lr=.false.)
+            'soilalbedo_2HX2_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info, &
+            create_lr=.false.)
     end do
 
     ! ----------- fracbd
     do iband=1,NBANDS_GISS
-        call chunker%nc_create(ioall_fracbd(iband), weighting(wta_fracbd,1d0,0d0), &
+        call clear_file_info(info)
+        info%vname = 'fracbd_'//trim(sbands_giss(iband))
+        info%long_name = 'Bright/Dark Soil (GISS '//trim(sbands_giss(iband))//' band)'
+        info%units = '1'
+        info%file_metadata_type = 'carrer'
+
+        call chunker%nc_create1(ioall_fracbd(iband), weighting(wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
-            'fracbd_'//trim(sbands_giss(iband)), &
-            'fracbd_'//trim(sbands_giss(iband)), &
-            'Bright/Dark Soil in GISS Bands', '1', &
+            'soilalbedo_fracbd_5km_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info, &
             sbright_dark, sbright_dark_long)
         do k=1,BRIGHT_DARK
             call chunker%nc_reuse_var( &
@@ -232,11 +242,14 @@ program Carrer_soilalbedo_to_GISS
     end do
 
     ! -------------- fracgrey
-    call chunker%nc_create(ioall_fracgrey, weighting(wta_fracbd,1d0,0d0), &
+    call clear_file_info(info)
+    info%vname = 'fracgrey'
+    info%long_name = 'Bright/Dark Soil in (grey avg of GISS bands)'
+    info%units = '1'
+    info%file_metadata_type = 'carrer'
+    call chunker%nc_create1(ioall_fracgrey, weighting(wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'fracgrey', &
-        'fracgrey', &
-        'Bright/Dark Soil in GISS Bands', '1', &
+        'soilalbedo_5km_v1.1_CarrerGISS_fracgrey_annual_2004', info, &
         sbright_dark, sbright_dark_long)
     do k=1,2
         call chunker%nc_reuse_var( &
@@ -244,11 +257,9 @@ program Carrer_soilalbedo_to_GISS
             (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
     end do
 
-    call chunkere%nc_create(ioall_fracgreye, weighting(wta_fracbd,1d0,0d0), &
+    call chunkere%nc_create1(ioall_fracgreye, weighting(wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'V2_fracgrey', &
-        'fracgrey', &
-        'Bright/Dark Soil in GISS Bands', '1', &
+        'soilalbedo_2HX2_fracgrey', info, &
         sbright_dark, sbright_dark_long, create_lr=.false.)
     do k=1,2
         call chunkere%nc_reuse_var( &
@@ -256,13 +267,16 @@ program Carrer_soilalbedo_to_GISS
             (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
     end do
 
-    ! ---------------- bs_brightratio_hr (1km resolution)
-    call chunkerhr%nc_create( &
+    ! ---------------- bs_brightratio_hr (1km resolution) 
+    call clear_file_info(info)
+    info%vname = 'bs_brightratio'
+    info%long_name = 'Bright Fraction of Soil'
+    info%units = '1'
+    info%file_metadata_type = 'carrer'
+    call chunkerhr%nc_create1( &
         io_bs_brightratio_hr, weighting(wta_fracbd_hr,1d0,0d0), &
         'soilalbedo/', &
-        'V1km_bs_brightratio', &
-        'bs_brightratio', &
-        'Bright Fraction of Soil', '1')
+        'soilalbedo_V1km_bs_brightratio', info)
 
     call chunker%nc_check(rw=rw)
     call chunkerhr%nc_check(rw=rw)

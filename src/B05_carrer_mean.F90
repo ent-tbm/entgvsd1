@@ -31,6 +31,7 @@ subroutine do_carrer_mean(rw, iband, ndates)
     ! ------------ Local Vars
 
     type(Chunker_t) :: chunker
+    type(FileInfo_t) :: info
     ! Input files
     type(ChunkIO_t), target :: ioall_albin
     type(ChunkIO_t), target :: io_albin(ndates)
@@ -58,12 +59,15 @@ subroutine do_carrer_mean(rw, iband, ndates)
     end do
 
     ! ======================== Output Files
-    call chunker%nc_create(ioall_albout, weighting(wta,1d0,0d0), &
+    call clear_file_info(info)
+    info%vname = 'albmodis_'//trim(sbands_modis(iband))
+    info%long_name = 'Soil albedo ('//trim(sbands_modis(iband))//' band)'
+    info%units = '1'
+    info%file_metadata_type = 'carrer'
+    call chunker%nc_create1(ioall_albout, weighting(wta,1d0,0d0), &
         'tmp/carrer/', &
-        'albmodis_'//trim(sbands_modis(iband)), &
-        'albmodis_'//trim(sbands_modis(iband)), &
-        'Soil albedo ('//trim(sbands_modis(iband))//' band)', &
-        '1', sstats, sstats)
+        'albmodis_'//trim(sbands_modis(iband)), info, &
+        sstats, sstats)
     do id=1,NSTATS
         call chunker%nc_reuse_var(ioall_albout, io_albout(id), (/1,1,id/), &
             weighting(wta, 1d0, 0d0))

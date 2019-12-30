@@ -76,11 +76,14 @@ subroutine do_gridfill(rw, iband)
     ! ===================== Open Output Files
 
     ! ------------ albfill
-    call chunker%nc_create(io_albfill, weighting(wta,1d0,0d0), &
+     call clear_file_info(info)
+     info%vname = 'albfill_'//trim(sbands_modis(iband))//'_MEAN'
+     info%long_name = 'albmodis MEAN with missing values filled in'
+     info%units = '1'
+     info%file_metadata_type = 'carrer'
+     call chunker%nc_create1(io_albfill, weighting(wta,1d0,0d0), &
         'tmp/carrer/', &
-        'albfill_'//trim(sbands_modis(iband)), &
-        'albfill_'//trim(sbands_modis(iband))//'_MEAN', &
-        'albmodis MEAN with missing values filled in', '1')
+        'albfill_'//trim(sbands_modis(iband)), info)
 
 
     call chunker%nc_check(rw=rw)
