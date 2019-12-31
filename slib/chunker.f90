@@ -1221,7 +1221,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     elseif (trim(info%file_metadata_type) == 'carrer') then
         call file_metadata_carrer(ncid)
     else
-        write(ERROR_UNIT,*) 'Unknown file_metadata_type ',info%file_metadata_type
+        write(ERROR_UNIT,*) 'Unknown file_metadata_type ',trim(info%file_metadata_type)
     end if
 
     status=nf90_enddef(ncid)
@@ -1936,6 +1936,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
     character*(10) :: time
     character*(20) :: xvarsuffix
 
+    info%file_metadata_type = 'entgvsd'
     if ((laisource/='M').and.(laisource/='B')) then
         write(ERROR_UNIT,*) 'Illegal laisource', laisource
         stop

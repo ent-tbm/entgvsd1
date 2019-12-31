@@ -441,7 +441,7 @@ call chunker%nc_open_input(io_06crops, &
 call chunker%nc_open_input(io_04cropsm, &
     INPUTS_URL, INPUTS_DIR,  &
     'lc_crops/Monfreda2008/', &
-    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'c4_multi', 1)
+    'EntGVSD_v1.1_Monfreda_crops_1km_norm.nc', 'c4crop_multi', 1)
 
 !     CLIMSTATS
 

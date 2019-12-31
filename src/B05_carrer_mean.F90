@@ -61,7 +61,7 @@ subroutine do_carrer_mean(rw, iband, ndates)
     ! ======================== Output Files
     call clear_file_info(info)
     info%vname = 'albmodis_'//trim(sbands_modis(iband))
-    info%long_name = 'Soil albedo ('//trim(sbands_modis(iband))//' band)'
+    info%long_name = 'Carrer soil albedo ('//trim(sbands_modis(iband))//' band)'
     info%units = '1'
     info%file_metadata_type = 'carrer'
     call chunker%nc_create1(ioall_albout, weighting(wta,1d0,0d0), &

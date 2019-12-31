@@ -62,7 +62,7 @@ subroutine do_reindex(esub)
 
     ! Bare Soil Brightness Ratio
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
-        'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
+        'soilalbedo_V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES

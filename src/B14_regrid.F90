@@ -388,7 +388,7 @@ subroutine do_regrid_all_lais(rw)
 
     oinfo%leaf = 'bs_brightratio'
     call regrid_selfmask( &
-        chunkerlr%outputs_dir, 'soilalbedo/', 'V1km_bs_brightratio', 'bs_brightratio', &
+        chunkerlr%outputs_dir, 'soilalbedo/', 'soilalbedo_V1km_bs_brightratio', 'bs_brightratio', &
         oinfo, rw)
     ! ---------------------------------
 

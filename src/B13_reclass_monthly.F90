@@ -67,7 +67,7 @@ subroutine do_reindex(esub,m0,m1,rw)
 
     ! bs ratio
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
-        'V1km_bs_brightratio.nc', 'bs_brightratio', 1)
+        'soilalbedo_V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES
