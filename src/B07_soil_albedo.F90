@@ -60,7 +60,7 @@ program Carrer_soilalbedo_to_GISS
     integer, parameter :: NBANDS_GISS = 6
     character*4, parameter :: sbands_giss(NBANDS_GISS) = &
         (/"VIS ", "NIR1", "NIR2", "NIR3", "NIR4", "NIR5"/)
-    character*4, parameter :: sbands_giss_long(NBANDS_GISS) = &
+    character*(*), parameter :: sbands_giss_long(NBANDS_GISS) = &
         (/"VIS (300-770nm)   ", &
           "NIR1 (770-860nm)  ", &
           "NIR2 (860-1250nm) ", &
@@ -216,7 +216,7 @@ program Carrer_soilalbedo_to_GISS
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
         info%vname = 'albgiss_'//trim(sbands_giss(iband))
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean 2004)'
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean 2004'
         info%units = '1'
         info%file_metadata_type = 'carrer'
         call chunker%nc_create1(io_albgiss(iband), weighting(wta,1d0,0d0), &
