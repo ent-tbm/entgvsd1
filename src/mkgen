@@ -37,7 +37,7 @@ def generate_makefile():
     makefile = []    # Makefile we are assembling
     makefile.append("""
 XENT={}/build/bin/entgvsd
-../outputs/B18_modele.txt :
+../outputs/B21_plots_to_png.txt :
 
 """.format(ROOT_DIR))
 
@@ -52,6 +52,22 @@ XENT={}/build/bin/entgvsd
         makefile.append('\techo Finished Stage >../outputs/{}.txt'.format(stage))
         makefile.append('')
         prev_stage = stage
+
+
+    makefile.append("""
+../outputs/B19_to_modele_format.txt : ../outputs/B18_modele.txt
+\tpython3 B19_to_modele_format.py
+\techo Finished Stage >../outputs/B19_to_modele_format.txt
+
+../outputs/B20_plots.txt : ../outputs/B19_to_modele_format.txt
+\tRscript B20_plots.R
+\techo Finished Stage >../outputs/B20_plots.txt
+
+../outputs/B21_plots_to_png.txt : ../outputs/B20_plots.txt
+\tpython3 B21_plots_to_png.py
+\techo Finsihed Stage >../outputs/B21_plots_to_png.txt
+""")
+
 
     # Write it out
     with open('Makefile', 'w') as out:
