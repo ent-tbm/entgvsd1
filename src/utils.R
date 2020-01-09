@@ -914,14 +914,14 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		restime = "_ann"
 		if.cat=TRUE
 		
-    } else if (varnamecheck == "lc_npftgrid" ) {
+        } else if (varnamecheck == "lc_npftgrid" ) {
 	   	zlim = c(0,17)
 	   	color = giss.palette.nowhite(18)
 	   	color[1] = rgb(0.5, 0.5, 0.5)
 	   	leg=zlim[1]:zlim[2]
 	   	restime="_ann"
 		if.cat=TRUE	
-	} else if (varnamecheck == "lc_dompftlc" ) {
+	} else if (varnamecheck == "lc_dompftlc" | varnamecheck == "lc_checksum") {
 		zlim = c(0,1)
 		color = giss.palette.nowhite(11)
 		color[1] = rgb(0.5, 0.5, 0.5)
@@ -934,7 +934,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg = NULL
 		restime = "_ann"
 		if.cat=FALSE
-	} else if (	varnamecheck == "lclai_err" |varnamecheck == "lclai_checksum_diff") {
+	} else if (varnamecheck == "lclai_err" |varnamecheck == "lclai_checksum_diff") {
 		zlim = c(-1,1)
 		color = giss.palette(40)
 		leg = NULL
@@ -950,7 +950,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		leg = NULL
 		restime = ""
 		if.cat=FALSE
-	} else if (	varnamecheck == "lclaimax_checksum") {
+	} else if (varnamecheck == "lclaimax_checksum") {
 		if (length(grep('diff', filesuf))>0) {
 			zlim = c(-1,1)
 		} else {
@@ -993,7 +993,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
     fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime,"_", trimopt, filesuf, ".nc", sep="")
 	if (length(grep('diff', filesuf))>0) {
 		if (varnamecheck=="lclaimax_checksum" ) {  #HACK because varname got cut off in file
-	    		 varnamecheck = paste(varnamecheck, '_di', sep="")
+	    		 varnamecheck = paste(varnamecheck, '_diff', sep="")
 		} else {	 
 		   varnamecheck = paste(varnamecheck, '_diff', sep="")
 		}

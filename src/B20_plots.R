@@ -71,17 +71,17 @@ if (TRUE) {
     # Monthly
     for (d in paste(datatime, "_", MON, sep="")) {
     	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-	}
+    }
 	
-	# Totals
-	# Dominant lc
-	fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	domlc = Ent_calc_domlc(file=paste(outputsdir, fname, sep=""), enttyp)
-	fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
-	pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
-	Ent_domlc_plot(lctype=domlc, numpft=17, res=res, legend.cex=0.6, Entcolors=Entcolors17[match(na.min(domlc), Entcolors17[,"num"]):21,], if.new=FALSE)
-	mtext(fnameout, cex=0.8)
-	dev.off()
+    # Totals
+    # Dominant lc
+    fname = paste(trimopt,"/", filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+    domlc = Ent_calc_domlc(file=paste(outputsdir, fname, sep=""), enttyp)
+    fnameout = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc_domlc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+    pdf(file=paste(pathplot, fnameout, ".pdf", sep=""), width=8, height=5)
+    Ent_domlc_plot(lctype=domlc, numpft=17, res=res, legend.cex=0.6, Entcolors=Entcolors17[match(na.min(domlc), Entcolors17[,"num"]):21,], if.new=FALSE)
+    mtext(fnameout, cex=0.8)
+    dev.off()
 
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
