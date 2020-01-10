@@ -206,7 +206,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 endif
 
                 ! convert sparse veg to arid adapted shrub 10 if present
-                if( vfc(esub%svm(BARE_SPARSE)) > 0e0i & !.and. vfc(esub%svm(BARE_SPARSE)) < .15 &
+                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 & !.and. vfc(esub%svm(BARE_SPARSE)) < .15 &
                    .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
                    .and. vfc(esub%svm(ARID_SHRUB)) > 0e0 ) &
                 then
