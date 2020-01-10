@@ -851,6 +851,17 @@ do ichunk = 1,chunker%nchunk(1)
          endif
       end do   ! k=1,lclass
 
+      ! Multiple calls to set_pft() accumulate LC*LAI in ENTPFTLAIMAX.
+      ! Now we must scale it back to LAI
+      ! TODO: THE CORRECTNESS OF THIS SCALING HAS NOT YET BEEN VERIFIED!!!!
+      do k = 1,NENT20
+         if (ENTPFTLC(k) /= 0) then
+            ENTPFTLAIMAX(k) = ENTPFTLAIMAX(k) / ENTPFTLC(k)
+         end if
+      end do
+
+
+
         ! --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
         ! After attempting re-scaling with this section, I determined that
         ! the numerical precision is just not good enough to rescale all 
