@@ -1,4 +1,4 @@
-!     Program to make 20 land cover type maps of 17 Ent PFTs and 3 non-vegetation cover types.
+!     Program to make convert MODIS partitioned 29 land cover types into Ent 20 land cover type maps of 17 Ent PFTs and 3 non-vegetation cover types.  Note that the program includes legacy code that also assigns LAI to the cover.  The assignment of LAI has been superceded by theanother program, so the LAI here is not written to an output file.
 !     Authors:     Nancy Kiang, updated by Carlo Montes (August 2015), Elizabeth Fischer (2019)
 !     Inputs: MODIS IGBP and PFT 29-type land cover partition, Monfreda et al. (2008) crop cover, 
 !     and climate statistcs
