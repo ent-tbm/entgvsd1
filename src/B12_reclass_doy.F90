@@ -29,6 +29,7 @@ subroutine do_reindex(esub)
     real*4, allocatable :: sum_lc(:,:)
     type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
+    type(ChunkIO_t) :: io_TCinave
     ! Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover,ndoy)
     type(ChunkIO_t) :: io_lclai_checksum(ndoy)
@@ -64,6 +65,12 @@ subroutine do_reindex(esub)
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
         'soilalbedo_V1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
+    ! Climate statistics (we want TCinave = temperature [C])
+    call chunker%nc_open_input(io_TCinave, &
+        INPUTS_URL, INPUTS_DIR, &
+        'climstats/CRU-TS3.22_GPCC-V6/', &
+        'TCinave.nc', 'TCinave', 1)
+
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES
 
@@ -97,7 +104,7 @@ subroutine do_reindex(esub)
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lc_ent17, io_laiin, io_bs, &
+        io_lc_ent17, io_laiin, io_bs, io_TCinave, &
         io_laiout, &
         sum_lc=sum_lc, &
         io_lclai_checksum=io_lclai_checksum)

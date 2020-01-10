@@ -6,7 +6,41 @@ module cropmerge_laisparse_splitbare_mod
     use conversions, only : convert_vf
 
 implicit none
+private
+
+public cropmerge_laisparse_splitbare
+
 CONTAINS
+
+! Allocates some LC and LAI to either COLD_SHRUB or ARID_SHRUB
+! NOTE: This must be the same logic as set_shrubtype() in
+!       B02_lc_laimax_modis_entpftrevcrop.F90
+!
+! MATEMP:
+!     Mean Annaul Temperature [K]
+! LC_IN:
+!     Some LC fraction to be allocated
+! LAI_IN:
+!     LAI corresponding to LC_IN
+! lc_cs, lai_cs:
+!     LC/LAI variables to update for cold_shrub
+! lc_as, lai_as:
+!     LC/LAI variables to update for arid_shrub
+subroutine Set_Shrubtype(MATEMP,  LC_IN,LAI_IN, lc_cs,lai_cs,  lc_as,lai_as)
+implicit none
+    real*4, intent(IN) :: MATEMP,LC_IN, LAI_IN
+    real*4, intent(INOUT) :: lc_cs,lai_cs,  lc_as,lai_as
+    !------
+
+    if (MATEMP.lt.278.15) then !5 C cut-off
+        lai_cs = (lc_cs*lai_cs + LC_IN*LAI_IN) / (lc_cs + LC_IN)
+        lc_cs = lc_cs + LC_IN
+    else
+        lai_as = (lc_as*lai_as + LC_IN*LAI_IN) / (lc_as + LC_IN)
+        lc_as = lc_as + LC_IN
+    endif
+end subroutine Set_Shrubtype
+
 
 ! This is the common "guts" of B11_reclass_annual, B12_reclass_doy and B13_reclass_doy
 ! Arguments:
@@ -58,7 +92,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     jc0,jc1, &
     ic0,ic1, &
     combine_crops_c3_c4, split_bare_soil, &
-    io_lcin, io_laiin, io_bs, &               ! INPUT
+    io_lcin, io_laiin, io_bs, io_TCinave, &  ! INPUT
     io_laiout, &                              ! OUTPUT
     sum_lc, io_lclai_checksum, &
     io_lc_checksum, io_lcout, &                      ! OUTPUT (optional)
@@ -73,6 +107,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     type(ChunkIO_t) :: io_lcin(NENT20)
     type(ChunkIO_t) :: io_laiin(NENT20,ndoy)
     type(ChunkIO_t) :: io_bs
+    type(ChunkIO_t) :: io_TCinave
     ! Output files
     type(ChunkIO_t) :: io_laiout(esub%ncover, ndoy)
     real*4, dimension(:,:), OPTIONAL :: sum_lc
@@ -210,7 +245,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                    .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
                    .and. vfc(esub%svm(ARID_SHRUB)) > 0e0 ) &
                 then
-                 
+
                     call convert_vf( &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
@@ -228,7 +263,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         vfc(esub%crops_herb), laic(esub%crops_herb), &
                         laic(esub%crops_herb))
                 end if
-              
+
                 ! Else... Convert to largest existing PFT
                 ! convert sparse veg to pft with biggest fraction
                 ! (if present)
@@ -250,12 +285,14 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 !  b) There's no arid shrubs or cold shrubs
                 !  c) No crops
                 !  d) No clear categorization of other vegetation types in the grid cell
-                ! ...so just assign it to arid shrub.
-                !
-                ! convert sparse veg to arid adapted shrub 10
+                ! Assign to cold_shrub or arid_shrub based on temperature
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
-                    call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                        vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0e0 )
+                    call set_shrubtype( &
+                        io_TCinave%buf(ic,jc)+273.15, &
+                        vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                        vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
+                        vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)))
+
                 end if
                 ! -----------------------------------------------------------------
                 if (present(io_simout)) then

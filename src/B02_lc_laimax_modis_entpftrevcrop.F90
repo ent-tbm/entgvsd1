@@ -108,6 +108,8 @@ implicit none
          + LC_IN*LAI_IN
 end subroutine Set_pft
 !------------------------------------------------------------------------------
+! NOTE: This must be the same logic as set_shrubtype() in
+!       slib/cropmerge_laisparse_splitbare.f90
 subroutine Set_Shrubtype(MATEMP,Pmave,LC_IN,LAI_IN)  
 implicit none
     real*4, intent(IN) :: MATEMP,Pmave,LC_IN, LAI_IN

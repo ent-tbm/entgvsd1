@@ -44,6 +44,7 @@ subroutine do_reindex(esub)
     type(ChunkIO_t) :: io_laiin(NENT20,one)
     type(ChunkIO_t) :: io_bs
     type(ChunkIO_t) :: io_simin(NENT20,one)
+    type(ChunkIO_t) :: io_TCinave
     ! Output files
     type(ChunkIO_t) :: io_lcout(esub%ncover,one)
     type(ChunkIO_t) :: io_laiout(esub%ncover,one)
@@ -79,6 +80,12 @@ subroutine do_reindex(esub)
     ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &
         LAI_SOURCE, 'M', 'hgt', 2004, 'ent17', '1.1')
+
+    ! Climate statistics (we want TCinave = temperature [C])
+    call chunker%nc_open_input(io_TCinave, &
+        INPUTS_URL, INPUTS_DIR, &
+        'climstats/CRU-TS3.22_GPCC-V6/', &
+        'TCinave.nc', 'TCinave', 1)
 
     !------------------------------------------------------------------------
     !------------------------------------------------------------------------
@@ -140,7 +147,7 @@ subroutine do_reindex(esub)
         1,chunker%nchunk(1), &
 #endif
         combine_crops_c3_c4, split_bare_soil, &
-        io_lc, io_laiin, io_bs, &
+        io_lc, io_laiin, io_bs, io_TCinave, &
         io_laiout, &
         io_lclai_checksum=io_lclai_checksum, &
         io_lc_checksum=io_lc_checksum, &
