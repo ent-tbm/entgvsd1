@@ -851,15 +851,6 @@ do ichunk = 1,chunker%nchunk(1)
          endif
       end do   ! k=1,lclass
 
-      ! Multiple calls to set_pft() accumulate LC*LAI in ENTPFTLAIMAX.
-      ! Now we must scale it back to LAI
-      ! TODO: THE CORRECTNESS OF THIS SCALING HAS NOT YET BEEN VERIFIED!!!!
-      do k = 1,NENT20
-         if (ENTPFTLC(k) /= 0) then
-            ENTPFTLAIMAX(k) = ENTPFTLAIMAX(k) / ENTPFTLC(k)
-         end if
-      end do
-
 
 
         ! --------- CHECK FOR COVER SUMS TO 1.0 -------------------*!
@@ -900,7 +891,7 @@ do ichunk = 1,chunker%nchunk(1)
         enddo
 
         ! ---------------------------------------------------------------
-        ! Finish by cover fraction weighted sum.
+        ! Finish by cover fraction weighted sum (sum(LC*LAI)/LC).
         do k=1,NENT20
             if (k == CV_WATER) cycle
 
@@ -909,12 +900,16 @@ do ichunk = 1,chunker%nchunk(1)
             else
                 NPFTGRID = NPFTGRID + 1
             endif
+            if (ENTPFTLC(k) /= 0) then
+                ENTPFTLAIMAX(k) = ENTPFTLAIMAX(k) / ENTPFTLC(k)
+            end if
             ! Update dominant pft LC and number.
             if (ENTPFTLC(k).gt.DOMPFTLC) then
                 DOMPFTLC = ENTPFTLC(k)
                 DOMPFT = k
             endif
         end do   !k=1,ENTPFTNUM
+
         ! ---------------------------------------------------------------
 
       ! Checksumminmax file.
