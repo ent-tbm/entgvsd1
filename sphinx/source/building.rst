@@ -131,7 +131,7 @@ Fetch Input Data and Create the Makefile
 The main EntGVSD process is structured as a series of Fortran scripts,
 to be run in order, starting with the capital letter `B`.  For example:
 | B01_bnu_laimax.F90
-| B02_lc_laimax_modis_entpftrevcrop.F90
+| B02_lc_modis_entpftrevcrop.F90
 |  ...
 
 

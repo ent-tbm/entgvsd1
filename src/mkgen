@@ -9,7 +9,7 @@ ROOT_DIR = os.path.abspath('..')
 
 stages = (
     'B01_bnu_laimax',
-    'B02_lc_laimax_modis_entpftrevcrop',
+    'B02_lc_modis_entpftrevcrop',
     'B03_regrid_snowice',
     'B04_veg_height',
     'B05_carrer_mean',

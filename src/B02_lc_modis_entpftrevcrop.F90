@@ -593,7 +593,7 @@ enddo
 
 
 ! Quit if we had any problems opening files
-call chunker%nc_check('B02_lc_laimax_modis_entpftrevcrop')
+call chunker%nc_check('B02_lc_modis_entpftrevcrop')
 #ifdef JUST_DEPENDENCIES
 stop 0
 #endif

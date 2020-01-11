@@ -14,7 +14,7 @@ CONTAINS
 
 ! Allocates some LC and LAI to either COLD_SHRUB or ARID_SHRUB
 ! NOTE: This must be the same logic as set_shrubtype() in
-!       B02_lc_laimax_modis_entpftrevcrop.F90
+!       B02_lc_modis_entpftrevcrop.F90
 !
 ! MATEMP:
 !     Mean Annaul Temperature [K]
