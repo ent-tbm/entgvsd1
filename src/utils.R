@@ -952,12 +952,20 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		if.cat=TRUE
 		
         } else if (varnamecheck == "lc_npftgrid" ) {
+                if (FALSE) { #categorical colors do not work
 	   	zlim = c(0,17)
 	   	color = giss.palette.nowhite(18)
 	   	color[1] = rgb(0.5, 0.5, 0.5)
 	   	leg=zlim[1]:zlim[2]
 	   	restime="_ann"
-		if.cat=TRUE	
+		if.cat=TRUE
+                }
+                zlim = c(0,17)
+                color = giss.palette.nowhite(18)
+                color[1] = rgb(0.5, 0.5, 0.5)
+                leg=zlim[1]:zlim[2]
+                restime="_ann"
+                if.cat=FALSE                
 	} else if (varnamecheck == "lc_dompftlc" | varnamecheck == "lc_checksum") {
 		zlim = c(0,1)
 		color = giss.palette.nowhite(11)

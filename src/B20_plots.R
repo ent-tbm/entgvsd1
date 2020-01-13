@@ -83,10 +83,20 @@ if (TRUE) {
     mtext(fnameout, cex=0.8)
     dev.off()
 
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    #Redundant plot, just test if this function works, too.
+    #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #Colors do not work in R as categorical
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot, if.cat=FALSE) 
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+
+	#npftgrid
+	fname = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
+	#file = paste(outputsdir, fname, sep="")
+	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
+	pdf(file=fileout, width=8, height=5)
+	npftgrid.list = Ent_calc_npftgrid(pathin=paste(outputsdir,trimopt,"/", sep=""), fname, pathout=pathplot, npft=16)
+        title(npftgrid.list$file.nc)
+	dev.off()
+	
      map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 	
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
@@ -156,9 +166,9 @@ if (TRUE) {
    	
 	if (FALSE) {
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	} #if (FALSE)
+        map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
@@ -214,9 +224,9 @@ if (TRUE) {
    	
 	if (FALSE) { #-------
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	} #if (FALSE) ---------
+        map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	
  	if (do.checksum) {
     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
@@ -260,7 +270,7 @@ if (TRUE) {
 	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","npftgrid", "_",datatime,"_ann",  "_", trimopt, filesuf, ".pdf", sep="")
 	pdf(file=fileout, width=8, height=5)
 	npftgrid.list = Ent_calc_npftgrid(pathin=paste(outputsdir,trimopt,"/", sep=""), fname, pathout=pathplot, npft=16)
-    title(npftgrid.list$file.nc)
+        title(npftgrid.list$file.nc)
 	dev.off()
 	
 
