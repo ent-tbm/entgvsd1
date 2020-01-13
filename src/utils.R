@@ -746,9 +746,9 @@ Entrgbhex = function(Entcolors=Entcolors17) {
 	return(rgbhex)
 }
 
-Ent17rgbhex = Entrgbhex()
+Ent17rgbhex = Entrgbhex(Entcolors=Entcolors17)
 
-Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
+Ent17legend = function(colors=Ent17rgbhex(Entcolors=Entcolors17), newwindow=FALSE) {
     #Quick check of map colors
     if (newwindow) {
         quartz(width=6,height=4)
@@ -766,6 +766,43 @@ Ent17legend = function(colors=Ent17rgbhex, newwindow=FALSE) {
     legend(70,150, legend=Entcolors17[21:39, "color"], col=colors[21:39], pch=15, cex=cex)
     
 }
+
+#Version with water last.
+Entcolors17b = as.data.frame(t(array(dim=c(5, 1+1+length(EntGVSD_COVER20)),
+c(
+0.0, 0.3, 0.0, "dark green", "ever_br_early",
+0.0, 0.3, 0.0, "dark green", "ever_br_late ",
+0.0, 0.4, 0.4, "dark blue-green", "ever_nd_early",
+0.0, 0.4, 0.4, "dark blue-green", "ever_nd_late ",
+0.0, 0.6, 0.0, "medium green", "cold_br_early",
+0.0, 0.6, 0.0, "medium green", "cold_br_late ",
+0.4, 0.5, 0.3, "taupe", "drought_br   ",
+0.5, 0.1, 0.1, "dark red", "decid_nd     ",
+0.0, 0.6, 0.6, "blue-green", "cold_shrub   ",
+0.95, 0.85, 0.65, "tan", "arid_shrub   ",
+0.0, 0.8, 0.1, "bright green", "c3_grass_per ",
+0.7, 0.8, 0.0, "leaf green", "c4_grass     ",
+1.0, 1.0, 0.0, "yellow", "c3_grass_ann ",
+0.1, 0.8, 0.8, "blue-grey", "c3_grass_arct",
+0.8, 0.7, 0.1, "gold", "crops_c3_herb",
+0.8, 0.4, 0.0, "orange", "crops_c4_herb",
+0.8, 0.0, 0.0, "red", "crops_woody  ",
+0.9, 1.0, 1.0, "blue-white", "snow_ice     ",
+1.0, 0.95, 0.8, "pale tan", "bare_sparse  ",
+0.5, 0.5, 0.5, "grey",      "water        ",
+1.0, 1.0, 1.0, "white",     "undef        ",
+0.7, 0.7, 0.7, "grey",       "water        "
+#0.0, 0.3, 0.0, "dark green", "dummy R plotting ever_br_early",
+#0.0, 0.4, 0.4, "dark blue-green", "ever_nd_early",
+#0.0, 0.6, 0.0, "medium green", "cold_br_early"
+))))
+
+names(Entcolors17b) = c("r","g","b", "color", "lc_type")
+Entcolors17b = as.data.frame(cbind(num=0:(nrow(Entcolors17b)-1), Entcolors17b))
+Entcolors17b[,c("r")] = as.numeric(as.character(Entcolors17b[,c("r")]))
+Entcolors17b[,c("g")] = as.numeric(as.character(Entcolors17b[,c("g")]))
+Entcolors17b[,c("b")] = as.numeric(as.character(Entcolors17b[,c("b")]))
+
 
 EntcolorsbareGISS = as.data.frame(t(array(dim=c(6, 2),
 c(17, 1.0, 0.95, 0.8, "pale tan",   "bare_bright  ",
@@ -905,8 +942,8 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 	if (varnamecheck ==  "lc_dompft" | varnamecheck == "lc_domlc") {
 		zlim = c(min(enttyp), max(enttyp))
 		if (trimopt=="ent17") {
-			color = Entrgbhex(Entcolors17[1:20,])
-			leg=Entcolors17[1:20, "lc_type"]
+			color = Entrgbhex(Entcolors17b[1:20,])
+			leg=Entcolors17b[1:20, "lc_type"]
 		} else {
 			color = Entrgbhex(Entcolors16)
 			leg=Entcolors16[,"lc_type"]
