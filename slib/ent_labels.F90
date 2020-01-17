@@ -171,7 +171,7 @@ real*8, parameter :: heights_form(2,NENT20) = RESHAPE( (/ &
     0d0, 0.5d0,  & ! HERB   16 - crops C4 herb
     1d0, 0d0,    & ! TREE   17 - crops woody
     0d0, 0.0d0,  & ! BARREN 18 - Permanent snow/ice
-    0d0, 0.0d0,  & ! BARREN 19 - Bare or sparsely vegetated, urban
+    0d0, 0.0d0,  & ! BARREN 19 - bare or sparsely vegetated, urban
     0d0, 0.0d0   & ! BARREN 20 - water
 /), (/ 2,NENT20 /))
 
@@ -425,7 +425,7 @@ subroutine init_ent_labels
     call ent20%add_covertype('v', 'crops_c4_herb ', 'crops C4 herb                              ')  ! 16
     call ent20%add_covertype('v', 'crops_woody   ', 'crops woody                                ')  ! 17
     call ent20%add_covertype('n', 'snow_ice      ', 'Permanent snow/ice                         ')  ! 18
-    call ent20%add_covertype('n', 'bare_sparse   ', 'Bare or sparsely vegetated, urban          ')  ! 19
+    call ent20%add_covertype('n', 'bare_sparse   ', 'bare or sparsely vegetated, urban          ')  ! 19
     call ent20%add_covertype('n', 'water         ', 'water on land                              ')  ! 20
 
 
@@ -536,11 +536,11 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
     if (split_bare_soil) then
         ! Change bare_spares to bare-bright
-        call esub%add_covertype('n', 'bare_bright', 'Bare bright')
+        call esub%add_covertype('n', 'bare_bright', 'bare bright')
         esub%bare_bright = esub%ncover
         call esub%add_remap(BARE_SPARSE)
 
-        call esub%add_covertype('n', 'bare_dark', 'Bare dark')
+        call esub%add_covertype('n', 'bare_dark', 'bare dark')
         esub%bare_dark = esub%ncover
         esub%NONVEG = 'G'
     else
