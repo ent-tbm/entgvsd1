@@ -54,23 +54,28 @@ if (TRUE) {
     filesuf = "_forplot"
     enttyp = 1:20
 
-    map.entgvsd.steps(outputsdir, res=res, enttyp,varname="lc", trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res, enttyp, varname="laimax", trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res,  enttyp, varname="hgt", trimopt=trimopt, filepre, datatime, version,  icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res, enttyp,varname="lc", trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res, enttyp, varname="laimax", trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp, varname="hgt", trimopt=trimopt, "", filepre, datatime, version,  icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     for (d in c( "2004_017", "2004_201")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, "", filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     }
-    for (d in paste(datatime, "_", MON, sep="")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, outpre, filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     }
 
 	#Layered check (only for ent17):
-    map.entgvsd.steps(outputsdir, res=res, enttyp, varname="laimax_err", trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = FALSE) #This is by PFT
+    map.entgvsd.steps(outputsdir, res=res, enttyp, varname="laimax_err", trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = FALSE) #This is by PFT
 
     #Single layer checks
     # Monthly
-    for (d in paste(datatime, "_", MON, sep="")) {
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
     }
 	
     # Totals
@@ -83,10 +88,10 @@ if (TRUE) {
     mtext(fnameout, cex=0.8)
     dev.off()
 
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    #Redundant plot, just test if this function works, too.
-    #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #Colors do not work in R as categorical
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    #Redundant plot, just test if this function works, too.
+    #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #Colors do not work in R as categorical
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 
 	#npftgrid
 	fname = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
@@ -97,33 +102,34 @@ if (TRUE) {
         title(npftgrid.list$file.nc)
 	dev.off()
 	
-     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+     map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
 
-   #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_err", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+   #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_err", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
     
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
  
- 	#map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_err", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	#map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_err", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
   	
   	#Checksum diff maps
   	res="HXH"
   	checksumdir = paste(outputsdir, "checksum/", sep="")
   	checksuff = paste("_diff", filesuf, sep="")
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
-	for (d in paste(datatime, "_", MON, sep="")) { 	 
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+
+	for (m in 1:12) {
+           d = paste(datatime, "_", MON[m], sep="")
+           outpre = paste(MONnum[m],"_", sep="")
+	   map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
     for (d in c( "2004_017", "2004_201")) {
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, "", filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 
-	
 	
 } #ent17
-
 
 # pure
 if (TRUE) {
@@ -135,24 +141,26 @@ if (TRUE) {
     filesuf = "_forplot"
     enttyp = 1:18
     
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     #for (d in c( "2004_Jan", "2004_Jul")) {
-    for (d in paste(datatime, "_", MON, sep="")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+        map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt=trimopt, outpre, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     }
  
-    for (d in paste(datatime, "_", MON, sep="")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    }
 
     #Single layer checks
     # Monthly
-    for (d in paste(datatime, "_", MON, sep="")) {
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
-	}
 
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
+	}
 		
 	# Totals
 	# Dominant lc
@@ -165,9 +173,9 @@ if (TRUE) {
 	dev.off()
    	
 	if (FALSE) {
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-        #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
+        #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	} #if (FALSE)
  	
 	#npftgrid
@@ -179,23 +187,26 @@ if (TRUE) {
         title(npftgrid.list$file.nc)
 	dev.off()
 	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 
 	
   	#Checksum diff maps
   	res = "HXH"
   	checksumdir = paste(outputsdir, "checksum/",  sep="")
   	checksuff = paste("_diff", filesuf, sep="")
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
-	for (d in paste(datatime, "_", MON, sep="")) { 	 
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+
+        for (m in 1:12) {
+           d = paste(datatime, "_", MON[m], sep="")
+           outpre = paste(MONnum[m],"_", sep="")
+     	   map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
     for (d in c( "2004_017", "2004_201")) {
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, "", filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 
 } #pure
 
@@ -211,31 +222,31 @@ if (TRUE) {
     enttyp = 1:18     
   	do.checksum=FALSE
 
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="laimax",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="hgt",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     #for (d in c( "2004_Jan", "2004_Jul")) {
-    for (d in paste(datatime, "_", MON, sep="")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+        map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt=trimopt, outpre, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
     }
  
-    for (d in paste(datatime, "_", MON, sep="")) {
-        map.entgvsd.steps(outputsdir, res=res, enttyp, varname="lai", trimopt=trimopt, filepre, datatime=d, version, icov, idat, filesuf=filesuf,do.pdf=do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    }
-
     #Single layer checks
     if (FALSE) { #----
     # Monthly
-    for (d in paste(datatime, "_", MON, sep="")) {
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
+    for (m in 1:12) {
+        d = paste(datatime, "_", MON[m], sep="")
+        outpre = paste(MONnum[m],"_", sep="")
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
 	}
     } #if FALSE ----
 
    	
 	if (FALSE) { #-------
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
-        #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    	
+        #map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  	} #if (FALSE) ---------
  	
     # Totals
@@ -258,9 +269,9 @@ if (TRUE) {
         title(npftgrid.list$file.nc)
 	dev.off()
 	
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
 	} #--------
 
 	# Totals
@@ -308,14 +319,16 @@ if (TRUE) {
   	res = "HXH"
   	checksumdir = paste(outputsdir, "checksum/",  sep="")
   	checksuff = paste("_diff", filesuf, sep="")
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
-	for (d in paste(datatime, "_", MON, sep="")) { 	 
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+        for (m in 1:12) {
+           d = paste(datatime, "_", MON[m], sep="")
+           outpre = paste(MONnum[m],"_", sep="")
+	   map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
-    for (d in c( "2004_017", "2004_201")) {
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+        for (d in c( "2004_017", "2004_201")) {
+  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, "", filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
   	 
   	 } # if FALSE -----------------
 
@@ -335,21 +348,25 @@ if (TRUE) {
     
     for (trimopt in trimopts) {
     		
-  	  	for (varname in c("lc", "laimax", "hgt")) {
-	        map.entgvsd.steps(outputsdir, res=res, varname, enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-	        #map.entgvsd.steps(outputsdir, res=res, varname="lc", enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    	    #map.entgvsd.steps(outputsdir, res=res, varname="laimax", enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-        	#map.entgvsd.steps(outputsdir, res=res, varname="hgt",enttyp=enttyp, trimopt, filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    		}
+  	for (varname in c("lc", "laimax", "hgt")) {
+	        map.entgvsd.steps(outputsdir, res=res, varname, enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+	        #map.entgvsd.steps(outputsdir, res=res, varname="lc", enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    	    #map.entgvsd.steps(outputsdir, res=res, varname="laimax", enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+        	#map.entgvsd.steps(outputsdir, res=res, varname="hgt",enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+	}
     	
-    		for (d in paste(datatime, "_", MON, sep="")) {
-    	    		map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    		}
+	for (m in 1:12) {
+	  d = paste(datatime, "_", MON[m], sep="")
+	  outpre = paste(MONnum[m],"_", sep="")
+	  map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname="lai", trimopt, outpre, filepre, datatime=d, version=version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    	}
     
    		#Single layer checks
    	 	# Monthly
-    		for (d in paste(datatime, "_", MON, sep="")) {
-    			map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
+		for (m in 1:12) {
+		   d = paste(datatime, "_", MON[m], sep="")
+		   outpre = paste(MONnum[m],"_", sep="")
+    		   map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
 		}
 
 	    	
@@ -371,23 +388,25 @@ if (TRUE) {
 		dev.off()
 	
 		if (FALSE) {
-   	 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
- 		map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+   	 	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompft", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)    
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_npftgrid", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 		map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_dompftlc", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  		} #if (FALSE)
  		
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
-    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lc_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with laimax.
+    	map.entgvsd.check.misc(outputsdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot)  #This is also plotted with hgt.
  	
  	#Checksum diff maps
   	checksumdir = paste(outputsdir, "checksum/", sep="")
   	checksuff = "_diff"
-  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
-	for (d in paste(datatime, "_", MON, sep="")) { 	 
-  	 	map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+  	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclaimax_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+	for (m in 1:12) {
+	   d = paste(datatime, "_", MON[m], sep="")
+	   outpre = paste(MONnum[m],"_", sep="")
+  	   map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lclai_checksum", trimopt, outpre, filepre, datatime=d,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
 	}
- 	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
+ 	 map.entgvsd.check.misc(checksumdir, res, enttyp=enttyp, varnamecheck="lchgt_checksum", trimopt, "", filepre, datatime,  version, icov, idat, filesuf=checksuff, add.new=FALSE, do.pdf = do.pdf, pathplot=pathplot) 
  		
    } #trimopts
 } #trimming
@@ -403,6 +422,7 @@ if (TRUE) {
     covlist = EntGVSD_COV13
 
     filesuf = paste("_ann_",trimopt,sep="")
+
     if (do.pdf) {
 
         varname = "lc"
@@ -496,6 +516,4 @@ if (TRUE) {
 
     }
 }
-
-
 

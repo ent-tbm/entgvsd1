@@ -183,6 +183,7 @@ MONcap = c('JAN','FEB','MAR','APR','MAY','JUN'
         ,'JUL','AUG','SEP','OCT','NOV','DEC' )
 MON = c('Jan','Feb','Mar','Apr','May','Jun'
         ,'Jul','Aug','Sep','Oct','Nov','Dec' )
+MONnum = c('01','02', '03','04', '05', '06', '07', '08', '09', '10', '11', '12')
         
 SEASON4cap = c('JFM', 'AMJ', 'JAS', 'OND')
 
@@ -818,7 +819,7 @@ Entcolors16 = rbind( Entcolors17[match(c(21, 1:15,17), Entcolors17[,"num"]),], E
 Entcolors16[pmatch("undef", Entcolors16[,"lc_type"]), "num"] = 0
 
 #-------------------------------------------------------------------------------------------------
-map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
+map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, outpre="", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="", do.checksum=TRUE) { 
     # Plot maps of lc, laimax, lai, or hgt
     # entlclaidir:  Directory containing subdirectories of trim options Ent GVSD files
     # res:          Grid resolution of data file.  "ent17" and "pure" V1km are plotted at qzq.  Trimmed files are at HXH.
@@ -875,7 +876,7 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
     fnamelc = paste(filepre, "_",version,"_", icov, "_", idat, "_", "lc","_",datatime,restime, "_", opt, filesuf,".nc", sep="")
     
     if (do.pdf) { 
-    	filepdf = paste(pathplot, fname, ".pdf", sep="")
+    	filepdf = paste(pathplot, paste(trimopt,"_",outpre, fname, sep=""), ".pdf", sep="")
         pdf(file=filepdf, width=11, height=7) 
     } else if (add.new) {
             quartz(width=11,height=7) #Open plotting window
@@ -930,7 +931,7 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
 }
 
 
-map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck, trimopt, filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="") { 
+map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck, trimopt, outpre="", filepre, datatime,  version, icov, idat, filesuf, add.new=FALSE, do.pdf = TRUE, pathplot="") { 
     # Plot maps of npftgrid, lc_dompft, lc_dompftlc, and add any other misc here
 
 	if (trimopt=="ent17") {
@@ -987,31 +988,34 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 		if.cat=FALSE
 	} else if (varnamecheck == "lclai_checksum" ) {
 		if (length(grep('diff', filesuf))>0) {
-			zlim = c(-1,1)
+		    zlim = c(-1,1)
+                    color = giss.palette.nowhite(40)
 		} else {
-			zlim = c(0,7)
+		    zlim = c(0,7)
+		    color = drywet(40)
 		}
-		color = drywet(40)
 		leg = NULL
 		restime = ""
 		if.cat=FALSE
 	} else if (varnamecheck == "lclaimax_checksum") {
 		if (length(grep('diff', filesuf))>0) {
 			zlim = c(-1,1)
+                        color = giss.palette.nowhite(40)
 		} else {
 			zlim = c(0,7)
+		        color = drywet(40)
 		}
-		color = drywet(40)
 		leg = NULL
 		restime = "_ann"
 		if.cat=FALSE		
     } else if (varnamecheck == "lchgt_checksum" ) {
     	if (length(grep('diff', filesuf))>0) {
     		zlim=c(-15,15)
+                color = giss.palette.nowhite(40)
     	} else {
-			zlim = c(0,40)
-		}
+		zlim = c(0,40)
 		color = drywet(40)
+		}
 		leg = NULL
 		restime = "_ann"
 		if.cat = FALSE
@@ -1053,7 +1057,7 @@ map.entgvsd.check.misc = function(entlclaidir, res, enttyp=enttyp, varnamecheck,
 	#plot.grid.categorical(x, res, colors=color)
 	
 	if (do.pdf) {
-		pdf(file=paste(pathplot, fname, ".pdf", sep=""), width=8, height=5) 
+		pdf(file=paste(pathplot, trimopt, "_", outpre, fname, ".pdf", sep=""), width=8, height=5) 
 	} else if(!add.new) {
 		quartz(width=8, height=5)
 	}
