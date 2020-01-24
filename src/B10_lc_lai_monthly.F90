@@ -42,7 +42,7 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 ! Monthly LAI
 do imonth = 1,nmonth
     call chunker%nc_open_input(io_lai(imonth), &
-        INPUTS_URL, INPUTS_DIR, &
+        INPUTS_URL, LAI_INPUTS_DIR, &
         'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', 'lai', 1)
 enddo
 

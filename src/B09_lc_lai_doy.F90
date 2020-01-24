@@ -41,7 +41,7 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 !     DOY LAI
 do idoy=1,ndoy
     call chunker%nc_open_input(io_lai(idoy), &
-        INPUTS_URL, INPUTS_DIR, &
+        INPUTS_URL, LAI_INPUTS_DIR, &
         'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai', 1)
 enddo
 

@@ -134,7 +134,7 @@ subroutine do_B17_checksums(rw, esub_p)
             doytype='doy', idoy=idoy, &
             varsuffix = '_checksum')
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! ----------- B10
@@ -144,7 +144,7 @@ subroutine do_B17_checksums(rw, esub_p)
         call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
             'lai')
     enddo
 
@@ -182,7 +182,7 @@ subroutine do_B17_checksums(rw, esub_p)
             varsuffix = '_checksum', &
             doytype='doy', idoy=idoy)
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! --------------- B13
@@ -195,7 +195,7 @@ subroutine do_B17_checksums(rw, esub_p)
             doytype='month', idoy=imonth)
 
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
             'lai')
     end do
 end subroutine

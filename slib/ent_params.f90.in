@@ -17,6 +17,9 @@ CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'B'
 ! Sa Simard RH100 | Sb Simard RH100-stdev | Sc Simard RH100-0.5*stdev | Ha GEDI+ICESat-2 data (some day) RH100 | Hb GEDI+ICESat-2 RH100-stdev | etc.
 character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
+! Year of LAI data to process
+character*(4), parameter :: LAI_YEAR = '2004'
+
 ! =================== Paths
 
 ! Donwload input files from here
@@ -26,6 +29,9 @@ character(*), parameter :: INPUTS_URL= &
 ! Put downloaded input files here
 character(*), parameter :: INPUTS_DIR= &
     ENTGVSD_PROJECT_ROOT//'inputs/'
+
+! Special INPUT_DIR for LAI files
+character(*), parameter :: LAI_INPUTS_DIR = INPUTS_DIR
 
 ! Any EntGVSD1-generated output files go here
 character(*), parameter :: DEFAULT_OUTPUTS_DIR= &
