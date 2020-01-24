@@ -275,26 +275,26 @@ C****
 
 !      character*38, parameter :: titlsoilalb(6) =
 !     &     (/
-!     &     'SOIL ALBEDO CARRER interim 2004 - VIS ',
-!     &     'SOIL ALBEDO CARRER interim 2004 - NIR1',
-!     &     'SOIL ALBEDO CARRER interim 2004 - NIR2',
-!     &     'SOIL ALBEDO CARRER interim 2004 - NIR3',
-!     &     'SOIL ALBEDO CARRER interim 2004 - NIR4',
-!     &     'SOIL ALBEDO CARRER interim 2004 - NIR5'
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - VIS ',
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - NIR1',
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - NIR2',
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - NIR3',
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - NIR4',
+!     &     'SOIL ALBEDO CARRER interim LAI_YEAR - NIR5'
 !     &     /)
 
       character*37, parameter :: titlsoilalbvis = 
-     &    'SOIL ALBEDO CARRER interim 2004 - VIS'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - VIS'
       character*38, parameter :: titlsoilalbnir1 = 
-     &    'SOIL ALBEDO CARRER interim 2004 - NIR1'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - NIR1'
       character*38, parameter :: titlsoilalbnir2 = 
-     &    'SOIL ALBEDO CARRER interim 2004 - NIR2'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - NIR2'
       character*38, parameter :: titlsoilalbnir3 = 
-     &    'SOIL ALBEDO CARRER interim 2004 - NIR3'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - NIR3'
       character*38, parameter :: titlsoilalbnir4 = 
-     &    'SOIL ALBEDO CARRER interim 2004 - NIR4'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - NIR4'
       character*38, parameter :: titlsoilalbnir5 = 
-     &    'SOIL ALBEDO CARRER interim 2004 - NIR5'
+     &    'SOIL ALBEDO CARRER interim LAI_YEAR - NIR5'
 
       real*4, parameter :: undef = -1.e30
 
@@ -404,7 +404,7 @@ C****
       !------------------------------------------------------------------------
       ! ij file
 
-      fileout = 'Carrer2014_soil_albedo_means_2004_1kmX1km.ij'
+      fileout = 'Carrer2014_soil_albedo_means_LAI_YEAR_1kmX1km.ij'
 
       open(90,file=trim(fileout),
      &   form='unformatted',status='unknown')

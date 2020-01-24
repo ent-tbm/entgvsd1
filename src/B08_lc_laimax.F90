@@ -55,21 +55,21 @@ end if
 
 ! --- ENTPFTLC: Open outputs written by A00
 call chunker%nc_open_set(ent20, io_lc, &
-    LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
 
 ! ================= Output Files
 
 call chunker%nc_create_set( &
     ent20, io_laiout(:,1), lc_weights(io_lc, 1d0, 0d0), &
-    LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1')
+    LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1')
 
 call chunker%nc_create_set( &
     ent20, io_err(:,1), lc_weights(io_lc, 1d0, 0d0), &
-    LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1', &
+    LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1', &
     varsuffix='_err')
 
 call chunker%file_info(info, ent20, &
-    LAI_SOURCE, 'M', 'lclaimax', 2004, 'ent17', '1.1', &
+    LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_checksum')
 call chunker%nc_create( &
     io_lclai_checksum(1),  weighting(sum_lc,1d0,0d0), &

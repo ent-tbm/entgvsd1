@@ -67,11 +67,11 @@ subroutine do_reindex(esub)
 
     ! --- ENTPFTLC: Open outputs written by A00
     call chunker%nc_open_set(ent20, io_lc, &
-        LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+        LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
 
     ! laimax
     call chunker%nc_open_set(ent20, io_laiin(:,1), &
-        LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1')
+        LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1')
 
     ! Bare Soil Brightness Ratio
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
@@ -79,7 +79,7 @@ subroutine do_reindex(esub)
 
     ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &
-        LAI_SOURCE, 'M', 'hgt', 2004, 'ent17', '1.1')
+        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'ent17', '1.1')
 
     ! Climate statistics (we want TCinave = temperature [C])
     call chunker%nc_open_input(io_TCinave, &
@@ -95,22 +95,22 @@ subroutine do_reindex(esub)
     call chunker%nc_create_set( &
         esub_p, io_lcout(:,1), &
         repeat_weights(esub%ncover, chunker%wta1, 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'lc', 2004, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1')
 
     ! ENTPFT heights in ENT16 indices
     call chunker%nc_create_set( &
         esub_p, io_simout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'hgt', 2004, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', '1.1')
 
     ! laimax_pure
     call chunker%nc_create_set( &
         esub_p, io_laiout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'laimax', 2004, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', '1.1')
 
     ! ------------- Checksums
     !  checksum land  laimax
     call chunker%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'lc', 2004, 'pure', '1.1', &
+        LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lc_checksum(1), &
         weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
@@ -118,7 +118,7 @@ subroutine do_reindex(esub)
         'SUM(lc)', info%units)
 
     call chunker%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'lchgt', 2004, 'pure', '1.1', &
+        LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lchgt_checksum(1), &
         weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
@@ -126,7 +126,7 @@ subroutine do_reindex(esub)
         'SUM(lc*height)', info%units)
 
     call chunker%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'lclaimax', 2004, 'pure', '1.1', &
+        LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lclai_checksum(1), &
         weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
