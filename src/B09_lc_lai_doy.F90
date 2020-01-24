@@ -42,7 +42,7 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 do idoy=1,ndoy
     call chunker%nc_open_input(io_lai(idoy), &
         INPUTS_URL, LAI_INPUTS_DIR, &
-        'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai', 1)
+        'lai/BNU/doy/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//DOY(idoy)//'.nc', 'lai', 1)
 enddo
 
 !     ENTPFTLC: Outputs written by A00

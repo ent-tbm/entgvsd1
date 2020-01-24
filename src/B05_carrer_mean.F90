@@ -52,7 +52,7 @@ subroutine do_carrer_mean(rw, iband, ndates)
     ! ====================== Input files
     call chunker%nc_open_input(ioall_albin, &
         INPUTS_URL, INPUTS_DIR, &
-        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc', &
+        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_'//sLAI_YEAR//'_8day_6km.nc', &
         'soilalb_'//trim(sbands_modis(iband)), 0)
     do id=1,ndates
         call chunker%nc_reuse_var(ioall_albin, io_albin(id), (/1,1,id/))
@@ -161,9 +161,9 @@ implicit none
     nerr = 0
     err = download_input_file(nerr, &
         INPUTS_URL, INPUTS_DIR, &
-        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc')
+        'soilalbedo/', 'Carrer2014_soilalbedo_VIS_NIR_'//sLAI_YEAR//'_8day_6km.nc')
 
-    err = nf90_open(INPUTS_DIR//'soilalbedo/Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc', NF90_NOWRITE, ncid)
+    err = nf90_open(INPUTS_DIR//'soilalbedo/Carrer2014_soilalbedo_VIS_NIR_'//sLAI_YEAR//'_8day_6km.nc', NF90_NOWRITE, ncid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening file at beginning'
         return

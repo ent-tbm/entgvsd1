@@ -93,7 +93,7 @@ subroutine regrid_controls(rw, root)
 
     do imonth=1,NMONTH
         call regrid_control(rw, &
-            LAI_INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth), 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth), 'lai')
     end do
 #endif
 

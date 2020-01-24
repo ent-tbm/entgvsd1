@@ -1,5 +1,5 @@
 ! Dimensions used in the Carrer soilalbedo file
-!     <inputs>/soilalbedo/Carrer2014_soilalbedo_VIS_NIR_2004_8day_6km.nc
+!     <inputs>/soilalbedo/Carrer2014_soilalbedo_VIS_NIR_<LAI_YEAR>_8day_6km.nc
 ! Used by B05_carrer_mean, to read that file.  These MUST match what
 ! is in the file.
 module carrer_mod

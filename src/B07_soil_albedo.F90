@@ -206,26 +206,26 @@ program Carrer_soilalbedo_to_GISS
     ! ------------ albsw
     call clear_file_info(info)
     info%vname = 'albsw'
-    info%long_name = 'Carrer soil albedo shoftwave (300-4000 nm) annual mean 2004'
+    info%long_name = 'Carrer soil albedo shoftwave (300-4000 nm) annual mean '//sLAI_YEAR
     info%units = '1'
     info%file_metadata_type = 'carrer'
     call chunker%nc_create1(io_albsw, weighting(wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_SW_annual_2004', info)
+        'soilalbedo/', 'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
 
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
         info%vname = 'albgiss_'//trim(sbands_giss(iband))
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean 2004'
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR
         info%units = '1'
         info%file_metadata_type = 'carrer'
         call chunker%nc_create1(io_albgiss(iband), weighting(wta,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_5km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info)
+            'soilalbedo_5km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info)
 
         call chunkere%nc_create1(io_albgisse(iband), weighting(wta,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info, &
+            'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
             create_lr=.false.)
     end do
 
@@ -239,7 +239,7 @@ program Carrer_soilalbedo_to_GISS
 
         call chunker%nc_create1(ioall_fracbd(iband), weighting(wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_fracbd_5km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_2004', info, &
+            'soilalbedo_fracbd_5km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
             sbright_dark, sbright_dark_long)
         do k=1,BRIGHT_DARK
             call chunker%nc_reuse_var( &
@@ -256,7 +256,7 @@ program Carrer_soilalbedo_to_GISS
     info%file_metadata_type = 'carrer'
     call chunker%nc_create1(ioall_fracgrey, weighting(wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'soilalbedo_5km_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_2004', info, &
+        'soilalbedo_5km_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR, info, &
         sbright_dark, sbright_dark_long)
     do k=1,2
         call chunker%nc_reuse_var( &

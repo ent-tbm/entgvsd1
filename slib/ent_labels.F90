@@ -1,5 +1,6 @@
 module ent_labels_mod
 
+    use ent_params_mod
     use, intrinsic :: iso_fortran_env
 
 implicit none
@@ -179,7 +180,7 @@ real*8, parameter :: heights_form(2,NENT20) = RESHAPE( (/ &
 
 character(*), parameter :: TITLE_LC = 'Ent PFT 1 km land cover fraction'
 character(*), parameter :: TITLE_LAI = &
-    'Maximum annual LAI (m2/m2) 2004 downscaled from 1/12 degrees'
+    'Maximum annual LAI (m2/m2) '//sLAI_YEAR//' downscaled from 1/12 degrees'
 character(*), parameter :: TITLE_CHECKSUM = 'Checksum File'
 
 integer, parameter :: nallmonth = 12
