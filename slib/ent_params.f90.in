@@ -18,7 +18,7 @@ CHARACTER (LEN=*), PARAMETER :: LAI_SOURCE = 'B'
 character*(*), parameter :: XHEIGHTSOURCE = 'Sa'
 
 ! Year of LAI data to process
-character*(4), parameter :: LAI_YEAR = '2004'
+integer, parameter :: LAI_YEAR = 2004
 character*(4), parameter :: sLAI_YEAR = '2004'   ! Must match LAI_YEAR
 
 ! =================== Paths
