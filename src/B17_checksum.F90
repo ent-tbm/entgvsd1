@@ -134,7 +134,7 @@ subroutine do_B17_checksums(rw, esub_p)
             doytype='doy', idoy=idoy, &
             varsuffix = '_checksum')
         call ent_diff(rw, chunker, info, &
-            LAI_INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! ----------- B10
@@ -144,7 +144,7 @@ subroutine do_B17_checksums(rw, esub_p)
         call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            LAI_INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'.nc', &
             'lai')
     enddo
 
@@ -182,7 +182,7 @@ subroutine do_B17_checksums(rw, esub_p)
             varsuffix = '_checksum', &
             doytype='doy', idoy=idoy)
         call ent_diff(rw, chunker, info, &
-            LAI_INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! --------------- B13
@@ -195,7 +195,7 @@ subroutine do_B17_checksums(rw, esub_p)
             doytype='month', idoy=imonth)
 
         call ent_diff(rw, chunker, info, &
-            LAI_INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'.nc', &
             'lai')
     end do
 end subroutine
@@ -244,7 +244,7 @@ subroutine do_B16_checksums(rw, esub_p, step)
         call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclai', 2004, step, '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            chunker%outputs_dir, 'tmp/regrids/', 'global_30s_2004_'//MONTH(imonth)//'_hxh.nc', &
+            chunker%outputs_dir, 'tmp/regrids/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'_hxh.nc', &
             'lai', create_lr=.false.)
     end do
 

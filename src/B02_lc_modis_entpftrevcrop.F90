@@ -480,8 +480,8 @@ call chunker%nc_open_input(io_CMedit, &
 !     WATERLC MODIS PARTITION
 call chunker%nc_open_input(io_waterpart, &
      INPUTS_URL, INPUTS_DIR, &
-     'lc/MODIS/2004/', &
-     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0', 1)
+     'lc/MODIS/'//sLAI_YEAR//'/', &
+     'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_00.nc', 'PARTITION_0', 1)
 
 
 ! ===================================================
@@ -548,8 +548,8 @@ io_dompft%regrid_lr => nop_regrid_lr
 do k = 1,LCLASS
    call chunker%nc_open_input(partit_io(k), &
         INPUTS_URL, INPUTS_DIR, &
-        'lc/MODIS/2004/',  &
-        'PART_SUB_1km_2004_geo.PARTITION_'//itoa2(k)//'.nc', &
+        'lc/MODIS/'//sLAI_YEAR//'/',  &
+        'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_'//itoa2(k)//'.nc', &
         'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo
 
@@ -634,8 +634,8 @@ stop 0
         'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'// &
         'Scaling: NASA Goddard Institute for Space Studies')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
-         'title', 'Maximum annual LAI (m2/m2) 2004'// &
-         'downscaled from 1/12 degrees')
+         'title', 'Maximum annual LAI (m2/m2) '//sLAI_YEAR// &
+         ' regridded from 1/12 degrees')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
