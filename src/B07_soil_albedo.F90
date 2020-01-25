@@ -176,7 +176,7 @@ program Carrer_soilalbedo_to_GISS
 
     ! --------- LC
     ent2 = make_ent2()
-    call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
     call chunker%nc_open(ioall_lc, &
         chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
     call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
