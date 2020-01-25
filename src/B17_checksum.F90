@@ -105,7 +105,7 @@ subroutine do_B17_checksums(rw, esub_p)
     print *,'========================= B08_lc_laimax'
     call init_hr(chunker)
     call chunker%file_info(info, ent20, &
-        LAI_SOURCE, 'M', 'lclaimax', 2004, 'ent17', '1.1', &
+        LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'ent17', '1.1', &
         varsuffix = '_checksum')
     if (LAI_SOURCE == 'L') then
         call ent_diff(rw, chunker, info, &
@@ -119,7 +119,7 @@ subroutine do_B17_checksums(rw, esub_p)
     print *,'========================= B04_veg_height'
     call init_hr(chunker)
     ! NOTE: Only makes sense for forest types
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lchgt', 2004, 'ent17', '1.1', &
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, 'ent17', '1.1', &
         varsuffix='_checksum')
     call ent_diff(rw, chunker, info, &
         INPUTS_DIR, 'height/', 'simard_forest_heights.nc', 'heights')
@@ -130,21 +130,21 @@ subroutine do_B17_checksums(rw, esub_p)
     do idoy = 1,ndoy
         call init_hr(chunker)
         call chunker%file_info(info, ent20, &
-            LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
+            LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
             doytype='doy', idoy=idoy, &
             varsuffix = '_checksum')
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! ----------- B10
     print *,'========================= B10_lc_lai_monthly'
     do imonth = 1,nmonth
         call init_hr(chunker)
-        call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
+        call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'.nc', &
             'lai')
     enddo
 
@@ -152,7 +152,7 @@ subroutine do_B17_checksums(rw, esub_p)
     print *,'========================= B11_reclass_annual'
     call init_hr(chunker)
     call chunker%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'lchgt', 2004, 'pure', '1.1', &
+        LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call ent_diff(rw, chunker, info, &
         INPUTS_DIR, 'height/', 'simard_forest_heights.nc', 'heights')
@@ -162,7 +162,7 @@ subroutine do_B17_checksums(rw, esub_p)
 #if 1
     call init_hr(chunker)
     call chunker%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'lclaimax', 2004, 'pure', '1.1', &
+        LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     if (LAI_SOURCE == 'L') then
         call ent_diff(rw, chunker, info, &
@@ -178,11 +178,11 @@ subroutine do_B17_checksums(rw, esub_p)
     do idoy = 1,ndoy
         call init_hr(chunker)
         call chunker%file_info(info, esub_p, &
-            LAI_SOURCE, 'M', 'lclai', 2004, 'pure', '1.1', &
+            LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'pure', '1.1', &
             varsuffix = '_checksum', &
             doytype='doy', idoy=idoy)
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/doy/2004/', 'global_30s_2004_'//DOY(idoy)//'.nc', 'lai')
+            LAI_INPUTS_DIR, 'lai/BNU/doy/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//DOY(idoy)//'.nc', 'lai')
     end do
 
     ! --------------- B13
@@ -190,12 +190,12 @@ subroutine do_B17_checksums(rw, esub_p)
     do imonth = 1,nmonth
         call init_hr(chunker)
         call chunker%file_info(info, esub_p, &
-            LAI_SOURCE, 'M', 'lclai', 2004, 'pure', '1.1', &
+            LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'pure', '1.1', &
             varsuffix = '_checksum', &
             doytype='month', idoy=imonth)
 
         call ent_diff(rw, chunker, info, &
-            INPUTS_DIR, 'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', &
+            LAI_INPUTS_DIR, 'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'.nc', &
             'lai')
     end do
 end subroutine
@@ -218,7 +218,7 @@ subroutine do_B16_checksums(rw, esub_p, step)
     ! --------------- B16_trim
     print *,'========================= B16 ',trim(step)
     call init_lr(chunker)
-    call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclaimax', 2004, step, '1.1', &
+    call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, step, '1.1', &
         varsuffix = '_checksum')
     if (LAI_SOURCE == 'L') then
         call ent_diff(rw, chunker, info, &
@@ -231,7 +231,7 @@ subroutine do_B16_checksums(rw, esub_p, step)
 
 
     call init_lr(chunker)
-    call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lchgt', 2004, step, '1.1', &
+    call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, step, '1.1', &
         varsuffix = '_checksum')
     call ent_diff(rw, chunker, info, &
         chunker%outputs_dir, 'tmp/regrids/', 'simard_forest_heights_hxh.nc', 'heights', &
@@ -241,10 +241,10 @@ subroutine do_B16_checksums(rw, esub_p, step)
 
     do imonth=1,NMONTH
         call init_lr(chunker)
-        call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclai', 2004, step, '1.1', &
+        call chunker%file_info(info, esub_p, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, step, '1.1', &
             doytype='month', idoy=imonth, varsuffix='_checksum')
         call ent_diff(rw, chunker, info, &
-            chunker%outputs_dir, 'tmp/regrids/', 'global_30s_2004_'//MONTH(imonth)//'_hxh.nc', &
+            chunker%outputs_dir, 'tmp/regrids/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'_hxh.nc', &
             'lai', create_lr=.false.)
     end do
 

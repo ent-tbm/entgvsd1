@@ -42,22 +42,22 @@ allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
 ! Monthly LAI
 do imonth = 1,nmonth
     call chunker%nc_open_input(io_lai(imonth), &
-        INPUTS_URL, INPUTS_DIR, &
-        'lai/BNU/monthly/2004/', 'global_30s_2004_'//MONTH(imonth)//'.nc', 'lai', 1)
+        INPUTS_URL, LAI_INPUTS_DIR, &
+        'lai/BNU/monthly/'//sLAI_YEAR//'/', 'global_30s_'//sLAI_YEAR//'_'//MONTH(imonth)//'.nc', 'lai', 1)
 enddo
 
 ! --- ENTPFTLC: Open outputs written by A00
 call chunker%nc_open_set(ent20, io_lc, &
-    LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
 
 ! =================== Output Files
 do imonth=1,nmonth
     call chunker%nc_create_set( &
         ent20, io_laiout(:,imonth), lc_weights(io_lc, 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'lai', 2004, 'ent17', '1.1', &
+        LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'ent17', '1.1', &
         doytype='month', idoy=imonth)
 
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
         doytype='month', idoy=imonth, varsuffix='_checksum')
     call chunker%nc_create(io_lclai_checksum(imonth), &
         weighting(sum_lc,1d0,0d0), &
@@ -65,7 +65,7 @@ do imonth=1,nmonth
         info%long_name, info%units)
 enddo
 
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
     varsuffix='_allmonth_checksum')
 call chunker%nc_create(io_lclai_checksum_allmonths, &
     weighting(sum_lc,1d0,0d0), &

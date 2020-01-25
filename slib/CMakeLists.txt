@@ -32,6 +32,14 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config.f90.in
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90)
 
+# This is just a copy...
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90)
+
+# If @ONLY is specified, only variables of the form @VAR@ will be
+# replaced and ${ VAR} will be ignored. This is useful for configuring
+# scripts that use ${VAR}.
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh @ONLY)

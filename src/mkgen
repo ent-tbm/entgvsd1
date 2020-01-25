@@ -65,7 +65,7 @@ XENT={}/build/bin/entgvsd
 
 ../outputs/B21_plots_to_png.txt : ../outputs/B20_plots.txt
 \tpython3 B21_plots_to_png.py
-\techo Finsihed Stage >../outputs/B21_plots_to_png.txt
+\techo Finished Stage >../outputs/B21_plots_to_png.txt
 """)
 
 

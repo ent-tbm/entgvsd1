@@ -43,7 +43,7 @@ implicit none
     ! ---------------- INPUT: Open land cover
     ent2 = make_ent2()
     !Make file name.
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1') 
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1') 
     !Open the file
     call chunker%nc_open(ioall_lc, &
         chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
@@ -56,7 +56,7 @@ implicit none
 
 
     ! --------------- OUTPUT: Open output file, create low-res (lr) version.
-    call chunkerlr%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+    call chunkerlr%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
     call chunkerlr%nc_create(ioall_lcout, &
         weighting(chunkerlr%wta1,1d0,0d0), &
         trim(info%dir), trim(info%leaf), trim(info%vname), &

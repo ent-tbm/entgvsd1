@@ -236,7 +236,7 @@ subroutine regrid_lais(esub, fname, rw)
     ! LC written by A04; in the esub indexing scheme
     if (need_lc) then
         call chunker%nc_open_set(esub, io_lc_pure, &
-            LAI_SOURCE, 'M', 'lc', 2004, 'pure', '1.1')
+            LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1')
     end if
 
     ! LAI
@@ -338,16 +338,16 @@ subroutine do_regrid_all_lais(rw)
     ! ----------- Annual
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .false., LAI_SOURCE, 'M', 'lc', 2004, 'pure', 'purelr', '1.1')
+        .false., LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', 'purelr', '1.1')
 
 
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., LAI_SOURCE, 'M', 'laimax', 2004, 'pure', 'purelr', '1.1')
+        .true., LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', 'purelr', '1.1')
 
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., LAI_SOURCE, 'M', 'hgt', 2004, 'pure', 'purelr', '1.1')
+        .true., LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', 'purelr', '1.1')
 
 #if 0
 ! We only need the doy files at the ent17 and pure steps.  We do not
@@ -358,7 +358,7 @@ subroutine do_regrid_all_lais(rw)
     do idoy=1,NDOY
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-            .true., LAI_SOURCE, 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
+            .true., LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'pure', 'purelr', '1.1', &
             'doy', idoy)
     end do
 #endif
@@ -367,7 +367,7 @@ subroutine do_regrid_all_lais(rw)
     do imonth=1,NMONTH
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-            .true., LAI_SOURCE, 'M', 'lai', 2004, 'pure', 'purelr', '1.1', &
+            .true., LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'pure', 'purelr', '1.1', &
             'month', imonth)
     end do
 
@@ -384,7 +384,7 @@ subroutine do_regrid_all_lais(rw)
     ! Create single-layer EntSet_t
     ! Bare soil Bright Ratio
     call chunkerlr%file_info(oinfo, ent1, &
-        LAI_SOURCE, 'M', 'bs_brightratio', 2004, 'purelr', '1.1')
+        LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'purelr', '1.1')
 
     oinfo%leaf = 'bs_brightratio'
     call regrid_selfmask( &

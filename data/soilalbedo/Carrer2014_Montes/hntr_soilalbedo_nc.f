@@ -376,7 +376,7 @@ C****
       dd(2)=dimidy
       err=NF_DEF_VAR(ncidout,'mean',NF_REAL,2,dd,varid)
       write(*,*) err,'varid',varid
-      long_title = 'SOIL ALBEDO CARRER interim 2004 - VIS'
+      long_title = 'SOIL ALBEDO CARRER interim LAI_YEAR - VIS'
       err=NF_PUT_ATT_TEXT(ncidout,varid,'long_name',40,
      &     trim(long_title))
       write(*,*) err
@@ -439,7 +439,7 @@ C****
       dd(2)=dimidy
       err=NF_DEF_VAR(ncidout,'mean',NF_REAL,2,dd,varid)
       write(*,*) err,'varid',varid
-      long_title = 'SOIL ALBEDO CARRER interim 2004 - NIR'
+      long_title = 'SOIL ALBEDO CARRER interim LAI_YEAR - NIR'
       err=NF_PUT_ATT_TEXT(ncidout,varid,'long_name',40,
      &     trim(long_title))
       write(*,*) err

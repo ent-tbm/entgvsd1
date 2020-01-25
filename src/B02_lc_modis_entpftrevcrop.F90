@@ -23,7 +23,7 @@
 !# Checksum on original MODIS LAI??  LC??
 !io_lc_modis_checksum = EntMM29lc_lai_for_1kmx1km
 !   sum_{1...MODIS28 LCLASS} partit_io(k) + io_waterpart
-!    partit_io = 2004/PART_SUB_1km_2004_geo.PARTITION/...
+!    partit_io = LAI_YEAR/PART_SUB_1km_LAI_YEAR_geo.PARTITION/...
 !    io_waterpart = <same>/water
 !
 !io_lc_checksum = EntLandcover_check_sum_Jun_1kmx1km
@@ -480,15 +480,15 @@ call chunker%nc_open_input(io_CMedit, &
 !     WATERLC MODIS PARTITION
 call chunker%nc_open_input(io_waterpart, &
      INPUTS_URL, INPUTS_DIR, &
-     'lc/MODIS/2004/', &
-     'PART_SUB_1km_2004_geo.PARTITION_00.nc', 'PARTITION_0', 1)
+     'lc/MODIS/'//sLAI_YEAR//'/', &
+     'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_00.nc', 'PARTITION_0', 1)
 
 
 ! ===================================================
 ! Create Output Files
 
 !      ENTPFTLC -- Land Cover
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1')
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
 call chunker%nc_create1(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
     info%dir, info%leaf, info, &
@@ -505,13 +505,13 @@ end do
 
 !     CHECKSUM
 
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_modis_checksum')
 call chunker%nc_create1(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
 
 !     CHECKSUM
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_checksum')
 call chunker%nc_create1(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
@@ -520,7 +520,7 @@ call chunker%nc_create1(io_lc_checksum, weighting(chunker%wta1,1d0,0d0), &
 ! ------------------------------------------------------------
 ! Low-res version computed specially for these
 !     NPFTGRID  Number of PFTs in a gridcell
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_npftgrid')
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
@@ -528,7 +528,7 @@ call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_dompftlc')
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
     info%dir, info%leaf, info%vname, &
@@ -536,7 +536,7 @@ call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', 2004, 'ent17', '1.1', &
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_dompft')
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
@@ -548,13 +548,13 @@ io_dompft%regrid_lr => nop_regrid_lr
 do k = 1,LCLASS
    call chunker%nc_open_input(partit_io(k), &
         INPUTS_URL, INPUTS_DIR, &
-        'lc/MODIS/2004/',  &
-        'PART_SUB_1km_2004_geo.PARTITION_'//itoa2(k)//'.nc', &
+        'lc/MODIS/'//sLAI_YEAR//'/',  &
+        'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_'//itoa2(k)//'.nc', &
         'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo
 
 ! ENTPFTLAIMAX
-call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'laimax', 2004, 'ent17', '1.1')
+call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1')
 call chunker%nc_create1(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
     info%dir, info%leaf, info, &
@@ -634,8 +634,8 @@ stop 0
         'Zhu Z.C. et al. 2013 RemSens 5(2):927-948.,'// &
         'Scaling: NASA Goddard Institute for Space Studies')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
-         'title', 'Maximum annual LAI (m2/m2) 2004'// &
-         'downscaled from 1/12 degrees')
+         'title', 'Maximum annual LAI (m2/m2) '//sLAI_YEAR// &
+         ' regridded from 1/12 degrees')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
         'creator_name', 'NASA GISS')
    err = NF90_PUT_ATT(ioall_laiout%fileid,NF90_GLOBAL, &
