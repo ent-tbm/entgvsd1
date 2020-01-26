@@ -181,7 +181,7 @@ Once EntGVSD has been built, the fortran programs can be run, with simply:
    make
 
 This will run the steps, in order, and is expected to take a few days.
-In order to force rerun of a step; say, step ``B01_bnu_laimax``, do:
+In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
 
 .. code-block:: bash
 
@@ -189,8 +189,26 @@ In order to force rerun of a step; say, step ``B01_bnu_laimax``, do:
    rm ../outputs/B01_bnu_laimax.txt
    make
 
-This will rerun the desired step, plus all subsequent steps (which are
-assumed to depend on all previous steps).
+.. note::
+
+   This will rerun the desired step, plus all subsequent steps (which
+   are assumed to depend on all previous steps).
+
+Input / Output Records
+----------------------
+
+Each step of EntGVSD, when it runs, writes out a file ending in
+``.mk``, which details the input and ouptut files used by that
+program.  These ``.mk`` files are written twice:
+
+1. When `mkgen` is run, they are written in the `mkfiles/` directory.
+
+1. When the programs are run for real, they are written again, in the
+   `outputs/` directory.
+
+Looking in these ``.mk`` files is useful to give a definitive answer
+on what files each program opens.
+
 
 Modifying Parameters
 ====================

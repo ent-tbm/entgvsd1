@@ -1,3 +1,7 @@
+# Plots results of EntGVSD, arranged for easy checking
+#
+# Author: Nancy Kiang
+
 #EntGVSD_efnk.R
 source("utils.R")
 

@@ -1,3 +1,10 @@
+! Regrids the PURE files from 1km to 1/2 degree resolution
+!    in preparation of further trimming
+!
+! Includes LC, LAIMAX, Height and monthly LAI files
+!
+! Author: Elizabeth Fischer
+
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR
 #else

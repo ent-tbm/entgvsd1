@@ -1,5 +1,12 @@
-! Program Fills in small regions of missing data in the soil albedo
-! files.
+! Fills in small regions of missing data in the soil albedo files.
+!
+! Uses Poisson relaxation, similar to NCL's poisson_grid_fill()
+! function
+! https://www.ncl.ucar.edu/Document/Functions/Built-in/poisson_grid_fill.shtml
+!
+! Author: Elizabeth Fischer
+!
+! See: slib/gridfill.f90
 
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR

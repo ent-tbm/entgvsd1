@@ -1,5 +1,5 @@
-! Program computes annual maximum LAI from BNU monthly LAI.
-! Authors:  Elizabeth Fischer, Carlo Montes
+! Computes annual maximum LAI from BNU monthly LAI.
+! Authors:  Elizabeth Fischer
 !------------------------------------------------------------------------
 
 #ifdef JUST_DEPENDENCIES
