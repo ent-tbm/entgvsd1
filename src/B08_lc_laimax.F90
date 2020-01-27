@@ -1,4 +1,7 @@
-!  Program to assign 1kmx1km BNU LAImax to EntPFTs lc
+! Assign 1kmx1km BNU LAImax to EntPFTs lc
+! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
+!
+! See slib/assign_laimas.F90
 
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR

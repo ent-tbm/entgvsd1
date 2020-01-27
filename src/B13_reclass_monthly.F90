@@ -1,3 +1,15 @@
+! Reclass of monthly LAI
+!
+! Takes 20-cover classes (Ent 17 PFTs + 3 non-veg) and converts to
+! 18-cover classes (Ent 16 PFTs and bright and dark bare soil fractions).
+! Merges C3 and C4 crops into one crop cover type for Ent 16 PFTs, excludes water
+! and permanent ice, and converts barse/sparse cover into equivalent veg type and
+! bare soil bright and dark fractions, preserving total LAI of grid cell.
+!
+! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
+!
+! See slib/cropmerge_laisparse_splitbare.f90
+
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR
 #else

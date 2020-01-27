@@ -1,13 +1,21 @@
-!     Program to make convert MODIS partitioned 29 land cover types into Ent 20 land cover type maps of 17 Ent PFTs and 3 non-vegetation cover types.  Note that the program includes legacy code that also assigns LAI to the cover.  The assignment of LAI has been superceded by theanother program, so the LAI here is not written to an output file.
-!     Authors:     Nancy Kiang, updated by Carlo Montes (August 2015), Elizabeth Fischer (2019)
-!     Inputs: MODIS IGBP and PFT 29-type land cover partition, Monfreda et al. (2008) crop cover, 
-!     and climate statistcs
+!     Convert MODIS partitioned 29 land cover types into Ent 20 land
+!     cover type maps of 17 Ent PFTs and 3 non-vegetation cover types.
+!     Note that the program includes legacy code that also assigns LAI
+!     to the cover.  The assignment of LAI has been superceded by
+!     theanother program, so the LAI written out here is overwritten later.
+!
+!     Authors:
+!        Nancy Kiang
+!        updated by Carlo Montes (August 2015)
+!        updated by Elizabeth Fischer (2019)
+!
+!     Inputs: MODIS IGBP and PFT 29-type land cover partition,
+!        Monfreda et al. (2008) crop cover, and climate statistcs
+!
 !     Outputs:     
 !        Land cover subgrid 17 Ent PFTs and 3 non-vegetation cover types (water, 
-!     permanent ice, bare/sparsely vegetated) for total 20 land cover classes.
+!            permanent ice, bare/sparsely vegetated) for total 20 land cover classes.
 !        Annual maximum LAI assigned to PFTs in grid cell.
-!
-!     Customize: Set longin and latin for 1km resolution and edit file names.
 !
 !     Modified from modis_entpftg.f, which had used the MODIS PFT crop partition
 !     of "cereal crop" and "broadleaf crop" to estimate C3 and C4 crops, 
@@ -17,30 +25,6 @@
 !     9/5/13 - Added FIX_MODIS29_NORTHPOLE_BUG to fix error in MODIS29.
 !     2019 - Implemented chunker tile scheme for processing 1 km data. Added
 !     checksums.
-
-! This produces the following checksums:
-!
-!# Checksum on original MODIS LAI??  LC??
-!io_lc_modis_checksum = EntMM29lc_lai_for_1kmx1km
-!   sum_{1...MODIS28 LCLASS} partit_io(k) + io_waterpart
-!    partit_io = LAI_YEAR/PART_SUB_1km_LAI_YEAR_geo.PARTITION/...
-!    io_waterpart = <same>/water
-!
-!io_lc_checksum = EntLandcover_check_sum_Jun_1kmx1km
-!    sum_{1...ENTPFTNUM} ENTPFTLC(k) + WATERLC
-!    NOTE: ENTPFTLC(k) == contents of file io_lc(k) = EntMM_lc_laimax_1kmx1km/...LAI
-!
-!io_lclai_checksum = EntLAI_check_sum_Jun_1kmx1km
-!    sum_{1..ENTPFTNUM} ENTPFTLC(k) * ENTPFTLAIMAX(k) + WATERLC*WATERLAI
-!
-!# Number of non-zero PFTs in each gridcell
-!io_npftgrid = EntPFTs_percell_check_sum_Jun_1kmx1km
-!
-!# LC of dominant PFT
-!io_dompftlc = EntdominantPFT_LC_check_sum_Jun_1kmx1km
-!
-!# Index of dominant PFT
-!io_dompft = EntdominantPFT_check_sum_Jun_1kmx1mk
 
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR

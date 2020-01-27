@@ -1,3 +1,11 @@
+! Generated ModelE input data from trimmed/etc outputs.
+!
+! These files are not directly useable by ModelE for two reasons:
+!   1. They do not conform to the NetCDF schema ModelE expects.
+!   2. The output file is NetCDF4 format, ModelE needs NetCDF3.
+!
+! Author: Elizabeth Fischer
+
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR
 #else

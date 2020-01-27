@@ -1,5 +1,6 @@
 ! Regrids LC to 6km grid needed for Carrer albedo processing
 ! JUST regrids SNOW_ICE and CV_WATER.  Uses ent2 universe to do so.
+! Author: Elizabeth Fischer
 
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR

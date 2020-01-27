@@ -32,8 +32,9 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd_config.f90.in
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd_config.f90)
 
-# This is just a copy...
-configure_file(
+
+execute_process( COMMAND
+    cp --no-clobber 
     ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90.in
     ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90)
 

@@ -1,3 +1,8 @@
+# Converts plots to PNG format, suitable for easy viewing / browsing
+# on a desktop.
+#
+# Author: Elizabeth Fischer
+
 import subprocess
 import os
 

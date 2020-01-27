@@ -1,3 +1,10 @@
+# Converts ModelE input data file to form usable by ModelE
+# This fixes two things:
+#   1. Reworks the data to the NetCDF scheme expected by ModelE
+#   2. Writes NetCDF3 output files
+#
+# Author: Elizabeth Fischer
+#
 import netCDF4
 import re
 import os

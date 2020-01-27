@@ -1,4 +1,4 @@
-! Program computes min,max,mean,std of Carrer soil albedo
+! Computes min,max,mean,std of Carrer soil albedo
 ! Elizabeth Fischer <elizabeth.fischer@columbia.edu>
 ! August 15, 2019
 

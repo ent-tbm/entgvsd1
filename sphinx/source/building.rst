@@ -181,7 +181,7 @@ Once EntGVSD has been built, the fortran programs can be run, with simply:
    make
 
 This will run the steps, in order, and is expected to take a few days.
-In order to force rerun of a step; say, step ``B01_bnu_laimax``, do:
+In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
 
 .. code-block:: bash
 
@@ -189,9 +189,111 @@ In order to force rerun of a step; say, step ``B01_bnu_laimax``, do:
    rm ../outputs/B01_bnu_laimax.txt
    make
 
-This will rerun the desired step, plus all subsequent steps (which are
-assumed to depend on all previous steps).
+.. note::
 
+   This will rerun the desired step, plus all subsequent steps (which
+   are assumed to depend on all previous steps).
+
+Input / Output Records
+----------------------
+
+Each step of EntGVSD, when it runs, writes out a file ending in
+``.mk``, which details the input and ouptut files used by that
+program.  These ``.mk`` files are written twice:
+
+1. When `mkgen` is run, they are written in the `mkfiles/` directory.
+
+1. When the programs are run for real, they are written again, in the
+   `outputs/` directory.
+
+Looking in these ``.mk`` files is useful to give a definitive answer
+on what files each program opens.
+
+
+Modifying Parameters
+====================
+
+User-editable parameters are in the file ``slib/ent_params.f90``.
+Once parameter(s) in this file are changed, the following steps must
+take place to make sure they take effect:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/build
+   make install
+   
+
+.. note::
+
+   1. The ``ent_params.f90`` file is NOT checked into git.  It is a
+      user configuration file.
+
+   1. To revert to default values as stored in git, do:
+
+      .. code-block:: bash
+
+         cd ~/git/entgvsd1/slib
+         rm ent_params.f90
+         cd ../build
+         FC=$(which gfortran) cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
+
+   1. The parameters ``LAI_YEAR`` and ``sLAI_YEAR`` must match.  One
+      is a string, one is an integer.
+
+   1. Changing the ``LAI_YEAR`` parameter will cause ``2004`` to be
+      replaced by a different year, everywhere it is appropriate in
+      input filenames, output filenames, metadata and folders ---
+      except for ``B20_plots.R``, where the year must be changed manually.
+
+Rerun EntGVSD
+=============
+
+If EntGVSD has already run and you wish to re-run it with a "clean"
+slate, the following steps are will do so:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1
+   rm -rf outputs build
+   mkdir build
+   cd build
+   FC=$(which gfortran) cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
+   make install
+   cd ../src
+   ./mkgen
+   make
+
+.. note::
+
+   As long as the downloaded data files in the `inputs/` directory are
+   not deleted, this procedure will not need to re-download them.
+
+   
+Modifying Parameters
+====================
+
+User-editable parameters are in the file ``slib/ent_params.f90``.
+Once parameter(s) in this file are changed, the following steps must
+take place to make sure they take effect:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/build
+   make install
+   
+
+.. note::
+
+   1. The ``ent_params.f90`` file is NOT checked into git.  It is a
+      user configuration file.
+
+   1. The parameters ``LAI_YEAR`` and ``sLAI_YEAR`` must match.  One
+      is a string, one is an integer.
+
+   1. Changing the ``LAI_YEAR`` parameter will cause ``2004`` to be
+      replaced by a different year, everywhere it is appropriate in
+      input filenames, output filenames, metadata and folders ---
+      except for ``B20_plots.R``, where the year must be changed manually.
 
 Pre-Processsed Raw Data Files
 ============================

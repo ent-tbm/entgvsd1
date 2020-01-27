@@ -1,3 +1,10 @@
+! Calculates _diff.nc files, giving difference between computed files
+! vs. inputs.  Output files with _checksum and _diff in their name
+! should in many cases be 0.  Read this source file to determine which
+! computed files are compared to which input files.
+!
+! Author:  Elizabeth Fischer
+
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR
 #else
@@ -5,10 +12,6 @@
 #endif
 
 module B17_mod
-!Author:  Elizabeth Fischer
-!
-! Calculates miscellaneous checksums: error checks, differences from
-! observations, sums of lc, sums over PFTs or lc for grid totals, etc.
 
 use chunker_mod
 use ent_labels_mod

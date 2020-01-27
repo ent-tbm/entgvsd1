@@ -1,4 +1,8 @@
-!  Program to assign 1kmx1km monthly LAI to EntPFTs
+! Assign 1kmx1km monthly LAI to EntPFTs
+! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
+!
+! See slib/assign_laimas.F90
+!
 !------------------------------------------------------------------------
 
 #ifdef JUST_DEPENDENCIES
