@@ -37,9 +37,9 @@ type HntrCalc_t
 
     real*8, dimension(:), allocatable :: SINA,SINB
     real*8, dimension(:), allocatable :: FMIN,FMAX
-    real*8, dimension(:), allocatable :: IMIN,IMAX
+    integer, dimension(:), allocatable :: IMIN,IMAX
     real*8, dimension(:), allocatable :: GMIN,GMAX
-    real*8, dimension(:), allocatable :: JMIN,JMAX
+    integer, dimension(:), allocatable :: JMIN,JMAX
 
     ! DATMIS = missing data value inserted in output array B when
     ! cell (IB,JB) has integrated value 0 of WTA
@@ -130,19 +130,21 @@ subroutine partition_east_west(this)
     integer :: IA, IB
     real*8 :: RIA, RIB
     integer :: IBp1
+    real*8 :: epsilon
 
+    epsilon = 1d-14 * max(this%specA%im, this%specB%im)   ! Tolerance for comparing # gridcells RIA,RIB
     DIA = this%specB%im  !  width of single A grid cell in scaled domain
     IA = 1
     RIA = (IA+this%specA%offi - this%specA%im)*this%specB%im  !  scaled longitude of eastern edge
     IB  = this%specB%im
     do IBp1=1,this%specB%im
         RIB = (IBp1-1+this%specB%offi)*this%specA%im    !  scaled longitude of eastern edge
-        do while (RIA < RIB)
+        do while (RIA < RIB-epsilon)
             IA  = IA + 1
             RIA = RIA + DIA
         end do
 
-        if (RIA == RIB) then
+        if (abs(RIA - RIB) < epsilon) then
         ! Eastern edges of cells IA of grid A and IB of grid B coincide
             this%IMAX(IB) = IA
             this%FMAX(IB) = 0
@@ -171,6 +173,7 @@ subroutine partition_north_south(this)
     real*8 :: FJEQA, RJA
     real*8 :: FJEQB, RJB
     integer :: JA, JB
+    real(8), parameter :: epsilon = 1d-14   ! Tolerance for comparing sin(A), sin(B)
 
     ! ------------------------------------------------
     ! Partitions in the north-south (J) direction
@@ -197,11 +200,11 @@ subroutine partition_north_south(this)
     this%GMIN(1) = 0
     JA = 1
     do JB=1,this%specB%jm-1
-        do while (this%SINA(JA) < this%SINB(JB))
+        do while (this%SINA(JA) < this%SINB(JB)-epsilon)
             JA = JA + 1
         end do
 
-        if (this%SINA(JA) == this%SINB(JB)) then
+        if (abs(this%SINA(JA)-this%SINB(JB)) < epsilon) then
             !  Northern edges of cells JA of grid A and JB of grid B coincide
             this%JMAX(JB) = JA
             this%GMAX(JB) = 0
