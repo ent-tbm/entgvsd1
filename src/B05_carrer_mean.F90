@@ -166,14 +166,13 @@ implicit none
     err = nf90_open(INPUTS_DIR//'soilalbedo/Carrer2014_soilalbedo_VIS_NIR_'//sLAI_YEAR//'_8day_6km.nc', NF90_NOWRITE, ncid)
     if (err /= NF90_NOERR) then
         write(ERROR_UNIT,*) 'Error opening file at beginning'
-        return
+        STOP
     end if
 
     err = nf90_inq_dimid(ncid, 'dates', dates_dimid)
     err = nf90_inquire_dimension(ncid, dates_dimid, xname, ndates)
     if (err /= NF90_NOERR) then
-        write(ERROR_UNIT,*) 'Error reading ndates'
-        return
+        STOP
     end if
 
     err = nf90_close(ncid)

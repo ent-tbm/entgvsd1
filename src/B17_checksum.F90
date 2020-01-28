@@ -265,13 +265,15 @@ implicit none
     ! -------------------------------------------------------
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
+    type(EntSet_t), pointer :: esub_p2
     type(ReadWrites_t) :: rw
     call rw%init(THIS_OUTPUTS_DIR, 'B17_checksum', 300,300)
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub
-    call do_B17_checksums(rw, esub_p)
+    esub_p2 => esub_p
+    call do_B17_checksums(rw, esub_p2)
     call do_B16_checksums(rw, esub_p, 'trimmed')
     call do_B16_checksums(rw, esub_p, 'trimmed_scaled')
     call do_B16_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
