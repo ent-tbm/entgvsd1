@@ -655,7 +655,7 @@ subroutine write_chunks(this)
     integer :: len
     type(ChunkIO_t), pointer :: cio
 
-    write(*, '(A I3 I3)', advance="no") 'Writing Chunk',this%cur
+    write(*, '(A,I3,I3)', advance="no") 'Writing Chunk',this%cur
 
     nerr = 0
     do i=1,this%nwrites
@@ -747,7 +747,7 @@ subroutine read_chunks(this)
     type(ChunkIO_t), pointer :: cio
 integer :: ic,jc
 
-    write(*, '(A I3 I3)', advance="no") 'Reading Chunk',this%cur
+    write(*, '(A,I3,I3)', advance="no") 'Reading Chunk',this%cur
 
     nerr = 0
     do i=1,this%nreads
@@ -1464,7 +1464,11 @@ layer_names, long_layer_names, create_lr)
     cio%wta = wta
     cio%leaf = leaf
     cio%rw = 'w'
-    cio%create_lr = (.not.present(create_lr)).or.create_lr
+    if (.not.present(create_lr)) then
+        cio%create_lr = .true.
+    else
+        cio%create_lr = create_lr
+    end if
     if (allocated(cio%base)) deallocate(cio%base)
     if (present(layer_names)) then
         nlayer = size(layer_names,1)
@@ -1869,7 +1873,7 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     cio%own_fileid_lr = .false.
     cio%fileid_lr = 0
 
-    print *,'Reading ', trim(oroot)//trim(dir)//trim(leaf), ' var=',trim(vname)
+    print *,'Reading ', trim(oroot)//trim(dir)//trim(leaf)!, ' var=',trim(vname)
 
     ! ------- Now open the file
     cio%path = trim(oroot)//trim(dir)//trim(leaf)
@@ -2115,7 +2119,7 @@ subroutine nc_check(this, exename, rw)
 
     if (present(exename)) then
         open(17, FILE=trim(this%outputs_dir)//trim(exename)//'.mk')
-        write(17,'(AA)') trim(exename),'_INPUTS = \'
+        write(17,'(A,A)') trim(exename),'_INPUTS = \'
     end if
     do i=1,this%nreads
         if (this%reads(i)%ptr%own_fileid) then
@@ -2133,7 +2137,7 @@ subroutine nc_check(this, exename, rw)
     end do
     if (present(exename)) then
         write(17,*)
-        write(17,'(AA)') trim(exename),'_OUTPUTS = \'
+        write(17,'(A,A)') trim(exename),'_OUTPUTS = \'
     end if
     do i=1,this%nwrites
         if (this%writes(i)%ptr%own_fileid) then
@@ -2162,12 +2166,12 @@ subroutine write_mk(this)
     integer :: i
 
     open(17, FILE=trim(this%outputs_dir)//trim(this%exename)//'.mk')
-    write(17,'(AA)') trim(this%exename),'_INPUTS = \'
+    write(17,'(A,A)') trim(this%exename),'_INPUTS = \'
     do i=1,this%nreads
         write(17,*) '   ',trim(this%reads(i)),' \'
     end do
     write(17,*)
-    write(17,'(AA)') trim(this%exename),'_OUTPUTS = \'
+    write(17,'(A,A)') trim(this%exename),'_OUTPUTS = \'
     do i=1,this%nwrites
         write(17,*) '   ',trim(this%writes(i)),' \'
     end do
