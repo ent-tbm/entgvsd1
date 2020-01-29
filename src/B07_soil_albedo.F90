@@ -518,21 +518,18 @@ program Carrer_soilalbedo_to_GISS
         end do
 
         ! ------------ Regrid to GISS resolution
-print *,'AA1'
         do k=1,NBANDS_GISS
             call hntr_e%regrid4( &
                 io_albgisse(k)%buf, io_albgiss(k)%buf, &
                 wta1, 1d0, 0d0, &    ! weighting,
                 io_albgisse(k)%startB(2), io_albgisse(k)%chunker%chunk_size(2))
         end do
-print *,'AA2'
         do k=1,2
             call hntr_e%regrid4( &
                 io_fracgreye(k)%buf, io_fracgrey(k)%buf, &
                 wta1, 1d0, 0d0, &    ! weighting,
                 io_fracgreye(k)%startB(2), io_fracgreye(k)%chunker%chunk_size(2))
         end do
-print *,'AA3'
 
 
         call chunker%write_chunks
