@@ -23,7 +23,7 @@ module b06_gridfill_mod
     use ent_params_mod
     use assign_laimax_mod
     use gridfill_mod
-    
+
     implicit none
 CONTAINS
 
@@ -56,6 +56,8 @@ subroutine do_gridfill(rw, iband)
     logical :: initzonal
     real*8 :: resmax   ! OUT
     integer :: numiter ! OUT
+
+    real*8 :: val
 
     print *,'=========== BEGIN do_gridfill',iband
     call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
@@ -118,6 +120,7 @@ subroutine do_gridfill(rw, iband)
         call chunker%move_to(ichunk,jchunk)
         wta = 1
 
+        ! NOTE: temporary variable grid is transposed compared to our standard.
         do jc = 1,chunker%chunk_size(2)
         do ic = 1,chunker%chunk_size(1)
             grid(jc,ic) = io_albmodis%buf(ic,jc)   ! Transpose for gridfill
@@ -136,15 +139,16 @@ subroutine do_gridfill(rw, iband)
             ! -- Output &
             resmax, numiter)
         print *,'END poisson_fill()',numiter,resmax
-                
+
         do jc = 1,chunker%chunk_size(2)
         do ic = 1,chunker%chunk_size(1)
             ! poisson_fill() created albedo of 0 at the poles, for latitudes
-            ! with no data at all.  Replace this with FilLValue.
-            if (grid(ic,jc) == 0) then
+            ! with no data at all.  Replace this with FillValue.
+            val = grid(jc,ic)    ! NOTE: grid is transposed compared to standard
+            if (val == 0) then
                 io_albfill%buf(ic,jc) = FillValue
             else
-                io_albfill%buf(ic,jc) = grid(jc,ic)
+                io_albfill%buf(ic,jc) = val
             end if
         end do
         end do
@@ -160,7 +164,7 @@ subroutine do_gridfill(rw, iband)
 end subroutine do_gridfill
 
 end module b06_gridfill_mod
-         
+
 program Carrer_soilalbedo_gridfill
     use b06_gridfill_mod
     use ent_params_mod

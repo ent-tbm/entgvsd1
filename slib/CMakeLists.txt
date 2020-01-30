@@ -38,12 +38,24 @@ execute_process( COMMAND
     ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90.in
     ${CMAKE_CURRENT_SOURCE_DIR}/ent_params.f90)
 
+# ------------------------------------------------------------
+# Set compiler flags; used in entgvsd.sh.in
+if (${CMAKE_Fortran_COMPILER} MATCHES "ifort.*$")
+    # Intel Fortran
+    set(FFLAGS "-mcmodel=medium -convert big_endian -O2 -check nobounds")
+else()
+    # GCC default
+    set(FFLAGS "-mcmodel=medium -fconvert=big-endian -O2 -fno-range-check")
+endif()
+
+
 # If @ONLY is specified, only variables of the form @VAR@ will be
 # replaced and ${ VAR} will be ignored. This is useful for configuring
 # scripts that use ${VAR}.
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/entgvsd.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/entgvsd.sh @ONLY)
+# ------------------------------------------------------------
 
 
 
