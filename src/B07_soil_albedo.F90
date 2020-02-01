@@ -123,7 +123,8 @@ program Carrer_soilalbedo_to_GISS
     integer :: dg
     real*4 :: s
 
-    type(Chunker_t) :: chunker,chunkerhr,chunkere
+    type(Chunker_t) :: chunker,chunkerhr
+    type(Chunker_T) :: chunkere,chunkerh   ! ModelE outputs
     ! Input files
     type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
     real*4 :: lcice, lcwater
@@ -132,19 +133,20 @@ program Carrer_soilalbedo_to_GISS
     ! Output Files
     type(ChunkIO_t) :: io_albsw
     real*4 :: albsw
-    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS), io_albgisse(NBANDS_GISS)
+    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS), io_albgisse(NBANDS_GISS), io_albgissh(NBANDS_GISS)
     real*4 :: albgiss(NBANDS_GISS)
     integer, parameter :: BRIGHT_DARK = 2
     type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
     type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
+    type(ChunkIO_t) :: ioall_fracgreyh, io_fracgreyh(BRIGHT_DARK)
     type(ChunkIO_t) :: ioall_fracgreye, io_fracgreye(BRIGHT_DARK)
     !type(ChunkIO_t) :: ioall_fracgrey_hr, io_fracgrey_hr(BRIGHT_DARK)
     type(ChunkIO_t) :: io_bs_brightratio_hr
     real*4 :: bsbr
 
     ! Regrid to ModelE
-    type(HntrSpec_t) :: spec_e, spec_k
-    type(HntrCalc_t) :: hntr_e    ! Preparation to regrid
+    type(HntrSpec_t) :: spec_e, spec_h, spec_k
+    type(HntrCalc_t) :: hntr_e, hntr_h    ! Preparation to regrid
 
 
     INTEGER :: ichunk,jchunk,ic,jc
@@ -167,11 +169,17 @@ program Carrer_soilalbedo_to_GISS
     call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
     call chunkere%init(IM2, JM2, IM2,JM2, 'forplot', 100, 100, 10,(/18,15/), &
         outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution
+!    call chunkerh%init(IMH, JMH, IMH,JMH, 'forplot', 100, 100, 10,(/18,15/), &
+!        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution 1/2-degree
+    call chunkerh%init(IMH, JMH, IMH,JMH, 'forplot', 100, 100, 10,(/18,15/), &
+        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution 1/2-degree
     call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
 
     spec_e = hntr_spec(chunkere%chunk_size(1), chunkere%ngrid(2), 0d0, 180d0*60d0 / chunkere%ngrid(2))
+    spec_h = hntr_spec(chunkerh%chunk_size(1), chunkerh%ngrid(2), 0d0, 180d0*60d0 / chunkerh%ngrid(2))
     spec_k = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
     hntr_e = hntr_calc(spec_e, spec_k, 0d0)   ! datmis=0
+    hntr_h = hntr_calc(spec_h, spec_k, 0d0)   ! datmis=0
 
 
     allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -235,6 +243,11 @@ program Carrer_soilalbedo_to_GISS
             'soilalbedo/', &
             'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
             create_lr=.false.)
+
+        call chunkerh%nc_create1(io_albgissh(iband), weighting(wta,1d0,0d0), &
+            'soilalbedo/', &
+            'soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
+            create_lr=.false.)
     end do
 
     ! ----------- fracbd
@@ -282,6 +295,16 @@ program Carrer_soilalbedo_to_GISS
             (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
     end do
 
+    call chunkerh%nc_create1(ioall_fracgreyh, weighting(wta_fracbd,1d0,0d0), &
+        'soilalbedo/', &
+        'soilalbedo_HXH_fracgrey', info, &
+        sbright_dark, sbright_dark_long, create_lr=.false.)
+    do k=1,2
+        call chunkerh%nc_reuse_var( &
+            ioall_fracgreyh, io_fracgreyh(k), &
+            (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
+    end do
+
     ! ---------------- bs_brightratio_hr (1km resolution) 
     call clear_file_info(info)
     info%vname = 'bs_brightratio'
@@ -315,6 +338,7 @@ program Carrer_soilalbedo_to_GISS
         call chunker%move_to(ichunk,jchunk)
         call chunkerhr%move_to(ichunk,jchunk)
         call chunkere%move_to(ichunk,jchunk)
+        call chunkerh%move_to(ichunk,jchunk)
         wta = 0
 
         do jc = 1,chunker%chunk_size(2)
@@ -531,10 +555,24 @@ program Carrer_soilalbedo_to_GISS
                 io_fracgreye(k)%startB(2), io_fracgreye(k)%chunker%chunk_size(2))
         end do
 
+        ! ------------ Regrid to GISS HXH resolution
+        do k=1,NBANDS_GISS
+            call hntr_h%regrid4( &
+                io_albgissh(k)%buf, io_albgiss(k)%buf, &
+                wta1, 1d0, 0d0, &    ! weighting,
+                io_albgissh(k)%startB(2), io_albgissh(k)%chunker%chunk_size(2))
+        end do
+        do k=1,2
+            call hntr_h%regrid4( &
+                io_fracgreyh(k)%buf, io_fracgrey(k)%buf, &
+                wta1, 1d0, 0d0, &    ! weighting,
+                io_fracgreyh(k)%startB(2), io_fracgreyh(k)%chunker%chunk_size(2))
+        end do
 
         call chunker%write_chunks
         call chunkerhr%write_chunks
         call chunkere%write_chunks
+        call chunkerh%write_chunks
     end do
     end do
 
@@ -542,6 +580,7 @@ program Carrer_soilalbedo_to_GISS
     call chunker%close_chunks
     call chunkerhr%close_chunks
     call chunkere%close_chunks
+    call chunkerh%close_chunks
 
 end program Carrer_soilalbedo_to_GISS
             
