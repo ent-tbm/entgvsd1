@@ -131,12 +131,13 @@ program Carrer_soilalbedo_to_GISS
     type(ChunkIO_t) :: io_albmodis(NBANDS_MODIS)
     real*4 :: albmodis(NBANDS_MODIS)
     ! Output Files
-    type(ChunkIO_t) :: io_albsw
+    type(ChunkIO_t) :: io_albsw, io_albswh
     real*4 :: albsw
     type(ChunkIO_t) :: io_albgiss(NBANDS_GISS), io_albgisse(NBANDS_GISS), io_albgissh(NBANDS_GISS)
     real*4 :: albgiss(NBANDS_GISS)
     integer, parameter :: BRIGHT_DARK = 2
     type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
+    type(ChunkIO_t) :: ioall_fracbdh(NBANDS_GISS), io_fracbdh(BRIGHT_DARK,NBANDS_GISS)
     type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
     type(ChunkIO_t) :: ioall_fracgreyh, io_fracgreyh(BRIGHT_DARK)
     type(ChunkIO_t) :: ioall_fracgreye, io_fracgreye(BRIGHT_DARK)
@@ -226,7 +227,9 @@ program Carrer_soilalbedo_to_GISS
     info%units = '1'
     info%file_metadata_type = 'carrer'
     call chunker%nc_create1(io_albsw, weighting(wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
+        'soilalbedo/', 'soilalbedo_6km_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
+    call chunkerh%nc_create1(io_albswh, weighting(wta,1d0,0d0), &
+        'soilalbedo/', 'soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
 
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
@@ -267,6 +270,18 @@ program Carrer_soilalbedo_to_GISS
                 ioall_fracbd(iband), io_fracbd(k,iband), &
                 (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
         end do
+
+        ! ----- HXH version fracbd
+        call chunkerh%nc_create1(ioall_fracbdh(iband), weighting(wta_fracbd,1d0,0d0), &
+            'soilalbedo/', &
+            'soilalbedo_fracbd_HXH_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
+            sbright_dark, sbright_dark_long)
+        do k=1,BRIGHT_DARK
+            call chunkerh%nc_reuse_var( &
+                ioall_fracbdh(iband), io_fracbdh(k,iband), &
+                (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
+        end do
+
     end do
 
     ! -------------- fracgrey
@@ -556,6 +571,20 @@ program Carrer_soilalbedo_to_GISS
         end do
 
         ! ------------ Regrid to GISS HXH resolution
+        do iband=1,NBANDS_GISS
+        do k=1,BRIGHT_DARK
+            call hntr_h%regrid4( &
+                io_fracbdh(k,iband)%buf, io_fracbd(k,iband)%buf, &
+                wta1, 1d0, 0d0, &    ! weighting,
+                io_fracbdh(k,iband)%startB(2), io_fracbdh(k,iband)%chunker%chunk_size(2))
+        end do
+        end do
+
+        call hntr_h%regrid4( &
+            io_albswh%buf, io_albsw%buf, &
+            wta1, 1d0, 0d0, &    ! weighting,
+            io_albswh%startB(2), io_albswh%chunker%chunk_size(2))
+
         do k=1,NBANDS_GISS
             call hntr_h%regrid4( &
                 io_albgissh(k)%buf, io_albgiss(k)%buf, &
