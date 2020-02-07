@@ -358,11 +358,11 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     real*4 :: br, brcov   !bright soil ratio, br, to total bare soil, brcov
 
     integer :: NATVEG    ! Index of highest natural vegetation type
-    integer :: c3herb_s, c4herb_s, c3_grass_arct_s, c3_grass_s
+    integer :: crops_herb_s, crops_woody_s, c3_grass_arct_s, c3_grass_s
 
     KM = esub%ncover
-    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+    crops_herb_s = esub%crops_herb ! shortcut
+    crops_woody_s = esub%svm(CROPS_WOODY)   ! shortcut
     c3_grass_arct_s = esub%svm(C3_GRASS_ARCT)
 
     NATVEG = esub%svm(CROPS_C3_HERB)-1
@@ -371,7 +371,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     allocate(covsumm(NMONTH, NATVEG))
     allocate(covavglaim(NMONTH, NATVEG))
 
-    if (sum(vfc(i,j,c3herb_s:c4herb_s)).le.0.0) then
+    if (sum(vfc(i,j,crops_herb_s:crops_woody_s)).le.0.0) then
        return !No crops, no need to do
     endif
     
@@ -391,11 +391,11 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        ! -------------- Replace crops with dominant natural vegetation type
        naturalvegfound = .true.
        vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
-            + vfc(i,j,c3herb_s)  + vfc(i,j,c4herb_s)
-       vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+            + vfc(i,j,crops_herb_s)  + vfc(i,j,crops_woody_s)
+       vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
        vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
-            + vfm(:,i,j,c3herb_s)  + vfm(:,i,j,c4herb_s)
-       vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+            + vfm(:,i,j,crops_herb_s)  + vfm(:,i,j,crops_woody_s)
+       vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
        !If in same cell, keep original LAI in (i,j) of natural veg
        !!DON'T DO ASSIGNMENT BELOW
        !!laic(i,j,covmaxk) = laic(covmaxii,covmaxjj,covmaxk)
@@ -418,19 +418,19 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
 
               ! (this code block copied from below)
               vfc(i,j,c3_grass_s) = vfc(i,j,c3_grass_s)  &
-                   + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
-              vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+                   + vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s)
+              vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
               vfm(:,i,j,c3_grass_s) = vfm(:,i,j,c3_grass_s) &
-                   + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
-              vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover  - done below
+                   + vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s)
+              vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover  - done below
 
               ! Move the crop LAI to the new C3 grass
               laic(i,j,c3_grass_s) = &
-                  (laic(i,j,c3herb_s)*vfc(i,j,c3herb_s) + laic(i,j,c4herb_s)*vfc(i,j,c4herb_s)) &
-                  / (vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s))
+                  (laic(i,j,crops_herb_s)*vfc(i,j,crops_herb_s) + laic(i,j,crops_woody_s)*vfc(i,j,crops_woody_s)) &
+                  / (vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s))
               laim(:,i,j,c3_grass_s) = &
-                  (laim(:,i,j,c3herb_s)*vfm(:,i,j,c3herb_s) + laim(:,i,j,c4herb_s)*vfm(:,i,j,c4herb_s)) &
-                  / (vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s))
+                  (laim(:,i,j,crops_herb_s)*vfm(:,i,j,crops_herb_s) + laim(:,i,j,crops_woody_s)*vfm(:,i,j,crops_woody_s)) &
+                  / (vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s))
 
               EXIT   ! do loop; done increasing dg
           end if
@@ -484,11 +484,11 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
              covavglaim(:,covmaxk) = covavglaim(:,covmaxk)/ &
                   covsumm(:,covmaxk)
              vfc(i,j,covmaxk) = vfc(i,j,covmaxk)  &
-                  + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
-             vfc(i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover - done below
+                  + vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s)
+             vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
              vfm(:,i,j,covmaxk) = vfm(:,i,j,covmaxk) &
-                  + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
-             vfm(:,i,j,c3herb_s:c4herb_s) = 0.0 !zero out crop cover  - done below
+                  + vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s)
+             vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover  - done below
              !Assign LAI in (i,j) from adjacent cell
              laic(i,j,covmaxk) = covavglai(covmaxk)
              laim(:,i,j,covmaxk) = covavglaim(:,covmaxk)
@@ -522,27 +522,27 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
 !      if ((IMn.eq.144).and.(JMn.eq.90)) then
 !         if ( (((i.eq.34).or.(i.eq.41).or.(i.eq.48)).and.(j.eq.9))
 !     &        .or.( (i.eq.34).and.(j.eq.10) ) ) then !Antartic
-!            vfc(i,j,c3_grass_arct) = vfc(i,j,c3_grass_arct) + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
+!            vfc(i,j,c3_grass_arct) = vfc(i,j,c3_grass_arct) + vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s)
 !            vfm(:,i,j,c3_grass_arct) = vfm(:,i,j,c3_grass_arct) 
-!     &           + vfm(:,i,j,c3herb_s) + vfm(:,i,j,c4herb_s)
-!            laic(i,j,c3_grass_arct) = (laic(i,j,c3herb_s)*vfc(i,j,c3herb_s) 
-!     &           + laic(i,j,c4herb_s)*vfc(i,j,c4herb_s)) / (vfc(i,j,c3herb_s)+vfc(i,j,c4herb_s))
+!     &           + vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s)
+!            laic(i,j,c3_grass_arct) = (laic(i,j,crops_herb_s)*vfc(i,j,crops_herb_s) 
+!     &           + laic(i,j,crops_woody_s)*vfc(i,j,crops_woody_s)) / (vfc(i,j,crops_herb_s)+vfc(i,j,crops_woody_s))
 !            do m=1,12
-!               laim(m,i,j,c3_grass_arct) = ( laim(m,i,j,c3herb_s)*vfm(m,i,j,c3herb_s) +
-!     &              laim(m,i,j,c4herb_s)*vfm(m,i,j,c4herb_s) ) / 
-!     &              ( vfm(m,i,j,c3herb_s)+vfm(m,i,j,c4herb_s) )
+!               laim(m,i,j,c3_grass_arct) = ( laim(m,i,j,crops_herb_s)*vfm(m,i,j,crops_herb_s) +
+!     &              laim(m,i,j,crops_woody_s)*vfm(m,i,j,crops_woody_s) ) / 
+!     &              ( vfm(m,i,j,crops_herb_s)+vfm(m,i,j,crops_woody_s) )
 !            enddo
 !            write(*,*) 'Replaced Antarctic crops.'
 !            naturalvegfound=.true.
 !         elseif ( ((i.eq.98).and.(j.eq.36))
 !     &           .or.((i.eq.139).and.(j.eq.45)) ) then !tropical islands
-!            vfc(i,j,12) = vfc(i,j,12) + vfc(i,j,c3herb_s) + vfc(i,j,c4herb_s)
-!            laic(i,j,12) = (laic(i,j,c3herb_s)*vfc(i,j,c3herb_s) 
-!     &        + laic(i,j,c4herb_s)*vfc(i,j,c4herb_s)) / (vfc(i,j,c3herb_s)+vfc(i,j,c4herb_s))
+!            vfc(i,j,12) = vfc(i,j,12) + vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s)
+!            laic(i,j,12) = (laic(i,j,crops_herb_s)*vfc(i,j,crops_herb_s) 
+!     &        + laic(i,j,crops_woody_s)*vfc(i,j,crops_woody_s)) / (vfc(i,j,crops_herb_s)+vfc(i,j,crops_woody_s))
 !            do m=1,12
-!               laim(m,i,j,12) = ( laim(m,i,j,c3herb_s)*vfm(m,i,j,c3herb_s) +
-!     &              laim(m,i,j,c4herb_s)*vfm(m,i,j,c4herb_s)) / 
-!     &              ( vfm(m,i,j,c3herb_s)+vfm(m,i,j,c4herb_s) )
+!               laim(m,i,j,12) = ( laim(m,i,j,crops_herb_s)*vfm(m,i,j,crops_herb_s) +
+!     &              laim(m,i,j,crops_woody_s)*vfm(m,i,j,crops_woody_s)) / 
+!     &              ( vfm(m,i,j,crops_herb_s)+vfm(m,i,j,crops_woody_s) )
 !            enddo
 !            write(*,*) 'Replaced island crops.'
 !            naturalvegfound=.true.
@@ -587,15 +587,15 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        !Assign bare soil fractions
        if (br.ne.FillValue) then  !Adjacent bs_brightratio found
           vfc(i,j,esub%bare_bright) = vfc(i,j,esub%bare_bright) + &
-               sum(vfc(i,j,c3herb_s:c4herb_s))*br
+               sum(vfc(i,j,crops_herb_s:crops_woody_s))*br
           vfc(i,j,esub%bare_dark) = vfc(i,j,esub%bare_dark) + &
-               sum(vfc(i,j,c3herb_s:c4herb_s))*(1. - br)
-          vfc(i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+               sum(vfc(i,j,crops_herb_s:crops_woody_s))*(1. - br)
+          vfc(i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
           vfm(:,i,j,esub%bare_bright) = vfm(:,i,j,esub%bare_bright) + &
-               sum(vfm(:,i,j,c3herb_s:c4herb_s))*br
+               sum(vfm(:,i,j,crops_herb_s:crops_woody_s))*br
           vfm(:,i,j,esub%bare_dark) = vfm(:,i,j,esub%bare_dark) + &
-               sum(vfm(:,i,j,c3herb_s:c4herb_s))*(1. - br)
-          vfm(:,i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+               sum(vfm(:,i,j,crops_herb_s:crops_woody_s))*(1. - br)
+          vfm(:,i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
           write(*,*) 'Assigned nearby bare' &
                ,i,j, dg, bs_brightratio(i,j),br
        elseif ((IMn.eq.720).and.(JMn.eq.360)) then
@@ -605,8 +605,8 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
 !     assigning bare Found for IM=720,JM=360 = (lon, lat)
 !     Below:  i,j,bs_brightratio(i,j), br = (lon, lat)
 !     Antarctica 1: (pureesub%bare_bright has C3 crop, partial coastal cell/ice)
-!     c4herb_s9  36  -1.00000002E+30  0.400000006 = (-95.75,-72.25)
-!     c4herb_s8  37  -1.00000002E+30  0.400000006 = (-96.25,-71.75)
+!     crops_woody_s9  36  -1.00000002E+30  0.400000006 = (-95.75,-72.25)
+!     crops_woody_s8  37  -1.00000002E+30  0.400000006 = (-96.25,-71.75)
 !     Antarctica 2: (pureesub%bare_bright has C3 crop, partial coastal cell/ice)
 !     239  36  -1.00000002E+30  0.400000006 = (-60.75,-72.75)
 !     204  36  -1.00000002E+30  0.400000006 = (-78.25,-72.25)
@@ -620,15 +620,15 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
                .or.((i.eq.204).and.(j.eq.36))) & !Antarctica2
                then
                 !* Assign Antarctica cells to arctic grass
-             vfc(i,j,c3_grass_arct) = vfc(i,j,c3_grass_arct) + sum(vfc(i,j,c3herb_s:c4herb_s))
-             vfc(i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+             vfc(i,j,c3_grass_arct) = vfc(i,j,c3_grass_arct) + sum(vfc(i,j,crops_herb_s:crops_woody_s))
+             vfc(i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
              laic(i,j,c3_grass_arct) = max(laic(i,j,c3_grass_arct), &
-                  max(laic(i,j,c3herb_s),laic(i,j,c4herb_s)))
+                  max(laic(i,j,crops_herb_s),laic(i,j,crops_woody_s)))
              do m=1,NMONTH
-                vfm(m,i,j,c3_grass_arct_s)=vfm(m,i,j,c3_grass_arct) + sum(vfm(m,i,j,c3herb_s:c4herb_s))
-                vfm(m,i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+                vfm(m,i,j,c3_grass_arct_s)=vfm(m,i,j,c3_grass_arct) + sum(vfm(m,i,j,crops_herb_s:crops_woody_s))
+                vfm(m,i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
                 laim(m,i,j,c3_grass_arct)=max(laim(m,i,j,c3_grass_arct), &
-                     max(laim(m,i,j,c3herb_s),laim(m,i,j,c4herb_s)))
+                     max(laim(m,i,j,crops_herb_s),laim(m,i,j,crops_woody_s)))
              enddo
              write(*,*) 'Assigned c3 crops cells in Antartica',i,j
           endif
@@ -636,15 +636,15 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
                .or.((i.eq.694).and.(j.eq.179))) & !Fiji or American Samoa
                then
              !* Assign tropical rainforest
-             vfc(i,j,2) = vfc(i,j,2) + sum(vfc(i,j,c3herb_s:c4herb_s))
-             vfc(i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+             vfc(i,j,2) = vfc(i,j,2) + sum(vfc(i,j,crops_herb_s:crops_woody_s))
+             vfc(i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
              laic(i,j,2) = max(laic(i,j,2), &
-                  max(laic(i,j,c3herb_s), laic(i,j,c4herb_s)))
+                  max(laic(i,j,crops_herb_s), laic(i,j,crops_woody_s)))
              do m=1,NMONTH
-                vfm(m,i,j,2)=vfm(m,i,j,2) + sum(vfm(m,i,j,c3herb_s:c4herb_s))
-                vfm(m,i,j,c3herb_s:c4herb_s) = 0. !zero out crops
+                vfm(m,i,j,2)=vfm(m,i,j,2) + sum(vfm(m,i,j,crops_herb_s:crops_woody_s))
+                vfm(m,i,j,crops_herb_s:crops_woody_s) = 0. !zero out crops
                 laim(m,i,j,2)=max(laim(m,i,j,2), &
-                     max(laim(m,i,j,c3herb_s),laim(m,i,j,c4herb_s)))
+                     max(laim(m,i,j,crops_herb_s),laim(m,i,j,crops_woody_s)))
              enddo
              write(*,*) 'Assigned c4 crops cells in islands',i,j
           endif
@@ -656,8 +656,8 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     endif                     !.not.(naturalvegfound)
     
     !Zero out crop cover - done above for each vfc assignment.
-!      vfc(i,j,c3herb_s:c4herb_s) = 0.
-!      vfm(:,i,j,c3herb_s:c4herb_s) = 0.
+!      vfc(i,j,crops_herb_s:crops_woody_s) = 0.
+!      vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.
 end subroutine replace_crops
 
 
@@ -1026,7 +1026,7 @@ subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
     type(OutputSegment_t), target :: mc
     ! ----------- Locals
     integer :: k,m
-    integer :: c3herb_s,c4herb_s
+    integer :: crops_herb_s,crops_woody_s
 
     real*4, pointer :: vfc15(:,:), laic15(:,:)  !(i,j)
     real*4, allocatable :: vfm15(:,:,:), laim15(:,:,:) !(m,i,j)
@@ -1041,19 +1041,19 @@ real*4 :: xsum
 
     print *,'========================= Part 3: maxcrops'
 
-    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
-print *,'c3herb',c3herb_s,c4herb_s
+    crops_herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
+    crops_woody_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+print *,'c3herb',crops_herb_s,crops_woody_s
     ! Copy input to 3D array
     allocate(laim15(NMONTH, IM,JM))
     do m=1,NMONTH
-        laim15(m,:,:) = ts%io_mon_lai(c3herb_s,m)%buf(:,:)
+        laim15(m,:,:) = ts%io_mon_lai(crops_herb_s,m)%buf(:,:)
     end do
 
     ! Initialize dummy inputs
     allocate(vfm15(NMONTH,IM,JM))
     do m=1,NMONTH
-        vfm15(m,:,:) = ts%io_ann_lc(c3herb_s,1)%buf(:,:)
+        vfm15(m,:,:) = ts%io_ann_lc(crops_herb_s,1)%buf(:,:)
     end do
     allocate(hsd15(IM,JM))
     hsd15 = 0d0
@@ -1079,16 +1079,16 @@ print *,'c3herb',c3herb_s,c4herb_s
     end do    ! k=1,esub%ncover
 
     ! Zero stuff out...
-    mc%io_ann_lc(c3herb_s,1)%buf = 0d0
-    mc%io_ann_hgt(c3herb_s,1)%buf = 0d0
+    mc%io_ann_lc(crops_herb_s,1)%buf = 0d0
+    mc%io_ann_hgt(crops_herb_s,1)%buf = 0d0
     ! ----------------------------------------------------
 
     ! Aliases
-    vfc15 => ts%io_ann_lai(c3herb_s,1)%buf
-    laic15 => ts%io_ann_lc(c3herb_s,1)%buf
-    hm15 => ts%io_ann_hgt(c3herb_s,1)%buf
-    laiccrop => mc%io_ann_lc(c3herb_s,1)%buf
-    hmcrop => mc%io_ann_hgt(c3herb_s,1)%buf
+    vfc15 => ts%io_ann_lai(crops_herb_s,1)%buf
+    laic15 => ts%io_ann_lc(crops_herb_s,1)%buf
+    hm15 => ts%io_ann_hgt(crops_herb_s,1)%buf
+    laiccrop => mc%io_ann_lc(crops_herb_s,1)%buf
+    hmcrop => mc%io_ann_hgt(crops_herb_s,1)%buf
 
 !do k=1,esub%ncover
 !    print *,'sumA',k,sum(mc%io_ann_lai(k,1)%buf)
@@ -1102,7 +1102,7 @@ print *,'c3herb',c3herb_s,c4herb_s
         laiccrop, laimcrop, hmcrop, hsdcrop)    ! outputs
     ! Copy output from 3D array
     do m=1,NMONTH
-        mc%io_mon_lai(c3herb_s,m)%buf(:,:) = laimcrop(m,:,:)
+        mc%io_mon_lai(crops_herb_s,m)%buf(:,:) = laimcrop(m,:,:)
     end do
 
 !do k=1,esub%ncover
@@ -1119,7 +1119,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     type(OutputSegment_t), target :: nc
     ! ----------- Locals
     integer :: i,j,k,m
-    integer :: c3herb_s,c4herb_s,N_BARE,NOTBARE
+    integer :: crops_herb_s,crops_woody_s,N_BARE,NOTBARE
 
     real*4, dimension(:,:), pointer :: bs_brightratio
     real*4, dimension(IM,JM,esub%ncover) :: vfc, laic
@@ -1134,8 +1134,8 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     print *,'========================= Part 4: nocrops'
 
-    c3herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    c4herb_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+    crops_herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
+    crops_woody_s = esub%svm(CROPS_C4_HERB)   ! shortcut
 
     N_BARE = esub%bare_dark
     NOTBARE = esub%svm(BARE_SPARSE) - 1
@@ -1157,11 +1157,11 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         end do ! m
     end do    ! k=1,esub%ncover
     ! ----------------------------------------------------
-    nc%io_ann_lai(c3herb_s,1)%buf(:,:) = 0d0
-    nc%io_ann_lai(c4herb_s,1)%buf(:,:) = 0d0
+    nc%io_ann_lai(crops_herb_s,1)%buf(:,:) = 0d0
+    nc%io_ann_lai(crops_woody_s,1)%buf(:,:) = 0d0
     do m=1,NMONTH
-        nc%io_mon_lai(c3herb_s,m)%buf(:,:) = 0d0
-        nc%io_mon_lai(c4herb_s,m)%buf(:,:) = 0d0
+        nc%io_mon_lai(crops_herb_s,m)%buf(:,:) = 0d0
+        nc%io_mon_lai(crops_woody_s,m)%buf(:,:) = 0d0
     end do  ! m
 
     ! Copy to input/output arrays
@@ -1181,7 +1181,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     do j=1,JM
     do i=1,IM
         s = sum( vfc(i,j,1:NOTBARE) ) 
-        if (sum(vfc(i,j,c3herb_s:c4herb_s))>0.d0) then !Cell has crops
+        if (sum(vfc(i,j,crops_herb_s:crops_woody_s))>0.d0) then !Cell has crops
             !write(*,*) 'Cell has crops',i,j,s
             !Replace with closest non-zero natural cover
             call replace_crops(esub, IM,JM,i,j, &
