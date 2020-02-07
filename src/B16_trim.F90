@@ -1157,12 +1157,13 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         end do ! m
     end do    ! k=1,esub%ncover
     ! ----------------------------------------------------
-    nc%io_ann_lai(crops_herb_s,1)%buf(:,:) = 0d0
-    nc%io_ann_lai(crops_woody_s,1)%buf(:,:) = 0d0
-    do m=1,NMONTH
-        nc%io_mon_lai(crops_herb_s,m)%buf(:,:) = 0d0
-        nc%io_mon_lai(crops_woody_s,m)%buf(:,:) = 0d0
-    end do  ! m
+    !* DO NOT ZERO OUT CROP LAI!
+    !nc%io_ann_lai(crops_herb_s,1)%buf(:,:) = 0d0
+    !nc%io_ann_lai(crops_woody_s,1)%buf(:,:) = 0d0
+    !do m=1,NMONTH
+    !    nc%io_mon_lai(crops_herb_s,m)%buf(:,:) = 0d0
+    !    nc%io_mon_lai(crops_woody_s,m)%buf(:,:) = 0d0
+    !end do  ! m
 
     ! Copy to input/output arrays
     do k=1,esub%ncover

@@ -287,7 +287,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 !  d) No clear categorization of other vegetation types in the grid cell
                 ! Assign to cold_shrub or arid_shrub based on temperature
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
-                    call set_shrubtype( &
+                    call Set_Shrubtype( &
                         io_TCinave%buf(ic,jc)+273.15, &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
