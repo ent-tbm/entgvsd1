@@ -526,7 +526,7 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
     if (combine_crops_c3_c4) then
         !  15 - crops C3+C4 
-        call esub%add_covertype('v', 'crops_herb', 'crops herbacious')    ! 15
+        call esub%add_covertype('v', 'crops_herb', 'crops herbaceous')    ! 15
         esub%crops_herb = esub%ncover
     else
         call esub%sub_covertype(ent20, CROPS_C3_HERB)        ! 15
