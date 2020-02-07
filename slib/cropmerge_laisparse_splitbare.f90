@@ -250,6 +250,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
                         laic(esub%svm(ARID_SHRUB)) )
+
                 end if
                 ! --------------
 
@@ -300,6 +301,12 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) == FillValue) then
 
                         io_simout(esub%svm(ARID_SHRUB),idoy)%buf(ic,jc) = heights_form(2,ARID_SHRUB)
+                    end if
+
+                    if (vfc(esub%svm(COLD_SHRUB)) > 0 .and. &
+                        io_simout(esub%svm(COLD_SHRUB),idoy)%buf(ic,jc) == FillValue) then
+
+                        io_simout(esub%svm(COLD_SHRUB),idoy)%buf(ic,jc) = heights_form(2,COLD_SHRUB)
                     end if
                 end if
 
