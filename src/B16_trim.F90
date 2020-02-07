@@ -365,7 +365,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     crops_woody_s = esub%svm(CROPS_WOODY)   ! shortcut
     c3_grass_arct_s = esub%svm(C3_GRASS_ARCT)
 
-    NATVEG = esub%svm(CROPS_C3_HERB)-1
+    NATVEG = esub%crops_herb - 1   ! Everything before the first crop covertype is natural vegetation
     allocate(covsum(NATVEG))
     allocate(covavglai(NATVEG))
     allocate(covsumm(NMONTH, NATVEG))
@@ -1041,8 +1041,8 @@ real*4 :: xsum
 
     print *,'========================= Part 3: maxcrops'
 
-    crops_herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    crops_woody_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+    crops_herb_s = esub%crops_herb   ! shortcut
+    crops_woody_s = esub%svm(CROPS_WOODY)   ! shortcut
 print *,'c3herb',crops_herb_s,crops_woody_s
     ! Copy input to 3D array
     allocate(laim15(NMONTH, IM,JM))
@@ -1134,8 +1134,8 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     print *,'========================= Part 4: nocrops'
 
-    crops_herb_s = esub%svm(CROPS_C3_HERB)   ! shortcut
-    crops_woody_s = esub%svm(CROPS_C4_HERB)   ! shortcut
+    crops_herb_s = esub%crops_herb   ! shortcut
+    crops_woody_s = esub%svm(CROPS_WOODY)   ! shortcut
 
     N_BARE = esub%bare_dark
     NOTBARE = esub%svm(BARE_SPARSE) - 1
@@ -1407,6 +1407,11 @@ implicit none
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
+
+    if (.not.combine_crops_c3_c4) then
+        print *,'B16_trim requires combine_crops_c3_c4, for now'
+        STOP -1
+    end if
 
     call do_trim(rw, esub)
     call rw%write_mk
