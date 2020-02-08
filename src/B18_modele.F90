@@ -1,8 +1,9 @@
 ! Generated ModelE input data from trimmed/etc outputs.
 !
-! These files are not directly useable by ModelE for two reasons:
-!   1. They do not conform to the NetCDF schema ModelE expects.
-!   2. The output file is NetCDF4 format, ModelE needs NetCDF3.
+! Convert files from previous processing steps to file format directly useable by ModelE for two reasons:
+!   1. Convert arrays with an lctype dimension to separate array variables with
+!   netcdf names for the cover type.
+!   2. Convert from NetCDF4 format to NetCDF3 for ModelE input format.
 !
 ! Author: Elizabeth Fischer
 

@@ -9,11 +9,15 @@
 !
 !   trimmed_scaled_nocrops/: scale out crop cover for version with all
 !      natural vegetation cover, used for rescaling with historical
-!      crop cover change.
+!      crop cover change. Keeps crops LAI and height.
 !
-!   trimmed_scaled_crops_ext/: crops LAI and height extended a few
-!      grid cells out to ensure availability of non-zero values for
-!      crops when cover changes.
+!   A later program creates:
+!   trimmed_scaled_ext/: LAI and height extended to more grid cells
+!      to ensure availability of non-zero values for crops when cover 
+!      changes, and they are extended across continental boundaries to
+!      provides values for different continental land masks.
+!      Note:  There are legacy routines fill_crops, and do_part3_maxcrops
+!      in this file.
 !
 ! Author: Nancy Kiang, Elizabeth Fischer
 
@@ -664,7 +668,8 @@ end subroutine replace_crops
 subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
     vfm15,laim15,hm15,hsd15,&
     laiccrop, laimcrop, hmcrop,hsdcrop)
-
+    !This routine was called to make maxcrops prior to nocrops, but it
+    !is no longer used. The "ext" step is now performed by another program.
     !This performs in-fill once for herb crop (PFT15) LAI to create
     !an extended crop LAI data set for use with historical crop cover.
     integer, intent(IN) :: IMn, JMn
@@ -765,7 +770,7 @@ subroutine check_laim(laim, msg)
 
 end subroutine check_laim
 
-subroutine do_part1_2_trimmed(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
+subroutine do_part1_2_trimmed_and_scaled(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     type(GcmEntSet_t), intent(IN) :: esub
     integer, intent(IN) :: IM,JM
     type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_hgt(:,:), io_ann_lai(:,:), io_mon_lai(:,:)
@@ -1015,9 +1020,14 @@ call check_laim(laim, 'check1')
     end do   ! ic
     end do   ! jc
 
-end subroutine do_part1_2_trimmed
+end subroutine do_part1_2_trimmed_and_scaled
 
 subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
+!This routine was called to produce maxcrops before doing no crops, but it 
+!is no longer used.  Creating "ext" files is now done by a later program.
+!Generate fill-in crop cover from trimmed_scaled before doing nocrops
+!Herb crop only, since right now zero woody crops.
+
     type(GcmEntSet_t), intent(IN) :: esub
     type(ChunkIO_t), target, intent(IN) :: io_bs
     integer, intent(IN) :: IM,JM
@@ -1293,7 +1303,7 @@ subroutine do_trim(rw, esub)
     ! -------- Outputs
     type(OutputSegment_t) :: tr    ! trimmed
     type(OutputSegment_t) :: ts    ! trimmed_scaled
-    type(OutputSegment_t) :: mc    ! maxcrops
+    !type(OutputSegment_t) :: mc    ! maxcrops. Replaced with "ext" program.
     type(OutputSegment_t) :: nc    ! nocrops
 
 
@@ -1341,13 +1351,13 @@ subroutine do_trim(rw, esub)
     call ts%open('trimmed_scaled', esub_p)
 !    call mc%open('maxcrops', esub_p)
 !    call nc%open('nocrops', esub_p)
-    call mc%open('trimmed_scaled_crops_ext', esub_p)
+!    call mc%open('trimmed_scaled_crops_ext', esub_p)
     call nc%open('trimmed_scaled_nocrops', esub_p)
 
     call chunker_pu%nc_check(rw=rw)
     call tr%chunker%nc_check(rw=rw)
     call ts%chunker%nc_check(rw=rw)
-    call mc%chunker%nc_check(rw=rw)
+!    call mc%chunker%nc_check(rw=rw)
     call nc%chunker%nc_check(rw=rw)
 
     ! Check for only one chunk
@@ -1364,34 +1374,34 @@ subroutine do_trim(rw, esub)
     call chunker_pu%move_to(1,1)
     call tr%chunker%move_to(1,1)
     call ts%chunker%move_to(1,1)
-    call mc%chunker%move_to(1,1)
+!    call mc%chunker%move_to(1,1)
     call nc%chunker%move_to(1,1)
 
     IM = chunker_pu%chunk_size(1)
     JM = chunker_pu%chunk_size(2)
 
-    call do_part1_2_trimmed(esub, IM,JM, &
+    call do_part1_2_trimmed_and_scaled(esub, IM,JM, &
         io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
-    call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc)
+    !call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc) !Replaced with "ext" program
     call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
 
     ! Compute checksums for each output segment
     call tr%checksum(esub_p)
     call ts%checksum(esub_p)
-    call mc%checksum(esub_p)
+!    call mc%checksum(esub_p)
     call nc%checksum(esub_p)
 
     !call chunker_pu%write_chunks
     call tr%chunker%write_chunks
     call ts%chunker%write_chunks
-    call mc%chunker%write_chunks
+!    call mc%chunker%write_chunks
     call nc%chunker%write_chunks
 
 
     call chunker_pu%close_chunks
     call tr%chunker%close_chunks
     call ts%chunker%close_chunks
-    call mc%chunker%close_chunks
+!    call mc%chunker%close_chunks
     call nc%chunker%close_chunks
 
 end subroutine do_trim
