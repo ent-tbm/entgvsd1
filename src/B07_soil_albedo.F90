@@ -32,38 +32,19 @@
 ! Use the filled-in version of Carrer MODIS albedo
 #define USE_FILLED
 
-!------------------------------------------------------------------------------
-      
-program Carrer_soilalbedo_to_GISS
-
+module B07_mod
 
     use carrer_mod
     use netcdf
     use chunker_mod
-    use ent_labels_mod
+!    use ent_labels_mod
     use ent_params_mod
-    use assign_laimax_mod
+!    use assign_laimax_mod
     use hntr_mod
 
-!    use convertnc
-!    use netcdf
-!    use EntGVSD_netcdf_util
-    
     implicit none
 
-    
-!    integer, parameter :: NBANDS_GISS = 6
-
-    !integer, parameter :: NSPEC = 3785 !Number of rows in Lean spectrum
-    !character*118 :: GISSBANDStxt = !len = 6*19 + 4
-    !Below parameters are moved to EntGVSD_util.f
-!     integer, parameter :: NBANDS_GISS = 6 !GISS 6 spectral bands
-!      character*101, parameter :: GISSBANDStxt =  &
-!          'VIS (330-770), NIR1 (770-860), NIR2 (860-1250), '// &
-!          'NIR3 (1250-1500), NIR4 (1500-2200), NIR5 (2200-4000)'
-
-
-    ! BISS Band Defintions
+    ! GISS Band Defintions
     integer, parameter :: VIS_GISS = 1
     integer, parameter :: NBANDS_GISS = 6
     character*4, parameter :: sbands_giss(NBANDS_GISS) = &
@@ -91,6 +72,7 @@ program Carrer_soilalbedo_to_GISS
     !GISS ModelE grey albedo fractions
     integer, parameter :: BRIGHT = 1
     integer, parameter :: DARK = 2
+    integer, parameter :: NBRIGHT_DARK = 2
     character*6, parameter :: sbright_dark(2) = (/"bright", "dark  "/)
     character*11, parameter :: sbright_dark_long(2) = (/"bright soil", "dark soil  "/)
 
@@ -113,112 +95,78 @@ program Carrer_soilalbedo_to_GISS
       ! From solar.lean_TOA.0km_toNancyin2006.xlsx.
       real*4, parameter :: fracSW_Lean_0km_2006(NBANDS_GISS) = (/ &
           0.56, 0.0893, 0.2102, 0.0394, 0.0786, 0.0225  /)
-      
 
+
+    !integer, parameter :: NSPEC = 3785 !Number of rows in Lean spectrum
+    !character*118 :: GISSBANDStxt = !len = 6*19 + 4
+    !Below parameters are moved to EntGVSD_util.f
+!     integer, parameter :: NBANDS_GISS = 6 !GISS 6 spectral bands
+!      character*101, parameter :: GISSBANDStxt =  &
+!          'VIS (330-770), NIR1 (770-860), NIR2 (860-1250), '// &
+!          'NIR3 (1250-1500), NIR4 (1500-2200), NIR5 (2200-4000)'
+    
     real*4 :: fracSW_GISS(NBANDS_GISS) !fraction of SW W m-2 nm-1 300-4000 nm
 
-    integer :: band(NBANDS_GISS)
 
-    integer :: k, m, b, dimlon, dimlat, dim(2), dimband
-    integer :: dg
-    real*4 :: s
+type Output_t
+    type(Chunker_t) :: chunker
+    type(HntrCalc_t) :: hntr    ! Preparation to regrid
+    character(8) :: sres    ! Resolution indicator
 
-    type(Chunker_t) :: chunker,chunkerhr
-    type(Chunker_T) :: chunkere,chunkerh   ! ModelE outputs
-    ! Input files
-    type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
-    real*4 :: lcice, lcwater
-    type(ChunkIO_t) :: io_albmodis(NBANDS_MODIS)
-    real*4 :: albmodis(NBANDS_MODIS)
-    ! Output Files
-    type(ChunkIO_t) :: io_albsw, io_albswh
-    real*4 :: albsw
-    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS), io_albgisse(NBANDS_GISS), io_albgissh(NBANDS_GISS)
-    real*4 :: albgiss(NBANDS_GISS)
-    integer, parameter :: BRIGHT_DARK = 2
-    type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(BRIGHT_DARK,NBANDS_GISS)
-    type(ChunkIO_t) :: ioall_fracbdh(NBANDS_GISS), io_fracbdh(BRIGHT_DARK,NBANDS_GISS)
-    type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(BRIGHT_DARK)
-    type(ChunkIO_t) :: ioall_fracgreyh, io_fracgreyh(BRIGHT_DARK)
-    type(ChunkIO_t) :: ioall_fracgreye, io_fracgreye(BRIGHT_DARK)
-    !type(ChunkIO_t) :: ioall_fracgrey_hr, io_fracgrey_hr(BRIGHT_DARK)
-    type(ChunkIO_t) :: io_bs_brightratio_hr
-    real*4 :: bsbr
+    logical :: create_lr    ! Create a _forplot version?  Only do this for original 6km...
+    real, dimension(:,:), allocatable :: wta1   ! Mask that's 1 everywhere
+    real, dimension(:,:), allocatable :: wta   ! Surmised landmask based on albmodis
+    real, dimension(:,:), allocatable :: wta_fracbd   ! Surmised landmask based on fracbd
 
-    ! Regrid to ModelE
-    type(HntrSpec_t) :: spec_e, spec_h, spec_k
-    type(HntrCalc_t) :: hntr_e, hntr_h    ! Preparation to regrid
+    type(ChunkIO_t) :: io_albsw
+    type(ChunkIO_t) :: io_albgiss(NBANDS_GISS)
+    type(ChunkIO_t) :: ioall_fracbd(NBANDS_GISS), io_fracbd(NBRIGHT_DARK,NBANDS_GISS)
+    type(ChunkIO_t) :: ioall_fracgrey, io_fracgrey(NBRIGHT_DARK)
+    type(ChunkIO_t) :: io_bs_brightratio
+end type Output_t
 
 
-    INTEGER :: ichunk,jchunk,ic,jc
-    integer :: i1km,j1km   ! Indexing into hi-res 1km variable
-    integer :: iband,istat
-    real, dimension(:,:), allocatable, target :: wta,wta_fracbd,wta_fracbd_hr    ! Surmised landmask
-    real, dimension(:,:), allocatable, target :: wta1
-    type(EntSet_t) :: ent2
-    type(FileInfo_t) :: info
-    integer, parameter :: nhr(2) = (/ IM1km/IMK, JM1km/JMK /)   ! # of hi-res gridcells per lo-res
-    type(ReadWrites_t) :: rw
-    call rw%init(THIS_OUTPUTS_DIR, 'B07_soil_albedo', 30,30)
+CONTAINS
 
-    call init_ent_labels
-
+subroutine B07_init
     !* Select spectral band irradiance fractions
     fracSW_GISS(:) = fracSW_Lean_0km_2006(:)
 
+end subroutine B07_init
 
-    call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
-    call chunkere%init(IM2, JM2, IM2,JM2, 'forplot', 100, 100, 10,(/18,15/), &
-        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution
-!    call chunkerh%init(IMH, JMH, IMH,JMH, 'forplot', 100, 100, 10,(/18,15/), &
-!        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution 1/2-degree
-    call chunkerh%init(IMH, JMH, IMH,JMH, 'forplot', 100, 100, 10,(/18,15/), &
-        outputs_dir=THIS_OUTPUTS_DIR) ! ModelE resolution 1/2-degree
-    call chunkerhr%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), outputs_dir=THIS_OUTPUTS_DIR)
+subroutine init_output(out, ichunker, sres, IM, JM, create_lr)
+    type(output_t), target, intent(INOUT) :: out
+    type(Chunker_t), intent(IN) :: ichunker
+    character*(*), intent(IN) :: sres
+    integer, intent(IN) :: IM, JM
+    logical :: create_lr
+    ! -------------- Local Vars
+    type(HntrSpec_t) :: ospec, ispec
 
-    spec_e = hntr_spec(chunkere%chunk_size(1), chunkere%ngrid(2), 0d0, 180d0*60d0 / chunkere%ngrid(2))
-    spec_h = hntr_spec(chunkerh%chunk_size(1), chunkerh%ngrid(2), 0d0, 180d0*60d0 / chunkerh%ngrid(2))
-    spec_k = hntr_spec(chunker%chunk_size(1), chunker%ngrid(2), 0d0, 180d0*60d0 / chunker%ngrid(2))
-    hntr_e = hntr_calc(spec_e, spec_k, 0d0)   ! datmis=0
-    hntr_h = hntr_calc(spec_h, spec_k, 0d0)   ! datmis=0
+    out%sres = sres
+    call out%chunker%init(IM, JM, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), &
+        outputs_dir=THIS_OUTPUTS_DIR)
+    ospec = hntr_spec(out%chunker%chunk_size(1), out%chunker%ngrid(2), 0d0, 180d0*60d0 / out%chunker%ngrid(2))
+    ispec = hntr_spec(ichunker%chunk_size(1), ichunker%ngrid(2), 0d0, 180d0*60d0 / ichunker%ngrid(2))
+    out%hntr = hntr_calc(ospec, ispec, 0d0)    ! datmis=0
 
+    ! Only need weightings for original (6km) resolution
+    out%create_lr = create_lr
+    if (create_lr) then
+        allocate(out%wta1(out%chunker%chunk_size(1), out%chunker%chunk_size(2)))
+        allocate(out%wta(out%chunker%chunk_size(1), out%chunker%chunk_size(2)))
+        allocate(out%wta_fracbd(out%chunker%chunk_size(1), out%chunker%chunk_size(2)))
+        out%wta1 = 1
+    end if
 
-    allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
-    allocate(wta1(chunker%chunk_size(1), chunker%chunk_size(2)))
-    allocate(wta_fracbd(chunker%chunk_size(1), chunker%chunk_size(2)))
-    allocate(wta_fracbd_hr(chunkerhr%chunk_size(1), chunkerhr%chunk_size(2)))
-    wta1 = 1d0
+end subroutine init_output
 
-    ! ------------- Open Input Files
-
-    ! --------- LC
-    ent2 = make_ent2()
-    call chunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
-    call chunker%nc_open(ioall_lc, &
-        chunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
-    call chunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
-    call chunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
-
-    ! ------------ albmodis
-#ifdef USE_FILLED
-    do iband=1,NBANDS_MODIS
-        ! Read from 2D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), chunker%outputs_dir, &
-            'tmp/carrer/', &
-            'albfill_'//trim(sbands_modis(iband))//'.nc', &
-            'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
-    end do
-#else
-    do iband=1,NBANDS_MODIS
-        ! Read from 3D NetCDF var
-        call chunker%nc_open(io_albmodis(iband), chunker%outputs_dir, &
-            'tmp/carrer/', &
-            'albmodis_'//trim(sbands_modis(iband))//'.nc', &
-            'albmodis_'//trim(sbands_modis(iband)), SMEAN)
-    end do
-#endif
-
-    ! ===================== Open Output Files
+subroutine open_output_files(out, rw)
+    type(output_t), target, intent(INOUT) :: out
+    type(ReadWrites_t) :: rw
+    ! ------------- Locals
+    type(FileInfo_t) :: info
+    integer iband,k
 
     ! ------------ albsw
     call clear_file_info(info)
@@ -226,10 +174,9 @@ program Carrer_soilalbedo_to_GISS
     info%long_name = 'Carrer soil albedo shoftwave (300-4000 nm) annual mean '//sLAI_YEAR
     info%units = '1'
     info%file_metadata_type = 'carrer'
-    call chunker%nc_create1(io_albsw, weighting(wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_6km_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
-    call chunkerh%nc_create1(io_albswh, weighting(wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info)
+    call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
+        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info, &
+        create_lr=out%create_lr)
 
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
@@ -238,19 +185,10 @@ program Carrer_soilalbedo_to_GISS
         info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR
         info%units = '1'
         info%file_metadata_type = 'carrer'
-        call chunker%nc_create1(io_albgiss(iband), weighting(wta,1d0,0d0), &
+        call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_6km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info)
-
-        call chunkere%nc_create1(io_albgisse(iband), weighting(wta,1d0,0d0), &
-            'soilalbedo/', &
-            'soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
-            create_lr=.false.)
-
-        call chunkerh%nc_create1(io_albgissh(iband), weighting(wta,1d0,0d0), &
-            'soilalbedo/', &
-            'soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
-            create_lr=.false.)
+            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
+            info, create_lr=out%create_lr)
     end do
 
     ! ----------- fracbd
@@ -261,25 +199,14 @@ program Carrer_soilalbedo_to_GISS
         info%units = '1'
         info%file_metadata_type = 'carrer'
 
-        call chunker%nc_create1(ioall_fracbd(iband), weighting(wta_fracbd,1d0,0d0), &
+        call out%chunker%nc_create1(out%ioall_fracbd(iband), weighting(out%wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_fracbd_6km_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
-            sbright_dark, sbright_dark_long)
-        do k=1,BRIGHT_DARK
-            call chunker%nc_reuse_var( &
-                ioall_fracbd(iband), io_fracbd(k,iband), &
-                (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
-        end do
-
-        ! ----- HXH version fracbd
-        call chunkerh%nc_create1(ioall_fracbdh(iband), weighting(wta_fracbd,1d0,0d0), &
-            'soilalbedo/', &
-            'soilalbedo_fracbd_HXH_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, info, &
-            sbright_dark, sbright_dark_long)
-        do k=1,BRIGHT_DARK
-            call chunkerh%nc_reuse_var( &
-                ioall_fracbdh(iband), io_fracbdh(k,iband), &
-                (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
+            'soilalbedo_fracbd_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
+            info, sbright_dark, sbright_dark_long, create_lr=out%create_lr)
+        do k=1,NBRIGHT_DARK
+            call out%chunker%nc_reuse_var( &
+                out%ioall_fracbd(iband), out%io_fracbd(k,iband), &
+                (/1,1,k/), weighting(out%wta_fracbd,1d0,0d0))
         end do
 
     end do
@@ -290,34 +217,14 @@ program Carrer_soilalbedo_to_GISS
     info%long_name = 'Bright/Dark Soil in (grey avg of GISS bands)'
     info%units = '1'
     info%file_metadata_type = 'carrer'
-    call chunker%nc_create1(ioall_fracgrey, weighting(wta_fracbd,1d0,0d0), &
+    call out%chunker%nc_create1(out%ioall_fracgrey, weighting(out%wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'soilalbedo_6km_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR, info, &
-        sbright_dark, sbright_dark_long)
+        'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR, info, &
+        sbright_dark, sbright_dark_long, create_lr=out%create_lr)
     do k=1,2
-        call chunker%nc_reuse_var( &
-            ioall_fracgrey, io_fracgrey(k), &
-            (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
-    end do
-
-    call chunkere%nc_create1(ioall_fracgreye, weighting(wta_fracbd,1d0,0d0), &
-        'soilalbedo/', &
-        'soilalbedo_2HX2_fracgrey', info, &
-        sbright_dark, sbright_dark_long, create_lr=.false.)
-    do k=1,2
-        call chunkere%nc_reuse_var( &
-            ioall_fracgreye, io_fracgreye(k), &
-            (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
-    end do
-
-    call chunkerh%nc_create1(ioall_fracgreyh, weighting(wta_fracbd,1d0,0d0), &
-        'soilalbedo/', &
-        'soilalbedo_HXH_fracgrey', info, &
-        sbright_dark, sbright_dark_long, create_lr=.false.)
-    do k=1,2
-        call chunkerh%nc_reuse_var( &
-            ioall_fracgreyh, io_fracgreyh(k), &
-            (/1,1,k/), weighting(wta_fracbd,1d0,0d0))
+        call out%chunker%nc_reuse_var( &
+            out%ioall_fracgrey, out%io_fracgrey(k), &
+            (/1,1,k/), weighting(out%wta_fracbd,1d0,0d0))
     end do
 
     ! ---------------- bs_brightratio_hr (1km resolution) 
@@ -326,14 +233,115 @@ program Carrer_soilalbedo_to_GISS
     info%long_name = 'Bright Fraction of Soil'
     info%units = '1'
     info%file_metadata_type = 'carrer'
-    call chunkerhr%nc_create1( &
-        io_bs_brightratio_hr, weighting(wta_fracbd_hr,1d0,0d0), &
+    call out%chunker%nc_create1( &
+        out%io_bs_brightratio, weighting(out%wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'soilalbedo_V1km_bs_brightratio', info)
+        'soilalbedo_'//trim(out%sres)//'_bs_brightratio', info, create_lr=out%create_lr)
 
-    call chunker%nc_check(rw=rw)
-    call chunkerhr%nc_check(rw=rw)
-    call chunkere%nc_check(rw=rw)
+    call out%chunker%nc_check(rw=rw)
+
+end subroutine open_output_files
+
+
+end module B07_mod
+
+!------------------------------------------------------------------------------
+      
+program Carrer_soilalbedo_to_GISS
+
+    use B07_mod
+    use carrer_mod
+    use netcdf
+    use chunker_mod
+    use ent_labels_mod
+    use ent_params_mod
+    use assign_laimax_mod
+    use hntr_mod
+
+!    use convertnc
+!    use netcdf
+!    use EntGVSD_netcdf_util
+    
+    implicit none
+
+
+    integer :: band(NBANDS_GISS)
+
+    integer :: i,k, m, b, dimlon, dimlat, dim(2), dimband
+    integer :: dg
+    real*4 :: s
+
+    type(Chunker_t) :: ichunker     ! INPUT: Native 6km resolution
+    integer, parameter :: NOUTS = 4
+    type(Output_t), target :: outs(NOUTS)    ! OUTPUTS: 6km, 1km, HXH, 2HX2 resolutions
+    type(Output_t), pointer :: o6    ! => outs(1), which is the (primary) 6km version
+    ! Input files
+    type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
+    real*4 :: lcice, lcwater
+    type(ChunkIO_t) :: io_albmodis(NBANDS_MODIS)
+    real*4 :: albmodis(NBANDS_MODIS)
+    ! Output Files
+    real*4 :: albsw
+    real*4 :: albgiss(NBANDS_GISS)
+    real*4 :: bsbr
+
+    INTEGER :: ichunk,jchunk,ic,jc
+    integer :: i1km,j1km   ! Indexing into hi-res 1km variable
+    integer :: iband,istat
+    type(EntSet_t) :: ent2
+    type(FileInfo_t) :: info
+    integer, parameter :: nhr(2) = (/ IM1km/IMK, JM1km/JMK /)   ! # of hi-res gridcells per lo-res
+    type(ReadWrites_t) :: rw
+    call rw%init(THIS_OUTPUTS_DIR, 'B07_soil_albedo', 30,30)
+
+    call init_ent_labels
+    call B07_init
+
+    call ichunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10,(/18,15/), &
+        outputs_dir=THIS_OUTPUTS_DIR)    ! READ-ONLY
+    call init_output(outs(1), ichunker, '6km',  IMK, JMK,.true.)   ! Special: No regrid for this one
+    o6 => outs(1)
+    call init_output(outs(2), ichunker, '1km',  IM1km, JM1km,.false.)
+    call init_output(outs(3), ichunker, 'HXH',  IMH, JMH,.false.)
+    call init_output(outs(4), ichunker, '2HX2', IM2, JM2,.false.)
+
+    ! ------------- Open Input Files
+
+    ! --------- LC
+    ent2 = make_ent2()
+    call ichunker%file_info(info, ent2, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
+    call ichunker%nc_open(ioall_lc, &
+        ichunker%outputs_dir, trim(info%dir), trim(info%leaf)//'.nc', trim(info%vname), 0)
+    call ichunker%nc_reuse_var(ioall_lc, io_lcice, (/1,1,ent2%svm(SNOW_ICE)/))
+    call ichunker%nc_reuse_var(ioall_lc, io_lcwater, (/1,1,ent2%svm(CV_WATER)/))
+
+    ! ------------ albmodis
+#ifdef USE_FILLED
+    do iband=1,NBANDS_MODIS
+        ! Read from 2D NetCDF var
+        call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
+            'tmp/carrer/', &
+            'albfill_'//trim(sbands_modis(iband))//'.nc', &
+            'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
+    end do
+#else
+    do iband=1,NBANDS_MODIS
+        ! Read from 3D NetCDF var
+        call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
+            'tmp/carrer/', &
+            'albmodis_'//trim(sbands_modis(iband))//'.nc', &
+            'albmodis_'//trim(sbands_modis(iband)), SMEAN)
+    end do
+#endif
+
+    ! ===================== Open Output Files
+
+    do i=1,NOUTS
+print *,'***************** open_output_files',i
+        call open_output_files(outs(i), rw)
+    end do
+
+    call ichunker%nc_check(rw=rw)
     call rw%write_mk
 
 #ifdef JUST_DEPENDENCIES
@@ -346,18 +354,18 @@ program Carrer_soilalbedo_to_GISS
     do jchunk = dbj0,dbj1
     do ichunk = dbi0,dbi1
 #else
-    do jchunk = 1,chunker%nchunk(2)
-    do ichunk = 1,chunker%nchunk(1)
+    do jchunk = 1,ichunker%nchunk(2)
+    do ichunk = 1,ichunker%nchunk(1)
 #endif
 
-        call chunker%move_to(ichunk,jchunk)
-        call chunkerhr%move_to(ichunk,jchunk)
-        call chunkere%move_to(ichunk,jchunk)
-        call chunkerh%move_to(ichunk,jchunk)
-        wta = 0
+        call ichunker%move_to(ichunk,jchunk)
+        do i=1,NOUTS
+            call outs(i)%chunker%move_to(ichunk,jchunk)
+        end do
+        o6%wta = 0
 
-        do jc = 1,chunker%chunk_size(2)
-        do ic = 1,chunker%chunk_size(1)
+        do jc = 1,o6%chunker%chunk_size(2)
+        do ic = 1,o6%chunker%chunk_size(1)
 
             ! ---------- Read inputs
             lcice = io_lcice%buf(ic,jc)
@@ -373,9 +381,9 @@ program Carrer_soilalbedo_to_GISS
             ! Infer soil mask
             ! TODO: Get this from LC instead
             if (albmodis(1) /= FillValue) then
-                wta(ic,jc) = 1
+                o6%wta(ic,jc) = 1
             else
-                wta(ic,jc) = 0
+                o6%wta(ic,jc) = 0
             end if
 
 
@@ -421,36 +429,21 @@ program Carrer_soilalbedo_to_GISS
             ! to cell's mixed albedo.
             do iband=1,NBANDS_GISS
             do k=1,2
-                io_fracbd(k,iband)%buf(ic,jc) = FillValue
+                o6%io_fracbd(k,iband)%buf(ic,jc) = FillValue
             end do
             end do
             do k=1,NBANDS_GISS
                 if (albgiss(k) /= FillValue) then
                     if (abs(1d0 - (lcice+lcwater)) < 1d-5) then
                         ! ------ All permanent ice, no soil.
-                        io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
-                        io_fracbd(DARK,k)%buf(ic,jc) = FillValue
+                        o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
+                        o6%io_fracbd(DARK,k)%buf(ic,jc) = FillValue
                     else if (((lcice+lcwater) > 0.).and. &
                         ((lcice+lcwater) < 1.0)) then
                         ! --------- Partial ground
                         !Search for nearest grid cell up to 5 that is all ground
                         s = FillValue
-#if 0
-! Not needed at 6km
-                        do dg=1,5
-                        do jj=j-dg,j+dg
-                        do ii=i-dg,i+dg
-                            if ((lcice+lcwater(ii,jj)).eq.0.) then
-                                !All ground found
-                                s = albgiss(ii,jj,k)
-                                exit
-                            end if
-                        end do
-                        if (s.ne.FillValue) exit
-                        end do
-                        if (s.ne.FillValue) exit
-                        end do
-#endif
+
                         if (s.eq.FillValue) then !No nearby ground cells found 
                             !io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
                             !io_fracbd(DARK,k)%buf(ic,jc) = FillValue
@@ -459,61 +452,45 @@ program Carrer_soilalbedo_to_GISS
                             !fracgrey(i,j,:) = FillValue
                             !*fringeice - Or, since there is some ground, assign i,j value there.
                             !  Leaves some coastal ice fringe.
-                            io_fracgrey(BRIGHT)%buf(ic,jc) = &
+                            o6%io_fracgrey(BRIGHT)%buf(ic,jc) = &
                                 min(0.5, albgiss(k))/0.5 !
-                            io_fracgrey(DARK)%buf(ic,jc) = 1.0 - io_fracgrey(BRIGHT)%buf(ic,jc)
+                            o6%io_fracgrey(DARK)%buf(ic,jc) = 1.0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
                         else
-                            io_fracbd(BRIGHT,k)%buf(ic,jc) = min(s,0.5)/0.5
-                            io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - io_fracbd(BRIGHT,k)%buf(ic,jc)
+                            o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = min(s,0.5)/0.5
+                            o6%io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - o6%io_fracbd(BRIGHT,k)%buf(ic,jc)
                         end if
                     else
                         ! -------- All ground
-                        io_fracbd(BRIGHT,k)%buf(ic,jc) = min(albgiss(k),0.5)/0.5
-                        io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - io_fracbd(BRIGHT,k)%buf(ic,jc)
+                        o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = min(albgiss(k),0.5)/0.5
+                        o6%io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - o6%io_fracbd(BRIGHT,k)%buf(ic,jc)
                     end if
                 else
-                    io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
-                    io_fracbd(DARK,k)%buf(ic,jc) = FillValue
+                    o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
+                    o6%io_fracbd(DARK,k)%buf(ic,jc) = FillValue
                 end if
             end do   ! k=1,NBANDS
 
-            if (io_fracbd(1,1)%buf(ic,jc) == FillValue) then
-                wta_fracbd(ic,jc) = 0
+            if (o6%io_fracbd(1,1)%buf(ic,jc) == FillValue) then
+                o6%wta_fracbd(ic,jc) = 0
             else
-                wta_fracbd(ic,jc) = 1
+                o6%wta_fracbd(ic,jc) = 1
             end if
 
             !2) Grey shortwave albedos - exclude 100% ice+water, nearest-neighbor fill
             !  For partial-land cells (that have water) use
             ! soil albedo of nearest all-land/non-ice neighbor.  If none, default to
             ! to cell's mixed albedo.
-            io_fracgrey(BRIGHT)%buf(ic,jc) = 0
-            io_fracgrey(DARK)%buf(ic,jc) = 0
+            o6%io_fracgrey(BRIGHT)%buf(ic,jc) = 0
+            o6%io_fracgrey(DARK)%buf(ic,jc) = 0
 
             if (albsw.ne.FillValue) then 
                if ((lcice+lcwater).eq.1.0) then !No ground
-                    io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
-                    io_fracgrey(DARK)%buf(ic,jc) = FillValue
+                    o6%io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
+                    o6%io_fracgrey(DARK)%buf(ic,jc) = FillValue
                elseif (((lcice+lcwater).gt.0.).and. &
                       ((lcice+lcwater).lt.1.0)) then !Partial
                   !Search for nearest grid cell up to 5 that is all ground
                   s = FillValue
-#if 0
-! Not needed at 6km
-                  do dg=1,5
-                  do ii=i-dg,i+dg
-                     do jj=j-dg,j+dg
-                        if ((lcice+lcwater(ii,jj)).eq.0.) then
-                          !All ground found
-                          s = albSW(ii,jj)
-                          exit
-                       endif
-                    enddo
-                    if (s.ne.FillValue) exit
-                  enddo
-                  if (s.ne.FillValue) exit
-                  enddo
-#endif
                   if (s.eq.FillValue) then !No nearby ground cells found
 !                    !*If cannot assign land albedo, cut the fractional cells.
 !                    !Loses Alaska peninsula
@@ -521,95 +498,88 @@ program Carrer_soilalbedo_to_GISS
 !                    !*Or, since there is some ground, assign i,j value there.
 !                    !Leaves some coastal ice fringe.
                      ! *** This is where had to cap bright/dark fraction to .5
-                     io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5 !
-                     io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
+                     o6%io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5 !
+                     o6%io_fracgrey(DARK)%buf(ic,jc) = 1d0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
                   else !Found nearby all-ground cell
-                     io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5,s)/0.5
-                     io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
+                     o6%io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5,s)/0.5
+                     o6%io_fracgrey(DARK)%buf(ic,jc) = 1d0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
                   endif
                else    !Cell is all ground with SW
-                  io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5
-                  io_fracgrey(DARK)%buf(ic,jc) = 1d0 - io_fracgrey(BRIGHT)%buf(ic,jc)
+                  o6%io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5
+                  o6%io_fracgrey(DARK)%buf(ic,jc) = 1d0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
                endif
             else
-                io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
-                io_fracgrey(DARK)%buf(ic,jc) = FillValue
+                o6%io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
+                o6%io_fracgrey(DARK)%buf(ic,jc) = FillValue
             endif
 
             ! ------------ Regrid fracgrey
-            bsbr = io_fracgrey(BRIGHT)%buf(ic,jc)
-            do j1km = (jc-1)*nhr(2)+1, jc*nhr(2)
-            do i1km = (ic-1)*nhr(1)+1, ic*nhr(1)
-                wta_fracbd_hr(i1km,j1km) = wta_fracbd(ic,jc)
-                io_bs_brightratio_hr%buf(i1km,j1km) = bsbr
-            end do
-            end do
-
+            o6%io_bs_brightratio%buf(ic,jc) = o6%io_fracgrey(BRIGHT)%buf(ic,jc)
 
             ! ---------- Store outputs
-            io_albsw%buf(ic,jc) = albsw
+            o6%io_albsw%buf(ic,jc) = albsw
             do k=1,NBANDS_GISS
-                io_albgiss(k)%buf(ic,jc) = albgiss(k)
+                o6%io_albgiss(k)%buf(ic,jc) = albgiss(k)
             end do
 
 
         end do
         end do
 
-        ! ------------ Regrid to GISS resolution
-        do k=1,NBANDS_GISS
-            call hntr_e%regrid4( &
-                io_albgisse(k)%buf, io_albgiss(k)%buf, &
-                wta1, 1d0, 0d0, &    ! weighting,
-                io_albgisse(k)%startB(2), io_albgisse(k)%chunker%chunk_size(2))
-        end do
-        do k=1,2
-            call hntr_e%regrid4( &
-                io_fracgreye(k)%buf, io_fracgrey(k)%buf, &
-                wta1, 1d0, 0d0, &    ! weighting,
-                io_fracgreye(k)%startB(2), io_fracgreye(k)%chunker%chunk_size(2))
-        end do
+        ! ------------ Regrid 6km to other resolutions
+        do i=2,NOUTS
+            ! ------------ Regrid to GISS resolution
 
-        ! ------------ Regrid to GISS HXH resolution
-        do iband=1,NBANDS_GISS
-        do k=1,BRIGHT_DARK
-            call hntr_h%regrid4( &
-                io_fracbdh(k,iband)%buf, io_fracbd(k,iband)%buf, &
-                wta1, 1d0, 0d0, &    ! weighting,
-                io_fracbdh(k,iband)%startB(2), io_fracbdh(k,iband)%chunker%chunk_size(2))
-        end do
-        end do
+            ! albgiss
+            do k=1,NBANDS_GISS
+                call outs(i)%hntr%regrid4( &
+                    outs(i)%io_albgiss(k)%buf, o6%io_albgiss(k)%buf, &
+                    o6%wta1, 1d0, 0d0, &    ! weighting,
+                    outs(i)%io_albgiss(k)%startB(2), outs(i)%io_albgiss(k)%chunker%chunk_size(2))
+            end do
 
-        call hntr_h%regrid4( &
-            io_albswh%buf, io_albsw%buf, &
-            wta1, 1d0, 0d0, &    ! weighting,
-            io_albswh%startB(2), io_albswh%chunker%chunk_size(2))
+            ! fracgrey
+            do k=1,2
+                call outs(i)%hntr%regrid4( &
+                    outs(i)%io_fracgrey(k)%buf, o6%io_fracgrey(k)%buf, &
+                    o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
+                    outs(i)%io_fracgrey(k)%startB(2), outs(i)%io_fracgrey(k)%chunker%chunk_size(2))
+            end do
 
-        do k=1,NBANDS_GISS
-            call hntr_h%regrid4( &
-                io_albgissh(k)%buf, io_albgiss(k)%buf, &
-                wta1, 1d0, 0d0, &    ! weighting,
-                io_albgissh(k)%startB(2), io_albgissh(k)%chunker%chunk_size(2))
-        end do
-        do k=1,2
-            call hntr_h%regrid4( &
-                io_fracgreyh(k)%buf, io_fracgrey(k)%buf, &
-                wta1, 1d0, 0d0, &    ! weighting,
-                io_fracgreyh(k)%startB(2), io_fracgreyh(k)%chunker%chunk_size(2))
-        end do
+            ! fracbd
+            do iband=1,NBANDS_GISS
+            do k=1,NBRIGHT_DARK
+                call outs(i)%hntr%regrid4( &
+                    outs(i)%io_fracbd(k,iband)%buf, o6%io_fracbd(k,iband)%buf, &
+                    o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
+                    outs(i)%io_fracbd(k,iband)%startB(2), outs(i)%io_fracbd(k,iband)%chunker%chunk_size(2))
+            end do
+            end do
 
-        call chunker%write_chunks
-        call chunkerhr%write_chunks
-        call chunkere%write_chunks
-        call chunkerh%write_chunks
+            call outs(i)%hntr%regrid4( &
+                outs(i)%io_albsw%buf, o6%io_albsw%buf, &
+                o6%wta1, 1d0, 0d0, &    ! weighting,
+                outs(i)%io_albsw%startB(2), outs(i)%io_albsw%chunker%chunk_size(2))
+
+            call outs(i)%hntr%regrid4( &
+                outs(i)%io_bs_brightratio%buf, o6%io_bs_brightratio%buf, &
+                o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
+                outs(i)%io_bs_brightratio%startB(2), outs(i)%io_bs_brightratio%chunker%chunk_size(2))
+
+
+        end do    ! i=2,NOUTS
+
+        do i=1,NOUTS
+            call outs(i)%chunker%write_chunks
+        end do
     end do
     end do
 
 
-    call chunker%close_chunks
-    call chunkerhr%close_chunks
-    call chunkere%close_chunks
-    call chunkerh%close_chunks
+    call ichunker%close_chunks
+    do i=1,NOUTS
+        call outs(i)%chunker%write_chunks
+    end do
 
 end program Carrer_soilalbedo_to_GISS
             
