@@ -19,6 +19,7 @@ module carrer_mod
     integer, parameter :: SSTD = 4
     integer, parameter :: SNUM = 5
     integer, parameter :: NSTATS = 5
+    integer, parameter :: NSTATS_FILLABLE = 3   ! Stats that will receive Poisson filling
     character*4, parameter :: sstats(NSTATS) = &
         (/"MAX ", "MEAN", "MIN ", "STD ", "N   "/)
 

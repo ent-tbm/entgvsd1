@@ -322,7 +322,7 @@ program Carrer_soilalbedo_to_GISS
         call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
             'tmp/carrer/', &
             'albfill_'//trim(sbands_modis(iband))//'.nc', &
-            'albfill_'//trim(sbands_modis(iband))//'_MEAN', 1)
+            'albfill_'//trim(sbands_modis(iband))//'_MEAN', SMEAN)
     end do
 #else
     do iband=1,NBANDS_MODIS

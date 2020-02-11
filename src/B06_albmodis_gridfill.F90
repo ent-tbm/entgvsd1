@@ -37,13 +37,13 @@ subroutine do_gridfill(rw, iband)
     type(Chunker_t) :: chunker
     ! Input files
     type(ChunkIO_t) :: ioall_lc, io_lcice, io_lcwater
-    type(ChunkIO_t) :: ioall_albmodis, io_albmodis  ! io_albmodis is SMEAN
+    type(ChunkIO_t) :: ioall_albmodis, io_albmodis(NSTATS_FILLABLE)  ! io_albmodis is SMEAN
     ! Output Files
-    type(ChunkIO_t) :: io_albfill ! sam as io_albmodis
+    type(ChunkIO_t) :: ioall_albfill, io_albfill(NSTATS_FILLABLE) ! sam as io_albmodis
 
 
-    INTEGER :: ichunk,jchunk,ic,jc
-    real, dimension(:,:), allocatable, target :: wta    ! Surmised landmask
+    INTEGER :: ichunk,jchunk,ic,jc,id
+    real, dimension(:,:,:), allocatable, target :: wta    ! Surmised landmask
     type(EntSet_t) :: ent2
     type(FileInfo_t) :: info
 
@@ -59,9 +59,15 @@ subroutine do_gridfill(rw, iband)
 
     real*8 :: val
 
+    ! Latitude extent of northern and southern hemisphere oceans
+    integer :: max_SH_ocean, max_NH_ocean
+    ! temporaries
+    integer :: max_NH_land
+    logical :: allocean,SH_isset
+
     print *,'=========== BEGIN do_gridfill',iband
     call chunker%init(IMK, JMK, IMH*2,JMH*2, 'forplot', 100, 100, 10, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
-    allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2)))
+    allocate(wta(chunker%chunk_size(1), chunker%chunk_size(2), NSTATS_FILLABLE ))
 
     ! ------------- Open Input Files
 
@@ -78,22 +84,28 @@ subroutine do_gridfill(rw, iband)
         'tmp/carrer/', &
         'albmodis_'//trim(sbands_modis(iband))//'.nc', &
         'albmodis_'//trim(sbands_modis(iband)), 0)
-    call chunker%nc_reuse_var( &
-        ioall_albmodis, io_albmodis, &
-        (/1,1,SMEAN/))
+    do id=1,NSTATS_FILLABLE
+        call chunker%nc_reuse_var( &
+            ioall_albmodis, io_albmodis(id), &
+            (/1,1,id/))
+    end do
 
     ! ===================== Open Output Files
 
     ! ------------ albfill
      call clear_file_info(info)
-     info%vname = 'albfill_'//trim(sbands_modis(iband))//'_MEAN'
-     info%long_name = 'albmodis MEAN with missing values filled in'
+     info%vname = 'albfill_'//trim(sbands_modis(iband))
+     info%long_name = 'albmodis statistics with missing values filled in'
      info%units = '1'
      info%file_metadata_type = 'carrer'
-     call chunker%nc_create1(io_albfill, weighting(wta,1d0,0d0), &
-        'tmp/carrer/', &
-        'albfill_'//trim(sbands_modis(iband)), info)
-
+     call chunker%nc_create1(ioall_albfill, weighting(wta(:,:,1),1d0,0d0), &
+         'tmp/carrer/', &
+         'albfill_'//trim(sbands_modis(iband)), info, &
+         sstats(1:NSTATS_FILLABLE), sstats(1:NSTATS_FILLABLE))
+     do id=1,NSTATS_FILLABLE
+         call chunker%nc_reuse_var(ioall_albfill, io_albfill(id), (/1,1,id/), &
+             weighting(wta(:,:,id), 1d0, 0d0))
+     end do
 
     call chunker%nc_check(rw=rw)
 #ifdef JUST_DEPENDENCIES
@@ -118,41 +130,69 @@ subroutine do_gridfill(rw, iband)
     do ichunk = 1,chunker%nchunk(1)
 
         call chunker%move_to(ichunk,jchunk)
-        wta = 1
 
-        ! NOTE: temporary variable grid is transposed compared to our standard.
-        do jc = 1,chunker%chunk_size(2)
-        do ic = 1,chunker%chunk_size(1)
-            grid(jc,ic) = io_albmodis%buf(ic,jc)   ! Transpose for gridfill
-            ! We will want to fill gridcells that are not 100% land
-            if (io_lcice%buf(ic,jc) + io_lcwater%buf(ic,jc) > 1.e-5) then
-                grid(jc,ic) = FillValue8
-            end if
-        end do
-        end do
+        do id=1,NSTATS_FILLABLE
+            print *,'================ Filling ',trim(sbands_modis(iband)),'-',trim(sstats(id))
+            ! NOTE: temporary variable grid is transposed compared to our standard.
+            max_SH_ocean = -1   ! Northernmost SH latitude that is all ocean
+            SH_isset = .false.
+            max_NH_land = -1  ! Southermost NH latitude that is all ocean
+            do jc = 1,chunker%chunk_size(2)
+                allocean = .true.
+                do ic = 1,chunker%chunk_size(1)
+                    grid(jc,ic) = io_albmodis(id)%buf(ic,jc)   ! Transpose for gridfill
+                    ! We will want to fill gridcells that are not 100% land
+                    if (io_lcice%buf(ic,jc) + io_lcwater%buf(ic,jc) > 1.e-5) then
+                        grid(jc,ic) = FillValue8
+                    else
+                        allocean = .false.
+                    end if
+                end do
 
-        print *,'BEGIN poisson_fill()'
-        call poisson_fill( &
-            chunker%chunk_size(2), chunker%chunk_size(1), &
-            grid, FillValue8, itermax, tolerance, &
-            relaxc, initzonal, .true., &
-            ! -- Output &
-            resmax, numiter)
-        print *,'END poisson_fill()',numiter,resmax
+                ! Compute max_SH_ocean and max_NH_ocean
+                if (allocean) then
+                    if (.not.SH_isset) then
+                        max_SH_ocean = jc
+                    end if
+                else
+                    SH_isset = .true.
+                    ! Actually northermost latitude that is all land; convert below
+                    max_NH_land = jc
+                end if
+            end do
+            max_NH_ocean = max_NH_land + 1
 
-        do jc = 1,chunker%chunk_size(2)
-        do ic = 1,chunker%chunk_size(1)
-            ! poisson_fill() created albedo of 0 at the poles, for latitudes
-            ! with no data at all.  Replace this with FillValue.
-            val = grid(jc,ic)    ! NOTE: grid is transposed compared to standard
-            if (val == 0) then
-                io_albfill%buf(ic,jc) = FillValue
-            else
-                io_albfill%buf(ic,jc) = val
-            end if
-        end do
-        end do
 
+            print *,'BEGIN poisson_fill()'
+            call poisson_fill( &
+                chunker%chunk_size(2), chunker%chunk_size(1), &
+                grid, FillValue8, itermax, tolerance, &
+                relaxc, initzonal, .true., &
+                ! -- Output &
+                resmax, numiter)
+            print *,'END poisson_fill()',numiter,resmax
+
+            do jc = 1,chunker%chunk_size(2)
+            do ic = 1,chunker%chunk_size(1)
+                ! poisson_fill() created albedo of 0 at the poles, for latitudes
+                ! with no data at all.  Replace this with FillValue.
+                val = grid(jc,ic)    ! NOTE: grid is transposed compared to standard
+                if ((val == 0) .or. (jc<=max_SH_ocean) .or. (jc>=max_NH_ocean)) then
+                    io_albfill(id)%buf(ic,jc) = FillValue
+                    wta(ic,jc,id)=0
+                else
+                    io_albfill(id)%buf(ic,jc) = val
+                    wta(ic,jc,id)=1
+                end if
+            end do
+            end do
+
+            ! This will result in some re-writing; but we want it written sooner
+            ! call chunker%write_chunks
+
+        end do    ! id=1,NSTATS_FILLABLE
+
+        ! Write out without any extra rewriting
         call chunker%write_chunks
     end do
     end do
