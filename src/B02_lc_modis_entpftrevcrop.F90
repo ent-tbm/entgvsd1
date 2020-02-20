@@ -533,10 +533,8 @@ io_dompft%regrid_lr => nop_regrid_lr
 do k = 1,LCLASS
    call chunker%nc_open_input(partit_io(k), &
         INPUTS_URL, INPUTS_DIR, &
-        'lc/MODIS/'//sLAI_YEAR//'/',  &
+        'lc/MODIS/V005/'//sLAI_YEAR//'/',  &
         'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_'//itoa2(k)//'.nc', &
-        !'lc/MODIS/V006/'//sLAI_YEAR//'/',  &
-        !'PART_SUB_1km_'//sLAI_YEAR//'_geo.hdf.PARTITION_'//itoa2(k)//'.nc', &
         'PARTITION_'//trim(itoa(k)), 1)    ! var name
 enddo
 
