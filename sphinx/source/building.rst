@@ -8,7 +8,7 @@ Install Prerequisites
 
 EntGVSD requires the following prerequisites:
 
-* GNU Fortran / C / C++ version 4.9 or later.
+* GNU Fortran / C / C++ version 4.9 or later.  Also works with Intel Compiler version 18.
 
 * `NetCDF-C <https://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html>`_, version 4 or later
 
@@ -16,15 +16,16 @@ EntGVSD requires the following prerequisites:
 
 * (Optional) `Python <https://www.python.org>`_ version 3.5 or later
 
-There are a variety of ways these prerequisites can be installed.
-Some suggestions are provided below; assuming you have already
-required the required Fortran and C compilers.
+There are a variety of ways these prerequisites can be installed.  For
+example, they may be installed by hand.  Some suggestions are provided
+below; assuming you have already required the required Fortran and C
+compilers.
 
 Spack
 `````
 
 The easiest way to install these prerequisites is with `Spack
-<https://spack.io>`_ (Linux or MacOS), using a pre-configured Spack Environment.
+<https://spack.io>`_ (Linux or MacOS), using a pre-configured Spack Environment.  For example:
 
 
 .. code-block:: bash
