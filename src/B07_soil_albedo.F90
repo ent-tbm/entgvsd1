@@ -201,7 +201,7 @@ subroutine open_output_files(out, rw)
 
         call out%chunker%nc_create1(out%ioall_fracbd(iband), weighting(out%wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_fracbd_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
+            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracbd_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
             info, sbright_dark, sbright_dark_long, create_lr=out%create_lr)
         do k=1,NBRIGHT_DARK
             call out%chunker%nc_reuse_var( &
