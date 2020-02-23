@@ -14,7 +14,13 @@ EntGVSD requires the following prerequisites:
 
 * `NetCDF-Fortran <https://www.unidata.ucar.edu/software/netcdf/docs/building_netcdf_fortran.html>`_, version 4 or later
 
-* (Optional) `Python <https://www.python.org>`_ version 3.5 or later
+* `CMake <https://cmake.org>`_, version 3.0 or later
+
+* `cURL <https://curl.haxx.se>`_ command line utility
+
+* (Optional) `Python <https://www.python.org>`_ version 3.5 or later.  It should have at least the packages `netCDF4-python <https://unidata.github.io/netcdf4-python/netCDF4/index.html>`_ installed.  This is only needed to convert final files to the GISS ModelE format.
+
+* (Optional) `R <https://www.r-project.org>`_.  It should have at least the packages *sp*, *maps*, *sdmtools*, *plotrix*, *spam*, *fields*, *maptools*, *rworldmap* and *netcdf*.  See `CRAN <https://cran.r-project.org>`_ for more details.  R is used to plot the results in an easy-to-check format.
 
 There are a variety of ways these prerequisites can be installed.  For
 example, they may be installed by hand.  Some suggestions are provided
