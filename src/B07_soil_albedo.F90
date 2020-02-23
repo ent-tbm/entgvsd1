@@ -317,6 +317,7 @@ program Carrer_soilalbedo_to_GISS
 
     ! ------------ albmodis
 #ifdef USE_FILLED
+    print *, 'Using grid filled soil albedo mean.'
     do iband=1,NBANDS_MODIS
         ! Read from 2D NetCDF var
         call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
@@ -325,6 +326,7 @@ program Carrer_soilalbedo_to_GISS
             'albfill_'//trim(sbands_modis(iband)), SMEAN)
     end do
 #else
+    print *, 'Using non-filled soil albedo mean.'
     do iband=1,NBANDS_MODIS
         ! Read from 3D NetCDF var
         call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
@@ -441,7 +443,7 @@ print *,'***************** open_output_files',i
                     else if (((lcice+lcwater) > 0.).and. &
                         ((lcice+lcwater) < 1.0)) then
                         ! --------- Partial ground
-                        !Search for nearest grid cell up to 5 that is all ground
+                        !Search for nearest grid cell up to 5 that is all ground -- NOT DONE
                         s = FillValue
 
                         if (s.eq.FillValue) then !No nearby ground cells found 
