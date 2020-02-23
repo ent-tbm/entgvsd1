@@ -301,7 +301,11 @@ program Carrer_soilalbedo_to_GISS
         outputs_dir=THIS_OUTPUTS_DIR)    ! READ-ONLY
     call init_output(outs(1), ichunker, '6km',  IMK, JMK,.true.)   ! Special: No regrid for this one
     o6 => outs(1)
+#ifdef ENTGVSD_DEBUG
+    call init_output(outs(2), ichunker, 'xkm',  IM2,JM2,.false.)
+#else
     call init_output(outs(2), ichunker, '1km',  IM1km, JM1km,.false.)
+#endif
     call init_output(outs(3), ichunker, 'HXH',  IMH, JMH,.false.)
     call init_output(outs(4), ichunker, '2HX2', IM2, JM2,.false.)
 
@@ -353,8 +357,8 @@ print *,'***************** open_output_files',i
     ! ================== Main Loop
 
 #ifdef ENTGVSD_DEBUG
-    do jchunk = dbj0,dbj1
-    do ichunk = dbi0,dbi1
+    do jchunk = dbj0,dbj1+1
+    do ichunk = 1,ichunker%nchunk(1)
 #else
     do jchunk = 1,ichunker%nchunk(2)
     do ichunk = 1,ichunker%nchunk(1)
