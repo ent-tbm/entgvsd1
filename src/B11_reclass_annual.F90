@@ -72,7 +72,7 @@ subroutine do_reindex(esub)
 
     ! Bare Soil Brightness Ratio
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
-        'soilalbedo_V1km_bs_brightratio.nc', 'bs_brightratio', 1)
+        'soilalbedo_1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &

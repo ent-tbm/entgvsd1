@@ -74,7 +74,7 @@ subroutine do_reindex(esub)
 
     ! Bare Soil Brightness Ratio
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
-        'soilalbedo_V1km_bs_brightratio.nc', 'bs_brightratio', 1)
+        'soilalbedo_1km_bs_brightratio.nc', 'bs_brightratio', 1)
 
     ! Climate statistics (we want TCinave = temperature [C])
     call chunker%nc_open_input(io_TCinave, &
