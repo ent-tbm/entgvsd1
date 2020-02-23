@@ -148,7 +148,7 @@ subroutine init_output(out, ichunker, sres, IM, JM, create_lr)
         outputs_dir=THIS_OUTPUTS_DIR)
     ospec = hntr_spec(out%chunker%chunk_size(1), out%chunker%ngrid(2), 0d0, 180d0*60d0 / out%chunker%ngrid(2))
     ispec = hntr_spec(ichunker%chunk_size(1), ichunker%ngrid(2), 0d0, 180d0*60d0 / ichunker%ngrid(2))
-    out%hntr = hntr_calc(ospec, ispec, 0d0)    ! datmis=0
+    out%hntr = hntr_calc(ospec, ispec, 1d0*FillValue)    ! datmis=FillValue
 
     ! Only need weightings for original (6km) resolution
     out%create_lr = create_lr
@@ -534,7 +534,7 @@ print *,'***************** open_output_files',i
             do k=1,NBANDS_GISS
                 call outs(i)%hntr%regrid4( &
                     outs(i)%io_albgiss(k)%buf, o6%io_albgiss(k)%buf, &
-                    o6%wta1, 1d0, 0d0, &    ! weighting,
+                    o6%wta, 1d0, 0d0, &    ! weighting,
                     outs(i)%io_albgiss(k)%startB(2), outs(i)%io_albgiss(k)%chunker%chunk_size(2))
             end do
 
@@ -558,7 +558,7 @@ print *,'***************** open_output_files',i
 
             call outs(i)%hntr%regrid4( &
                 outs(i)%io_albsw%buf, o6%io_albsw%buf, &
-                o6%wta1, 1d0, 0d0, &    ! weighting,
+                o6%wta, 1d0, 0d0, &    ! weighting,
                 outs(i)%io_albsw%startB(2), outs(i)%io_albsw%chunker%chunk_size(2))
 
             call outs(i)%hntr%regrid4( &
