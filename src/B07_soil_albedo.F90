@@ -30,7 +30,7 @@
 #endif
 
 ! Use the filled-in version of Carrer MODIS albedo
-#define USE_FILLED
+!#define USE_FILLED
 
 module B07_mod
 
