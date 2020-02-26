@@ -172,7 +172,7 @@ subroutine open_output_files(out, rw)
     ! ------------ albsw
     call clear_file_info(info)
     info%vname = 'albsw'
-    info%long_name = 'Carrer soil albedo shoftwave (300-4000 nm) annual mean '//sLAI_YEAR
+    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR
     info%units = '1'
     info%file_metadata_type = 'carrer'
     call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
