@@ -276,7 +276,7 @@ implicit none
     call do_B17_checksums(rw, esub_p2)
     call do_B16_checksums(rw, esub_p, 'trimmed')
     call do_B16_checksums(rw, esub_p, 'trimmed_scaled')
-    call do_B16_checksums(rw, esub_p, 'trimmed_scaled_crops_ext')
+    !call do_B16_checksums(rw, esub_p, 'trimmed_scaled_crops_ext') !This step will be handled by the Ent_utils.git code.
     call do_B16_checksums(rw, esub_p, 'trimmed_scaled_nocrops')
 
     call rw%write_mk

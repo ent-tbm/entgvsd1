@@ -79,18 +79,19 @@ module B07_mod
     ! Convert spectrum in one set of bands to another set of bands while conserving energy
     !From Judith Lean 0 km solar surface irradiance (from 2006 version)
     !Fraction of shortwave 300-4000 nm in MODIS & GISS band portions.
+    !Calculated in solar.lean_TOA.0km_toNancyin2006.xlsx
     real*4, parameter :: fracSW_MG(8) =  (/ &
-        0.105992883, &        !1 300-400 nm
-        0.992030205,&	!2 400-700 nm
-        0.174912449,&	!3 700-770 nm
-        0.203020351,&	!4 770-860 nm
-        0.477761295,&	!5 860-1250 nm
-        0.089450965,&	!6 1250-1500 nm
-        0.17866227,&  !7 1500-2200 nm
-        0.051105118 & !8 2200-4000 nm
+         0.046632595,&   !1 300-400 nm
+         0.436453295,&   !2 400-700 nm
+         0.076954426,&   !3 700-770 nm
+         0.089320769,&   !4 770-860 nm
+         0.210195708,&   !5 860-1250 nm
+         0.039354818,&   !6 1250-1500 nm
+         0.078604196,&   !7 1500-2200 nm
+         0.022484192 &   !8 2200-4000 nm
       /)
 
-      ! Fraction of shortwave (SW) surface irradiance (200-4000 nmm)
+      ! Fraction of shortwave (SW) surface irradiance (300-4000 nmm)
       !  in GISS bands.
       ! From solar.lean_TOA.0km_toNancyin2006.xlsx.
       real*4, parameter :: fracSW_Lean_0km_2006(NBANDS_GISS) = (/ &
