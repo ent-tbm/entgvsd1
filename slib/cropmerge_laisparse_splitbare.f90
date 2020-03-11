@@ -8,7 +8,7 @@ module cropmerge_laisparse_splitbare_mod
 implicit none
 private
 
-public cropmerge_laisparse_splitbare
+public cropmerge_laisparse_splitbare, Shrubtype
 
 CONTAINS
 
@@ -26,20 +26,31 @@ CONTAINS
 !     LC/LAI variables to update for cold_shrub
 ! lc_as, lai_as:
 !     LC/LAI variables to update for arid_shrub
-subroutine Set_Shrubtype(MATEMP,  LC_IN,LAI_IN, lc_cs,lai_cs,  lc_as,lai_as)
-implicit none
-    real*4, intent(IN) :: MATEMP,LC_IN, LAI_IN
-    real*4, intent(INOUT) :: lc_cs,lai_cs,  lc_as,lai_as
-    !------
+!subroutine Set_Shrubtype(MATEMP,  LC_IN,LAI_IN, lc_cs,lai_cs,  lc_as,lai_as)
+!implicit none
+!    real*4, intent(IN) :: MATEMP,LC_IN, LAI_IN
+!    real*4, intent(INOUT) :: lc_cs,lai_cs,  lc_as,lai_as
+!    !------
+!
+!    if (MATEMP.lt.278.15) then !5 C cut-off
+!        lai_cs = (lc_cs*lai_cs + LC_IN*LAI_IN) / (lc_cs + LC_IN)
+!        lc_cs = lc_cs + LC_IN
+!    else
+!        lai_as = (lc_as*lai_as + LC_IN*LAI_IN) / (lc_as + LC_IN)
+!        lc_as = lc_as + LC_IN
+!    endif
+!end subroutine Set_Shrubtype
 
-    if (MATEMP.lt.278.15) then !5 C cut-off
-        lai_cs = (lc_cs*lai_cs + LC_IN*LAI_IN) / (lc_cs + LC_IN)
-        lc_cs = lc_cs + LC_IN
+
+integer function Shrubtype(MATEMP)
+    real*4, intent(IN) :: MATEMP !,Pmave
+
+    if (MATEMP.lt.278.15) then !5 C cut-off                                                                                                                 
+       Shrubtype = COLD_SHRUB
     else
-        lai_as = (lc_as*lai_as + LC_IN*LAI_IN) / (lc_as + LC_IN)
-        lc_as = lc_as + LC_IN
+       Shrubtype = ARID_SHRUB
     endif
-end subroutine Set_Shrubtype
+end function Shrubtype
 
 
 ! This is the common "guts" of B11_reclass_annual, B12_reclass_doy and B13_reclass_doy
@@ -288,11 +299,21 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 !  d) No clear categorization of other vegetation types in the grid cell
                 ! Assign to cold_shrub or arid_shrub based on temperature
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
-                    call Set_Shrubtype( &
-                        io_TCinave%buf(ic,jc)+273.15, &
-                        vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                        vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
-                        vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)))
+                   if (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
+                      call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                           vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
+                           laic(esub%svm(COLD_SHRUB)))
+                   else
+                      call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
+                           laic(esub%svm(ARID_SHRUB)))
+                   endif
+
+                   !call Set_Shrubtype( &
+                   !     io_TCinave%buf(ic,jc)+273.15, &
+                   !     vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                   !     vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
+                   !     vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)))
 
                 end if
                 ! -----------------------------------------------------------------

@@ -93,7 +93,7 @@ module B07_mod
 
       ! Fraction of shortwave (SW) surface irradiance (300-4000 nmm)
       !  in GISS bands.
-      ! From solar.lean_TOA.0km_toNancyin2006.xlsx.
+      ! From solar.lean_TOA.0km_toNancyin2006.xlsx.  Old 1366 W/m2 S0, but at surface
       real*4, parameter :: fracSW_Lean_0km_2006(NBANDS_GISS) = (/ &
           0.56, 0.0893, 0.2102, 0.0394, 0.0786, 0.0225  /)
 

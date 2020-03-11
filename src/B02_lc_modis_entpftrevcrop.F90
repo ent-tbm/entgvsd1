@@ -92,10 +92,10 @@ implicit none
          + LC_IN*LAI_IN
 end subroutine Set_pft
 !------------------------------------------------------------------------------
-! NOTE: This must be the same logic as set_shrubtype() in
-!       slib/cropmerge_laisparse_splitbare.f90
+
 subroutine Set_Shrubtype(MATEMP,Pmave,LC_IN,LAI_IN)  
-implicit none
+  use cropmerge_laisparse_splitbare_mod, only:  Shrubtype
+  implicit none
     real*4, intent(IN) :: MATEMP,Pmave,LC_IN, LAI_IN
     !------
 
@@ -105,7 +105,8 @@ implicit none
     pft_cold_shrub = 0.
     pft_arid_shrub = 0.
 
-    if (MATEMP.lt.278.15) then !5 C cut-off
+    !if (MATEMP.lt.278.15) then !5 C cut-off
+    if (Shrubtype(MATEMP).eq.COLD_SHRUB) then
        pft_cold_shrub = LC_IN
     else
        pft_arid_shrub= LC_IN
