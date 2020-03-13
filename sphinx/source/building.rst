@@ -42,10 +42,16 @@ An option to install these computing prerequisites is through `Spack
    source ~/spack/share/spack/setup-env.sh         #Set up the environment variables in the user's shell.
 
 The needed software packages are listed in files named "spack.yaml" here:
-/spack/var/spack/environments/environments/<environment name>/spack.yaml
+
+.. code-block:: bash
+
+~/spack/var/spack/environments/environments/<environment name>/spack.yaml
 
 where <environment name> is a subdirectory for a particular known computing environment.  The spack.yaml files for each <environment name> differ only in an optional include section for customizable yaml files that specify  preferred versions of the software packages. Customized yaml files are put in this directory, which contains example configurations:
-/spack/var/spack/environments/environments/config/
+
+.. code-block:: bash
+
+~/spack/var/spack/environments/environments/config/
 
 Otherwise, the default is to download the most recent versions.
 
