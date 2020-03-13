@@ -45,13 +45,13 @@ The needed software packages are listed in files named "spack.yaml" here:
 
 .. code-block:: bash
 
-~/spack/var/spack/environments/environments/<environment name>/spack.yaml
+~/spack/var/spack/environments/<entgvsd-environment>/spack.yaml
 
-where <environment name> is a subdirectory for a particular known computing environment.  The spack.yaml files for each <environment name> differ only in an optional include section for customizable yaml files that specify  preferred versions of the software packages. Customized yaml files are put in this directory, which contains example configurations:
+where <entgvsd-environment> is a subdirectory for a particular known computing environment, for which some examples for some machines used for development of this code are shown, e.g. entgvsd-discover.  The spack.yaml files for each <entgvsd-environment> differ only in an optional include section for customizable yaml files that specify  preferred versions of the software packages. Customized yaml files are put in the following directory, which contains example configurations:
 
 .. code-block:: bash
 
-~/spack/var/spack/environments/environments/config/
+~/spack/var/spack/environments/config/
 
 Otherwise, the default is to download the most recent versions.
 
@@ -81,7 +81,7 @@ After putting your loads-x into your spack environment directory, then load the 
 
 .. code-block:: bash
 
-   source ~/spack/var/spack/environments/<environment name>/loads-x
+   source ~/spack/var/spack/environments/<entgvsd-environment>/loads-x
 
 .. note::
 
