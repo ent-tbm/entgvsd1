@@ -30,24 +30,46 @@ compilers.
 Spack
 `````
 
-The easiest way to install these prerequisites is with `Spack
-<https://spack.io>`_ (Linux or MacOS), using a pre-configured Spack Environment.  For example:
+An option to install these computing prerequisites is through `Spack
+<https://spack.io>`_ (Linux or MacOS). A pre-configured Spack Environment for the EntGVSD v1 can be set up through these installation instructions:
 
 
 .. code-block:: bash
 
-   cd ~
-   git clone https://github.com/spack/spack.git -b efischer/giss2
-   . spack/share/spack/setup-env.sh
-   spack -e entgvsd-gibbs concretize -f
-   spack -e entgvsd-gibbs install
-   spack -e entgvsd-gibbs env loads
+   cd ~ #cd to your home directory.
+   bash #Use the bash shell.
+   git clone https://github.com/nkianggiss/spack.git -b nasasgiss/entgvsd1 #Clone the Spack branch developed for the Ent GVSD v1.
+   source ~/spack/share/spack/setup-env.sh         #Set up the environment variables in the user's shell.
 
-These commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  Those environment modules may be loaded with:
+The needed software packages are listed in files named "spack.yaml" here:
+/spack/var/spack/environments/environments/<environment name>/spack.yaml
 
+where <environment name> is a subdirectory for a particular known computing environment.  The spack.yaml files for each <environment name> differ only in an optional include section for customizable yaml files that specify  preferred versions of the software packages. Customized yaml files are put in this directory, which contains example configurations:
+/spack/var/spack/environments/environments/config/
+
+Otherwise, the default is to download the most recent versions.
+
+Select your <environment name> to use, and continue setting up your environment:
+
+   spack -e <entgvsd-environment> concretize -f    #Discern what software packages are needed and their dependencies.
+   spack -e <entgvsd-environment> install          #Download and build the software packages.
+   spack -e <entgvsd-environment> env loads        #Generate a file "loads". This is a list of modules to load.
+
+   #The "loads" file may have duplicates that slow downloading them.  Commands to eliminate duplicates in the loads files are:
+   cd ~/spack/var/spack/environments/entgvsd-gibbs
+   sort loads | uniq >loads2
+   cp loads2 loads
+
+The above commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  To load the environment modules, the user should make a version of the below environment file, "loads-x".  This environment file performs these functions:
+1.  Performs the functions that might be in the user’s .profile or other environment files to do the following:
+ purges modules, loads modules
+2.  Sets environment paths such as optionally python path, library path (avoiding the need to edit a .profile or .bashrc file).
+3.  Sets FC environment variable to select which fortran to use.
+
+After putting your loads-x into your spack environment directory, then load the environment:
 .. code-block:: bash
 
-   source ~/spack/var/spack/environments/entgvsd-gibbs/loads-x
+   source ~/spack/var/spack/environments/<environment name>/loads-x
 
 .. note::
 

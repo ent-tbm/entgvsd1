@@ -150,6 +150,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     integer :: maxpft
     real*4 :: vf_bare_sparse
 
+
+!    print *, "NK test debug"
+
     ! Use these loop bounds for testing...
     ! it chooses a land area in Asia
     do jchunk = jc0,jc1
@@ -239,38 +242,45 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! --------------
                 ! Convert to shrub if there's a small fraction and the shrubs already exist
                 ! convert sparse veg to cold adapted shrub (9) if present
+                ! At coarser spatial resolutions, use the upper limit of BARE_SPARSE fraction to convert.
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 & !.and. vfc(esub%svm(BARE_SPARSE)) < .15 &
                    .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
                    .and. vfc(esub%svm(COLD_SHRUB)) > 0e0 ) &
                 then
                     ! Preserve total LAI, but put it all in that vegetation
                     ! type.
-                    call convert_vf( &
+                   if (laic(esub%svm(COLD_SHRUB)).le.0.) &
+                      print *, 'ERROR: no cold_shrub LAI for cold_shrub cover'
+
+                   call convert_vf( &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
                         laic(esub%svm(COLD_SHRUB)) )
                 endif
 
                 ! convert sparse veg to arid adapted shrub 10 if present
-                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 & !.and. vfc(esub%svm(BARE_SPARSE)) < .15 &
+                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 & ! .and. vfc(esub%svm(BARE_SPARSE)) < .15 &
                    .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
                    .and. vfc(esub%svm(ARID_SHRUB)) > 0e0 ) &
                 then
+                   if (laic(esub%svm(ARID_SHRUB)).le.0.) &
+                      print *, 'ERROR: no arid_shrub LAI for arid_shrub cover'
 
-                    call convert_vf( &
+                   call convert_vf( &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
                         laic(esub%svm(ARID_SHRUB)) )
-
                 end if
-                ! --------------
 
+                ! --------------
                 ! Convert to crops if they exist (any size fraction)
-                ! convert sparse veg to crop 15 if present
+                ! convert the rest of sparse veg to crop 15 if present
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
                       .and. vfc(esub%crops_herb) > 0e0 ) &
                 then
-                    call convert_vf( &
+                   if (laic(esub%crops_herb).le.0.) &
+                        print *, 'ERROR: no crops_herb LAI for crops_herb cover'
+                   call convert_vf( &
                         vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                         vfc(esub%crops_herb), laic(esub%crops_herb), &
                         laic(esub%crops_herb))
@@ -301,12 +311,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
                    if (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
                       call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                           vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
-                           laic(esub%svm(COLD_SHRUB)))
+                           vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), 0.)
                    else
                       call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
-                           laic(esub%svm(ARID_SHRUB)))
+                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0.)
                    endif
 
                    !call Set_Shrubtype( &
@@ -366,6 +374,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     do k=1,esub%ncover
                         io_lc_checksum(idoy)%buf(ic,jc) = io_lc_checksum(idoy)%buf(ic,jc) + vfc(k)
                     end do
+!## NK DEBUG ##
+!                    if (io_lc_checksum(idoy)%buf(ic,jc).gt.1.) then
+!                       print *, 'io',ic,jc, io_lc_checksum(idoy)%buf(ic,jc), vfc(:)
+!                    endif
                 end if
 
                 ! Compute weighting for checksums
@@ -374,6 +386,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     do k = 1,esub%ncover
                         sum_lc(ic,jc) = sum_lc(ic,jc) + vfc(k)
                     end do
+!## NK DEBUG ##
+!                    if (sum_lc(ic,jc).gt.1.) then
+!                       print *, 'sum_lc',ic,jc, sum_lc(ic,jc), vfc(:)
+!                    endif
                 end if
 
                 if (present(io_lclai_checksum)) then

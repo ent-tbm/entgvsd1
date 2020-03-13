@@ -13,24 +13,24 @@
       !vf2, lai2 - vegetated cover fraction and max LAI
       real*4 vf1, lai1, vf2, lai2, laimin
       !---
-      real*4 tot_la, tot_vf, new_lai, new_vf
+      real*4 tot_la, tot_vf, new_lai, new_vf2
 
       tot_la = vf1*lai1 + vf2*lai2
       tot_vf = vf1 + vf2
       new_lai = tot_la/tot_vf
       !Fix for if 100% conversion to vf2.
       if (new_lai.eq.0.0) then
-         new_vf = 0.0
+         new_vf2 = 0.0
       else
          new_lai = max( new_lai, laimin)
-         new_vf = tot_la/new_lai
+         new_vf2 = tot_la/new_lai
       endif
       ! get rid of round-off errors
-      new_vf = min( new_vf, tot_vf )
+      new_vf2 = min( new_vf2, tot_vf )
 
-      vf2 = new_vf
+      vf2 = new_vf2
       lai2 = new_lai
-      vf1 = tot_vf - vf2
+      vf1 = max(0.,tot_vf - vf2)
       lai1 = 0.
 
       end subroutine convert_vf
