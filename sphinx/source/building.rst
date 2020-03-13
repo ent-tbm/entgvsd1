@@ -67,7 +67,7 @@ The "loads" file may have duplicates that slow downloading them.  Commands to el
 
 .. code-block:: bash
 
-   cd ~/spack/var/spack/environments/entgvsd-gibbs
+   cd ~/spack/var/spack/environments/<entgvsd-environment>
    sort loads | uniq >loads2
    cp loads2 loads
 
