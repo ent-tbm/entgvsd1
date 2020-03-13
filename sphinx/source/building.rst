@@ -57,7 +57,7 @@ Select your <environment name> to use, and continue setting up your environment:
    spack -e <entgvsd-environment> install          #Download and build the software packages.
    spack -e <entgvsd-environment> env loads        #Generate a file "loads". This is a list of modules to load.
 
-   #The "loads" file may have duplicates that slow downloading them.  Commands to eliminate duplicates in the loads files are:
+The "loads" file may have duplicates that slow downloading them.  Commands to eliminate duplicates in the loads files are:
 
 .. code-block:: bash
 
@@ -65,14 +65,14 @@ Select your <environment name> to use, and continue setting up your environment:
    sort loads | uniq >loads2
    cp loads2 loads
 
-The above commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  To load the environment modules, the user should make a version of the below environment file, "loads-x".  This environment file performs these functions:
+The above commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  To load the environment modules, the user should make a version of the below environment file, "loads-x".  This environment file performs the functions that might be in the user’s .profile or other environment files, including:
 
-1.  Performs the functions that might be in the user’s .profile or other environment files to do the following:
- purges modules, loads modules
+1.  Purges modules, loads modules
 2.  Sets environment paths such as optionally python path, library path (avoiding the need to edit a .profile or .bashrc file).
 3.  Sets FC environment variable to select which fortran to use.
 
 After putting your loads-x into your spack environment directory, then load the environment:
+
 .. code-block:: bash
 
    source ~/spack/var/spack/environments/<environment name>/loads-x
