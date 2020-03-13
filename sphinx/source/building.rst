@@ -89,7 +89,7 @@ After putting your loads-x into your spack environment directory, then load the 
    1. Spack can be cloned into any location.  From here on, we will
       assume without loss of generality it has been installed in ``~/spack``.
 
-   1. If you have trouble installing prerequisites with Spack, *please*
+   2. If you have trouble installing prerequisites with Spack, *please*
       and ask questions on the `Spack discussion
       group<https://groups.google.com/forum/#!forum/spack>`_.  This will
       get you better help, faster, than contacting the EntGVSD authors
@@ -102,6 +102,7 @@ Download EntGVSD Source
 Download the EntGVSD source from the Simplex git server.  
 
 If you are outside the NASA network, download a snapshot of the code from:
+
 * link TBA on NASA-approved git site.
 
 
@@ -223,6 +224,14 @@ Once EntGVSD has been built, the fortran programs can be run, with simply:
    make
 
 This will run the steps, in order, and is expected to take a few days.
+
+If you alter a program, to recompile, be sure to repeat the make install command:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/build
+   make install
+
 In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
 
 .. code-block:: bash
@@ -235,6 +244,14 @@ In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
 
    This will rerun the desired step, plus all subsequent steps (which
    are assumed to depend on all previous steps).
+
+To run a single program at a time, such as B11_reclass.F90::
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/src
+   ../build/bin/entgvsd B11_reclass.F90
+
 
 Input / Output Records
 ----------------------
