@@ -245,7 +245,7 @@ In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
    This will rerun the desired step, plus all subsequent steps (which
    are assumed to depend on all previous steps).
 
-To run a single program at a time, such as B11_reclass.F90::
+To run a single program at a time, such as B11_reclass.F90:
 
 .. code-block:: bash
 
