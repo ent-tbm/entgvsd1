@@ -75,6 +75,7 @@ The above commands build all the prerequisites needed for working with EntGVSD, 
 
 1.  Purges modules, loads modules.
 2.  Sets environment paths such as optionally python path, library path (avoiding the need to edit a .profile or .bashrc file).
+3.  Reads in the loads2 file.
 3.  Sets FC environment variable to select which fortran to use.
 
 After putting your loads-x into your spack environment directory, then load the environment:
