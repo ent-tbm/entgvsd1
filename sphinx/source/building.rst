@@ -73,7 +73,7 @@ The "loads" file may have duplicates that slow downloading them.  Commands to el
 
 The above commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  To load the environment modules, the user should make a version of the below environment file, "loads-x".  This environment file performs the functions that might be in the user’s .profile or other environment files, including:
 
-1.  Purges modules, loads modules
+1.  Purges modules, loads modules.
 2.  Sets environment paths such as optionally python path, library path (avoiding the need to edit a .profile or .bashrc file).
 3.  Sets FC environment variable to select which fortran to use.
 
@@ -115,7 +115,7 @@ If you are inside the NASA network, (replace
 .. note::
 
    1. EntGVSD can be cloned into any location.  From here on, we will
-      assume without loss of generality it has been installed in ``~/git/entgvsd``.
+      assume without loss of generality it has been installed in ``~/git/entgvsd1``.
 
    2. To gain access to Simplex, contact Igor Aleinov
       *igor.aleinov@nasa.gov*.
@@ -140,7 +140,7 @@ follows:
    cd ~/git/entgvsd1
    mkdir build
    cd build
-   FC=$(which gfortran) cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
+   cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
    make install
 
 .. admonition:: OPTIONAL:
