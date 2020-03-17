@@ -25,11 +25,13 @@ smonths = dict((im+1,m) for im,m in
 File = collections.namedtuple('File', ('ftype', 'name', 'imonth', 'mname'))
 fileRE = re.compile(r'(.*)_((lai)|(laimax)|(hgt)|(lc))_(.*)\.nc')
 monthRE = re.compile(r'(.*)_(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)_(.*)\.nc')
-def snoop_A10_dir(idir):
+def snoop_B18_dir(idir):
     """Snoops output of B18_modele to determine the different relevant files in it"""
     files = []
     for fname in os.listdir(idir):
         if fname.endswith('.nc3'):
+            continue
+        if fname.endswith('.gz'):
             continue
         match = fileRE.match(fname)
         if match is not None:
@@ -169,14 +171,13 @@ def convert_monthly(ivname, mname, files, ifiles, ofiles):
 convert_fn = {
     'lc' : lambda ifname,ofname: convert_annual('lc', ifname, ofname),
     'laimax' : lambda ifname,ofname: convert_annual('laimax', ifname, ofname),
-    'lai' : lambda ifname,ofname: convert_monthly('lai', ifname, ofname),
     'hgt' : lambda ifname,ofname: convert_annual('hgt', ifname, ofname, prefix='hgt_')
 }
 
 OUTPUTS_DIR = '../outputs'
 
 def main():
-    annual_files, month_group = snoop_A10_dir(os.path.join(OUTPUTS_DIR, 'modelE'))
+    annual_files, month_group = snoop_B18_dir(os.path.join(OUTPUTS_DIR, 'modelE'))
 
     ifiles = list()
     ofiles = list()
