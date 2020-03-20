@@ -2,7 +2,6 @@
 #
 # Author: Nancy Kiang
 
-#EntGVSD_efnk.R
 source("utils.R")
 
 #******************************************************************************************
@@ -13,6 +12,7 @@ version = "v1.1"
 
 #Set paths:
 
+#Local directory customization, example.
 #For Nancy on gibbs:
 if (FALSE) {
     outputsdir = "/home2/rpfische/git/entgvsd1/outputs/"
@@ -23,7 +23,7 @@ if (FALSE) {
 }
     
     
-#For running within the src/ directory as part of the generation process:
+#DEFAULT: For running within the src/ directory as part of the generation process:
 if (TRUE) {
     outputsdir = "../outputs/"
     pathplot=paste(outputsdir, "plots/", sep="")
@@ -41,8 +41,8 @@ do.checksum = TRUE
 #******************************************************************************************
 # Step 4:  Do plots.
 #
-#   If inside R gui:  source("EntGVSD_ef.R")
-#   If linux command line:  R CMD BATCH EntGVSD_ef.R 
+#   If inside R gui:  source("B20_plots.R")
+#   If linux command line:  R CMD BATCH B20_plots.R 
 
 # ent17
 if (TRUE) {

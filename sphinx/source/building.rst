@@ -147,7 +147,7 @@ follows:
 
 .. admonition:: OPTIONAL:
 
-   The ``xent`` may be used to conviently launch Fortran scritpts.  It
+   The ``xent`` may be used to conviently launch Fortran scripts.  It
    should be added to your ``.bashrc`` file as follows:
 
    .. code-block:: bash

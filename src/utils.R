@@ -450,10 +450,21 @@ gridxy = function(lat=0,lon=0, res="4x5") {
 
 #-------------------
 grid.lon.lat = function(res) {
+#Return i j of grid cell centers
         if (res=="5Mx5M") {
         #1/12 degree
         i = (-12*180):(12*180 -1) + 0.5
         j = (-12*90):(12*90 -1) + 0.5
+    } else if (res=="1km") {
+        #1/120
+	deg = 1/120
+        i =  -180 + (1:(360/deg) - 0.5)*deg 
+        j = -90 + (1:(180/deg)  - 0.5)*deg
+    } else if (res=="6km") {
+        #1/20 degree ~ 6 km
+	deg = 1/20
+        i =  -180 + (1:(360/deg) - 0.5)*deg 
+        j = -90 + (1:(180/deg)  - 0.5)*deg
     } else if (res=="QxQ" | res=="qxq"| res=="1440x720") {
         #0.25 degree
         i = ((-4*180):(4*180 -1) + 0.5)/(4)
@@ -464,10 +475,10 @@ grid.lon.lat = function(res) {
         i = i*0.5
         j = -180:179 + 0.5
         j = j*0.5
-    } else if   (res=="1x1") {
+    } else if   (res=="1x1" | res=="1X1") {
         i = (-180:179) + 0.5
         j = (-90:89) + 0.5
-    } else if (res=="2x2.5") {
+    } else if (res=="2x2.5" | res=="2HXH" | res=="2HxH") {
         i = (-72:71)*2.5 + 1.25
         i = i*2.5
         j = (-45:44)*2 + 1
@@ -485,7 +496,43 @@ grid.lon.lat = function(res) {
     return(list(i,j))
 }
 
+
+
+IM.JM.from.res = function(res) {
+    lonlatres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), lat=c(21600, 3600, 720, 360, 180,90,46), res=c("1km","6km","QXQ","HXH","1X1","2HX2", "4X5"))
+    IM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lon"])
+    JM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lat"])
+    return(c(IM,JM))
+}
+
 #-------------------
+grid.lon.lat.degrees = function(IM,JM) {
+		     #Return lon and lat degrees for grid centers
+		     
+		     if (IM==144) { #JM=90, 2HX2
+        lon = -180 + (1:IM - 0.5)*(360/IM)
+        lat = -90 + (1:JM - 0.5)*(180/JM) #(-45:44)*2 + 1
+        #lat[1] = -90
+        #lat[length(lat)] = 90
+        #NOTE: ModelE lat has ends at -90 and 90, not -89 and 89.
+    } else if (IM==72) { #JM=46, 4x5
+        deg = 360/IM
+        lon = -180 + (1:IM - 0.5)*deg
+        #ModelE grid
+        deg = 4  #!=180/JM!
+        lat = -90 -deg/2 + (1:JM - 0.5)*deg  #split at equator 
+        #lat[1] = -89 #cannot have point at pole
+        #lat[length(lat)] = 89
+    } else { #All others 1x1 and finer spatial resolution
+      deg = 360/IM
+        lon =  -180 + (1:IM - 0.5)*deg 
+        lat = -90 + (1:JM  - 0.5)*deg
+    }
+    return(list(lon=lon,lat=lat))
+}
+
+#-------------------
+
 plot.grid.categorical = function(mapz, res="1x1", zlim=NULL, colors=terrain.colors(40), xlab="longitude", ylab="latitude", ADD=FALSE) {
     #Plot map of categorical values.  
     #NOTE:  image function stretches z values over entire colors range.  Therefore, pass in colors array that
@@ -498,16 +545,34 @@ plot.grid.categorical = function(mapz, res="1x1", zlim=NULL, colors=terrain.colo
     image(x=i,y=j,mapz, xlab=xlab, ylab=ylab, col=colors, add=ADD)
 }
 
+res.from.IM = function(IM) {
+    lonres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), res=c("1km","6km","QXQ","HXH","1x1","2HXH", "4x5"))
+    res = as.character(lonres[match(IM,lonres[,"lon"]),"res"])
+    return(res)
+}
+
+IM.JM.from.res = function(res) {
+    lonlatres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), lat=c(21600, 3600, 720, 360, 180,90,46), res=c("1km","6km","QXQ","HXH","1x1","2HXH", "4x5"))
+    IM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lon"])
+    JM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lat"])
+    return(c(IM,JM))
+}
+
+
+
+
 #-----------------
 plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), legend.lab=NULL, xlab="longitude", ylab="latitude", titletext="", zlim=NULL, ADD=FALSE, if.fill=TRUE, if.coasts=FALSE, ask=TRUE) {
     #Plot map of continuous values, gridded, and fill in z extremes with colors limits.
     #Grid centers (x,y)
     #mapz is continuous values
+    
+    if (FALSE) {
     if (res=="5Mx5M") {
         #1/12 degree
         i = (-12*180):(12*180 -1) + 0.5
         j = (-12*90):(12*90 -1) + 0.5
-    } else if (res=="QxQ" | res=="qxq" | res=="1440x720") {
+    } else if (res=="QxQ" | res=="QXQ" | res=="qxq" | res=="1440x720") {
         #0.25 degree
         i = ((-4*180):(4*180 -1) + 0.5)/(4)
         j = ((-4*90):(4*90 -1) + 0.5    )/(4)
@@ -533,6 +598,13 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
         dj = 4
         j = ((-90/dj):((90)/dj))*dj
     }
+    }
+    
+    imjm = IM.JM.from.res(res)
+    ij = grid.lon.lat.degrees(imjm[1], imjm[2])
+    i = ij$lon
+    j = ij$lat
+    
     #print(res)
     #print(i)
     #print(j)
@@ -551,6 +623,19 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
     }
     title(titletext)
 }
+
+rev.lat = function(z) {
+	#z is a matrix(-lat, lon)
+	res = dim(z)
+	print(paste(res))
+	znew = NA*z
+	for (j in 1:res[2]) {
+	    #print(paste(res[2], j))
+	    			 znew[,j] = z[,res[2]-j+1]
+				 }
+				 return(znew)
+}
+
 
 
 #-----------------

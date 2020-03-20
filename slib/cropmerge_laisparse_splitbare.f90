@@ -307,14 +307,14 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 !  b) There's no arid shrubs or cold shrubs
                 !  c) No crops
                 !  d) No clear categorization of other vegetation types in the grid cell
-                ! Assign to cold_shrub or arid_shrub based on temperature
+                ! Assign to cold_shrub or arid_shrub based on temperature. Set minimum LAI of veg fraction to 0.5 to keep some bare fraction.
                 if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
                    if (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
                       call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                           vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), 0.)
+                           vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), 0.5)
                    else
                       call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0.)
+                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0.5)
                    endif
 
                    !call Set_Shrubtype( &
@@ -344,10 +344,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! (We need a soil albedo wherever there is veg or bare soil type)
                 ! (If there is not, we need to interpolate a little bit)
                 ! Carrer uses same dataset, so things should line up...
-                if (split_bare_soil) then
+                if ((split_bare_soil).and.(vfc(esub%svm(BARE_SPARSE))>0.)) then
                     vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
                     vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
-                    vfc(esub%bare_dark) = vf_bare_sparse - vfc(esub%bare_bright)
+                    vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
                     laic(esub%bare_bright) = 0.
                     laic(esub%bare_dark) = 0.
                 end if
