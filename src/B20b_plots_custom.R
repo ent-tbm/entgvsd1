@@ -1,6 +1,7 @@
 # Plots single file results of EntGVSD, by specifying file type and name at the command line.
 # Creates a directory 'myplots' for the output plot, unless otherwise edited below by the user.
-# 
+# This code may not be able to plot 1 km multi-layer resolution files due to R or system memory limits.
+
 # Author: Nancy Kiang
 # 
 # To run:
