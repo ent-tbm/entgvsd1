@@ -1,4 +1,5 @@
 # Plots single file results of EntGVSD, by specifying file type and name at the command line.
+# Creates a directory 'myplots' for the output plot, unless otherwise edited below by the user.
 # 
 # Author: Nancy Kiang
 # 
@@ -15,15 +16,6 @@ source("utils.R")
 
 #Set paths:
 
-#Local directory customization, example.
-if (FALSE) {
-    outputsdir = "../outputs/"
-    pathplot = "../outputs/plots/" 
-    # Create output directory if it doesn't already exist
-    dir.create("../outputs/")
-    dir.create(pathplot)
-}
-    
 #DEFAULT: For running within the src/ directory as part of the generation process:
 if (TRUE) {
     pathplot="../myplots"
