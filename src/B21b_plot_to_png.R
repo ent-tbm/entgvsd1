@@ -1,4 +1,6 @@
 #B21b_plots_to_png.R
+#Convert pdf to png.
+
 source("utils.R")
 library("imagemagick")
 
