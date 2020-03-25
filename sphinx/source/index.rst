@@ -12,9 +12,15 @@ Overview
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    spackenv
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Appendix
+
    building
 
 Indices and tables
