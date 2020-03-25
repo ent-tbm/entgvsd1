@@ -1,7 +1,7 @@
-.. _spackenv:
-
 Installing the EntGVSD1 Spack Environment
 =========================================
+
+.. _spackenv:
 
 These instructions outline how to install the prerequisites for EntGVSD1 on
 *discover* (or any computer), starting from scratch.  For the most

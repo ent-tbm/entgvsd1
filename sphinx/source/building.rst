@@ -1,7 +1,7 @@
-.. _building
-
 Build EntGVSD
 =============
+
+.. _building:
 
 Install Prerequisites
 ---------------------
@@ -32,7 +32,7 @@ Spack
 
 One way to install these computing prerequisites, along with useful
 utilities, is through `Spack <https://spack.io>`_ (Linux or MacOS).
-See spackenv_ for further details.
+See :ref:`Installing the EntGVSD1 Spack Environment <spackenv>` for further details.
 
 Download EntGVSD Source
 -----------------------

@@ -14,8 +14,8 @@ Overview
    :maxdepth: 2
    :caption: Contents:
 
-   building
    spackenv
+   building
 
 Indices and tables
 ==================
