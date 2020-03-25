@@ -32,7 +32,7 @@ Spack
 
 One way to install these computing prerequisites, along with useful
 utilities, is through `Spack <https://spack.io>`_ (Linux or MacOS).
-See :ref:`spackenv` for further details.
+See spackenv_ for further details.
 
 Download EntGVSD Source
 -----------------------
