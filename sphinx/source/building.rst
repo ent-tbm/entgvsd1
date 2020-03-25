@@ -30,97 +30,28 @@ compilers.
 Spack
 `````
 
-An option to install these computing prerequisites is through `Spack
-<https://spack.io>`_ (Linux or MacOS). A pre-configured Spack Environment for the EntGVSD v1 can be set up through these installation instructions:
-
-
-.. code-block:: bash
-
-   cd ~ #cd to your home directory.
-   bash #Use the bash shell.
-   git clone https://github.com/nkianggiss/spack.git -b nasasgiss/entgvsd1 #Clone the Spack branch developed for the Ent GVSD v1.
-   source ~/spack/share/spack/setup-env.sh         #Set up the environment variables in the user's shell.
-
-The needed software packages are listed in files named "spack.yaml" here:
-
-.. code-block:: bash
-
-~/spack/var/spack/environments/<entgvsd-environment>/spack.yaml
-
-where <entgvsd-environment> is a subdirectory for a particular known computing environment, for which some examples for some machines used for development of this code are shown, e.g. entgvsd-discover.  The spack.yaml files for each <entgvsd-environment> differ only in an optional include section for customizable yaml files that specify  preferred versions of the software packages. Customized yaml files are put in the following directory, which contains example configurations:
-
-.. code-block:: bash
-
-~/spack/var/spack/environments/config/
-
-Otherwise, the default is to download the most recent versions.
-
-Select your <environment name> to use, and continue setting up your environment:
-
-.. code-block:: bash
-
-   spack -e <entgvsd-environment> concretize -f    #Discern what software packages are needed and their dependencies.
-   spack -e <entgvsd-environment> install          #Download and build the software packages.
-   spack -e <entgvsd-environment> env loads        #Generate a file "loads". This is a list of modules to load.
-
-The "loads" file may have duplicates that slow downloading them.  Commands to eliminate duplicates in the loads files are:
-
-.. code-block:: bash
-
-   cd ~/spack/var/spack/environments/<entgvsd-environment>
-   sort loads | uniq >loads2
-   cp loads2 loads
-
-The above commands build all the prerequisites needed for working with EntGVSD, and install them as environment modules.  To load the environment modules, the user should make a version of the below environment file, "loads-x".  This environment file performs the functions that might be in the user’s .profile or other environment files, including:
-
-1.  Purges modules, loads modules.
-2.  Sets environment paths such as optionally python path, library path (avoiding the need to edit a .profile or .bashrc file).
-3.  Reads in the loads2 file.
-4.  Sets FC environment variable to select which fortran to use.
-
-After putting your loads-x into your spack environment directory, then load the environment:
-
-.. code-block:: bash
-
-   source ~/spack/var/spack/environments/<entgvsd-environment>/loads-x
-
-.. note::
-
-   1. Spack can be cloned into any location.  From here on, we will
-      assume without loss of generality it has been installed in ``~/spack``.
-
-   2. If you have trouble installing prerequisites with Spack, *please*
-      and ask questions on the `Spack discussion
-      group<https://groups.google.com/forum/#!forum/spack>`_.  This will
-      get you better help, faster, than contacting the EntGVSD authors
-      directly.
-
+One way to install these computing prerequisites, along with useful
+utilities, is through `Spack <https://spack.io>`_ (Linux or MacOS).
+See :ref:`spackenv` for further details.
 
 Download EntGVSD Source
 -----------------------
 
-Download the EntGVSD source from the Simplex git server.  
-
-If you are outside the NASA network, download a snapshot of the code from:
-
-* link TBA on NASA-approved git site.
-
-
-If you are inside the NASA network, (replace
-``<ndcusername>`` with your NDC username):
+Download the EntGVSD source from GitHub:
 
 .. code-block:: bash
 
    cd ~/git
-   git clone <ndcusername>@simplex.giss.nasa.gov:/giss/gitrepo/entgvsd1.git -b develop
+   git clone git@github.com:ent-tbm/entgvsd1.git -b develop
 
 .. note::
 
-   1. EntGVSD can be cloned into any location.  From here on, we will
-      assume without loss of generality it has been installed in ``~/git/entgvsd1``.
+   To use GitHub, you need to generate a public/private SSH keypair on
+   each machine on which you will use git.  If you have not done so
+   already, follow these `instructions
+   <https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account>`_
+   to generate a keypair and install it to your *GitHub* account.
 
-   2. To gain access to Simplex, contact Igor Aleinov
-      *igor.aleinov@nasa.gov*.
 
 
 Build EntGVSD Library
@@ -173,50 +104,73 @@ Fetch Input Data and Create the Makefile
 
 The main EntGVSD process is structured as a series of Fortran scripts,
 to be run in order, starting with the capital letter `B`.  For example:
-| B01_bnu_laimax.F90
-| B02_lc_modis_entpftrevcrop.F90
-|  ...
+
+.. code-block:: bash
+
+   B01_bnu_laimax.F90
+   B02_lc_modis_entpftrevcrop.F90
+   B03_regrid_snowice.F90
+   B04_veg_height.F90
+   B05_carrer_mean.F90
+   B06_albmodis_gridfill.F90
+   B07_soil_albedo.F90
+   B08_lc_laimax.F90
+   B09_lc_lai_doy.F90
+   B10_lc_lai_monthly.F90
+   B11_reclass_annual.F90
+   B12_reclass_doy.F90
+   B13_reclass_monthly.F90
+   B14_regrid.F90
+   B15_regrid_controls.F90
+   B16_trim.F90
+   B17_checksum.F90
+   B18_modele.F90
 
 
-The EntGVSD creates a Makefile to run these in sequence.  To download all necessary input data and
-create the Makefile, run the ``mkgen`` script.
+The EntGVSD creates a Makefile to run these in sequence.  To download
+all necessary input data and create the Makefile, run the *mkgen*
+script.
 
 .. code-block:: bash
 
    cd ~/git/entgvsd1/src
    ./mkgen
 
-Downloading input files can take a while; and can also get stuck, depending on the condition of 
-the network and NCCS.
 
 .. note::
 
-   1. The input data files and their subdirectory structures used to produce the Ent GVSD, are mirrored at 
-      the 'NCCS Data Portal. 
-      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs/>'_
+   1. Downloading input files can take a while; and can also get
+      stuck, depending on the condition of the network and NCCS.
 
-   2.  The input files are not automatically downloaded with a git clone of the code, due to their size.  
-       These are pre-processed data files that are read by the B*.F90 fortran programs that generate the 
-       Ent GVSD. The ``mkgen`` script downloads the input files to their correct directories in your 
-       EntGVSD clone and also avoids repeating if previously downloaded. 
+   1. The input data files and their subdirectory structures used to
+      produce the Ent GVSD, are mirrored at the `NCCS Data Portal
+      <https://portal.nccs.nasa.gov/datashare/GISS/Ent_TBM/EntGVSD/inputs/>'_.
 
-   3. Input files are stored in compressed form on the dataportal
-      (gzip format), and are uncompressed immediately after
-      downloading.  Uncompressed files can be markedly larger than
-      their compressed form, sometimes up to 50-100X.
+   1.  The input files are not automatically downloaded with a git
+       clone of the code, due to their size.  These are pre-processed
+       data files that are read by the ``B*.F90`` fortran programs that
+       generate the Ent GVSD. The *mkgen* script downloads the input
+       files to their correct directories in your EntGVSD clone and
+       also avoids repeating if previously downloaded.
 
-   4. ``mkgen`` may take a long time, due to downloading the files.
-      If it is stopped in the middle, simple restart it agian.
+   1. Input files are stored in compressed (gzip) form on the
+      dataportal, and are uncompressed immediately after downloading.
+      Uncompressed files can be markedly larger than their compressed
+      form, sometimes up to 50-100X.
 
-   5. In addition to downloading datafiles, the ``mkgen`` script
+   1. *mkgen* may take a long time, due to downloading the files.
+      If it is stopped in the middle, simply restart it agian.
+
+   1. In addition to downloading datafiles, the *mkgen* script
       generates dependency files in the ``mkfiles/`` directory, which
       indicate the input and ouput files of each EntGVSD script.
-      These are not used for the ``Makefile``.
+      These are not used for the ``Makefile``; however they offer a
+      definitive reference of what files each step uses and produces.
 
 Run EntGVSD
 ============
 
-Once EntGVSD has been built, the fortran programs can be run, with simply:
+Once EntGVSD has been built, the Fortran programs can be run with:
 
 .. code-block:: bash
 
@@ -224,8 +178,7 @@ Once EntGVSD has been built, the fortran programs can be run, with simply:
    make
 
 This will run the steps, in order, and is expected to take a few days.
-
-If you alter a program, to recompile, be sure to repeat the make install command:
+If you alter a Fortran script in the `src/` directory, recompilation is not necessary.  However, if you alter any code in the `slib/` directory, be sure to recompile by repeating the *make install* command:
 
 .. code-block:: bash
 
@@ -242,8 +195,8 @@ In order to force rerun of a step ; say, step ``B01_bnu_laimax``, do:
 
 .. note::
 
-   This will rerun the desired step, plus all subsequent steps (which
-   are assumed to depend on all previous steps).
+   This will rerun the desired step, plus all subsequent steps, which
+   are assumed to depend on all previous steps.
 
 To run a single program at a time, such as B11_reclass.F90:
 
@@ -357,11 +310,12 @@ take place to make sure they take effect:
 Pre-Processsed Raw Data Files
 ============================
 
-Code to pre-process original source data files (many of which serve as input to EntGVSD)
-are in the ``data/`` directory, created and downloaded by the ``mkgen`` script.  These codes 
-have been run previously and their output pre-processed files are provided; but unlike the 
-scripts in ``src/``, the codes do not come with a
-curated build system.  They are provided as-is, for reference.
+Code to pre-process original source data files (many of which serve as
+input to EntGVSD) are in the ``data/`` directory, created and
+downloaded by the *mkgen* script.  These codes have been run
+previously and their output pre-processed files are provided; but
+unlike the scripts in ``src/``, the codes do not come with a curated
+build system.  They are provided as-is, for reference.
 
 Accompanying the code are a number of data files from the original data sources.  
 They may be downloaded by running the ``entdata'' script in each subdirectory of ``data/``.  For example:
@@ -372,5 +326,9 @@ They may be downloaded by running the ``entdata'' script in each subdirectory of
    ./entdata
 
 The contents of the data directory are described here.
-##Add link to new page named data.rst to describe the data directory ##
+
+.. note::
+
+   **TODO**: Add link to new page named data.rst to describe the data
+    directory
 
