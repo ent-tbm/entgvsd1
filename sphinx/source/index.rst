@@ -14,14 +14,14 @@ Overview
    :maxdepth: 2
    :caption: Contents
 
-   spackenv
+   building
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Appendix
 
-   building
+   spackenv
 
 Indices and tables
 ==================
