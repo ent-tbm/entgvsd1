@@ -1,4 +1,4 @@
-.. _spackenv
+.. _spackenv:
 
 Installing the EntGVSD1 Spack Environment
 =========================================
