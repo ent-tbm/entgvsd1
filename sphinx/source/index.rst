@@ -15,7 +15,7 @@ Overview
    :caption: Contents:
 
    building
-
+   spackenv
 
 Indices and tables
 ==================
