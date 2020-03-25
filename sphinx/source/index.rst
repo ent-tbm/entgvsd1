@@ -6,8 +6,7 @@
 Overview
 ========
 
-*EntGVSD* is a program designed to be run "once", to generate
- vegetation input files for ModelE.
+*EntGVSD* is a program designed to be run "once", to generate vegetation input files for ModelE.
 
 
 .. toctree::
