@@ -6,7 +6,7 @@
 Overview
 ========
 
-*EntGVSD* is the code to generate the Ent Global Vegetation Structure Data set v1.1.  The program is designed so that it can be run "once", to generate vegetation input files for ModelE.
+*EntGVSD* is the code to generate the Ent Global Vegetation Structure Data set v1.1.  The code is designed so that it can be run "once", to generate vegetation input files for ModelE.  Further documemtation is provided on how to run the various programs for each step of the data processing separately.  
 
 
 .. toctree::
