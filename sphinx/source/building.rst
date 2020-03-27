@@ -178,7 +178,7 @@ Once EntGVSD has been built, the Fortran programs can be run with:
    make
 
 This will run the steps, in order, and is expected to take a few days.
-If you alter a Fortran script in the `src/` directory, recompilation is not necessary.  However, if you alter any code in the `slib/` directory, be sure to recompile by repeating the *make install* command:
+If you alter a Fortran script in the `src/` directory, recompilation is not necessary.  However, if you alter any code in the `slib/` directory, you must recompile by repeating the *make install* command:
 
 .. code-block:: bash
 
@@ -204,6 +204,13 @@ To run a single program at a time, such as B11_reclass.F90:
 
    cd ~/git/entgvsd1/src
    ../build/bin/entgvsd B11_reclass.F90
+
+To run more quickly in debug mode, processing only a portion of the globe for a single program, such as B04_veg_height.F90:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/src
+   ../build/bin/entgvsd -d B04_veg_height.F90
 
 
 Input / Output Records
