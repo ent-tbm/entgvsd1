@@ -5,7 +5,7 @@ Ent Global Vegetation Structure Dataset v1
 User Manual
 ===========
 
-See the [full user manual](https://entgvsd.readthedocs.io) for more details on using this project.
+See the `full user manual <https://entgvsd.readthedocs.io>`_ for more details on using this project.
 
 Introduction
 ============
