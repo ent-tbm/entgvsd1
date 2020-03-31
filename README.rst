@@ -11,15 +11,15 @@ Introduction
 ============
 The *Ent Global Vegetation Structure Dataset (Ent GVSD) v1* provides satellite- and climate data-derived global vegetation structure for boundary conditions and evaluation data sets for dynamic global vegetation models (DGVMs), tailored to the Ent Terrestrial Biosphere Model (Ent TBM) (Kiang et al 2006, Kim et al 2015, Ni-Meister et al 2010, Yang et al 2010), and formulated to be of general use for for demographic dynamic global vegetation models (dDGVMs).  The data fields provided are gridded maps of:
 
-1. Subgrid fractions of land cover.  Land cover types can be bare soil and patches of vegetation communities composed of identical individual plants, which can be one of the Ent TBM's 12-13 plant functional types (PFTs).
+#. Subgrid fractions of land cover.  Land cover types can be bare soil and patches of vegetation communities composed of identical individual plants, which can be one of the Ent TBM's 12-13 plant functional types (PFTs).
 
-1. Height of each patch community.
+#. Height of each patch community.
 
-1. Maximum annual leaf area index (LAI) of each community.
+#. Maximum annual leaf area index (LAI) of each community.
 
-1. Temporal values of LAI of each community.
+#. Temporal values of LAI of each community.
 
-1. Spectral soil albedo for advanced land albedo calculations.  
+#. Spectral soil albedo for advanced land albedo calculations.  
 
 The vegetation communities are comprised of the Ent TBM's 12-13 plant functional types (PFTs) described at :ref:`EntPFTs`  
 
