@@ -465,7 +465,7 @@ grid.lon.lat = function(res) {
 	deg = 1/20
         i =  -180 + (1:(360/deg) - 0.5)*deg 
         j = -90 + (1:(180/deg)  - 0.5)*deg
-    } else if (res=="QxQ" | res=="qxq"| res=="1440x720") {
+    } else if (res=="QxQ" | res=="QXQ" | res=="qxq"| res=="1440x720") {
         #0.25 degree
         i = ((-4*180):(4*180 -1) + 0.5)/(4)
         j = ((-4*90):(4*90 -1) + 0.5    )/(4)
@@ -492,6 +492,8 @@ grid.lon.lat = function(res) {
         j = ((-90/dj):((90)/dj))*dj
         j[1] = -89 #cannot have point at pole
         j[length(j)] = 89
+    } else {
+        print(paste("No such resolution", res))
     }
     return(list(i,j))
 }
@@ -502,6 +504,9 @@ IM.JM.from.res = function(res) {
     lonlatres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), lat=c(21600, 3600, 720, 360, 180,90,46), res=c("1km","6km","QXQ","HXH","1X1","2HX2", "4X5"))
     IM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lon"])
     JM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lat"])
+    if (is.na(IM) | is.na(JM)) {
+	print(paste('typo in resolution', res))
+    }
     return(c(IM,JM))
 }
 
@@ -509,7 +514,7 @@ IM.JM.from.res = function(res) {
 grid.lon.lat.degrees = function(IM,JM) {
 		     #Return lon and lat degrees for grid centers
 		     
-		     if (IM==144) { #JM=90, 2HX2
+     if (IM==144) { #JM=90, 2HX2
         lon = -180 + (1:IM - 0.5)*(360/IM)
         lat = -90 + (1:JM - 0.5)*(180/JM) #(-45:44)*2 + 1
         #lat[1] = -90
@@ -601,7 +606,8 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
     }
     
     imjm = IM.JM.from.res(res)
-    ij = grid.lon.lat.degrees(imjm[1], imjm[2])
+    print(imjm)
+    ij = grid.lon.lat.degrees(IM=imjm[1], JM=imjm[2])
     i = ij$lon
     j = ij$lat
     
@@ -1360,7 +1366,7 @@ map.EntGVSD <- function(filelc=NULL, file, res="2x2.5", varpre="", varlist=EntGV
 }
 
 #------------
-map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2x2.5", varpre="", varname="lc", lcnum=c(2,4,6,7:15), colors=giss.palette.nowhite(40), type="any", zlim=c(0,1), if.zeroNA=TRUE, titletype=1) {
+map.EntGVSD.v1.1 <- function(filelc=NULL, file, res="2HX2", varpre="", varname="lc", lcnum=c(2,4,6,7:15), colors=giss.palette.nowhite(40), type="any", zlim=c(0,1), if.zeroNA=TRUE, titletype=1) {
     #This version reads files formatted as 3D arrays of var[IM,JM,layers]
     #file = netcdf file path and name
     #type = 

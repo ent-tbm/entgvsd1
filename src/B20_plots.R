@@ -47,7 +47,7 @@ do.checksum = TRUE
 # ent17
 if (TRUE) {
     trimopt = "ent17"
-    res="qxq"
+    res="QXQ"
     IM=1440
     JM=720
     #filepre = "V1km_EntGVSD17G_BNUM"
@@ -140,7 +140,7 @@ if (TRUE) {
 # pure
 if (TRUE) {
     trimopt = "pure"
-    res="qxq"
+    res="QXQ"
     filepre = "V1km_EntGVSD"
     icov = "16G"
     idat = "BMSa"
