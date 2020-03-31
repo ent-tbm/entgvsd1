@@ -557,7 +557,7 @@ res.from.IM = function(IM) {
 }
 
 IM.JM.from.res = function(res) {
-    lonlatres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), lat=c(21600, 3600, 720, 360, 180,90,46), res=c("1km","6km","QXQ","HXH","1x1","2HXH", "4x5"))
+    lonlatres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), lat=c(21600, 3600, 720, 360, 180,90,46), res=c("1km","6km","QXQ","HXH","1x1","2HX2", "4x5"))
     IM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lon"])
     JM = as.numeric(lonlatres[match(res,lonlatres[,"res"]),"lat"])
     return(c(IM,JM))
@@ -606,7 +606,7 @@ plot.grid.continuous = function(mapz, res="1x1", colors=terrain.colors(40), lege
     }
     
     imjm = IM.JM.from.res(res)
-    print(imjm)
+    print(paste(res, imjm))
     ij = grid.lon.lat.degrees(IM=imjm[1], JM=imjm[2])
     i = ij$lon
     j = ij$lat
