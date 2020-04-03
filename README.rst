@@ -37,14 +37,14 @@ The codes released here and the documented source data enable the users to regen
 Requirements
 ============
 
-Main programs are written in Fortran95, and **ELIZABETH WILL WRITE THIS SECTION**.  Script in R are provided for automated plotting of maps of all steps in generation of the Ent GVSD v1.1
+Main programs are written in Fortran95.  Scripts in python3 and R are provided for automated plotting of maps of all steps in generation of the Ent GVSD v1.1.  See the `full user manual <https://entgvsd.readthedocs.io>`_ for more details.
 
 HOW-TO get the code
 =====================
-get_code
+See instructions at the `full user manual <https://entgvsd.readthedocs.io>`_ for more details
 
 
-Ent GVSD v1.1 Files: ``/``
+Ent GVSD v1.1 Directory Structure: ``/``
 =========================
 
 ``CMakeLists.txt``, ``cmake/``
