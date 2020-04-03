@@ -107,9 +107,9 @@ to be run in order, starting with the capital letter `B`.  For example:
 
 .. code-block:: bash
 
-   B01_bnu_laimax.F90
-   B02_lc_modis_entpftrevcrop.F90
-   B03_regrid_snowice.F90
+   B01_bnu_laimax.F90                     Computes annual maximum LAI from BNU monthly LAI.
+   B02_lc_modis_entpftrevcrop.F90         Convert MODIS partitioned 29 land cover types into Ent 20 land cover types.
+   B03_regrid_snowice.F90                 
    B04_veg_height.F90
    B05_carrer_mean.F90
    B06_albmodis_gridfill.F90
