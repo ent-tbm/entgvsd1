@@ -109,25 +109,25 @@ to be run in order, starting with the capital letter `B`.  For example:
 
    B01_bnu_laimax.F90                     Computes annual maximum LAI from BNU monthly LAI.
    B02_lc_modis_entpftrevcrop.F90         Convert MODIS partitioned 29 land cover types into Ent 20 land cover types.
-   B03_regrid_snowice.F90                 
-   B04_veg_height.F90
-   B05_carrer_mean.F90
-   B06_albmodis_gridfill.F90
-   B07_soil_albedo.F90
-   B08_lc_laimax.F90
-   B09_lc_lai_doy.F90
-   B10_lc_lai_monthly.F90
-   B11_reclass_annual.F90
-   B12_reclass_doy.F90
-   B13_reclass_monthly.F90
-   B14_regrid.F90
-   B15_regrid_controls.F90
-   B16_trim.F90
-   B17_checksum.F90
-   B18_modele.F90
+   B03_regrid_snowice.F90                 Regrids snow and ice land cover from 1 km to 6 km grid for Carrer albedo processing.
+   B04_veg_height.F90                     Assigns tree heights from Simard et al. (2011) to Ent tree PFTs.
+   B05_carrer_mean.F90                    Computes min,max,mean,stddev of Carrer soil albedo.
+   B06_albmodis_gridfill.F90              Interpolates to fill in small regions of missing data in the soil albedo files.
+   B07_soil_albedo.F90                    Generates grey and 6 spectral band soil albedo boundary condition files.
+   B08_lc_laimax.F90                      Assigns 1kmx1km BNU LAImax to Ent PFTs.
+   B09_lc_lai_doy.F90                     Asssign 1kmx1km BNU LAI of selected DOY to Ent PFTs.
+   B10_lc_lai_monthly.F90                 Assign 1kmx1km monthly LAI to Ent PFTs.
+   B11_reclass_annual.F90                 Reclass annual LAIMAX from 20 land cover class scheme to 18 class scheme.
+   B12_reclass_doy.F90                    Reclass LAI for two days of year (DOY) from 20-cover classes to 18-cover classes.
+   B13_reclass_monthly.F90                Reclass monthly LAI from 20-cover classes to 18-cover classes.
+   B14_regrid.F90                         Regrid the 'pure' files from 1km to 1/2 degree resolution.
+   B15_regrid_controls.F90                Regrids original data files from 1km to 1/2 degree for data comparison checks.
+   B16_trim.F90                           Sequence of steps (trimmed, scaled, no crops) toward producing GISS GCM input files.
+   B17_checksum.F90                       Calculates cover-weighted 'checksum' of processed files and difference from data.
+   B18_modele.F90                         Generates GISS GCM ModelE input formatted files from trimming steps outputs.
 
 
-The EntGVSD creates a Makefile to run these in sequence.  To download
+The EntGVSD code creates a Makefile to run these in sequence.  To download
 all necessary input data and create the Makefile, run the *mkgen*
 script.
 
@@ -228,6 +228,16 @@ program.  These ``.mk`` files are written twice:
 Looking in these ``.mk`` files is useful to give a definitive answer
 on what files each program opens.
 
+Plotting
+====================
+In addition to the fortran programs, there are utility python and R scripts for generating map plots.  These are run by the Makefile after the fortran programs and can also be invoked at the command line.
+
+.. code-block:: bash
+
+   B19_to_modele_format.py                Reformats GISS GCM ModelE file from netcdf4 to netcdf3.
+   B20_plots.R                            Generates maps of all output files to outputs/plots directory.
+   B20b_plots_custom.R                    Script for generating map(s) of singe file specified at the command line.
+   B21_plots_to_png.py                    Converts *.pdf format plots to *.png.
 
 Modifying Parameters
 ====================
