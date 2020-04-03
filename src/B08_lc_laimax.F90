@@ -1,4 +1,4 @@
-! Assign 1kmx1km BNU LAImax to EntPFTs lc
+! Assigns 1kmx1km BNU LAImax to EntPFTs lc
 ! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
 !
 ! See slib/assign_laimas.F90

@@ -1,4 +1,4 @@
-! Generated ModelE input data from trimmed/etc outputs.
+! Generates GISS GCM ModelE input formatted files from trimming steps outputs.
 !
 ! Convert files from previous processing steps to file format directly useable by ModelE for two reasons:
 !   1. Convert arrays with an lctype dimension to separate array variables with

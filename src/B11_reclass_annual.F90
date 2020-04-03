@@ -1,4 +1,4 @@
-! Reclass of annual LAIMAX
+! Reclass annual LAIMAX from 20 land cover class scheme to 18 class scheme.
 !
 ! Takes 20-cover classes (Ent 17 PFTs + 3 non-veg) and converts to
 ! 18-cover classes (Ent 16 PFTs and bright and dark bare soil fractions).

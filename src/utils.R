@@ -1553,6 +1553,46 @@ create.map.template.nc = function(res, varname, longname, units, undef=-1e30, de
     close.nc(ncid)
 } 
 
+#------------
+create.entgvsd.template.4D.nc = function(res, varname, longname, units, NAMECOV,NCOV, undef=-1e30, description, fileout, contact="Nancy.Y.Kiang@nasa.gov") {
+    lon.lat = grid.lon.lat(res)
+    IM = length(lon.lat[[1]])
+    JM = length(lon.lat[[2]])
+    MONTHS = 12
+
+    ncid <- create.nc(filename=fileout)
+    dim.def.nc(ncid, "lon", IM)
+    dim.def.nc(ncid, "lat", JM)
+    dim.def.nc(ncid, NAMECOV, NCOV)
+    dim.def.nc(ncid, "month", MONTHS)
+
+    var.def.nc(ncid, 'lon', 'NC_FLOAT', 'lon')
+    var.def.nc(ncid, 'lat', 'NC_FLOAT', 'lat')
+    var.def.nc(ncid, NAMECOV, 'NC_CHAR', NAMECOV)
+    var.def.nc(ncid, 'month', 'NC_INTEGER', 'month')
+    var.def.nc(ncid, varname, 'NC_FLOAT', dimensions=c('lon','lat', NAMECOV, 'month'))
+
+    att.put.nc(ncid, 'lon', 'long_name', 'NC_CHAR', 'longitude degrees east')
+    att.put.nc(ncid, 'lat', 'long_name', 'NC_CHAR', 'latitude degrees north')
+    att.put.nc(ncid, NAMECOV, 'long_name', 'NC_CHAR', 'land cover type')
+    att.put.nc(ncid, varname, 'long_name', 'NC_CHAR', longname)
+
+    att.put.nc(ncid, varname, 'units', 'NC_FLOAT', units)
+    att.put.nc(ncid, varname, '_FillValue', 'NC_FLOAT', undef)
+
+    att.put.nc(ncid, 'NC_GLOBAL', 'Description', 'NC_CHAR', description)
+    att.put.nc(ncid, 'NC_GLOBAL', 'Contact','NC_CHAR', contact)
+    att.put.nc(ncid, 'NC_GLOBAL', 'Date created','NC_CHAR', paste(date()))
+
+    close.nc(ncid)
+    open.nc(fileout, write=TRUE)
+    var.put.nc(ncid, 'lon', lon.lat[[1]])
+    var.put.nc(ncid, 'lat', lon.lat[[2]])
+    var.put.nc(ncid, 'month', 1:MONTHS)
+    #var.put.nc(ncid, varname, matrix(undef, IM,JM), start=c(1,1), count=c(IM,JM))
+    close.nc(ncid)
+}
+
 
 #------------
 plot.obs.diff2 <- function(x0, x1, x2

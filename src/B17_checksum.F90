@@ -1,3 +1,5 @@
+! Calculates cover-weighted 'checksum' of processed files and difference from
+! data.
 ! Calculates _diff.nc files, giving difference between computed files
 ! vs. inputs.  Output files with _checksum and _diff in their name
 ! should in many cases be 0.  Read this source file to determine which

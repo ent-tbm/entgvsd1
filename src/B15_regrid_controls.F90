@@ -1,5 +1,5 @@
 ! Regrids original data files from 1km to 1/2 degree resolution
-!    so they can be compared to 1/2 degree computed files.
+!    for data check comparison to 1/2 degree computed files.
 !
 ! Includes LAIMAX, Height and monthly LAI files
 !

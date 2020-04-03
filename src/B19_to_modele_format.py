@@ -10,6 +10,7 @@ import re
 import os
 import itertools
 import collections
+import sys
 
 def decode_strs(ncin, vname):
     """Reads a bunch of strings and returns as a list"""
@@ -32,6 +33,10 @@ def snoop_B18_dir(idir):
         if fname.endswith('.nc3'):
             continue
         if fname.endswith('.gz'):
+            continue
+        if 'checksum' in fname:
+            continue
+        if 'forplot' in fname:
             continue
         match = fileRE.match(fname)
         if match is not None:
@@ -177,7 +182,7 @@ convert_fn = {
 OUTPUTS_DIR = '../outputs'
 
 def main():
-    annual_files, month_group = snoop_B18_dir(os.path.join(OUTPUTS_DIR, 'modelE'))
+    annual_files, month_group = snoop_B18_dir(os.path.join(OUTPUTS_DIR, sys.argv[1])) #'modelE'))  #sys.argv[1]
 
     ifiles = list()
     ofiles = list()

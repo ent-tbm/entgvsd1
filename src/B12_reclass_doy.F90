@@ -1,4 +1,4 @@
-! Reclass of LAI for two days of the year
+! Reclass LAI for selected days of year (DOY) from 20-cover classes to 18-cover classes.
 !
 ! Takes 20-cover classes (Ent 17 PFTs + 3 non-veg) and converts to
 ! 18-cover classes (Ent 16 PFTs and bright and dark bare soil fractions).

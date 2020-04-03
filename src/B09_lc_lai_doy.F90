@@ -1,4 +1,4 @@
-! Asssign 1kmx1km BNU LAI of selected DOY to EntPFTs
+! Asssign 1kmx1km BNU LAI of selected day of year (DOY) to EntPFTs
 ! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
 !
 ! See slib/assign_laimas.F90

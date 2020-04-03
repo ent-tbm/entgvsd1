@@ -1,11 +1,11 @@
-! Author 10/14/2018 N.Y.Kiang, Elizabeth Fischer
-!      
-
+!     Generates grey and 6 spectral band soil albedo boundary condition files.
 !     Takes Carrer soil albedo annual (min,mean,max, and std) already
 !     interpolated to desired spatial resolution and generates GISS
 !     GCM boundary conditions input versions.  Creates downscaled 1 km
 !     bare soil bright fraction ('bs_brightratio.nc') for ModelE grey
 !     bare soil albedo scheme.
+!
+! Author 10/14/2018 N.Y.Kiang, Elizabeth Fischer
 !
 !     Versions:
 !
