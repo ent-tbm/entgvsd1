@@ -124,7 +124,7 @@ to be run in order, starting with the capital letter `B`.  For example:
    B15_regrid_controls.F90                Regrids original data files from 1km to 1/2 degree for data comparison checks.
    B16_trim.F90                           Sequence of steps (trimmed, scaled, no crops) toward producing GISS GCM input files.
    B17_checksum.F90                       Calculates cover-weighted 'checksum' of processed files and difference from data.
-   B18_modele.F90                         Generates GISS GCM ModelE input formatted files from trimming steps outputs.
+   B18_modele.F90                         
 
 
 The EntGVSD code creates a Makefile to run these in sequence.  To download
@@ -234,9 +234,10 @@ In addition to the fortran programs, there are utility python and R scripts for 
 
 .. code-block:: bash
 
-   B19_to_modele_format.py                Reformats GISS GCM ModelE file from netcdf4 to netcdf3.
+   B19_to_modele_format.py                Reformats for GISS ModelE: 1) from netcdf4 to netcdf3, 2) land cover types as 
+                                             separate named arrays.
    B20_plots.R                            Generates maps of all output files to outputs/plots directory.
-   B20b_plots_custom.R                    Script for generating map(s) of singe file specified at the command line.
+   B20b_plots_custom.R                    Script for generating map(s) of single file specified at the command line.
    B21_plots_to_png.py                    Converts *.pdf format plots to *.png.
 
 Modifying Parameters
