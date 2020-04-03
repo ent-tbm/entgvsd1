@@ -124,7 +124,7 @@ to be run in order, starting with the capital letter `B`.  For example:
    B15_regrid_controls.F90                Regrids original data files from 1km to 1/2 degree for data comparison checks.
    B16_trim.F90                           Sequence of steps (trimmed, scaled, no crops) toward producing GISS GCM input files.
    B17_checksum.F90                       Calculates cover-weighted 'checksum' of processed files and difference from data.
-   B18_modele.F90                         
+   B18_modele.F90                         Regrids trimmed_scaled_nocrops files to grid of GISS GCM ModelE for later reformat.
 
 
 The EntGVSD code creates a Makefile to run these in sequence.  To download
@@ -230,7 +230,7 @@ on what files each program opens.
 
 Plotting
 ====================
-In addition to the fortran programs, there are utility python and R scripts for generating map plots.  These are run by the Makefile after the fortran programs and can also be invoked at the command line.
+In addition to the fortran programs, there are utility python and R scripts for for generating map plots and reformatting files to the GISS GCM ModelE file format.  These are run by the Makefile after the fortran programs and can also be invoked at the command line.  For python scripts, use python3.  For R, use the command Rscript.
 
 .. code-block:: bash
 
