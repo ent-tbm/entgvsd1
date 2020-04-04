@@ -333,7 +333,6 @@ if (TRUE) {
 
 } #purelr
 
-
 do.checksum = TRUE
 # trimmming
 if (TRUE) {
@@ -349,9 +348,9 @@ if (TRUE) {
     	
 
   	for (varname in c("lc", "laimax", "hgt")) {
-	        map.entgvsd.steps(outputsdir, res=res, varname, enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-	        #map.entgvsd.steps(outputsdir, res=res, varname="lc", enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
-    	    #map.entgvsd.steps(outputsdir, res=res, varname="laimax", enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+		map.entgvsd.steps(outputsdir, res=res, enttyp=enttyp, varname=varname, trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+                #map.entgvsd.steps(outputsdir, res=res,  enttyp=enttyp, varname="lc",  trimopt=trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
+    	        #map.entgvsd.steps(outputsdir, res=res, varname="laimax", enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
         	#map.entgvsd.steps(outputsdir, res=res, varname="hgt",enttyp=enttyp, trimopt, "", filepre, datatime, version, icov, idat, filesuf=filesuf,do.pdf = do.pdf, pathplot=pathplot, do.checksum = do.checksum)
 	}
     	

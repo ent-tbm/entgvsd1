@@ -144,6 +144,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 
     real*4 area
     real*4 c3c4_crops
+    real*4 waterice
     real*4 am
     ! Converted values
 
@@ -195,6 +196,31 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     end if
                 end do
 
+                ! Combine water and permanent snow/ice
+                waterice = io_lcin(CV_WATER)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
+                if (waterice > 0.) then
+                     laic(esub%water_ice) = ( & 
+                        io_lcin(CV_WATER)%buf(ic,jc) *io_laiin(CV_WATER,idoy)%buf(ic,jc) &
+                      + io_lcin(SNOW_ICE)%buf(ic,jc) *io_laiin(SNOW_ICE,idoy)%buf(ic,jc) &
+                            ) / waterice
+                        vfc(esub%water_ice) = waterice
+
+                        if (present(io_simout)) then
+                            io_simout(esub%water_ice,idoy)%buf(ic,jc) = ( & 
+                                io_lcin(CV_WATER)%buf(ic,jc) * io_simin(CV_WATER,idoy)%buf(ic,jc) + &
+                                io_lcin(SNOW_ICE)%buf(ic,jc) * io_simin(SNOW_ICE,idoy)%buf(ic,jc) &
+                                ) / waterice
+
+                        end if
+                else   ! waterice <= 0
+                        laic(esub%water_ice) = 0.
+                        vfc(esub%water_ice) = 0.
+                        if (present(io_simout)) then
+                            io_simout(esub%water_ice,idoy)%buf(ic,jc) = FillValue
+                        end if
+                end if
+
+
                 ! Then more complex stuff
                 if (combine_crops_c3_c4) then
                     !lc laimax
@@ -205,8 +231,6 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                             + io_lcin(CROPS_C4_HERB)%buf(ic,jc) *io_laiin(CROPS_C4_HERB,idoy)%buf(ic,jc) &
                             ) / c3c4_crops
                         vfc(esub%crops_herb) = c3c4_crops
-
-
 
                         if (present(io_simout)) then
                             io_simout(esub%crops_herb,idoy)%buf(ic,jc) = ( &

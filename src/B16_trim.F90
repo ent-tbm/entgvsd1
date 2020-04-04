@@ -779,7 +779,7 @@ subroutine do_part1_2_trimmed_and_scaled(esub, IM,JM, io_ann_lc, io_bs, io_ann_h
 
     ! ------------- Locals
     integer :: i,j,k,m
-    integer :: n_bare
+    integer :: N_BARE, N_WATERICE
     ! Annual LC and LAI (LC doesn't change so annual LC is used everywhere)
     real*4, dimension(esub%ncover) :: vfc,laic,hm,hsd,vfh
     ! Monthly LC and LAI (NOTE: Monthly LC is set to same as annual)
@@ -836,7 +836,8 @@ call check_laim(laim, 'check1')
         !    If split already: = BARE_DARK
         ! 1:N_BARE == everything but water
         ! We assume we've already been split in A04...A06
-        n_bare = esub%bare_dark
+        N_BARE = esub%bare_dark
+        N_WATERICE = esub%water_ice
 
         ! ========== Part 1: trimmed
 
@@ -915,6 +916,8 @@ call check_laim(laim, 'check1')
             ! add up to total bare soil fraction and give the right
             ! weighted-sum albedo.  Or you can trim them ONLY if bare_bright +
             ! bare_dark < 0.05.
+            ! Also do not trim water_ice; instead, later scale out water_ice if land
+            ! exists.
             if ((k == esub%bare_dark).or.(k == esub%bare_bright)) cycle
 
             if (vfc(k) < lc_trim_threshold) vfc(k) = 0
@@ -923,10 +926,13 @@ call check_laim(laim, 'check1')
             end do   ! m
         end do    ! k=1,esub%ncover
 
+       !Why is this done twice?
         do k=1,esub%ncover
             ! Note: Do not trim bare_bright and bare_dark.  They still have to
             ! add up to total bare soil fraction and give the right
             ! weighted-sum albedo.
+            ! Also do not trim water_ice; instead, later scale out water_ice if land
+            ! exists.
             if ((k == esub%bare_bright).or.(k == esub%bare_dark)) cycle
 
             if (vfc(k) < lc_trim_threshold) vfc(k) = 0
@@ -967,6 +973,8 @@ call check_laim(laim, 'check1')
         ! ============= Part 2: trimmed_scaled
 
         ! rescale fractions so that they sum to 1 (except water)
+        ! This should rescale only grid cells with land and remove water_ice
+        ! fractions.  Will leave water_ice that is 100% of grid cell.
         sum_vfc = sum(vfc(1:N_BARE))
         sum_vfm = sum(vfm(1:N_BARE, 1))
         if (abs(sum_vfc - sum_vfm) > 1.e-5) then !#DEBUG
@@ -978,9 +986,12 @@ call check_laim(laim, 'check1')
             end if
         endif
 
+        !grid cells with land scale land to sum to 1 and set water_ice to 0.
         if ( sum_vfc > 0.00001 ) then
             vfc(1:N_BARE) = vfc(1:N_BARE) / sum_vfc
             vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / sum_vfc
+            vfc(N_WATERICE) = 0.
+            vfm(N_WATERICE) = 0.
         end if
         sum_vfc = sum(vfc(1:N_BARE))
         sum_vfm = sum(vfm(1:N_BARE, 1))

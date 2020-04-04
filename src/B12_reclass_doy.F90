@@ -1,8 +1,8 @@
-! Reclass LAI for selected days of year (DOY) from 20-cover classes to 18-cover classes.
+! Reclass LAI for selected days of year (DOY) from 20-cover classes to 18-cover + water/ice classes.
 !
 ! Takes 20-cover classes (Ent 17 PFTs + 3 non-veg) and converts to
-! 18-cover classes (Ent 16 PFTs and bright and dark bare soil fractions).
-! Merges C3 and C4 crops into one crop cover type for Ent 16 PFTs, excludes water
+! 18-cover + water/ice classes (Ent 16 PFTs and bright and dark bare soil fractions).
+! Merges C3 and C4 crops into one crop cover type for Ent 16 PFTs, combines water
 ! and permanent ice, and converts barse/sparse cover into equivalent veg type and
 ! bare soil bright and dark fractions, preserving total LAI of grid cell.
 !

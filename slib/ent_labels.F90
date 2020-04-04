@@ -32,6 +32,7 @@ implicit none
 !     16  crops_woody
 !     17  bare_bright
 !     18  bare_dark
+!     19  water_ice
 !
 ! If not combine_crops_c3_c4, then this would be modified as:
 !     ...
@@ -40,10 +41,12 @@ implicit none
 !     17  crops_woody
 !     18  bare_bright
 !     19  bare_dark
+!     20  water_ice
 !
 ! If not split_bare, this would be modified as:
 !     ...
 !     17  bare_sparse
+!     18  water_ice
 !
 ! If neither parameter is set, it would look like:
 !     ...
@@ -51,8 +54,10 @@ implicit none
 !     16  crops_c4_herb
 !     17  crops_woody
 !     18  bare_sparse
+!     19  water_ice
 !
-! NOTE: Water is NOT part of these sub-sets
+! NOTE: Water was NOT part of these sub-sets.  It was added on 4/3/2020 to
+! enable straightforward regridding.
 
 integer, parameter :: ENT_ABBREV_LEN = 20
 integer, parameter :: ENT_TITLE_LEN = 50  ! long_layer_names
@@ -469,6 +474,7 @@ implicit none
         integer :: last_pft   ! Last PLANT functional type (as opposed to cover type in general)
         integer :: bare_bright
         integer :: bare_dark
+        integer :: water_ice
     contains
         procedure :: allocate => GcmEntSet_allocate
     end type GcmEntSet_t
@@ -486,6 +492,7 @@ subroutine GcmEntSet_allocate(ents, maxcover, ncover_master)
     ents%crops_herb = -1
     ents%bare_bright = -1
     ents%bare_dark = -1
+    ents%water_ice = -1
     ents%NONVEG = ''
 end subroutine GcmEntSet_allocate
 
@@ -547,6 +554,10 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
     else
         call esub%sub_covertype(ent20, BARE_SPARSE)
     end if
+
+    ! Combine water and snow/ice
+    call esub%add_covertype('v', 'water_ice', 'water, permanent snow/ice')     
+    esub%water_ice = esub%ncover
 
     ! Use remap to pull out EntLabels
 

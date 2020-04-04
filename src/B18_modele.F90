@@ -1,6 +1,6 @@
-! Generates GISS GCM ModelE input formatted files from trimming steps outputs.
+!  Regrids trimmed_scaled_nocrops files to grid of GISS GCM ModelE for later reformatting as GCM input.
 !
-! Convert files from previous processing steps to file format directly useable by ModelE for two reasons:
+! Step after this will take regridded files to format directly useable by ModelE for two reasons:
 !   1. Convert arrays with an lctype dimension to separate array variables with
 !   netcdf names for the cover type.
 !   2. Convert from NetCDF4 format to NetCDF3 for ModelE input format.
