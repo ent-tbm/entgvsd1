@@ -120,6 +120,7 @@ contains
     procedure :: long_layer_names
 !    generic, public :: allocate => EntSet_allocate
     procedure :: add_covertype
+    procedure :: Entset_nonveg_name
     procedure :: add_remap
     procedure :: sub_covertype
 end type
@@ -356,16 +357,28 @@ subroutine add_covertype(ents, cttype, abbrev,title)
         stop
     end if
     ents%ncover = ents%npft + ents%nnonveg
-    if (ents%nnonveg == 3) then
-        ents%nonveg = 'M'
-    else if (ents%nnonveg == 2) then
-        ents%nonveg = 'G'
-    else
-        ! We currently don't know whether this is 'M' or 'G'.
-        ents%nonveg = 'X'
-    end if
+!    if (ents%nnonveg == 3) then
+!        ents%nonveg = 'M'
+!    else if (ents%nnonveg == 2) then
+!        ents%nonveg = 'G'
+!    else
+!        ! We currently don't know whether this is 'M' or 'G'.
+!        ents%nonveg = 'X'
+!    end if
 
 end subroutine add_covertype
+
+
+! Assigns a character code for the non-vegetation cover class set.  Used for
+! file names.
+subroutine EntSet_nonveg_name(ents, nonvegset)
+    class(EntSet_t) :: ents
+    character, intent(IN) :: nonvegset    !'M' for MODIS, 'G' for GISS
+
+    ents%nonveg = nonvegset
+
+end subroutine EntSet_nonveg_name
+
 
 ! Equates the last-added covertype in an EntSet to a particular
 ! covertype in the master set (NENT20).
@@ -434,6 +447,7 @@ subroutine init_ent_labels
     call ent20%add_covertype('n', 'bare_sparse   ', 'bare or sparsely vegetated, urban          ')  ! 19
     call ent20%add_covertype('n', 'water         ', 'water on land                              ')  ! 20
 
+    call ent20%Entset_nonveg_name('M')  !MODIS non-vegetation cover classes
 
     ! Set up ent19 = ent20 without water
     ! (indices will be the same, but only if water is at the end)
@@ -550,14 +564,17 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
 
         call esub%add_covertype('n', 'bare_dark', 'bare dark')
         esub%bare_dark = esub%ncover
-        esub%NONVEG = 'G'
+        call esub%Entset_nonveg_name('G')  !Non-veg cover types are GISS classes.
     else
         call esub%sub_covertype(ent20, BARE_SPARSE)
     end if
 
     ! Combine water and snow/ice
-    call esub%add_covertype('v', 'water_ice', 'water, permanent snow/ice')     
+    call esub%add_covertype('n', 'water_ice', 'water, permanent snow/ice')     
     esub%water_ice = esub%ncover
+    if (.not.split_bare_soil) then 
+        call esub%Entset_nonveg_name('X')  !Non-veg cover types are alternative
+    endif
 
     ! Use remap to pull out EntLabels
 

@@ -991,7 +991,7 @@ call check_laim(laim, 'check1')
             vfc(1:N_BARE) = vfc(1:N_BARE) / sum_vfc
             vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / sum_vfc
             vfc(N_WATERICE) = 0.
-            vfm(N_WATERICE) = 0.
+            vfm(N_WATERICE,:) = 0.
         end if
         sum_vfc = sum(vfc(1:N_BARE))
         sum_vfm = sum(vfm(1:N_BARE, 1))
@@ -1326,7 +1326,11 @@ subroutine do_trim(rw, esub)
 
     esub_p => esub
 
-    call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
+    !Number of layers = esub%ncover * (lc + laimax + hgt + laimonthly + bs_brightratio) = 
+    !                   esub%ncover * 16
+    !call chunker_pu%init(IMLR,JMLR,  0,0,'', 300, 1, 30, (/1,1/), outputs_dir=THIS_OUTPUTS_DIR)
+    call chunker_pu%init(IMLR,JMLR,  0,0,'', esub%ncover*16, 1, 30, (/1,1/),&
+         outputs_dir=THIS_OUTPUTS_DIR)
 
     ! --- Inputs: Same for annual vs. monthly
     call chunker_pu%nc_open_set( &
@@ -1348,7 +1352,6 @@ subroutine do_trim(rw, esub)
     call chunker_pu%nc_open_set( &
         esub_p, io_ann_lai(:,1), &
         LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'purelr', '1.1')
-
 
     do m=1,NMONTH
         call chunker_pu%nc_open_set( &

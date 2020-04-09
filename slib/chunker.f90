@@ -1082,7 +1082,7 @@ subroutine file_metadata_entgvsd(ncid, modification)
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'reference', '__ENTGVSD_TECHNICAL_PUBLICATION__')
+        'reference', '__ENT GVSD_NASA TECHNICAL_REPORT__')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'data_sources', &
         'v1.1:'//NEW_LINE('A')//&

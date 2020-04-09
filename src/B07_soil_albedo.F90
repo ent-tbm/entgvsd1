@@ -541,7 +541,7 @@ print *,'***************** open_output_files',i
             do k=1,NBANDS_GISS
                 call outs(i)%hntr%regrid4( &
                     outs(i)%io_albgiss(k)%buf, o6%io_albgiss(k)%buf, &
-                    o6%wta, 1d0, 0d0, &    ! weighting,
+                    o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
                     outs(i)%io_albgiss(k)%startB(2), outs(i)%io_albgiss(k)%chunker%chunk_size(2))
             end do
 
@@ -565,7 +565,7 @@ print *,'***************** open_output_files',i
 
             call outs(i)%hntr%regrid4( &
                 outs(i)%io_albsw%buf, o6%io_albsw%buf, &
-                o6%wta, 1d0, 0d0, &    ! weighting,
+                o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
                 outs(i)%io_albsw%startB(2), outs(i)%io_albsw%chunker%chunk_size(2))
 
             call outs(i)%hntr%regrid4( &
