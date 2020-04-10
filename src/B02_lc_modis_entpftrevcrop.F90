@@ -465,7 +465,7 @@ call chunker%nc_open_input(io_CMedit, &
 !     WATERLC MODIS PARTITION
 call chunker%nc_open_input(io_waterpart, &
      INPUTS_URL, INPUTS_DIR, &
-     'lc/MODIS/'//sLAI_YEAR//'/', &
+     'lc/MODIS/V005/'//sLAI_YEAR//'/', &
      'PART_SUB_1km_'//sLAI_YEAR//'_geo.PARTITION_00.nc', 'PARTITION_0', 1)
      !lc/MODIS/V006/'//sLAI_YEAR//'/', &
      !PART_SUB_1km_'//sLAI_YEAR//'_geo.hdf.PARTITION_00.nc', 'PARTITION_0', 1)
