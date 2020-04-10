@@ -469,8 +469,8 @@ function make_ent2() result(ent2)
     call ent2%allocate(2,NENT20)
     call ent2%sub_covertype(ent20, SNOW_ICE)
     call ent2%sub_covertype(ent20, CV_WATER)
-    call ent2%Entset_nonveg_name('G') !Hack because of old add_cover_type.##
-    !call ent2%Entset_nonveg_name('M')
+    !call ent2%Entset_nonveg_name('G') !Hack because of old add_cover_type.##
+    call ent2%Entset_nonveg_name('M')
 
 end function make_ent2
 
