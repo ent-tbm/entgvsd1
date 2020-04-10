@@ -456,7 +456,7 @@ subroutine init_ent_labels
         if (k == CV_WATER) cycle
         call ent19%sub_covertype(ent20, k)
     end do
-
+    call ent19%Entset_nonveg_name('M')
 
 end subroutine init_ent_labels
 
@@ -469,6 +469,8 @@ function make_ent2() result(ent2)
     call ent2%allocate(2,NENT20)
     call ent2%sub_covertype(ent20, SNOW_ICE)
     call ent2%sub_covertype(ent20, CV_WATER)
+    call ent2%Entset_nonveg_name('G') !Hack because of old add_cover_type.##
+    !call ent2%Entset_nonveg_name('M')
 
 end function make_ent2
 
@@ -567,6 +569,7 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
         call esub%Entset_nonveg_name('G')  !Non-veg cover types are GISS classes.
     else
         call esub%sub_covertype(ent20, BARE_SPARSE)
+        call esub%Entset_nonveg_name('M')  !Non-veg cover types are MODIS classes.
     end if
 
     ! Combine water and snow/ice
