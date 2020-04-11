@@ -1012,6 +1012,7 @@ call check_laim(laim, 'check1')
 
         ! -------------------------- Write Outputs (trimmed_scaled)
         do k=1,esub%ncover
+            !print *, 'trimmed_scaled esub%ncover', k
             ! Annual LC and LAI file
             ts%io_ann_lc(k,1)%buf(i,j) = vfc(k)    ! vfn in 1km
             ts%io_ann_lai(k,1)%buf(i,j) = laic(k)  ! laic in 1km

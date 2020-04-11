@@ -142,8 +142,7 @@ if (TRUE) {
     trimopt = "pure"
     res="QXQ"
     filepre = "V1km_EntGVSD"
-    #icov = "16G"
-    icov = "17G"
+    icov = "16G"
     idat = "BMSa"
     filesuf = "_forplot"
     enttyp = 1:18
@@ -223,8 +222,7 @@ if (TRUE) {
     trimopt = "purelr"
     res="HXH"
     filepre = "VHXH_EntGVSD"
-    #icov = "16G"
-    icov = "17G"
+    icov = "16G"
     idat = "BMSa"
     filesuf = ""
     enttyp = 1:18     
@@ -341,8 +339,7 @@ if (TRUE) {
    trimopts = c("trimmed", "trimmed_scaled", "trimmed_scaled_nocrops") #, "trimmed_scaled_crops_ext")
     res="HXH"
     filepre = "VHXH_EntGVSD"
-    #icov = "16G"
-    icov = "17G"
+    icov = "16G"
     idat = "BMSa"
     filesuf = "_forplot"
     enttyp = 1:18
@@ -418,8 +415,7 @@ if (TRUE) {
     trimopt = c("modelE")
     res="2HX2"
     filepre = "V2HX2_EntGVSD"
-    #icov = "16G"
-    icov = "17G"
+    icov = "16G"
     idat = "BMSa"
     enttyp = 1:18
     covlist = EntGVSD_COV13
