@@ -5,7 +5,7 @@
 # Author: Nancy Kiang
 # 
 # To run:
-#   Rscript B20b_plots_custome.R NPFT filetype path filename
+#   Rscript B22_plots_custom.R NPFT filetype path filename
 # where:
 #   [NPFT] = 16 | 17
 #   [filetype] = lc | laimax | laimonth | laidoy | hgt | lc_checksum | lclai_checksum | lchgt_checksum
@@ -25,8 +25,8 @@ if (TRUE) {
 }
 
 #*****************************************************************************************
-B20b_usage = function() {
-  print("Usage: Rscript B20b_plots_custom.R NPFT filetype path filename <vname>")
+man_usage = function() {
+  print("Usage: Rscript B22_plots_custom.R NPFT filetype path filename <vname>")
   print("<vname> required if filetype is soilalbedo.")
   print("npft = 16 | 17")
   print("filetype = lc | laimax | laimonth | laidoy | hgt | lc_checksum | lclai_checksum | lchgt_checksum")
@@ -40,7 +40,7 @@ args = commandArgs(trailingOnly=TRUE)
 print(args)
 numargs = length(args)
 if (numargs < 4) {
-  B20b_usage()
+  man_usage()
   quit()
 } 
 npft = as.numeric(args[1])
@@ -169,6 +169,8 @@ if (ftype=="soilalbedo" & numargs==5) {
      plot.grid.continuous(mapz=mapz, res=res, colors=color, legend.lab=NULL, xlab="longitude", ylab="latitude", titletext="", zlim=zlim, ADD=FALSE, if.fill=TRUE, if.coasts=TRUE, ask=TRUE)
        
 }
+
+mtext(outer=TRUE, file, cex=0.7, line=-2)
 
 if (do.pdf) {
    dev.off()

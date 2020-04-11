@@ -478,7 +478,7 @@ grid.lon.lat = function(res) {
     } else if   (res=="1x1" | res=="1X1") {
         i = (-180:179) + 0.5
         j = (-90:89) + 0.5
-    } else if (res=="2x2.5" | res=="2HXH" | res=="2HxH") {
+    } else if (res=="2x2.5" | res=="2HX2" | res=="2Hx2") {
         i = (-72:71)*2.5 + 1.25
         i = i*2.5
         j = (-45:44)*2 + 1
@@ -551,7 +551,7 @@ plot.grid.categorical = function(mapz, res="1x1", zlim=NULL, colors=terrain.colo
 }
 
 res.from.IM = function(IM) {
-    lonres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), res=c("1km","6km","QXQ","HXH","1x1","2HXH", "4x5"))
+    lonres = data.frame(lon=c(43200, 7200, 1440, 720, 360, 144, 72), res=c("1km","6km","QXQ","HXH","1x1","2HX2", "4x5"))
     res = as.character(lonres[match(IM,lonres[,"lon"]),"res"])
     return(res)
 }
@@ -665,8 +665,12 @@ plot.grid3 = function(mapz, res="1x1", colors=terrain.colors(40), legend.lab=NUL
 #----------------
 
 giss.palette = colorRampPalette(c("dark blue", "blue","light blue", "cyan","white", "yellow", "orange",  "red","dark red"),    space = "rgb")
+giss.palette = colorRampPalette(c("dark blue", "blue", "light blue", "white", "yellow", "red", "dark red"),    space = "rgb")
+
 #giss.palette.nowhite = colorRampPalette(c("dark blue", "blue", "light blue", "cyan", "yellow", "orange", "red","dark red"),    space = "rgb")
 giss.palette.nowhite = colorRampPalette(c("blue", "light blue", "cyan", "yellow", "orange", "red"),    space = "rgb")
+giss.palette.nowhite = colorRampPalette(c("dark blue", "blue", "light blue", "light yellow", "yellow", "red", "dark red"),    space = "rgb")
+
 
 drywet = colorRampPalette(c("tan", "yellow", "green", "dark green", "dark blue"), spac="rgb")
 

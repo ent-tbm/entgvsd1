@@ -169,13 +169,13 @@ subroutine open_output_files(out, rw)
     type(FileInfo_t) :: info
     integer iband,k
 
-    ! ------------ albsw
+    ! ------------ albSW
     call clear_file_info(info)
-    info%vname = 'albsw'
+    info%vname = 'albSW'
 #ifdef USE_FILLED
-    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
+    info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
 #else
-    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells not filled'
+    info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells not filled'
 #endif
     info%units = '1'
     info%file_metadata_type = 'carrer'
