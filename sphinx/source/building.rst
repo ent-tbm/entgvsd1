@@ -207,7 +207,7 @@ To run a single program at a time, such as B11_reclass.F90:
 
 .. note::
 
-   If you previously ran a program, rerunning it ../build/bin/entgvsd does not delete the previously created files but writes to them if they already exist.  To ensure a new run completely replaces the previous files, it is best to delete the previous files by hand.
+   If you previously ran a program, rerunning it with ../build/bin/entgvsd does not delete the previously created files but writes to them if they already exist.  To ensure a new run completely replaces the previous files, it is best to delete the previous files by hand.
 
 
 To run more quickly in debug mode, processing only a portion of the globe for a single program, such as B04_veg_height.F90:
