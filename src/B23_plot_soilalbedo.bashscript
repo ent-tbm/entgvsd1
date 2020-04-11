@@ -1,0 +1,24 @@
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_bs_brightratio.nc bs_brightratio
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_bs_brightratio.nc bs_brightratio
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_6km_bs_brightratio.nc bs_brightratio
+#Rscript B20b_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_1km_bs_brightratio.nc bs_brightratio
+
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_VIS_annual_2004.nc albgiss_VIS
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_NIR1_annual_2004.nc albgiss_NIR1
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_NIR2_annual_2004.nc albgiss_NIR2
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_NIR3_annual_2004.nc albgiss_NIR3
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_NIR4_annual_2004.nc albgiss_NIR4
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_NIR5_annual_2004.nc albgiss_NIR5
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_HXH_EntGVSD_v1.1_CarrerGISS_SW_annual_2004.nc albsw
+
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_VIS_annual_2004.nc albgiss_VIS
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_NIR1_annual_2004.nc albgiss_NIR1
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_NIR2_annual_2004.nc albgiss_NIR2
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_NIR3_annual_2004.nc albgiss_NIR3
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_NIR4_annual_2004.nc albgiss_NIR4
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_NIR5_annual_2004.nc albgiss_NIR5
+Rscript B22_plots_custom.R 16 soilalbedo /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/soilalbedo soilalbedo_2HX2_EntGVSD_v1.1_CarrerGISS_SW_annual_2004.nc albsw
+
+#Rscript B20b_plots_custom.R 16 lc /home2/nkiang/entgvsd1/entgvsd1_test3/outputs/pure V1km_EntGVSD_v1.1_16G_BMSa_lc_2004_ann_pure.nc
+
+
