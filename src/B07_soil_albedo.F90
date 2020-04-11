@@ -172,7 +172,11 @@ subroutine open_output_files(out, rw)
     ! ------------ albsw
     call clear_file_info(info)
     info%vname = 'albsw'
-    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR
+#ifdef USE_FILLED
+    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
+#else
+    info%long_name = 'Carrer soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells not filled'
+#endif
     info%units = '1'
     info%file_metadata_type = 'carrer'
     call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
@@ -183,7 +187,11 @@ subroutine open_output_files(out, rw)
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
         info%vname = 'albgiss_'//trim(sbands_giss(iband))
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR
+#ifdef USE_FILLED
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR//', undefined cells filled'
+#else
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR//', undefined cells not filled'
+#endif
         info%units = '1'
         info%file_metadata_type = 'carrer'
         call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
@@ -350,7 +358,6 @@ print *,'***************** open_output_files',i
 
     call ichunker%nc_check(rw=rw)
     call rw%write_mk
-print *, 'Got here'
 
 #ifdef JUST_DEPENDENCIES
     STOP 0
