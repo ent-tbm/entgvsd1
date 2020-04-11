@@ -205,6 +205,11 @@ To run a single program at a time, such as B11_reclass.F90:
    cd ~/git/entgvsd1/src
    ../build/bin/entgvsd B11_reclass.F90
 
+.. note::
+
+   If you previously ran a program, rerunning it ../build/bin/entgvsd does not delete the previously created files but writes to them if they already exist.  To ensure a new run completely replaces the previous files, it is best to delete the previous files by hand.
+
+
 To run more quickly in debug mode, processing only a portion of the globe for a single program, such as B04_veg_height.F90:
 
 .. code-block:: bash
@@ -239,6 +244,7 @@ In addition to the fortran programs, there are utility python and R scripts for 
    B20_plots.R                            Generates maps of all output files to outputs/plots directory.
    B20b_plots_custom.R                    Script for generating map(s) of single file specified at the command line.
    B21_plots_to_png.py                    Converts *.pdf format plots to *.png.
+   B22_plots_custom.R                     Generates map of file and variable specified at the command line. 
 
 Modifying Parameters
 ====================
