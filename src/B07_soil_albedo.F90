@@ -196,10 +196,18 @@ subroutine open_output_files(out, rw)
 #endif
         info%units = '1'
         info%file_metadata_type = 'carrer'
+#ifdef USE_FILLED
+        call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
+            'soilalbedo/', &
+            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'// &
+                sLAI_YEAR//'_fill', &
+            info, create_lr=out%create_lr)
+#else
         call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
             'soilalbedo/', &
             'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
             info, create_lr=out%create_lr)
+#endif
     end do
 
     ! ----------- fracbd
