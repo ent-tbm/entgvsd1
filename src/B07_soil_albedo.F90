@@ -188,9 +188,11 @@ subroutine open_output_files(out, rw)
         call clear_file_info(info)
         info%vname = 'albgiss_'//trim(sbands_giss(iband))
 #ifdef USE_FILLED
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR//', undefined cells filled'
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
+           ', undefined cells filled'
 #else
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR//', undefined cells not filled'
+        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
+           ', undefined cells not filled'
 #endif
         info%units = '1'
         info%file_metadata_type = 'carrer'
