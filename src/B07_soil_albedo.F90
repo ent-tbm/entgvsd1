@@ -171,7 +171,7 @@ subroutine open_output_files(out, rw)
 
     ! ------------ albSW
     call clear_file_info(info)
-    info%vname = 'albSW'
+    info%vname = 'albedo_soil_SW'
 #ifdef USE_FILLED
     info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
 #else
@@ -186,12 +186,12 @@ subroutine open_output_files(out, rw)
     ! ----------- albgiss
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
-        info%vname = 'albgiss_'//trim(sbands_giss(iband))
+        info%vname = 'albedo_soil_'//trim(sbands_giss(iband))
 #ifdef USE_FILLED
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
+        info%long_name = 'soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
            ', undefined cells filled'
 #else
-        info%long_name = 'Carrer soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
+        info%long_name = 'soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
            ', undefined cells not filled'
 #endif
         info%units = '1'
