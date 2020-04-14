@@ -169,7 +169,7 @@ subroutine open_output_files(out, rw)
     type(FileInfo_t) :: info
     integer iband,k
 
-    ! ------------ albSW
+    ! ------------ albsw = albedo_soil_SW
     call clear_file_info(info)
     info%vname = 'albedo_soil_SW'
 #ifdef USE_FILLED
@@ -183,7 +183,7 @@ subroutine open_output_files(out, rw)
         'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info, &
         create_lr=out%create_lr)
 
-    ! ----------- albgiss
+    ! ----------- albgiss = albedo_soil_<GISSBAND>
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
         info%vname = 'albedo_soil_'//trim(sbands_giss(iband))
