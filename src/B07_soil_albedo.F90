@@ -169,9 +169,9 @@ subroutine open_output_files(out, rw)
     type(FileInfo_t) :: info
     integer iband,k
 
-    ! ------------ albsw = albedo_soil_SW
+    ! ------------ albsw = soilalbedo_SW
     call clear_file_info(info)
-    info%vname = 'albedo_soil_SW'
+    info%vname = 'soilalbedo_SW'
 #ifdef USE_FILLED
     info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
 #else
@@ -179,14 +179,20 @@ subroutine open_output_files(out, rw)
 #endif
     info%units = '1'
     info%file_metadata_type = 'carrer'
+#ifdef USE_FILLED
     call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, info, &
-        create_lr=out%create_lr)
+        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR//'_fill', &
+         info, create_lr=out%create_lr)
+#else
+    call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
+        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, &
+        info, create_lr=out%create_lr)
+#endif
 
-    ! ----------- albgiss = albedo_soil_<GISSBAND>
+    ! ----------- albgiss = soilalbedo_<GISSBAND>
     do iband=1,NBANDS_GISS
         call clear_file_info(info)
-        info%vname = 'albedo_soil_'//trim(sbands_giss(iband))
+        info%vname = 'soilalbedo_'//trim(sbands_giss(iband))
 #ifdef USE_FILLED
         info%long_name = 'soil albedo '//trim(sbands_giss_long(iband))//' annual mean '//sLAI_YEAR// &
            ', undefined cells filled'
