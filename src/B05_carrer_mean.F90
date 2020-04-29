@@ -63,10 +63,10 @@ subroutine do_carrer_mean(rw, iband, ndates)
     info%vname = 'albmodis_'//trim(sbands_modis(iband))
     info%long_name = 'Carrer soil albedo ('//trim(sbands_modis(iband))//' band)'
     info%units = '1'
-    info%file_metadata_type = 'carrer'
-    call chunker%nc_create1(ioall_albout, weighting(wta,1d0,0d0), &
+    info%file_metadata_type = 'soilalbedo' !carrer
+    call chunker%nc_create1_n(ioall_albout, weighting(wta,1d0,0d0), &
         'tmp/carrer/', &
-        'albmodis_'//trim(sbands_modis(iband)), info, &
+        'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband)), info, &
         sstats, sstats)
     do id=1,NSTATS
         call chunker%nc_reuse_var(ioall_albout, io_albout(id), (/1,1,id/), &

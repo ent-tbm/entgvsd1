@@ -3,8 +3,9 @@
 source("utils.R")
 library("RNetCDF")
 
-FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated."
-#FILL = ''; FILLdescription=""
+#Update 
+#FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated."
+FILL = ''; FILLdescription="  No interpolation."
 YEAR='2004'
 version = 'v1.1'
 
@@ -53,3 +54,4 @@ for (i in 1:length(GISSBAND)) {
 }
  
    var.put.nc(nco, 'albedo_soil_giss', alb3D)
+

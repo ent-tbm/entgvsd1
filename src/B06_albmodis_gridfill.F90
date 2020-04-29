@@ -82,7 +82,9 @@ subroutine do_gridfill(rw, iband)
     ! ------------ albmodis
     call chunker%nc_open(ioall_albmodis, chunker%outputs_dir, &
         'tmp/carrer/', &
-        'albmodis_'//trim(sbands_modis(iband))//'.nc', &
+        !'albmodis_'//trim(sbands_modis(iband))//'.nc', &
+        !'albmodis_'//trim(sbands_modis(iband)), 0)
+        'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
         'albmodis_'//trim(sbands_modis(iband)), 0)
     do id=1,NSTATS_FILLABLE
         call chunker%nc_reuse_var( &
@@ -97,10 +99,10 @@ subroutine do_gridfill(rw, iband)
      info%vname = 'albfill_'//trim(sbands_modis(iband))
      info%long_name = 'albmodis statistics with missing values filled in'
      info%units = '1'
-     info%file_metadata_type = 'carrer'
-     call chunker%nc_create1(ioall_albfill, weighting(wta(:,:,1),1d0,0d0), &
+     info%file_metadata_type = 'soilalbedo' !'carrer'
+     call chunker%nc_create1_n(ioall_albfill, weighting(wta(:,:,1),1d0,0d0), &
          'tmp/carrer/', &
-         'albfill_'//trim(sbands_modis(iband)), info, &
+         'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill', info, &
          sstats(1:NSTATS_FILLABLE), sstats(1:NSTATS_FILLABLE))
      do id=1,NSTATS_FILLABLE
          call chunker%nc_reuse_var(ioall_albfill, io_albfill(id), (/1,1,id/), &

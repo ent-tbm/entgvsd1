@@ -279,6 +279,7 @@ contains
     procedure :: nc_reuse_file
     procedure :: nc_create
     procedure :: nc_create1
+    procedure :: nc_create1_n
     procedure :: nc_create_set
     procedure :: nc_open_input
     procedure :: nc_open
@@ -890,7 +891,7 @@ function get_sdate()
     get_sdate = yyyy//'-'//mm//'-'//dd
 END function get_sdate
 
-! Opens/Creates just the file and dimensions
+! Opens/Creates just the file and dimensions for lctype.
 ! Normally sets up for a file with one or more 2D (single layer) variables
 ! To create a file that will hold 3D (multi layer) variables, set
 ! layer_names.  This will then create additional
@@ -1022,6 +1023,143 @@ function my_nf90_create_ij(filename,IM,JM, ncid, layer_names, long_layer_names) 
 
 end function my_nf90_create_ij
 
+
+! Opens/Creates just the file and dimensions for any generaic nlayers (e.g. min, mean, max, std).
+! Normally sets up for a file with one or more 2D (single layer) variables
+! To create a file that will hold 3D (multi layer) variables, set
+! layer_names.  This will then create additional
+! metadata variables describing the layers in the 3D files.
+! @param IM,JM Resolution of file to create.
+! @param ncid (OUT) Returns the open NetCDF file handle here
+! @param layer_names (OPTIONAL) The descriptive name of each layer
+function my_nf90_create_ij_n(filename,IM,JM, ncid, layer_names, long_layer_names) result(status)
+
+    character(len=*), intent(in) :: filename
+    integer,intent(in) :: IM,JM
+    integer,intent(out) :: ncid
+    integer :: status    ! Return variable
+    character(len=*), dimension(:), OPTIONAL :: layer_names
+    character(len=*), dimension(:), OPTIONAL :: long_layer_names
+    !--- Local ----
+    integer :: idlon, idlat, varid
+    integer :: idlayer_names, idlong_layer_names
+    real*4 :: lon(IM), lat(JM)
+    !character*80 :: filenc
+    character*10 :: res
+    integer :: len1(1)
+    integer :: strdimids(2), ixdimids(1)
+    integer :: startS(2), countS(2)
+    integer :: nlayers
+    integer, dimension(:), allocatable :: dimids
+
+    if (present(layer_names)) then
+        allocate(dimids(3))
+        nlayers = size(layer_names,1)
+    else
+        allocate(dimids(2))
+        nlayers = 1
+    end if
+
+
+    if (IM.eq.72) then
+      res = '72X46' !5X4
+    elseif (IM.eq.144) then
+      res = '2HX2' !'144X90'
+    elseif (IM.eq.360) then
+      res = '1X1'
+    elseif (IM.eq.720) then
+      res = 'HXH'
+    elseif (IM.eq.1440) then
+      res = 'QXQ'
+    elseif (IM.eq.7200) then
+      res = '6km'
+    elseif (IM.eq.43200) then
+      res = '1km'
+    elseif (IM.eq.86400) then
+      res = '500m'
+    endif
+
+    ! netcdf output file needs to be created
+    write(0,*) 'Creating ',trim(filename)
+    status=nf90_create(filename, NF90_HDF5, ncid)
+    if (status /= NF90_NOERR) return
+    status=nf90_def_dim(ncid, 'lon', IM, dimids(1))
+    if (status /= NF90_NOERR) return
+    status=nf90_def_dim(ncid, 'lat', JM, dimids(2))
+    if (status /= NF90_NOERR) return
+    if (nlayers > 1) then
+        status=nf90_def_dim(ncid, 'n', nlayers, dimids(3))
+        if (status /= NF90_NOERR) return
+        strdimids(2) = dimids(3)
+        ixdimids(1) = dimids(3)
+
+        status=nf90_def_dim(ncid, 'n_len', len(layer_names(1)), strdimids(1))
+        if (status /= NF90_NOERR) return
+        status=nf90_def_var(ncid, 'n', NF90_CHAR, strdimids, idlayer_names)
+        if (status /= NF90_NOERR) return
+
+        status=nf90_def_dim(ncid, 'n_longnames_len', len(long_layer_names(1)), strdimids(1))
+        if (status /= NF90_NOERR) return
+        status=nf90_def_var(ncid, 'n_longname', NF90_CHAR, strdimids, idlong_layer_names)
+        if (status /= NF90_NOERR) return
+
+    end if
+
+
+    ! Create lon
+    status=nf90_def_var(ncid, 'lon', NF90_FLOAT, dimids(1), idlon)
+    if (status /= NF90_NOERR) return
+    status=nf90_def_var_deflate(ncid,idlon,1,1,4)
+    if (status /= NF90_NOERR) return
+    len1(1) = im
+    status=nf90_def_var_chunking(ncid,idlon,NF90_CHUNKED, len1)
+    if (status /= NF90_NOERR) return
+
+    ! Create lat
+    status=nf90_def_var(ncid, 'lat', NF90_FLOAT, dimids(2), idlat)
+    if (status /= NF90_NOERR) return
+    status=nf90_def_var_deflate(ncid,idlat,1,1,4)
+    if (status /= NF90_NOERR) return
+    len1(1) = jm
+    status=nf90_def_var_chunking(ncid,idlat,NF90_CHUNKED, len1)
+    if (status /= NF90_NOERR) return
+
+    ! ---------- Global Attributes
+    status=nf90_put_att(ncid, idlon, 'long_name', 'longitude')
+    if (status /= NF90_NOERR) return
+    status=nf90_put_att(ncid, idlat, 'long_name', 'latitude')
+    if (status /= NF90_NOERR) return
+    status=nf90_put_att(ncid, idlon, 'units', 'degrees_east')
+    if (status /= NF90_NOERR) return
+    status=nf90_put_att(ncid, idlat, 'units', 'degrees_north')
+    if (status /= NF90_NOERR) return
+
+    status=nf90_enddef(ncid)
+    if (status /= NF90_NOERR) return
+
+    call calc_lon_lat(IM,JM,lon,lat)
+    status=my_nf90_inq_put_var_real32(ncid,'lon',varid,lon)
+    if (status /= NF90_NOERR) return
+    status=my_nf90_inq_put_var_real32(ncid,'lat',varid,lat)
+
+
+    if (nlayers>1) then
+        startS = (/ 1,1 /)
+        countS = (/ len(layer_names(1)), size(layer_names,1) /)
+        status=nf90_put_var(ncid,idlayer_names, layer_names,startS,countS)
+
+        countS = (/ len(long_layer_names(1)), size(long_layer_names,1) /)
+        status=nf90_put_var(ncid,idlong_layer_names, long_layer_names,startS,countS)
+
+        if (status /= NF90_NOERR) return
+    end if
+
+end function my_nf90_create_ij_n
+
+! Lookup dimension IDs and sizes by name
+! @param ncid Open NetCDF file
+! @param dim_names Names of dimensions to look up
+
 ! Lookup dimension IDs and sizes by name
 ! @param ncid Open NetCDF file
 ! @param dim_names Names of dimensions to look up
@@ -1133,7 +1271,7 @@ subroutine file_metadata_carrer(ncid)
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'version', '1.1')
     status=nf90_put_att(ncid,NF90_GLOBAL, &
-        'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
+        'contact', 'Nancy.Y.Kiang@nasa.gov')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
@@ -1190,8 +1328,12 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
     ! Lookup dimensions by string name
     if (nlayers==1) then
         status=nc_lookup_dims(ncid, (/'lon', 'lat' /), dimids, dim_sz)
-    else
+    elseif (trim(info%file_metadata_type)=='entgvsd') then
         status=nc_lookup_dims(ncid, (/'lon   ', 'lat   ', 'lctype'/), dimids, dim_sz)
+    elseif (trim(info%file_metadata_type)=='soilalbedo') then
+        status=nc_lookup_dims(ncid, (/'lon   ', 'lat   ', 'n     '/), dimids, dim_sz)
+    else
+        print *, 'No such file type: ', trim(info%file_metadata_type)
     end if
     call handle_nf90_error(status, 'nc_lookup_dims '//trim(info%vname))
 
@@ -1218,7 +1360,7 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
 
     if (trim(info%file_metadata_type) == 'entgvsd') then
         call file_metadata_entgvsd(ncid, info%modification)
-    elseif (trim(info%file_metadata_type) == 'carrer') then
+    elseif (trim(info%file_metadata_type) == 'soilalbedo') then
         call file_metadata_carrer(ncid)
     else
         write(ERROR_UNIT,*) 'Unknown file_metadata_type ',trim(info%file_metadata_type)
@@ -1426,7 +1568,7 @@ end subroutine nc_create
 
 
 
-! Creates a NetCDF file with a single variable.
+! Creates a NetCDF file with a single variable for a vegetation file.
 ! The variable may be single layer or multi-layer.
 ! @param cio ChunkIO to initialize
 ! @param wta Weighting to use when writing this variable
@@ -1547,6 +1689,131 @@ layer_names, long_layer_names, create_lr)
     alloc_buf = (.not.present(layer_names)).and.(info%vname /= '')
     call finish_cio_init(this, cio, alloc_buf)
 end subroutine nc_create1
+
+
+! Creates a NetCDF file with a single variable that include a dimension n.
+! The variable may be single layer or multi-layer.
+! @param cio ChunkIO to initialize
+! @param wta Weighting to use when writing this variable
+! @param Directory in which to create file (relative to OUTPUTS_DIR)
+! @param leaf Filename to create, NOT INCLUDING .nc extension (eg: 'foo')
+! @param (OPTIONAL) layer_names (OPTIONAL) The descriptive name of each layer
+subroutine nc_create1_n(this, cio, &
+wta, &   ! Weight by weights(i,j)*MM + BB
+dir, leaf, &
+info, &
+layer_names, long_layer_names, create_lr)
+
+    class(Chunker_t) :: this
+    type(ChunkIO_t), target :: cio
+    type(Weighting_t), target :: wta
+    character*(*), intent(in) :: dir
+    character*(*), intent(in) :: leaf
+    type(FileInfo_t), intent(IN) :: info
+
+    character(len=*), dimension(:), OPTIONAL :: layer_names
+    character(len=*), dimension(:), OPTIONAL :: long_layer_names
+    logical, intent(IN), OPTIONAL :: create_lr
+
+    ! --------- Locals
+    integer :: err
+    character(2048) :: path_name_lr
+    character(4192) :: cmd
+    character(10) :: lon_s, lat_s,fmt
+    logical :: exist
+    integer, dimension(:), allocatable :: dimids
+    logical :: alloc_buf
+    integer :: nlayer
+
+
+    cio%wta = wta
+    cio%leaf = leaf
+    cio%rw = 'w'
+    if (.not.present(create_lr)) then
+        cio%create_lr = .true.
+    else
+        cio%create_lr = create_lr
+    end if
+    if (allocated(cio%base)) deallocate(cio%base)
+    if (present(layer_names)) then
+        nlayer = size(layer_names,1)
+        allocate(dimids(3))
+        cio%base = (/1,1,1/)    ! Not used
+    else
+        nlayer = 1
+        allocate(dimids(2))
+        cio%base = (/1,1/)
+    end if
+
+    ! ------ Create directory
+    if (info%use_outputs_dir) then
+        call execute_command_line('mkdir -p '//trim(this%outputs_dir)//trim(dir), &
+            .true., err)
+    else
+        call execute_command_line('mkdir -p '//trim(dir), &
+            .true., err)
+    end if
+    if (err /= 0) STOP 1
+
+    ! ------ Open/Create hi-res file
+    if (info%use_outputs_dir) then
+        cio%path = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'.nc'
+    else
+        cio%path = trim(dir)//trim(leaf)//'.nc'
+    end if
+    print *,'Writing ',trim(cio%path)
+    err = nf90_open(trim(cio%path), NF90_WRITE, cio%fileid) !Get ncid if file exists
+    if (err /= NF90_NOERR) then
+        if (present(layer_names)) then
+            err = my_nf90_create_ij_n(trim(cio%path), &
+                this%ngrid(1), this%ngrid(2), &
+                cio%fileid, &
+                layer_names, long_layer_names)
+        else
+            err = my_nf90_create_ij_n(trim(cio%path), &
+                this%ngrid(1), this%ngrid(2), &
+                cio%fileid)
+        end if
+    end if
+    if (info%vname /= '') then
+        call my_nf90_create_Ent_single(cio%fileid, cio%varid, nlayer, this%nchunk_file, info)
+    end if
+    cio%own_fileid = .true.
+
+    ! ---------- Open/Create lo-res file
+    if (.not.cio%create_lr) then
+        cio%own_fileid_lr = .false.
+    else
+        if (info%use_outputs_dir) then
+            path_name_lr = trim(this%outputs_dir)//trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        else
+            path_name_lr = trim(dir)//trim(leaf)//'_'//trim(this%lr_suffix)//'.nc'
+        end if
+        print *,'Writing ',trim(path_name_lr)
+        err = nf90_open(trim(path_name_lr), NF90_WRITE, cio%fileid_lr) !Get ncid if file exists
+        if (err /= NF90_NOERR) then
+            if (present(layer_names)) then
+                err = my_nf90_create_ij_n(trim(path_name_lr), &
+                    this%ngrid_lr(1), this%ngrid_lr(2), &
+                    cio%fileid_lr, layer_names, long_layer_names)
+            else
+                err = my_nf90_create_ij_n(trim(path_name_lr), &
+                    this%ngrid_lr(1), this%ngrid_lr(2), &
+                    cio%fileid_lr)
+            end if
+
+        end if
+        if (info%vname /= '') then
+            call my_nf90_create_Ent_single(cio%fileid_lr, cio%varid_lr, nlayer, this%nchunk_file, info)
+        end if
+        cio%own_fileid_lr = .true.
+    end if
+
+    alloc_buf = (.not.present(layer_names)).and.(info%vname /= '')
+    call finish_cio_init(this, cio, alloc_buf)
+end subroutine nc_create1_n
+
+
 
 function lc_weights(io_lc, MM, BB) result(wta)
     type(ChunkIO_t), intent(IN) :: io_lc(:)
@@ -1887,13 +2154,15 @@ subroutine nc_open(this, cio, oroot, dir, leaf, vname, k)
     cio%own_fileid = .true.
 
     ! Set cio%nlayers
-    err = nf90_inq_dimid(cio%fileid, 'nlayers', nlayers_dimid)
+    !err = nf90_inq_dimid(cio%fileid, 'nlayers', nlayers_dimid)
+    err = nf90_inq_dimid(cio%fileid, 'n', nlayers_dimid)
     if (allocated(cio%base)) deallocate(cio%base)
     if (err == NF90_NOERR) then
         err = nf90_inquire_dimension(cio%fileid, nlayers_dimid, xname, nlayers)
         allocate(cio%base(3))
         cio%base(3) = k
     else
+        print *,'No nlayers dimension, default to 1.'
         nlayers = 1
         allocate(cio%base(2))
     end if

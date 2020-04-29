@@ -178,13 +178,13 @@ subroutine open_output_files(out, rw)
     info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells not filled'
 #endif
     info%units = '1'
-    info%file_metadata_type = 'carrer'
+    info%file_metadata_type = 'soilalbedo' ! 'carrer'
 #ifdef USE_FILLED
-    call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
+    call out%chunker%nc_create1_n(out%io_albsw, weighting(out%wta,1d0,0d0), &
         'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR//'_fill', &
          info, create_lr=out%create_lr)
 #else
-    call out%chunker%nc_create1(out%io_albsw, weighting(out%wta,1d0,0d0), &
+    call out%chunker%nc_create1_n(out%io_albsw, weighting(out%wta,1d0,0d0), &
         'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, &
         info, create_lr=out%create_lr)
 #endif
@@ -201,15 +201,15 @@ subroutine open_output_files(out, rw)
            ', undefined cells not filled'
 #endif
         info%units = '1'
-        info%file_metadata_type = 'carrer'
+        info%file_metadata_type = 'soilalbedo' !'carrer'
 #ifdef USE_FILLED
-        call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
+        call out%chunker%nc_create1_n(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
             'soilalbedo/', &
             'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'// &
                 sLAI_YEAR//'_fill', &
             info, create_lr=out%create_lr)
 #else
-        call out%chunker%nc_create1(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
+        call out%chunker%nc_create1_n(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
             'soilalbedo/', &
             'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
             info, create_lr=out%create_lr)
@@ -222,9 +222,9 @@ subroutine open_output_files(out, rw)
         info%vname = 'fracbd_'//trim(sbands_giss(iband))
         info%long_name = 'Bright/Dark Soil (GISS '//trim(sbands_giss(iband))//' band)'
         info%units = '1'
-        info%file_metadata_type = 'carrer'
+        info%file_metadata_type = 'soilalbedo' !'carrer'
 
-        call out%chunker%nc_create1(out%ioall_fracbd(iband), weighting(out%wta_fracbd,1d0,0d0), &
+        call out%chunker%nc_create1_n(out%ioall_fracbd(iband), weighting(out%wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
             'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracbd_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
             info, sbright_dark, sbright_dark_long, create_lr=out%create_lr)
@@ -241,8 +241,8 @@ subroutine open_output_files(out, rw)
     info%vname = 'fracgrey'
     info%long_name = 'Bright/Dark Soil in (grey avg of GISS bands)'
     info%units = '1'
-    info%file_metadata_type = 'carrer'
-    call out%chunker%nc_create1(out%ioall_fracgrey, weighting(out%wta_fracbd,1d0,0d0), &
+    info%file_metadata_type = 'soilalbedo'  !'carrer'
+    call out%chunker%nc_create1_n(out%ioall_fracgrey, weighting(out%wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
         'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR, info, &
         sbright_dark, sbright_dark_long, create_lr=out%create_lr)
@@ -257,8 +257,8 @@ subroutine open_output_files(out, rw)
     info%vname = 'bs_brightratio'
     info%long_name = 'Bright Fraction of Soil'
     info%units = '1'
-    info%file_metadata_type = 'carrer'
-    call out%chunker%nc_create1( &
+    info%file_metadata_type = 'soilalbedo' !'carrer'
+    call out%chunker%nc_create1_n( &
         out%io_bs_brightratio, weighting(out%wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
         'soilalbedo_'//trim(out%sres)//'_bs_brightratio', info, create_lr=out%create_lr)
@@ -351,8 +351,10 @@ program Carrer_soilalbedo_to_GISS
         ! Read from 2D NetCDF var
         call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
             'tmp/carrer/', &
-            'albfill_'//trim(sbands_modis(iband))//'.nc', &
-            'albfill_'//trim(sbands_modis(iband)), SMEAN)
+            !'albfill_'//trim(sbands_modis(iband))//'.nc', &
+            !'albfill_'//trim(sbands_modis(iband)), SMEAN)
+         'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill.nc', &
+            'albfill_'//trim(sbands_modis(iband)), SMEAN) 
     end do
 #else
     print *, 'Using non-filled soil albedo mean.'
@@ -360,7 +362,9 @@ program Carrer_soilalbedo_to_GISS
         ! Read from 3D NetCDF var
         call ichunker%nc_open(io_albmodis(iband), ichunker%outputs_dir, &
             'tmp/carrer/', &
-            'albmodis_'//trim(sbands_modis(iband))//'.nc', &
+            !'albmodis_'//trim(sbands_modis(iband))//'.nc',&
+            !'albmodis_'//trim(sbands_modis(iband)), SMEAN)
+            'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
             'albmodis_'//trim(sbands_modis(iband)), SMEAN)
     end do
 #endif
