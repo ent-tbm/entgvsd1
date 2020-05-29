@@ -90,6 +90,8 @@ subroutine do_reindex(esub)
     !------------------------------------------------------------------------
     ! CREATE OUTPUT NETCDF FILES
 
+    ! PURE WITH WATER_ICE  
+
     ! LC_pure
     call chunker%nc_create_set( &
         esub_p, io_lcout(:,1), &
@@ -105,6 +107,11 @@ subroutine do_reindex(esub)
     call chunker%nc_create_set( &
         esub_p, io_laiout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
         LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', '1.1')
+
+    ! PURE_NOH2O scale out water_ice
+
+    !
+
 
     ! ------------- Checksums
     !  checksum land  laimax
@@ -170,6 +177,7 @@ implicit none
 
     ! -------------------------------------------------------
     type(GcmEntSet_t), target :: esub
+    type(GcmEntSet_t), target :: esubnoh2o
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)

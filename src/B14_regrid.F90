@@ -1,9 +1,12 @@
 ! Regrids the PURE files from 1km to 1/2 degree resolution
-!    in preparation of further trimming
+!    in preparation of further trimming.  
+! Creates:
+!    purelr with water_ice and 
+!    purelr_noh2o without water_ice, as input for trimming
 !
 ! Includes LC, LAIMAX, Height and monthly LAI files
 !
-! Author: Elizabeth Fischer
+! Author: Elizabeth Fischer, Nancy Y. Kiang
 
 #ifdef JUST_DEPENDENCIES
 #    define THIS_OUTPUTS_DIR MKFILES_DIR

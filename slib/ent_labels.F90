@@ -524,11 +524,12 @@ end subroutine GcmEntSet_allocate
 function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
     logical, intent(IN) :: combine_crops_c3_c4
     logical, intent(IN) :: split_bare_soil
+    !logical, intent(IN) :: with_h2o
     type(GcmEntSet_t) :: esub
 
     ! ---------- Locals
+    logical, parameter ::  with_h2o=.true.  ! TEMPORARY UNTIL PARAMETER
     integer :: i
-
     ! ------- Set up the remap
     call esub%allocate(ent20%ncover, ent20%ncover)
 
@@ -572,9 +573,12 @@ function make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil) result(esub)
         call esub%Entset_nonveg_name('M')  !Non-veg cover types are MODIS classes.
     end if
 
-    ! Combine water and snow/ice
-    call esub%add_covertype('n', 'water_ice', 'water, permanent snow/ice')     
-    esub%water_ice = esub%ncover
+    if (with_h2o) then 
+        ! Combine water and snow/ice
+        call esub%add_covertype('n', 'water_ice', 'water, permanent snow/ice')     
+        esub%water_ice = esub%ncover
+    endif
+
     if (.not.split_bare_soil) then 
         call esub%Entset_nonveg_name('X')  !Non-veg cover types are alternative
     endif

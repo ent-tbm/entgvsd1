@@ -168,14 +168,16 @@ subroutine open_output_files(out, rw)
     ! ------------- Locals
     type(FileInfo_t) :: info
     integer iband,k
-
+    character*5 :: fillsuf
     ! ------------ albsw = soilalbedo_SW
     call clear_file_info(info)
     info%vname = 'soilalbedo_SW'
 #ifdef USE_FILLED
     info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells filled'
+    fillsuf = '_fill'
 #else
     info%long_name = 'soil albedo shortwave (300-4000 nm) annual mean '//sLAI_YEAR//', undefined cells not filled'
+    fillsuf = ''
 #endif
     info%units = '1'
     info%file_metadata_type = 'soilalbedo' ! 'carrer'
@@ -226,7 +228,8 @@ subroutine open_output_files(out, rw)
 
         call out%chunker%nc_create1_n(out%ioall_fracbd(iband), weighting(out%wta_fracbd,1d0,0d0), &
             'soilalbedo/', &
-            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracbd_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
+            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracbd_'//trim(sbands_giss(iband))//'_annual_'// &
+                sLAI_YEAR//trim(fillsuf), &
             info, sbright_dark, sbright_dark_long, create_lr=out%create_lr)
         do k=1,NBRIGHT_DARK
             call out%chunker%nc_reuse_var( &
@@ -244,7 +247,7 @@ subroutine open_output_files(out, rw)
     info%file_metadata_type = 'soilalbedo'  !'carrer'
     call out%chunker%nc_create1_n(out%ioall_fracgrey, weighting(out%wta_fracbd,1d0,0d0), &
         'soilalbedo/', &
-        'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR, info, &
+        'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_fracgrey_annual_'//sLAI_YEAR//trim(fillsuf), info, &
         sbright_dark, sbright_dark_long, create_lr=out%create_lr)
     do k=1,2
         call out%chunker%nc_reuse_var( &
