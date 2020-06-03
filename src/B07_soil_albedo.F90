@@ -181,15 +181,10 @@ subroutine open_output_files(out, rw)
 #endif
     info%units = '1'
     info%file_metadata_type = 'soilalbedo' ! 'carrer'
-#ifdef USE_FILLED
+
     call out%chunker%nc_create1_n(out%io_albsw, weighting(out%wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR//'_fill', &
+        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR//trim(fillsuf), &
          info, create_lr=out%create_lr)
-#else
-    call out%chunker%nc_create1_n(out%io_albsw, weighting(out%wta,1d0,0d0), &
-        'soilalbedo/', 'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_SW_annual_'//sLAI_YEAR, &
-        info, create_lr=out%create_lr)
-#endif
 
     ! ----------- albgiss = soilalbedo_<GISSBAND>
     do iband=1,NBANDS_GISS
@@ -204,18 +199,12 @@ subroutine open_output_files(out, rw)
 #endif
         info%units = '1'
         info%file_metadata_type = 'soilalbedo' !'carrer'
-#ifdef USE_FILLED
+
         call out%chunker%nc_create1_n(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
             'soilalbedo/', &
             'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'// &
-                sLAI_YEAR//'_fill', &
+                sLAI_YEAR//trim(fillsuf), &
             info, create_lr=out%create_lr)
-#else
-        call out%chunker%nc_create1_n(out%io_albgiss(iband), weighting(out%wta,1d0,0d0), &
-            'soilalbedo/', &
-            'soilalbedo_'//trim(out%sres)//'_EntGVSD_v1.1_CarrerGISS_'//trim(sbands_giss(iband))//'_annual_'//sLAI_YEAR, &
-            info, create_lr=out%create_lr)
-#endif
     end do
 
     ! ----------- fracbd
@@ -262,9 +251,10 @@ subroutine open_output_files(out, rw)
     info%units = '1'
     info%file_metadata_type = 'soilalbedo' !'carrer'
     call out%chunker%nc_create1_n( &
-        out%io_bs_brightratio, weighting(out%wta_fracbd,1d0,0d0), &
+        !out%io_bs_brightratio, weighting(out%wta_fracbd,1d0,0d0), &
+        out%io_bs_brightratio, weighting(out%wta,1d0,0d0), &
         'soilalbedo/', &
-        'soilalbedo_'//trim(out%sres)//'_bs_brightratio', info, create_lr=out%create_lr)
+        'soilalbedo_'//trim(out%sres)//'_bs_brightratio'//trim(fillsuf), info, create_lr=out%create_lr)
 
     call out%chunker%nc_check(rw=rw)
 
@@ -472,6 +462,7 @@ print *,'***************** open_output_files',i
             end do
             do k=1,NBANDS_GISS
                 if (albgiss(k) /= FillValue) then
+#ifndef USE_FILLED
                     if (abs(1d0 - (lcice+lcwater)) < 1d-5) then
                         ! ------ All permanent ice, no soil.
                         o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
@@ -498,10 +489,13 @@ print *,'***************** open_output_files',i
                             o6%io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - o6%io_fracbd(BRIGHT,k)%buf(ic,jc)
                         end if
                     else
+#endif
                         ! -------- All ground
                         o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = min(albgiss(k),0.5)/0.5
                         o6%io_fracbd(DARK,k)%buf(ic,jc) = 1.0 - o6%io_fracbd(BRIGHT,k)%buf(ic,jc)
+#ifndef USE_FILLED
                     end if
+#endif
                 else
                     o6%io_fracbd(BRIGHT,k)%buf(ic,jc) = FillValue
                     o6%io_fracbd(DARK,k)%buf(ic,jc) = FillValue
@@ -522,6 +516,7 @@ print *,'***************** open_output_files',i
             o6%io_fracgrey(DARK)%buf(ic,jc) = 0
 
             if (albsw.ne.FillValue) then 
+#ifndef USE_FILLED
                if ((lcice+lcwater).eq.1.0) then !No ground
                     o6%io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
                     o6%io_fracgrey(DARK)%buf(ic,jc) = FillValue
@@ -543,9 +538,12 @@ print *,'***************** open_output_files',i
                      o6%io_fracgrey(DARK)%buf(ic,jc) = 1d0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
                   endif
                else    !Cell is all ground with SW
+#endif
                   o6%io_fracgrey(BRIGHT)%buf(ic,jc) = min(0.5, albsw)/0.5
                   o6%io_fracgrey(DARK)%buf(ic,jc) = 1d0 - o6%io_fracgrey(BRIGHT)%buf(ic,jc)
+#ifndef USE_FILLED
                endif
+#endif
             else
                 o6%io_fracgrey(BRIGHT)%buf(ic,jc) = FillValue
                 o6%io_fracgrey(DARK)%buf(ic,jc) = FillValue
@@ -602,6 +600,7 @@ print *,'***************** open_output_files',i
             call outs(i)%hntr%regrid4( &
                 outs(i)%io_bs_brightratio%buf, o6%io_bs_brightratio%buf, &
                 o6%wta_fracbd, 1d0, 0d0, &    ! weighting,
+                !o6%wta1, 1d0, 0d0, &    ! weighting,
                 outs(i)%io_bs_brightratio%startB(2), outs(i)%io_bs_brightratio%chunker%chunk_size(2))
 
 

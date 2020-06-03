@@ -274,15 +274,18 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! Convert to shrub if there's a small fraction and the shrubs already exist
                 ! convert sparse veg to cold adapted shrub (9) if present
                 ! At coarser spatial resolutions, use the upper limit of BARE_SPARSE fraction to convert.
-                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. vfc(esub%svm(BARE_SPARSE)) < .85 &
-                   .and. laic(esub%svm(BARE_SPARSE)) > 0e0) &
+                if( vfc(esub%svm(BARE_SPARSE)) > 0. .and. vfc(esub%svm(BARE_SPARSE)) < .85 &
+                   .and. laic(esub%svm(BARE_SPARSE)) > 0.) &
                 then
-                   if ( vfc(esub%svm(COLD_SHRUB)) > 0e0 )  then
+                   if ( vfc(esub%svm(COLD_SHRUB)) > 0. )  then
                     ! Preserve total LAI, but put it all in that vegetation
                     ! type.
                       if (laic(esub%svm(COLD_SHRUB)).le.0.) then
                          print *, 'ERROR: no cold_shrub LAI for cold_shrub cover', ii,jj
                       else
+                         print *, ii,jj,'Converting to cold shrub', &
+                                vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                                vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB))
                           call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                              vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
@@ -294,11 +297,14 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 !                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 & ! .and. vfc(esub%svm(BARE_SPARSE)) < .15 &
 !                   .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
 !                   .and. vfc(esub%svm(ARID_SHRUB)) > 0e0 ) &
-                     elseif (vfc(esub%svm(ARID_SHRUB)) > 0e0 )  &
-                     then
+                   elseif (vfc(esub%svm(ARID_SHRUB)) > 0e0 )  &
+                   then
                         if (laic(esub%svm(ARID_SHRUB)).le.0.) then
                            print *, 'ERROR: no arid_shrub LAI for arid_shrub cover',ii,jj 
                         else 
+                           print *, ii,jj,'Converting to arid shrub', &
+                                vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                                vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
                            call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                              vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
@@ -312,11 +318,15 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! convert the rest of sparse veg to crop 15 if present
 !                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 &
 !                      .and. vfc(esub%crops_herb) > 0e0 ) &
-                     elseif (vfc(esub%crops_herb) > 0e0 ) &
-                     then
+                   elseif (vfc(esub%crops_herb) > 0e0 ) &
+                   then
                         if (laic(esub%crops_herb).le.0.) then
                             print *, 'ERROR: no crops_herb LAI for crops_herb cover',ii,jj
                         else
+                           print *, 'Converting to crops', &
+                             vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                             vfc(esub%crops_herb), laic(esub%crops_herb)
+
                            call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                              vfc(esub%crops_herb), laic(esub%crops_herb), &
@@ -329,8 +339,8 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! (if present)
 !                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
 
-                     elseif (( vfc(maxpft) >= .0001 ).and.(laic(esub%svm(maxpft)).gt.0.)) &
-                     then
+                   elseif (( vfc(esub%svm(maxpft)) >= 0. ).and.(laic(esub%svm(maxpft)).gt.0.)) &
+                   then
                     !maxpft = maxloc( vfc(1:esub%last_pft), 1 )  !Moved to top
                     !of conditionals
                     ! TODO: Why is cycle here?  Check Nancy's original code
@@ -339,10 +349,10 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     !    as well as split_bare_soil (see original A07.f)
                     ! if ( vfc(maxpft) < .0001 ) cycle
                          
-                         if ((vfc(esub%svm(maxpft)).gt.0.0).and.(laic(esub%svm(maxpft)).gt.0.0)) then
+                     !    if ((vfc(esub%svm(maxpft)).gt.0.0).and.(laic(esub%svm(maxpft)).gt.0.0)) then
                              call convert_vf( &
                                 vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                vfc(maxpft), laic(maxpft), laic(maxpft))
+                                vfc(esub%svm(maxpft)), laic(esub%svm(maxpft)), laic(esub%svm(maxpft)))
 
                 ! If none of the above was true, then:
                 !  a) It's not a small fraction
@@ -351,30 +361,38 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 !  d) No clear categorization of other vegetation types in the grid cell
                 ! Assign to cold_shrub or arid_shrub based on temperature. Set minimum LAI of veg fraction to 0.5 to keep some bare fraction.
 !                if( vfc(esub%svm(BARE_SPARSE)) > 0e0 .and. laic(esub%svm(BARE_SPARSE)) > 0e0 ) then
-                          elseif (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
+                   elseif (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
                               call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                 vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), max(0.5, laic(esub%svm(BARE_SPARSE))))
-                          else
+                                 vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), max(0.5,laic(esub%svm(BARE_SPARSE))))
+                   else
                               call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                 vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), max(0.5, laic(esub%svm(BARE_SPARSE))))
-                          endif
+                                 vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), max(0.5,laic(esub%svm(BARE_SPARSE))))
+                   endif
 
                    !call Set_Shrubtype( &
                    !     io_TCinave%buf(ic,jc)+273.15, &
                    !     vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                    !     vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
                    !     vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)))
-                        
-                     end if
+                     !else
+                     !   print *,ii,jj, 'maxpft',maxpft, 'vfc',  vfc(esub%svm(maxpft)), 'laic',laic(esub%svm(maxpft))
+                     !end if
                 else ! vfc BARE_SPARSE>=0.85
-                     if  (laic(esub%svm(BARE_SPARSE)) > 0e0) then
+                     if  ((vfc(esub%svm(BARE_SPARSE)).ge.0.85) .and. laic(esub%svm(BARE_SPARSE)) > 0.) then
+                        print *, 'vfc BARE >= 0.85',vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                                vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
+                                vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
                         if (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
-                            call convert_vf(vfc(esub%svm(BARE_SPARSE)), &
-                              laic(esub%svm(BARE_SPARSE)), vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), 0.5)
-                        else
                             call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                           vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), 0.5)
+                                vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), & 
+                                max(0.5, laic(esub%svm(BARE_SPARSE))))
+                        else
+                            call convert_vf(vfc(esub%svm(BARE_SPARSE)), & 
+                               laic(esub%svm(BARE_SPARSE)), vfc(esub%svm(ARID_SHRUB)), &
+                                laic(esub%svm(ARID_SHRUB)), max(0.5, laic(esub%svm(BARE_SPARSE))))
                         endif
+                     else
+                        !print *, ii,jj, 'No lai for BARE_SPARSE>=0.85'
                      endif
                 end if !if vfc and lai BARE_SPARSE are >0. AND vfc BARE_SPASE < 0.85
 
