@@ -84,7 +84,7 @@ subroutine do_gridfill(rw, iband)
         'tmp/carrer/', &
         !'albmodis_'//trim(sbands_modis(iband))//'.nc', &
         !'albmodis_'//trim(sbands_modis(iband)), 0)
-        'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
+        'soilalbedo_6km_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
         'albmodis_'//trim(sbands_modis(iband)), 0)
     do id=1,NSTATS_FILLABLE
         call chunker%nc_reuse_var( &
