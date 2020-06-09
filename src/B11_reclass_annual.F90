@@ -114,12 +114,12 @@ subroutine do_reindex(esub)
 
 
     ! ------------- Checksums
-    !  checksum land  laimax
+    !   
     call chunker%file_info(info, esub_p, &
         LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lc_checksum(1), &
-        weighting(chunker%wta1, 1d0, 0d0), &   ! TODO: Scale by _lc
+        weighting(chunker%wta1, 1d0, 0d0), &   ! Sum all cover
         info%dir, info%leaf, info%vname, &
         'SUM(lc)', info%units)
 
@@ -127,7 +127,7 @@ subroutine do_reindex(esub)
         LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lchgt_checksum(1), &
-        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! Scale by _lc
         info%dir, info%leaf, info%vname, &
         'SUM(lc*height)', info%units)
 
@@ -135,7 +135,7 @@ subroutine do_reindex(esub)
         LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'pure', '1.1', &
         varsuffix = '_checksum')
     call chunker%nc_create(io_lclai_checksum(1), &
-        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! TODO: Scale by _lc
+        weighting(io_lc_checksum(1)%buf, 1d0, 0d0), &   ! Scale by _lc
         info%dir, info%leaf, info%vname, &
         'SUM(LC*LAI)', info%units)
 

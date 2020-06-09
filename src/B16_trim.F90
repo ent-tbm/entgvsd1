@@ -934,7 +934,7 @@ call check_laim(laim, 'check1')
             ! Also do not trim water_ice; instead, later scale out water_ice if land
             ! exists.
             if ((k == esub%bare_bright).or.(k == esub%bare_dark)) cycle
-
+            if (k == esub%water_ice) cycle
             if (vfc(k) < lc_trim_threshold) vfc(k) = 0
             do m=1,NMONTH
                 if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
@@ -987,11 +987,18 @@ call check_laim(laim, 'check1')
         endif
 
         !grid cells with land scale land to sum to 1 and set water_ice to 0.
-        if ( sum_vfc > 0.00001 ) then
+        !If all land got trimmed out, then set water_ice to 1.
+        !if ( sum_vfc > 0.00001 ) then
+        if ( sum_vfc > 0. ) then
             vfc(1:N_BARE) = vfc(1:N_BARE) / sum_vfc
             vfm(1:N_BARE,:) = vfm(1:N_BARE,:) / sum_vfc
             vfc(N_WATERICE) = 0.
             vfm(N_WATERICE,:) = 0.
+        else if ((vfc(N_WATERICE).gt.0.).and.(vfc(N_WATERICE).lt.1.)) then
+            print *, sum_vfc, vfc
+            vfc(N_WATERICE) = 1.
+            vfm(N_WATERICE,:) = 1.
+
         end if
         sum_vfc = sum(vfc(1:N_BARE))
         sum_vfm = sum(vfm(1:N_BARE, 1))

@@ -137,7 +137,8 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     integer :: idoy
 
     ! Input values, max, monthly
-    real*4 :: bs_brightratio   !are soil brightratio
+    real*4 :: bs_brightratio   !soil albedo brightratio
+    real*4 :: bs_brightratio_last !Save last good value of bs_brightratio, hack for some that are FillValue
     ! Renumbered input values
     real*4 vfc(esub%ncover)    ! = vfn = io_lcin
     real*4 laic(esub%ncover)   ! = lain = io_lcaiin
@@ -151,7 +152,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     integer :: maxpft
     real*4 :: vf_bare_sparse
 
-
+    bs_brightratio_last = FillValue
 
     ! Use these loop bounds for testing...
     ! it chooses a land area in Asia
@@ -195,7 +196,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     end if
                 end do
 
-                ! Combine water and permanent snow/ice
+
+                ! Combine water and permanent snow/ice. If lai>0 over ice, then
+                ! convert to arctic grass.
                 waterice = 0.
 !                waterice = io_lcin(CV_WATER)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
                 if (io_lcin(CV_WATER)%buf(ic,jc) > 0.) waterice = waterice + io_lcin(CV_WATER)%buf(ic,jc)
@@ -283,9 +286,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                       if (laic(esub%svm(COLD_SHRUB)).le.0.) then
                          print *, 'ERROR: no cold_shrub LAI for cold_shrub cover', ii,jj
                       else
-                         print *, ii,jj,'Converting to cold shrub', &
-                                vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB))
+                         !print *, ii,jj,'Converting to cold shrub', &
+                         !       vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                         !       vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB))
                           call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                              vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
@@ -302,9 +305,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         if (laic(esub%svm(ARID_SHRUB)).le.0.) then
                            print *, 'ERROR: no arid_shrub LAI for arid_shrub cover',ii,jj 
                         else 
-                           print *, ii,jj,'Converting to arid shrub', &
-                                vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
+                           !print *, ii,jj,'Converting to arid shrub', &
+                           !     vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                           !     vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
                            call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                              vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB)), &
@@ -323,9 +326,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         if (laic(esub%crops_herb).le.0.) then
                             print *, 'ERROR: no crops_herb LAI for crops_herb cover',ii,jj
                         else
-                           print *, 'Converting to crops', &
-                             vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                             vfc(esub%crops_herb), laic(esub%crops_herb)
+                           !print *, 'Converting to crops', &
+                           !  vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                           !  vfc(esub%crops_herb), laic(esub%crops_herb)
 
                            call convert_vf( &
                              vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
@@ -379,9 +382,9 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                      !end if
                 else ! vfc BARE_SPARSE>=0.85
                      if  ((vfc(esub%svm(BARE_SPARSE)).ge.0.85) .and. laic(esub%svm(BARE_SPARSE)) > 0.) then
-                        print *, 'vfc BARE >= 0.85',vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
-                                vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
-                                vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
+                        !print *, 'vfc BARE >= 0.85',vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
+                        !        vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), &
+                        !        vfc(esub%svm(ARID_SHRUB)), laic(esub%svm(ARID_SHRUB))
                         if (Shrubtype(io_TCinave%buf(ic,jc)+273.15).eq.COLD_SHRUB) then
                             call convert_vf(vfc(esub%svm(BARE_SPARSE)), laic(esub%svm(BARE_SPARSE)), &
                                 vfc(esub%svm(COLD_SHRUB)), laic(esub%svm(COLD_SHRUB)), & 
@@ -418,8 +421,22 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 ! Carrer uses same dataset, so things should line up...
                 if ((split_bare_soil).and.(vfc(esub%svm(BARE_SPARSE))>0.)) then
                     vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
-                    vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
-                    vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
+                    if (bs_brightratio.lt.0.) then  !Unknown source of ~1742 points with bs_brightratio==FillValue
+                        if (bs_brightratio_last.eq.FillValue) then !No nearby previous okay bs_brightratio
+                           print *, ic, jc, "bs_brightratio<0 ", bs_brightratio, vfc(esub%svm(BARE_SPARSE)), &
+                                'Assigning 0.3 bright, 0.7 dark x BARE_SPARSE'
+                           vfc(esub%bare_bright) = vf_bare_sparse * 0.3
+                           vfc(esub%bare_dark) = vf_bare_sparse*(1. - 0.3) !vf_bare_sparse - vfc(esub%bare_bright)
+                        else
+                           print *, ic, jc, "Using bs_brightratio_last",bs_brightratio_last, vf_bare_sparse 
+                           vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio_last
+                           vfc(esub%bare_dark) = vf_bare_sparse*max(0., 1. - bs_brightratio_last) 
+                        endif
+                    else
+                        vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
+                        vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
+                        bs_brightratio_last = bs_brightratio
+                    endif
                     laic(esub%bare_bright) = 0.
                     laic(esub%bare_dark) = 0.
                 end if
