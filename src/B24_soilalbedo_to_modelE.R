@@ -1,11 +1,11 @@
-#B19b_to_modelE.R
+#B24_soilalbedo_to_modelE.R
 #Reformats netcdf individual month LAI files into a single file with lai(im, jm, lc, month)
 source("utils.R")
 library("RNetCDF")
 
 #Update 
-#FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated."
-FILL = ''; FILLdescription="  No interpolation."
+FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated."
+#FILL = ''; FILLdescription="  No interpolation."
 YEAR='2004'
 version = 'v1.1'
 
@@ -14,6 +14,7 @@ res="HXH"
 path = '../outputs/soilalbedo/'
 file = paste('soilalbedo_',res,'_EntGVSD_',version,'_multiband_annual_',YEAR,FILL,'.nc', sep='')
 fileout = paste(path, file, sep='')
+print(fileout)
 
 description = paste('Ent Global Vegetation Structure Dataset (Ent GVSD) Soil albedo derived from D. Carrer et al. (2014) MODIS soil albedos.  Created with Ent GVSD ',version,'.',FILLdescription,  sep="")
 
