@@ -275,7 +275,7 @@ implicit none
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
     esub_p => esub
     esub_p2 => esub_p
-    call do_B17_checksums(rw, esub_p2)
+    !call do_B17_checksums(rw, esub_p2) !Do earlier in B14a program.
     call do_B16_checksums(rw, esub_p, 'trimmed')
     call do_B16_checksums(rw, esub_p, 'trimmed_scaled')
     !call do_B16_checksums(rw, esub_p, 'trimmed_scaled_crops_ext') !This step will be handled by the Ent_utils.git code.

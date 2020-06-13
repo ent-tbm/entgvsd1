@@ -130,8 +130,13 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
     type(ChunkIO_t), OPTIONAL :: io_lchgt_checksum(ndoy)
 
     ! -------------- Local Vars
+    !These logical parameters could be passed in as parameters like split_bare_soil
+    logical,parameter :: split_coasts=.false.   !Allocate all LAI to land portion of grid cell that has a water fraction<1. .false. in official release.
+    logical,parameter :: land_ice_lai=.true.   !Assign any land ice with lai>0. to be arctic c3 grass.
+    !---------------
     integer :: ichunk,jchunk,ic,jc,ii,jj
     integer :: i
+    integer :: p
     integer :: k,ksub, ri
     real*8 :: CHECKSUM
     integer :: idoy
@@ -151,6 +156,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
 
     integer :: maxpft
     real*4 :: vf_bare_sparse
+    real*4 :: laitot, lclailand, vf_land, f
 
     bs_brightratio_last = FillValue
 
@@ -181,6 +187,63 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 vfc = 0
                 laic = 0
 
+                ! This operation leads to rare high LAI pixels. NOT USED IN OFFICIAL RELEASE. Only need to zero out water lai.
+                ! Allocate coastal water lai to io_laiin land subgrid fractions (incl. SNOW_ICE and BARE_SPARSE).
+                ! No change in cover fractions, just scale land lai to make
+                ! sum(lc*lai) = laitot, and set water io_laiin to 0. 
+                ! Later can convert any lai on SNOW_ICE oR BARE_SPARSE.
+                if (split_coasts) then
+                    vf_land = 0.
+                    do  i=1,BARE_SPARSE
+                        vf_land = vf_land + (io_lcin(i)%buf(ic,jc))
+                    enddo
+                    if (((vf_land.gt.0.).and.(io_lcin(CV_WATER)%buf(ic,jc).gt.0.)) &
+                        .and.(io_laiin(CV_WATER,idoy)%buf(ic,jc).gt.0.)) then
+                       laitot = 0.
+                       do i=1,CV_WATER
+                           laitot = laitot + (io_lcin(i)%buf(ic,jc))*io_laiin(i,idoy)%buf(ic,jc) !/sum(lc all)=1.
+                       enddo
+                       lclailand = 0.
+                       do i=1,BARE_SPARSE
+                           lclailand = lclailand + (io_lcin(i)%buf(ic,jc))*io_laiin(i,idoy)%buf(ic,jc) 
+                       enddo
+                       if (lclailand.gt.0) then
+                           ! increase lai of all land fractions proportional to their existing lai, preserving laitot.
+                           f = laitot / lclailand
+                           do i=1,BARE_SPARSE
+                               !print *, 'Scaling up lai on land from CV_WATER', &
+                               !         ic,jc,f,vf_land,i, io_lcin(i)%buf(ic,jc), io_lcin(CV_WATER)%buf(ic,jc),&
+                               !         io_laiin(CV_WATER,idoy)%buf(ic,jc), laitot, io_laiin(i,idoy)%buf(ic,jc)
+                               io_laiin(i,idoy)%buf(ic,jc) = f * io_laiin(i,idoy)%buf(ic,jc)
+                           enddo
+                       else
+                           do i=1,BARE_SPARSE
+                               !This operation can be wrong if a green water
+                               !body is surrounded by bare ground.
+                               !print *,'Moving lai to land from CV_WATER', &
+                               !        ic,jc,vf_land,i, io_lcin(i)%buf(ic,jc), io_lcin(CV_WATER)%buf(ic,jc),&
+                               !        io_laiin(CV_WATER,idoy)%buf(ic,jc), laitot, io_laiin(i,idoy)%buf(ic,jc) 
+                               io_laiin(i,idoy)%buf(ic,jc) = laitot / vf_land
+                           enddo 
+                       endif
+                       io_laiin(CV_WATER,idoy)%buf(ic,jc) = 0.
+                    endif
+                endif
+
+                ! Convert lai>0 on permanent ice to arctic c3 grass
+                if (land_ice_lai) then
+                   if ( (io_lcin(SNOW_ICE)%buf(ic,jc).gt.0.).and.(io_laiin(SNOW_ICE,idoy)%buf(ic,jc).gt.0.) ) then
+                        print *, 'Converting lai on snow_ice to arctic c3 grass', &
+                                ic,jc,io_lcin(SNOW_ICE)%buf(ic,jc), io_laiin(SNOW_ICE,idoy)%buf(ic,jc)
+                        laitot = ( io_lcin(C3_GRASS_ARCT)%buf(ic,jc)*io_laiin(C3_GRASS_ARCT,idoy)%buf(ic,jc) + &
+                                io_lcin(SNOW_ICE)%buf(ic,jc)*io_laiin(SNOW_ICE,idoy)%buf(ic,jc) ) / &
+                                ( io_lcin(C3_GRASS_ARCT)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc))
+                        io_laiin(C3_GRASS_ARCT,idoy)%buf(ic,jc) = laitot
+                        io_laiin(SNOW_ICE,idoy)%buf(ic,jc) = 0.
+                        io_lcin(C3_GRASS_ARCT)%buf(ic,jc) = io_lcin(C3_GRASS_ARCT)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
+                        io_lcin(SNOW_ICE)%buf(ic,jc) = 0.
+                    endif
+                endif 
 
                 ! =============== Convert to GISS 16 pfts format with water_ice
                 ! First simple transfers
@@ -196,9 +259,7 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     end if
                 end do
 
-
-                ! Combine water and permanent snow/ice. If lai>0 over ice, then
-                ! convert to arctic grass.
+                ! Combine water and permanent snow/ice. 
                 waterice = 0.
 !                waterice = io_lcin(CV_WATER)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
                 if (io_lcin(CV_WATER)%buf(ic,jc) > 0.) waterice = waterice + io_lcin(CV_WATER)%buf(ic,jc)

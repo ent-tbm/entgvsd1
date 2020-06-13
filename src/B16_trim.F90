@@ -897,7 +897,7 @@ call check_laim(laim, 'check1')
                 vfc,laic,hm,hsd,vfm,laim)
         end if
 
-
+       
         ! ------------------ Trim small fractions, just zero them out
         ! Trimming stage is not getting rid of some tiny fractions
         ! Things over Antarctica, also over the ocean
@@ -910,6 +910,7 @@ call check_laim(laim, 'check1')
         ! If no other vegetation in that cell and that's the only point with LAI and it's that small...
         !     ==> just zero it out
         !     Then checksum to see loss/gain in LAI
+        ! Zero out water_ice LAI
 
         do k=1,esub%ncover
             ! Note: Do not trim bare_bright and bare_dark.  They still have to
@@ -953,6 +954,14 @@ call check_laim(laim, 'check1')
                 vfm(esub%bare_dark,m) = 0
             end if
         end do
+
+        ! Zero out water_ice lai
+        laic(esub%water_ice) = 0.
+
+        ! Zero out water_ice monthly lai
+        do m=1,NMONTH
+                tr%io_mon_lai(esub%water_ice,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
+        end do ! m
 
         ! -------------------------- Write Outputs (trimmed)
         do k=1,esub%ncover
