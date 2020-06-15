@@ -14,7 +14,7 @@ private
     public :: Chunker_t,ChunkIO_t,FileInfo_t,clear_file_info,ReadWrites_t
     public :: weighting,Weighting_t,lc_weights,repeat_weights
     public :: nop_regrid_lr, default_regrid_lr
-    public :: FillValue
+    public :: FillValue, sres
     public :: dbi0,dbi1,dbj0,dbj1
     public :: dbi0_lc,dbi1_lc,dbj0_lc,dbj1_lc
     public :: get_sdate

@@ -9,6 +9,7 @@ implicit none
 private
 
 public cropmerge_laisparse_splitbare, Shrubtype
+public split_bare_single
 
 CONTAINS
 
@@ -52,6 +53,52 @@ integer function Shrubtype(MATEMP)
     endif
 end function Shrubtype
 
+! split_bare_single splits bare soil into bright and dark fractions for only
+! ModelE legacy soil albedo scheme.  Also, due to the original soil albedo
+! source file lacking some data in grid cells where MODIS land cover is
+! non-zero, a check for undefined bs_brightratio is done:  if it is <0
+! (undefined, should be FillValue, then it uses the most recent
+! bs_brightratio_last if defined, otherwise assigns typical fractons of 0.3
+! bright and 0.7 dark; if bs_brightratio is defined, then it bs_brightratio_last
+! is updated.
+subroutine split_bare_single( &
+    esub, bs_brightratio, &
+    vf_bare_sparse, &
+    vfc,laic, &
+    bs_brightratio_last)
+implicit none
+    type(GcmEntSet_t), intent(IN) :: esub
+    real*4, intent(IN) :: bs_brightratio   !Fraction of bare that is bright.
+    real*4, intent(IN) :: vf_bare_sparse
+    real*4, intent(INOUT), dimension(esub%ncover) :: vfc,laic
+    real*4, intent(INOUT) :: bs_brightratio_last
+    !-----Local----
+    integer :: m
+
+    if ((split_bare_soil).and.(vf_bare_sparse>0.)) then
+        if (bs_brightratio.lt.0.) then  !Unknown source of ~1742 points with bs_brightratio==FillValue
+            if (bs_brightratio_last.eq.FillValue) then !No nearby previous okay bs_brightratio
+                !print *, ic, jc, "bs_brightratio<0 ", bs_brightratio, vfc(esub%svm(BARE_SPARSE)), &
+                print *, "bs_brightratio<0 ", bs_brightratio, vfc(esub%svm(BARE_SPARSE)), &
+                    'Assigning 0.3 bright, 0.7 dark x BARE_SPARSE'
+                    vfc(esub%bare_bright) = vf_bare_sparse * 0.3
+                    vfc(esub%bare_dark) = vf_bare_sparse*(1. - 0.3) !vf_bare_sparse - vfc(esub%bare_bright)
+            else
+                !print *, ic, jc, "Using bs_brightratio_last",bs_brightratio_last, vf_bare_sparse
+                print *, "Using bs_brightratio_last",bs_brightratio_last, vf_bare_sparse
+                    vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio_last
+                    vfc(esub%bare_dark) = vf_bare_sparse*max(0., 1. - bs_brightratio_last)
+            endif
+        else
+                    vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
+                    vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
+                    bs_brightratio_last = bs_brightratio
+        endif
+            laic(esub%bare_bright) = 0.
+            laic(esub%bare_dark) = 0.
+     endif
+
+end subroutine split_bare_single
 
 ! This is the common "guts" of B11_reclass_annual, B12_reclass_doy and B13_reclass_doy
 ! Arguments:
@@ -234,14 +281,22 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 if (land_ice_lai) then
                    if ( (io_lcin(SNOW_ICE)%buf(ic,jc).gt.0.).and.(io_laiin(SNOW_ICE,idoy)%buf(ic,jc).gt.0.) ) then
                         print *, 'Converting lai on snow_ice to arctic c3 grass', &
-                                ic,jc,io_lcin(SNOW_ICE)%buf(ic,jc), io_laiin(SNOW_ICE,idoy)%buf(ic,jc)
+                                ic,jc,io_lcin(SNOW_ICE)%buf(ic,jc), io_laiin(SNOW_ICE,idoy)%buf(ic,jc), &
+                                io_lcin(C3_GRASS_ARCT)%buf(ic,jc), io_laiin(C3_GRASS_ARCT,idoy)%buf(ic,jc)
                         laitot = ( io_lcin(C3_GRASS_ARCT)%buf(ic,jc)*io_laiin(C3_GRASS_ARCT,idoy)%buf(ic,jc) + &
                                 io_lcin(SNOW_ICE)%buf(ic,jc)*io_laiin(SNOW_ICE,idoy)%buf(ic,jc) ) / &
                                 ( io_lcin(C3_GRASS_ARCT)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc))
+                        print *, '...laitot', laitot
                         io_laiin(C3_GRASS_ARCT,idoy)%buf(ic,jc) = laitot
                         io_laiin(SNOW_ICE,idoy)%buf(ic,jc) = 0.
+                        if (present(io_simin)) then
+                            print *, 'io_simin',io_simin(C3_GRASS_ARCT,idoy)%buf(ic,jc), io_simin(SNOW_ICE,idoy)%buf(ic,jc)
+                            io_simin(C3_GRASS_ARCT,idoy)%buf(ic,jc) =  heights_form(2,C3_GRASS_ARCT)
+                            io_simin(SNOW_ICE,idoy)%buf(ic,jc) =  0.
+                        endif
                         io_lcin(C3_GRASS_ARCT)%buf(ic,jc) = io_lcin(C3_GRASS_ARCT)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
                         io_lcin(SNOW_ICE)%buf(ic,jc) = 0.
+                        print *, 'Got here.'
                     endif
                 endif 
 
@@ -475,32 +530,39 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                     end if
                 end if
 
-                ! Splits bare soil into bright and dark fractions, so we get
-                ! the proper albedo in the GCM
+                ! Splits bare soil into bright and dark fractions, only for
+                ! legacy GISS ModelE scheme for calculating albedo.
                 ! (We need a soil albedo wherever there is veg or bare soil type)
-                ! (If there is not, we need to interpolate a little bit)
-                ! Carrer uses same dataset, so things should line up...
-                if ((split_bare_soil).and.(vfc(esub%svm(BARE_SPARSE))>0.)) then
-                    vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
-                    if (bs_brightratio.lt.0.) then  !Unknown source of ~1742 points with bs_brightratio==FillValue
-                        if (bs_brightratio_last.eq.FillValue) then !No nearby previous okay bs_brightratio
-                           print *, ic, jc, "bs_brightratio<0 ", bs_brightratio, vfc(esub%svm(BARE_SPARSE)), &
-                                'Assigning 0.3 bright, 0.7 dark x BARE_SPARSE'
-                           vfc(esub%bare_bright) = vf_bare_sparse * 0.3
-                           vfc(esub%bare_dark) = vf_bare_sparse*(1. - 0.3) !vf_bare_sparse - vfc(esub%bare_bright)
-                        else
-                           print *, ic, jc, "Using bs_brightratio_last",bs_brightratio_last, vf_bare_sparse 
-                           vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio_last
-                           vfc(esub%bare_dark) = vf_bare_sparse*max(0., 1. - bs_brightratio_last) 
-                        endif
-                    else
-                        vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
-                        vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
-                        bs_brightratio_last = bs_brightratio
-                    endif
-                    laic(esub%bare_bright) = 0.
-                    laic(esub%bare_dark) = 0.
-                end if
+                ! The soil albedo grid fill interpolates along latitudes.
+                ! Carrer uses same dataset, so things should line up; however,
+                ! MODIS lc still has pixels at high latitude not in the Carrer 6
+                ! km data set; therefore, checked for in split_bare_single.
+                vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
+                call split_bare_single( esub, bs_brightratio, &
+                    vf_bare_sparse, &
+                    vfc,laic, &
+                    bs_brightratio_last)
+                !if ((split_bare_soil).and.(vfc(esub%svm(BARE_SPARSE))>0.)) then
+                !    vf_bare_sparse = vfc(esub%svm(BARE_SPARSE))
+                !    if (bs_brightratio.lt.0.) then  !Unknown source of ~1742 points with bs_brightratio==FillValue
+                !        if (bs_brightratio_last.eq.FillValue) then !No nearby previous okay bs_brightratio
+                !           print *, ic, jc, "bs_brightratio<0 ", bs_brightratio, vfc(esub%svm(BARE_SPARSE)), &
+                !                'Assigning 0.3 bright, 0.7 dark x BARE_SPARSE'
+                !           vfc(esub%bare_bright) = vf_bare_sparse * 0.3
+                !           vfc(esub%bare_dark) = vf_bare_sparse*(1. - 0.3) !vf_bare_sparse - vfc(esub%bare_bright)
+                !        else
+                !           print *, ic, jc, "Using bs_brightratio_last",bs_brightratio_last, vf_bare_sparse 
+                !           vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio_last
+                !           vfc(esub%bare_dark) = vf_bare_sparse*max(0., 1. - bs_brightratio_last) 
+                !        endif
+                !    else
+                !        vfc(esub%bare_bright) = vf_bare_sparse * bs_brightratio
+                !        vfc(esub%bare_dark) = vf_bare_sparse*(1. - bs_brightratio)  !vf_bare_sparse - vfc(esub%bare_bright)
+                !        bs_brightratio_last = bs_brightratio
+                !    endif
+                !    laic(esub%bare_bright) = 0.
+                !    laic(esub%bare_dark) = 0.
+                !end if
 
 
                 do k=1,esub%ncover
@@ -551,11 +613,13 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                 end if
 
                 if (present(io_lchgt_checksum)) then
+                  if (present(io_simout)) then
                     io_lchgt_checksum(idoy)%buf(ic,jc) = 0.
                     do k=1,esub%ncover
                         io_lchgt_checksum(idoy)%buf(ic,jc) = io_lchgt_checksum(idoy)%buf(ic,jc) + &
                             vfc(k) * io_simout(k,idoy)%buf(ic,jc) 
                     end do
+                  endif
                 end if
 
             end do    ! idoy

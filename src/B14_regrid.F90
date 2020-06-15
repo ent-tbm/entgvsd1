@@ -391,15 +391,16 @@ subroutine do_regrid_all_lais(rw)
 
 
     ! ---------------------------------
+    ! NOT NEEDED: Use file already created by B07_soilalbedo.F90.
     ! Create single-layer EntSet_t
     ! Bare soil Bright Ratio
-    call chunkerlr%file_info(oinfo, ent1, &
-        LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'purelr', '1.1')
-
-    oinfo%leaf = 'bs_brightratio'
-    call regrid_selfmask( &
-        chunkerlr%outputs_dir, 'soilalbedo/', 'soilalbedo_1km_bs_brightratio_fill', 'bs_brightratio', &
-        oinfo, rw)
+    !call chunkerlr%file_info(oinfo, ent1, &
+    !    LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'purelr', '1.1')
+    !
+    !oinfo%leaf = 'bs_brightratio'
+    !call regrid_selfmask( &
+    !    chunkerlr%outputs_dir, 'soilalbedo/', 'soilalbedo_1km_bs_brightratio_fill', 'bs_brightratio', &
+    !    oinfo, rw)
     ! ---------------------------------
 
     esub_p => esub

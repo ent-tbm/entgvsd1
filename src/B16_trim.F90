@@ -289,37 +289,47 @@ end subroutine convert_vfh
 subroutine do_split_bare_soil( &
     esub, bs_brightratio, &
     vfc,laic,hm,hsd, &
-    vfm,laim)
+    vfm,laim, &
+    bs_brightratio_last)
+    use cropmerge_laisparse_splitbare_mod, only:  split_bare_single
 implicit none
     type(GcmEntSet_t), intent(IN) :: esub
     real*4, intent(IN) :: bs_brightratio   !Fraction of bare that is bright.
     real*4, intent(INOUT), dimension(esub%ncover) :: vfc,laic,hm,hsd
     real*4, intent(INOUT), dimension(esub%ncover,NMONTH) :: vfm, laim
+    real*4, intent(INOUT) :: bs_brightratio_last
     !-----Local----
     real*4 :: vft
     integer :: m
 
     vft = vfc(esub%bare_bright) + vfc(esub%bare_dark)
-    if ((vft.lt.0.and.abs(vft)<1e20).or. &
-          ((vft.gt.0.and.abs(vft)<1e20).and.(bs_brightratio.lt.0.))) then !Bad data
+    if ((vft.lt.0.and.abs(vft)<1e20)) then !.or. &
+        !  ((vft.gt.0.and.abs(vft)<1e20).and.(bs_brightratio.lt.0.))) then !.or. &
+        !        (bs_brightratio.lt.0.)) then !Bad data
         write(ERROR_UNIT,*) 'ERR2: bs_brightratio',vft,bs_brightratio
         !Keep existing bright and dark
     else             !Good data
-        vfc(esub%bare_bright) = vft*bs_brightratio
-        vfc(esub%bare_dark) = vft*(1.-bs_brightratio)
-        laic(esub%bare_bright) = 0.
-        laic(esub%bare_dark) = 0.
+    !    vfc(esub%bare_bright) = vft*bs_brightratio
+    !    vfc(esub%bare_dark) = vft*(1.-bs_brightratio)
+    !    laic(esub%bare_bright) = 0.
+    !    laic(esub%bare_dark) = 0.
+        call split_bare_single( esub, bs_brightratio, &
+           vft, vfc,laic, bs_brightratio_last)
     end if
 
     do m=1,NMONTH
-        if ((vft<0.and.abs(vft)<1e20).or. &
-           ((vft>0.and.abs(vft)<1e20).and.(bs_brightratio<0.))) then !Bad data
+        if ((vft<0.and.abs(vft)<1e20)) then !.or. &
+            !   ((vft>0.and.abs(vft)<1e20).and.(bs_brightratio<0.))) then !.or. &
+            !     (bs_brightratio.lt.0.)) then !Bad data
             write(ERROR_UNIT,*) 'ERR2m: bs_brightratio',vft,abs(vft) &
               ,vfc(esub%bare_bright),vfc(esub%bare_dark),bs_brightratio
             !Keep existing bright and dark, or check why vft<0.
-        else          !Good data
-            vfm(esub%bare_bright,m) = vft*bs_brightratio
-            vfm(esub%bare_dark,m) = vft*(1d0-bs_brightratio)
+        else         !Good data
+            !vfm(esub%bare_bright,m) = vft*bs_brightratio
+            !vfm(esub%bare_dark,m) = vft*(1.-bs_brightratio)
+            call split_bare_single( esub, bs_brightratio, &
+             vft, vfm(:,m),laim(:,m), bs_brightratio_last)
+
         end if
         laim(esub%bare_bright,m) = 0.
         laim(esub%bare_dark,m) = 0.
@@ -771,6 +781,7 @@ subroutine check_laim(laim, msg)
 end subroutine check_laim
 
 subroutine do_part1_2_trimmed_and_scaled(esub, IM,JM, io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
+    use cropmerge_laisparse_splitbare_mod, only:  split_bare_single
     type(GcmEntSet_t), intent(IN) :: esub
     integer, intent(IN) :: IM,JM
     type(ChunkIO_t), intent(IN) :: io_ann_lc(:), io_bs, io_ann_hgt(:,:), io_ann_lai(:,:), io_mon_lai(:,:)
@@ -785,6 +796,7 @@ subroutine do_part1_2_trimmed_and_scaled(esub, IM,JM, io_ann_lc, io_bs, io_ann_h
     ! Monthly LC and LAI (NOTE: Monthly LC is set to same as annual)
     real*4, dimension(esub%ncover,NMONTH) :: vfm,laim
     real*4 :: bs_brightratio
+    real*4 :: bs_brightratio_last
     integer :: arid_shrub_s   ! Shortcut indices
 
     logical :: isgood
@@ -799,8 +811,10 @@ subroutine do_part1_2_trimmed_and_scaled(esub, IM,JM, io_ann_lc, io_bs, io_ann_h
 
     do j = 1,JM
     do i = 1,IM
-        ! Avoid cells not processed by previous steps
-        if (abs(io_bs%buf(i,j)) > 1.e10) cycle
+        ! Avoid cells not processed by previous steps - this was hack because of
+        ! no water_ice mask.
+        !if (abs(io_bs%buf(i,j)) > 1.e10) cycle
+
 
         ! -------------------------- Read Inputs
         do k=1,esub%ncover
@@ -824,11 +838,21 @@ call check_laim(laim, 'check1')
             hsd(k) = 0
 
         end do    ! k=1,esub%ncover
+
+        bs_brightratio_last = FillValue
         ! Bare soil brightness ratiaafo
         bs_brightratio = io_bs%buf(i,j)
 
-        ! Make sure this gridcell has been defined in inputs
-        isgood = (bs_brightratio /= FillValue)
+        ! ============= Process cells that have land ! ==========================
+        if (io_ann_lc(esub%water_ice)%buf(i,j).lt.1.) then !cycle skips writing output, so do conditional to process land cells.
+        ! No need to process cells that are not land
+        
+        ! Make sure this gridcell has been defined in inputs -- This was crappy
+        ! logic based on something totally wrong about the wrong bs_brightratio
+        ! that was regridded, having zeros instead of FillValue!
+        !isgood = (bs_brightratio /= FillValue)
+        ! There is some land to process
+        isgood = io_ann_lc(esub%water_ice)%buf(i,j).lt.1. 
         ! ----------------------------------------------------
 
         ! By definition, N_BARE indexes the last bare covertype
@@ -881,7 +905,7 @@ call check_laim(laim, 'check1')
                 end if
               endif
             enddo
-call check_laim(laim, 'check1')
+            call check_laim(laim, 'check1')
 
 
             ! **hm = Simard hegihts
@@ -894,7 +918,7 @@ call check_laim(laim, 'check1')
 
         if (isgood.and.split_bare_soil) then
             call do_split_bare_soil(esub, bs_brightratio, &
-                vfc,laic,hm,hsd,vfm,laim)
+                vfc,laic,hm,hsd,vfm,laim, bs_brightratio_last)
         end if
 
        
@@ -912,7 +936,8 @@ call check_laim(laim, 'check1')
         !     Then checksum to see loss/gain in LAI
         ! Zero out water_ice LAI
 
-        do k=1,esub%ncover
+        !do k=1,esub%ncover
+        do k=1,esub%last_pft
             ! Note: Do not trim bare_bright and bare_dark.  They still have to
             ! add up to total bare soil fraction and give the right
             ! weighted-sum albedo.  Or you can trim them ONLY if bare_bright +
@@ -920,7 +945,7 @@ call check_laim(laim, 'check1')
             ! Also do not trim water_ice; instead, later scale out water_ice if land
             ! exists.
             if ((k == esub%bare_dark).or.(k == esub%bare_bright)) cycle
-
+            if (k == esub%water_ice) cycle
             if (vfc(k) < lc_trim_threshold) vfc(k) = 0
             do m=1,NMONTH
                 if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
@@ -928,19 +953,19 @@ call check_laim(laim, 'check1')
         end do    ! k=1,esub%ncover
 
        !Why is this done twice?
-        do k=1,esub%ncover
-            ! Note: Do not trim bare_bright and bare_dark.  They still have to
-            ! add up to total bare soil fraction and give the right
-            ! weighted-sum albedo.
-            ! Also do not trim water_ice; instead, later scale out water_ice if land
-            ! exists.
-            if ((k == esub%bare_bright).or.(k == esub%bare_dark)) cycle
-            if (k == esub%water_ice) cycle
-            if (vfc(k) < lc_trim_threshold) vfc(k) = 0
-            do m=1,NMONTH
-                if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
-            end do   ! m
-        end do    ! k=1,esub%ncover
+       ! do k=1,esub%ncover
+       !     ! Note: Do not trim bare_bright and bare_dark.  They still have to
+       !     ! add up to total bare soil fraction and give the right
+       !     ! weighted-sum albedo.
+       !     ! Also do not trim water_ice; instead, later scale out water_ice if land
+       !     ! exists.
+       !     if ((k == esub%bare_bright).or.(k == esub%bare_dark)) cycle
+       !     if (k == esub%water_ice) cycle
+       !     if (vfc(k) < lc_trim_threshold) vfc(k) = 0
+       !     do m=1,NMONTH
+       !         if (vfm(k,m) < lc_trim_threshold) vfm(k,m) = 0
+       !     end do   ! m
+       ! end do    ! k=1,esub%ncover
 
         ! Or you can trim them ONLY if bare_bright +
         ! bare_dark < 0.05.
@@ -963,6 +988,7 @@ call check_laim(laim, 'check1')
                 tr%io_mon_lai(esub%water_ice,m)%buf(i,j) = laim(k,m)  ! lainm in 1km
         end do ! m
 
+        endif !============ Finished cells that have land  ============================
         ! -------------------------- Write Outputs (trimmed)
         do k=1,esub%ncover
             ! Annual LC and LAI file
@@ -1004,7 +1030,7 @@ call check_laim(laim, 'check1')
             vfc(N_WATERICE) = 0.
             vfm(N_WATERICE,:) = 0.
         else if ((vfc(N_WATERICE).gt.0.).and.(vfc(N_WATERICE).lt.1.)) then
-            print *, sum_vfc, vfc
+            !print *, 'sum_vfc, vfc', sum_vfc, vfc
             vfc(N_WATERICE) = 1.
             vfm(N_WATERICE,:) = 1.
 
@@ -1022,7 +1048,7 @@ call check_laim(laim, 'check1')
 
         if (isgood.and.split_bare_soil) then
             call do_split_bare_soil(esub, bs_brightratio, &
-                vfc,laic,hm,hsd,vfm,laim)
+                vfc,laic,hm,hsd,vfm,laim, bs_brightratio_last)
         end if
 
 
@@ -1149,6 +1175,8 @@ print *,'c3herb',crops_herb_s,crops_woody_s
 end subroutine do_part3_maxcrops
 
 subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+    use cropmerge_laisparse_splitbare_mod, only:  split_bare_single
+    implicit none
     type(GcmEntSet_t), intent(IN) :: esub
     integer, intent(IN) :: IM,JM
     type(ChunkIO_t), target, intent(IN) :: io_bs
@@ -1160,6 +1188,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     integer :: crops_herb_s,crops_woody_s,N_BARE,NOTBARE
 
     real*4, dimension(:,:), pointer :: bs_brightratio
+    real*4 :: bs_brightratio_last
     real*4, dimension(IM,JM,esub%ncover) :: vfc, laic
     real*4, dimension(NMONTH,IM,JM,esub%ncover) :: vfm, laim
     real*4, dimension(esub%ncover) :: hm,hsd
@@ -1268,6 +1297,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     !write(93) 'All-crop cells with no near natural veg.', LAYER
 
     if (split_bare_soil) then
+        bs_brightratio_last = FillValue
         do i=1,IM
         do j=1,JM
             ! Loade data from arrays
@@ -1284,7 +1314,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
             call do_split_bare_soil( &
                 esub, bs_brightratio(i,j), &
                 vfc(i,j,:),laic(i,j,:), &
-                hm,hsd,vfmx,laimx)
+                hm,hsd,vfmx,laimx, bs_brightratio_last)
 
             ! Store answers
             do k=1,esub%ncover
@@ -1355,10 +1385,13 @@ subroutine do_trim(rw, esub)
         LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'purelr', '1.1')
 
     ! Bare Soil Brightness Ratio
-    call chunker_pu%file_info(info, esub_p, &
-        LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'purelr', '1.1')
+    !call chunker_pu%file_info(info, esub_p, &
+    !    LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'purelr', '1.1')
+    !    LAI_SOURCE, 'M', 'bs_brightratio', LAI_YEAR, 'soilalbedo', '1.1')
+    !call chunker_pu%nc_open(io_bs, chunker_pu%outputs_dir, &
+    !    info%dir, 'bs_brightratio.nc', info%vname, 1)
     call chunker_pu%nc_open(io_bs, chunker_pu%outputs_dir, &
-        info%dir, 'bs_brightratio.nc', info%vname, 1)
+        'soilalbedo/', 'soilalbedo_'//trim(sres(chunker_pu%ngrid(1)))//'_bs_brightratio_fill.nc', 'bs_brightratio', 1)
 
     ! Simard Heights
     call chunker_pu%nc_open_set( &

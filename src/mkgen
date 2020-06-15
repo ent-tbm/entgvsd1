@@ -21,6 +21,7 @@ stages = (
     'B11_reclass_annual',
     'B12_reclass_doy',
     'B13_reclass_monthly',
+    'B14a_ent17_pure_checksum',
     'B14_regrid',
     'B15_regrid_controls',
     'B16_trim',
