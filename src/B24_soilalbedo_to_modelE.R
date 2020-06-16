@@ -1,5 +1,7 @@
 #B24_soilalbedo_to_modelE.R
-#Reformats netcdf individual month LAI files into a single file with lai(im, jm, lc, month)
+# Reformats netcdf individual month LAI files into a single file with lai(im, jm, lc, month)
+# To run: R CMD BATCH B24_soilalbedo_to_modelE.R
+
 source("utils.R")
 library("RNetCDF")
 
@@ -9,10 +11,14 @@ FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated.
 YEAR='2004'
 version = 'v1.1'
 
+reschar = c("2HX2", "HXH")
 #res="2HX2"
-res="HXH"
+#res="HXH"
+
+for (res in reschar) {
+
 path = '../outputs/soilalbedo/'
-file = paste('soilalbedo_',res,'_EntGVSD_',version,'_multiband_annual_',YEAR,FILL,'.nc', sep='')
+file = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_multiband_annual_',YEAR,FILL,'.nc', sep='')
 fileout = paste(path, file, sep='')
 print(fileout)
 
@@ -55,4 +61,8 @@ for (i in 1:length(GISSBAND)) {
 }
  
    var.put.nc(nco, 'albedo_soil_giss', alb3D)
+   close.nc(nco)
+
+} #for res
+
 

@@ -2336,8 +2336,10 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         info%modification = 'cover and ext LAI further extended by latitude ' //&
             'across continental boundaries for ModelE users who use slightly ' //&
             'different continental boundaries.'
+    else if (step == 'modelE') then
+        info%modification = 'reformat file for GISS ModelE'
     else
-        info%modification = 'bug fix for TBD, etc.'
+        info%modification = ' ' !Insert extra info here, such as bug fixes.
     end if
 
 

@@ -295,13 +295,13 @@ if (TRUE) {
 	dev.off()
 	
 	#bs_brightratio
-	fname = 'bs_brightratio.nc'
-	file = paste(outputsdir, trimopt,"/",fname, sep="")
-	fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","bs_brightratio", "_",datatime, trimopt, filesuf, ".pdf", sep="")
-	pdf(file=fileout, width=8, height=5)
-    map.GCM(file=file, res=res, colors=giss.palette.nowhite(40), varname="bs_brightratio")  
-    title(file)
-	dev.off()
+	#fname = 'bs_brightratio.nc'
+	#file = paste(outputsdir, trimopt,"/",fname, sep="")
+	#fileout = paste(pathplot, filepre, "_",version, "_",icov, "_",idat, "_","bs_brightratio", "_",datatime, trimopt, filesuf, ".pdf", sep="")
+	#pdf(file=fileout, width=8, height=5)
+        #map.GCM(file=file, res=res, colors=giss.palette.nowhite(40), varname="bs_brightratio")  
+        #title(file)
+	#dev.off()
 	
 	#npftgrid
 #	fname = paste(filepre, "_",version, "_",icov, "_",idat, "_","lc", "_",datatime,"_ann",  "_", trimopt, filesuf, ".nc", sep="")
