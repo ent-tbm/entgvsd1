@@ -296,7 +296,6 @@ subroutine cropmerge_laisparse_splitbare(esub, chunker, ndoy, &
                         endif
                         io_lcin(C3_GRASS_ARCT)%buf(ic,jc) = io_lcin(C3_GRASS_ARCT)%buf(ic,jc) + io_lcin(SNOW_ICE)%buf(ic,jc)
                         io_lcin(SNOW_ICE)%buf(ic,jc) = 0.
-                        print *, 'Got here.'
                     endif
                 endif 
 
