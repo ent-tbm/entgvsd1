@@ -9,7 +9,7 @@ args = commandArgs(trailingOnly=TRUE)
 print(args)
 numargs = length(args)
 if (numargs != 1) {
-  print ('Usage:  Rscript B24_soilabledo_to_modelE.R <fill | nofill>')
+  print ('Usage:  Rscript B24_soilalbedo_to_modelE.R <fill | nofill>')
   print ('Input fill or nofill to convert soil albedo files that are or are not gap-filled.')
   quit()
 } 
