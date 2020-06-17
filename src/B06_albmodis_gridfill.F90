@@ -102,7 +102,7 @@ subroutine do_gridfill(rw, iband)
      info%file_metadata_type = 'soilalbedo' !'carrer'
      call chunker%nc_create1_n(ioall_albfill, weighting(wta(:,:,1),1d0,0d0), &
          'tmp/carrer/', &
-         'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill', info, &
+         'soilalbedo_6km_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill', info, &
          sstats(1:NSTATS_FILLABLE), sstats(1:NSTATS_FILLABLE))
      do id=1,NSTATS_FILLABLE
          call chunker%nc_reuse_var(ioall_albfill, io_albfill(id), (/1,1,id/), &

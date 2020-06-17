@@ -346,7 +346,7 @@ program Carrer_soilalbedo_to_GISS
             'tmp/carrer/', &
             !'albfill_'//trim(sbands_modis(iband))//'.nc', &
             !'albfill_'//trim(sbands_modis(iband)), SMEAN)
-         'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill.nc', &
+         'soilalbedo_6km_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'_fill.nc', &
             'albfill_'//trim(sbands_modis(iband)), SMEAN) 
     end do
 #else
@@ -357,7 +357,7 @@ program Carrer_soilalbedo_to_GISS
             'tmp/carrer/', &
             !'albmodis_'//trim(sbands_modis(iband))//'.nc',&
             !'albmodis_'//trim(sbands_modis(iband)), SMEAN)
-            'soilalbedo_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
+            'soilalbedo_6km_Carrer2014_'//sLAI_YEAR//'ann_modis_'//trim(sbands_modis(iband))//'.nc',&
             'albmodis_'//trim(sbands_modis(iband)), SMEAN)
     end do
 #endif
