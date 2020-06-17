@@ -2338,6 +2338,8 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             'different continental boundaries.'
     else if (step == 'modelE') then
         info%modification = 'reformat file for GISS ModelE'
+    else if (step == 'modelE_c') then
+        info%modification = 'reformat file for GISS ModelE, retain observed crop cover'
     else
         info%modification = ' ' !Insert extra info here, such as bug fixes.
     end if

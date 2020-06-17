@@ -194,8 +194,15 @@ implicit none
         'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
         'trimmed_scaled_nocrops', &            ! HGT
         'modelE', & ! output part
-        IM2,JM2, '')
+        IM2,JM2, 'reformat for GISS ModelE, natveg, no crops')
 
+
+    call make_modele(rw, esub_p, &
+        'trimmed_scaled', &    ! LC
+        'trimmed_scaled', &            ! LAIMAX, LAI
+        'trimmed_scaled', &            ! HGT
+        'modelE_c', & ! output part
+        IM2,JM2, 'reformat for GISS ModelE, retain observed crop cover')
 
 
     call rw%write_mk
