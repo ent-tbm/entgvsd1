@@ -29,7 +29,7 @@
 #    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
 #endif
 
-! Use the filled-in version of Carrer MODIS albedo
+! Use the gap-filled version of Carrer MODIS albedo, default.
 #define USE_FILLED
 
 module B07_mod

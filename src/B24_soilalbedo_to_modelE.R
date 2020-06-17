@@ -1,13 +1,29 @@
 #B24_soilalbedo_to_modelE.R
-# Reformats netcdf individual month LAI files into a single file with lai(im, jm, lc, month)
-# To run: R CMD BATCH B24_soilalbedo_to_modelE.R
+# Reformats netcdf individual band soil albedo files into a single file with albedo_soil_giss(im, jm, band) and albedo_soil_SW(im, jm)
+# To run: Rscript B24_soilalbedo_to_modelE.R <fill | nofill>
 
 source("utils.R")
 library("RNetCDF")
 
-#Update 
-FILL = '_fill'; FILLdescription="  FILLED version: Undefined cells interpolated."
-#FILL = ''; FILLdescription="  No interpolation."
+args = commandArgs(trailingOnly=TRUE)
+print(args)
+numargs = length(args)
+if (numargs != 1) {
+  print ('Usage:  Rscript B24_soilabledo_to_modelE.R <fill | nofill>')
+  print ('Input fill or nofill to convert soil albedo files that are or are not gap-filled.')
+  quit()
+} 
+
+if (args[1]=='fill') {
+   #gap-filled
+   IFILL = '_fill'; FILLdescription='  Gap-filled.'
+   IFILLdir = '_fill'
+} else {
+   #no gap-filled
+   IFILL = ''; FILLdescription='  Not gap-filled.'
+   IFILLdir = '_nofill'
+}
+
 YEAR='2004'
 version = 'v1.1'
 
@@ -17,8 +33,8 @@ reschar = c("2HX2", "HXH")
 
 for (res in reschar) {
 
-path = '../outputs/soilalbedo/'
-file = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_multiband_annual_',YEAR,FILL,'.nc', sep='')
+path = paste('../outputs/soilalbedo',IFILLdir,'/', sep="")
+file = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_multiband_annual_',YEAR,IFILL,'.nc', sep='')
 fileout = paste(path, file, sep='')
 print(fileout)
 
@@ -29,14 +45,14 @@ create.soilalbedo.ModelE.template.nc(res=res, description, fileout, contact="Nan
 nco = open.nc(con=fileout, write=T)
 
 #lon, lat
-filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_SW_annual_',YEAR,FILL,'.nc', sep='')
+filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_SW_annual_',YEAR,IFILL,'.nc', sep='')
 nci = open.nc(con=paste(path,filein,sep=""))
 
 var.put.nc(nco, 'lon', var.get.nc(nci,'lon'))
 var.put.nc(nco, 'lat', var.get.nc(nci,'lat'))
 
 # SW
-filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_SW_annual_',YEAR,FILL,'.nc', sep='')
+filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_SW_annual_',YEAR,IFILL,'.nc', sep='')
 print(filein)
 nci = open.nc(con=paste(path,filein,sep=""))
 #var.put.nc(nco, 'albedo_soil_SW', var.get.nc(nci, 'albSW'))
@@ -49,7 +65,7 @@ dim3D = dim(var.get.nc(nco, 'albedo_soil_giss'))
 print(dim3D)
 alb3D = array(NA, dim=dim3D)
 for (i in 1:length(GISSBAND)) {
-   filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_',trim(GISSBAND[i]),'_annual_',YEAR,FILL,'.nc', sep='')
+   filein = paste('soilalbedo_',res,'_EntGVSD_',version,'_CarrerGISS_',trim(GISSBAND[i]),'_annual_',YEAR,IFILL,'.nc', sep='')
    print(filein)
    nci = open.nc(con=paste(path,filein,sep=""))
 #   varin = paste('albgiss_', trim(GISSBAND[i]),sep='')

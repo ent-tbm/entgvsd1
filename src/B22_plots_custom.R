@@ -21,7 +21,7 @@ source("utils.R")
 if (TRUE) {
     pathplot="../myplots"
     # Create output directory if it doesn't already exist
-    dir.create(pathplot)
+    suppressWarnings(dir.create(pathplot))
 }
 
 #*****************************************************************************************
@@ -58,7 +58,7 @@ file = paste(path, "/", fname, sep="")
 print(file)
 
 if (ftype=="soilalbedo" & numargs<5) {
-   B20b_usage()
+   man_usage()
    quit()
 }
 
@@ -74,7 +74,7 @@ filetypes = c(ftype3D, ftypecs, ftypeother, ftypesoil)
 
 if (is.na(match(ftype, filetypes))) {
    print(c("No such file type: ", ftype))
-   B20b_usage()
+   man_usage()
    quit()
 }
 

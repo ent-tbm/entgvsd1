@@ -2,18 +2,15 @@
 # From Nancy Kiang
 
 #utils.R
-#source("entdiag995fn.R")
-#source("mvn.R")
-#source("plot_fit.R")
-library(sp)
-library(spam) 
-library(maps) 
-library(fields) 
-library(maptools) 
-library(rworldmap) 
-library(SDMTools) 
-library(plotrix)
-library("RNetCDF")
+suppressMessages(library(sp))
+suppressMessages(library(spam)) 
+suppressMessages(library(maps))
+suppressMessages(library(fields)) 
+suppressMessages(library(maptools)) 
+suppressMessages(library(rworldmap))
+suppressMessages(library(SDMTools))
+suppressMessages(library(plotrix))
+suppressMessages(library("RNetCDF"))
 #library("animation") #For using im.convert. Not working due OS 10.14 bug with gs.
 
 Kelvin=273.15
