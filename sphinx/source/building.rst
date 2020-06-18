@@ -305,32 +305,6 @@ slate, the following steps are will do so:
    not deleted, this procedure will not need to re-download them.
 
    
-Modifying Parameters
-====================
-
-User-editable parameters are in the file ``slib/ent_params.f90``.
-Once parameter(s) in this file are changed, the following steps must
-take place to make sure they take effect:
-
-.. code-block:: bash
-
-   cd ~/git/entgvsd1/build
-   make install
-   
-
-.. note::
-
-   1. The ``ent_params.f90`` file is NOT checked into git.  It is a
-      user configuration file.
-
-   1. The parameters ``LAI_YEAR`` and ``sLAI_YEAR`` must match.  One
-      is a string, one is an integer.
-
-   1. Changing the ``LAI_YEAR`` parameter will cause ``2004`` to be
-      replaced by a different year, everywhere it is appropriate in
-      input filenames, output filenames, metadata and folders ---
-      except for ``B20_plots.R``, where the year must be changed manually.
-
 Updating the Documentation Files
 ================================
 
