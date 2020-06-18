@@ -2336,8 +2336,8 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         info%modification = 'cover and ext LAI further extended by latitude ' //&
             'across continental boundaries for ModelE users who use slightly ' //&
             'different continental boundaries.'
-    else if (step == 'modelE') then
-        info%modification = 'reformat file for GISS ModelE'
+    else if (step == 'modelE' .or. step == 'modelE_nocrops') then
+        info%modification = 'reformat file for GISS ModelE; if nocrops then natural cover scaled'
     else if (step == 'modelE_c') then
         info%modification = 'reformat file for GISS ModelE, retain observed crop cover'
     else

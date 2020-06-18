@@ -193,7 +193,7 @@ implicit none
         'trimmed_scaled_nocrops', &    ! LC
         'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
         'trimmed_scaled_nocrops', &            ! HGT
-        'modelE', & ! output part
+        'modelE_nocrops', & ! output part
         IM2,JM2, 'reformat for GISS ModelE, natveg, no crops')
 
 
@@ -201,7 +201,7 @@ implicit none
         'trimmed_scaled', &    ! LC
         'trimmed_scaled', &            ! LAIMAX, LAI
         'trimmed_scaled', &            ! HGT
-        'modelE_c', & ! output part
+        'modelE', & ! output part
         IM2,JM2, 'reformat for GISS ModelE, retain observed crop cover')
 
 

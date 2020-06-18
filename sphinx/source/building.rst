@@ -73,7 +73,7 @@ follows:
    cd ~/git/entgvsd1
    mkdir build
    cd build
-   cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
+   FC=$(which gfortran) cmake .. -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)
    make install
 
 .. admonition:: OPTIONAL:
