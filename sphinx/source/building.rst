@@ -331,6 +331,21 @@ take place to make sure they take effect:
       input filenames, output filenames, metadata and folders ---
       except for ``B20_plots.R``, where the year must be changed manually.
 
+Updating the Documentation Files
+================================
+
+Documentation makes use of reStructuredText (reST) in .rst files.  Besides the
+homepage README.rst, additional documentation is in sphinx/source.  The html files
+generated from the rst files are in sphinx/build.  The rst files are also directly
+readable through the website ReadTheDocs.  To update these files, after editing, 
+to regenerate the html files:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/sphinx
+   make html
+
+
 Pre-Processsed Raw Data Files
 ============================
 
