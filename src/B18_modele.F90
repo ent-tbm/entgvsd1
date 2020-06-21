@@ -193,7 +193,11 @@ implicit none
         'trimmed_scaled_nocrops', &    ! LC
         'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
         'trimmed_scaled_nocrops', &            ! HGT
+<<<<<<< HEAD
         'modelE_nocrops', & ! output part
+=======
+        'modelE_natveg', & ! output part
+>>>>>>> B18:  Put back default #define USE_FILLED
         IM2,JM2, 'reformat for GISS ModelE, natveg, no crops')
 
 

@@ -1,15 +1,39 @@
 #!/bin/bash
+# Plot soil albedo files to ../myplots.
 
+# Author: Nancy Kiang
+# 
+# To run:
+#   bash B23_plot_soilalbedo.bash [FILLTYPE]
+# where:
+#   [FILLTYPE] = fill | nofill for soil albedo gap-filled or not gap-filled versions.
+#   
+
+ifillin=$1
+
+if [ $ifillin == 'fill' ]; then
+    ifill=_fill
+    ifilldir=_fill
+elif [ $ifillin == 'nofill' ]; then
+    ifill=''
+    ifilldir=_nofill
+else
+    echo 'Incorrect parameter: ' $ifillin
+    echo 'Options:   < fill | nofill >'
+    exit 
+fi
+
+# Edit this file info
 version=v1.1
 year=2004
 timestep=annual
 #Select whether to plot filled of no-fill soil albedo
 #gap-filled
-# ifill=_fill
-# ifilldir=_fill
+#ifill=_fill
+#ifilldir=_fill
 #not gap-filled
- ifill=''
- ifilldir=_nofill
+# ifill=''
+# ifilldir=_nofill
 
 path=${PWD}
 DIR="$(dirname $path)"/outputs/soilalbedo$ifilldir

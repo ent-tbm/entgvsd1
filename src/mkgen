@@ -59,7 +59,7 @@ XENT={}/build/bin/entgvsd
 
     makefile.append("""
 ../outputs/B19_to_modele_format.txt : ../outputs/B18_modele.txt
-\tpython3 B19_to_modele_format.py modelE_nocrops
+\tpython3 B19_to_modele_format.py modelE_natveg
 \tpython3 B19_to_modele_format.py modelE
 \tpython3 B19_to_modele_format.py trimmed_scaled
 \tpython3 B19_to_modele_format.py trimmed_scaled_nocrops
