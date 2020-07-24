@@ -7,7 +7,7 @@
 !   trimmed_scaled/: recale subgrid cover fractions to ensure they sum
 !      to 1 over land.
 !
-!   trimmed_scaled_nocrops/: scale out crop cover for version with all
+!   trimmed_scaled_natveg/: scale out crop cover for version with all
 !      natural vegetation cover, used for rescaling with historical
 !      crop cover change. Keeps crops LAI and height.
 !
@@ -58,10 +58,10 @@ end type OutputSegment_t
 
 CONTAINS
 
-! Opens one of trimmed, trimmed_scaled or nocrops outputs
+! Opens one of trimmed, trimmed_scaled or natveg outputs
 subroutine outputsegment_open(this, step, esub)
     class(OutputSegment_t) :: this    ! Set of file handles to open
-    character*(*) :: step    ! 'trimmed', 'trimmed_scaled' or 'nocrops'
+    character*(*) :: step    ! 'trimmed', 'trimmed_scaled' or 'natveg'
     type(EntSet_t), intent(IN) :: esub
     ! --------------------------- Locals
     integer :: m,k
@@ -281,7 +281,7 @@ end subroutine convert_vfh
 
 
 !Split BARE soil into BRIGHT and DARK cover to preserve albedo from
-!  "old" ModelE cover.  Should be called after each trim, scale, nocrops.
+!  "old" ModelE cover.  Should be called after each trim, scale, natveg.
 !Any LAI on BARE soil should already have been moved to vegetated cover,
 !  so laic(:,:,N_BARE) should be zero.
 !!!!This checks for cases if BARE is original total or was previously split.
@@ -665,7 +665,7 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        else
           !Don't do any grid cell fixes
           write(*,*) 'WRONG GRID RES:  PRESCRIBED FIX NOT DONE: '
-          write(*,*) '**Check array indices for grid res for nocrops'
+          write(*,*) '**Check array indices for grid res for natveg'
        endif                  !Adjacent bs_brightratio not found
     endif                     !.not.(naturalvegfound)
     
@@ -678,7 +678,7 @@ end subroutine replace_crops
 subroutine fill_crops(IMn,JMn,io_bs, vfc15,laic15, &
     vfm15,laim15,hm15,hsd15,&
     laiccrop, laimcrop, hmcrop,hsdcrop)
-    !This routine was called to make maxcrops prior to nocrops, but it
+    !This routine was called to make maxcrops prior to natveg, but it
     !is no longer used. The "ext" step is now performed by another program.
     !This performs in-fill once for herb crop (PFT15) LAI to create
     !an extended crop LAI data set for use with historical crop cover.
@@ -1079,7 +1079,7 @@ end subroutine do_part1_2_trimmed_and_scaled
 subroutine do_part3_maxcrops(esub, IM,JM, io_bs, ts,   mc)
 !This routine was called to produce maxcrops before doing no crops, but it 
 !is no longer used.  Creating "ext" files is now done by a later program.
-!Generate fill-in crop cover from trimmed_scaled before doing nocrops
+!Generate fill-in crop cover from trimmed_scaled before doing natveg
 !Herb crop only, since right now zero woody crops.
 
     type(GcmEntSet_t), intent(IN) :: esub
@@ -1158,7 +1158,7 @@ print *,'c3herb',crops_herb_s,crops_woody_s
 !    print *,'sumA',k,sum(mc%io_ann_lai(k,1)%buf)
 !end do
 
-    !Generate fill-in crop cover from trimmed_scaled before doing nocrops
+    !Generate fill-in crop cover from trimmed_scaled before doing natveg
     !Herb crop only, since right now zero woody crops.
     call fill_crops( &
         IM,JM, io_bs, vfc15, laic15, &
@@ -1174,7 +1174,7 @@ print *,'c3herb',crops_herb_s,crops_woody_s
 !end do
 end subroutine do_part3_maxcrops
 
-subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+subroutine do_part4_natveg(esub, IM,JM, io_bs, ts,   nc)
     use cropmerge_laisparse_splitbare_mod, only:  split_bare_single
     implicit none
     type(GcmEntSet_t), intent(IN) :: esub
@@ -1199,7 +1199,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     logical :: naturalfound, nonaturalfound
     integer :: naturalcount, nonaturalcount
 
-    print *,'========================= Part 4: nocrops'
+    print *,'========================= Part 4: natveg'
 
     crops_herb_s = esub%crops_herb   ! shortcut
     crops_woody_s = esub%svm(CROPS_WOODY)   ! shortcut
@@ -1210,7 +1210,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
     bs_brightratio => io_bs%buf
 
     ! ==================== Part 4:
-    ! Initialze nocrops output to be same as trimmed_scaled output
+    ! Initialze natveg output to be same as trimmed_scaled output
     do k=1,esub%ncover
         ! Annual LC and LAI file
         nc%io_ann_lc(k,1)%buf(:,:) = ts%io_ann_lc(k,1)%buf(:,:)
@@ -1283,7 +1283,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
        
         s = sum( vfc(i,j,1:N_BARE) ) !#DEBUG
         if (s.ne.sum(vfm(1,i,j,1:N_BARE))) then 
-            write(*,*) 'ERROR nocrops:  max and monthly lc differ' &
+            write(*,*) 'ERROR natveg:  max and monthly lc differ' &
                ,i,j, s,sum( vfm(1,i,j,1:N_BARE) ) 
             !write(*,*) vfc(i,j,1:N_BARE)
             !write(*,*) vfm(1,i,j,1:N_BARE)
@@ -1342,7 +1342,7 @@ subroutine do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
         end do   ! m
     end do
 
-end subroutine do_part4_nocrops
+end subroutine do_part4_natveg
 
 subroutine do_trim(rw, esub)
     type(ReadWrites_t) :: rw
@@ -1362,7 +1362,7 @@ subroutine do_trim(rw, esub)
     type(OutputSegment_t) :: tr    ! trimmed
     type(OutputSegment_t) :: ts    ! trimmed_scaled
     !type(OutputSegment_t) :: mc    ! maxcrops. Replaced with "ext" program.
-    type(OutputSegment_t) :: nc    ! nocrops
+    type(OutputSegment_t) :: nc    ! natveg
 
 
     integer :: IM,JM
@@ -1414,9 +1414,9 @@ subroutine do_trim(rw, esub)
     call tr%open('trimmed', esub_p)
     call ts%open('trimmed_scaled', esub_p)
 !    call mc%open('maxcrops', esub_p)
-!    call nc%open('nocrops', esub_p)
+!    call nc%open('natveg', esub_p)
 !    call mc%open('trimmed_scaled_crops_ext', esub_p)
-    call nc%open('trimmed_scaled_nocrops', esub_p)
+    call nc%open('trimmed_scaled_natveg', esub_p)
 
     call chunker_pu%nc_check(rw=rw)
     call tr%chunker%nc_check(rw=rw)
@@ -1447,7 +1447,7 @@ subroutine do_trim(rw, esub)
     call do_part1_2_trimmed_and_scaled(esub, IM,JM, &
         io_ann_lc, io_bs, io_ann_hgt, io_ann_lai, io_mon_lai,    tr, ts)
     !call do_part3_maxcrops(esub, IM,JM, io_bs, ts,    mc) !Replaced with "ext" program
-    call do_part4_nocrops(esub, IM,JM, io_bs, ts,   nc)
+    call do_part4_natveg(esub, IM,JM, io_bs, ts,   nc)
 
     ! Compute checksums for each output segment
     call tr%checksum(esub_p)

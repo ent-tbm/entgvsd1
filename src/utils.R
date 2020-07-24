@@ -915,9 +915,9 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
     # Plot maps of lc, laimax, lai, or hgt
     # entlclaidir:  Directory containing subdirectories of trim options Ent GVSD files
     # res:          Grid resolution of data file.  "ent17" and "pure" V1km are plotted at qzq.  Trimmed files are at HXH.
-    # enttyp:         ent17: 1:20;  pure, trimmmed...nocrops:  1:18
+    # enttyp:         ent17: 1:20;  pure, trimmmed...natveg:  1:18
     # varname:    lc, laimax, hgt, lai
-    # trimopt:    ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_crops_ext1
+    # trimopt:    ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_natveg, trimmed_scaled_crops_ext1
     # filepre:    File prefix (Vres_EntGVSD<PFTs>_<LAILdata>, e.g. V1km_EntGVSD17G_BNUM, VHXH_EntGVSD16G_BNUM 
     # datatime:   Time point of data, e.g.:  2004
     # version:    EntGVSD version, e.g.:  v0.1, v1.1
@@ -947,7 +947,8 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
    } else if (varname == "hgt") {
       zlim = c(0,40)
       restime = "_ann"
-      colors=drywet(40)
+      #colors=drywet(40)
+      colors=giss.palette.nowhite(40)
    } else {
     print(paste(varname, "Whoops, only does lc or laimax"))
     return()
@@ -958,7 +959,7 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
     if (opt=="ent17") {  #Ent 17 PFTs
 #        fname = paste(filepre, "_",varname,"_",datatime,restime, "_", opt, "_",version, filesuf,".nc", sep="")
         fname = paste(filepre, "_",version,"_", icov, "_", idat, "_", varname,"_",datatime,restime, "_", opt, filesuf,".nc", sep="")
-    } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
+    } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_natveg
         #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
 	#        fname = paste(filepre, "_",varname,"_", datatime, restime,"_", opt, "_",  version, filesuf, ".nc", sep="")
         fname = paste(filepre, "_",version,"_", icov, "_", idat, "_", varname,"_",datatime,restime, "_", opt, filesuf,".nc", sep="")	
@@ -1004,7 +1005,7 @@ map.entgvsd.steps = function(entlclaidir, res, enttyp=enttyp, varname, trimopt, 
         if (opt=="ent17") {  #Ent 17 PFTs
             fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime, "_",opt, filesuf,".nc", sep="")
         
-        } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops
+        } else { #Ent 16 PFTs pure, trimmed, trimmed_scaled, trimmed_scaled_natveg
             #fname = paste(filepre, "_lc_max_", opt, "_", version, filesuf, ".nc", sep="")
             fname = paste(filepre, "_",version, "_",icov, "_",idat, "_",varnamecheck, "_",datatime,restime,"_", opt, filesuf, ".nc", sep="")
         }

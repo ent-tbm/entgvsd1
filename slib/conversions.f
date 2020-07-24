@@ -385,7 +385,7 @@
      &     ,bs_brightratio,vfc,laic
      &     ,res_out)
       !Split BARE soil into BRIGHT and DARK cover to preserve albedo from
-      !  "old" ModelE cover.  Should be called after each trim, scale, nocrops.
+      !  "old" ModelE cover.  Should be called after each trim, scale, natveg.
       !Any LAI on BARE soil should already have been moved to vegetated cover,
       !  so laic(:,:,N_BARE) should be zero.
       !This checks for cases if BARE is original total or was previously split.
@@ -566,7 +566,7 @@
 
       integer :: IMn,JMn,KM,i, j
       real*4 :: s
-      !real*4 :: vfct(:,:,:) !vfc trim before nocrops
+      !real*4 :: vfct(:,:,:) !vfc trim before natveg
       !real*4 :: vfmt(:,:,:,:)
       real*4 :: vfc(:,:,:) , laic(:,:,:)
       real*4 :: vfm(:,:,:,:), laim(12,IMn,JMn,KM)
@@ -698,7 +698,7 @@
             naturalvegfound=1
          endif
       else
-         write(*,*) 'STOP: Check array indices for grid res for nocrops'
+         write(*,*) 'STOP: Check array indices for grid res for natveg'
          STOP
       endif
 

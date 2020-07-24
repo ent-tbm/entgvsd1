@@ -1,4 +1,4 @@
-!  Regrids trimmed_scaled_nocrops files to grid of GISS GCM ModelE for later reformatting as GCM input.
+!  Regrids trimmed_scaled_natveg files to grid of GISS GCM ModelE for later reformatting as GCM input.
 !
 ! Step after this will take regridded files to format directly useable by ModelE for two reasons:
 !   1. Convert arrays with an lctype dimension to separate array variables with
@@ -63,7 +63,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
     om%modification = modification
 ! For each make_modele(), mods should be one of:
-!nocrops = crop cover set to zero and other cover scaled up to fill grid cell;  if no other cover type in grid cell, dominant cover of adjacent grid cells is used.
+!natveg = crop cover set to zero and other cover scaled up to fill grid cell;  if no other cover type in grid cell, dominant cover of adjacent grid cells is used.
 !ext# = LAI of crops extended to # neighboring grid cells to provide LAI for historically changing crop cover.
 !ext1 = cover and ext LAI further extended by latitude across continental boundaries for ModelE users who use slightly different continental boundaries.
 !other = bug fix for TBD, etc. >;
@@ -106,6 +106,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
         LAI_SOURCE, 'M', 'lc', LAI_YEAR, part1, '1.1', create_lr=.false., overmeta=om)
 
     call chunker1%nc_create_set( &
+        !esub, io1_ann_lai(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
         esub, io1_ann_lai(:,1), repeat_weights(esub%ncover, chunker1%wta1, 1d0, 0d0), &
         LAI_SOURCE, 'M', 'laimax', LAI_YEAR, part1, '1.1', create_lr=.false., overmeta=om)
 
@@ -137,28 +138,49 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
         call chunker0%move_to(ichunk,jchunk)
         call chunker1%move_to(ichunk,jchunk)
 
+        print *, 'esub%ncover', esub%ncover
         do k=1,esub%ncover
             call hntr%regrid4( &
                 io1_ann_lc(k,1)%buf, io0_ann_lc(k,1)%buf, &
                 chunker0%wta1, 1d0, 0d0, &   ! weighting
                 io1_ann_lc(k,1)%startB(2), io1_ann_lc(k,1)%chunker%chunk_size(2))
 
-            call hntr%regrid4( &
+!            if ((k.eq.esub%crops_herb).or.(k.eq.esub%crops_woody)) then
+              call hntr%regrid4( &
                 io1_ann_lai(k,1)%buf, io0_ann_lai(k,1)%buf, &
-                io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+                chunker0%wta1, 1d0, 0d0, &   ! weighting
                 io1_ann_lai(k,1)%startB(2), io1_ann_lai(k,1)%chunker%chunk_size(2))
 
-            call hntr%regrid4( &
+              call hntr%regrid4( &
                 io1_ann_hgt(k,1)%buf, io0_ann_hgt(k,1)%buf, &
-                io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+                chunker0%wta1, 1d0, 0d0, &   ! weighting
                 io1_ann_hgt(k,1)%startB(2), io1_ann_hgt(k,1)%chunker%chunk_size(2))
 
-            do m=1,NMONTH
+              do m=1,NMONTH
                 call hntr%regrid4( &
                     io1_mon_lai(k,m)%buf, io0_mon_lai(k,m)%buf, &
-                    io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+                    chunker0%wta1, 1d0, 0d0, &   ! weighting
                     io1_mon_lai(k,m)%startB(2), io1_mon_lai(k,m)%chunker%chunk_size(2))
-            end do
+              end do
+
+! !           else  !non-crop cover
+! !             call hntr%regrid4( &
+! !               io1_ann_lai(k,1)%buf, io0_ann_lai(k,1)%buf, &
+! !               io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+! !               io1_ann_lai(k,1)%startB(2), io1_ann_lai(k,1)%chunker%chunk_size(2))
+! !
+!              call hntr%regrid4( &
+!                io1_ann_hgt(k,1)%buf, io0_ann_hgt(k,1)%buf, &
+!                io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+!                io1_ann_hgt(k,1)%startB(2), io1_ann_hgt(k,1)%chunker%chunk_size(2))
+!
+!              do m=1,NMONTH
+!                call hntr%regrid4( &
+!                    io1_mon_lai(k,m)%buf, io0_mon_lai(k,m)%buf, &
+!                    io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
+!                    io1_mon_lai(k,m)%startB(2), io1_mon_lai(k,m)%chunker%chunk_size(2))
+!              end do
+!            endif
         end do
 
         call chunker1%write_chunks
@@ -190,14 +212,10 @@ implicit none
 
     ! Here we put different combinations for ModelE consumption
     call make_modele(rw, esub_p, &
-        'trimmed_scaled_nocrops', &    ! LC
-        'trimmed_scaled_nocrops', &            ! LAIMAX, LAI
-        'trimmed_scaled_nocrops', &            ! HGT
-<<<<<<< HEAD
-        'modelE_nocrops', & ! output part
-=======
+        'trimmed_scaled_natveg', &    ! LC
+        'trimmed_scaled_natveg', &            ! LAIMAX, LAI
+        'trimmed_scaled_natveg', &            ! HGT
         'modelE_natveg', & ! output part
->>>>>>> B18:  Put back default #define USE_FILLED
         IM2,JM2, 'reformat for GISS ModelE, natveg, no crops')
 
 

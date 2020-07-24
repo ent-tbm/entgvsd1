@@ -1866,7 +1866,7 @@ subroutine nc_create_set( &
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_natveg, trimmed_scaled_natveg_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     ! ----- Optional
     character*(*), intent(IN), OPTIONAL :: varsuffix
@@ -1928,7 +1928,7 @@ subroutine nc_open_set( &
     character*(*), intent(IN) :: cropsource   ! M (Monfreda et al. 2008)
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_natveg, trimmed_scaled_natveg_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     ! ----- Optional
     character*(*), intent(IN), OPTIONAL :: varsuffix
@@ -2200,7 +2200,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
 !    character*(*), intent(IN) :: heightsource ! Sa Simard RH100 | Sb Simard RH100-stdev | Sc Simard RH100-0.5*stdev | Ha GEDI+ICESat-2 data (some day) RH100 | Hb GEDI+ICESat-2 RH100-stdev | etc.
     character*(*), intent(IN) :: var    ! lc, lai, laimax, height
     integer, intent(IN) :: year
-    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_nocrops, trimmed_scaled_nocrops_ext, trimmed_scaled_crops_ext (lai only)
+    character*(*), intent(IN) :: step  ! ent17, pure, trimmed, trimmed_scaled, trimmed_scaled_natveg, trimmed_scaled_natveg_ext, trimmed_scaled_crops_ext (lai only)
     character*(*) , intent(IN) :: ver  ! 1.1, 1.2, etc
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
@@ -2325,7 +2325,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         info%modification = 'small cover fractions < 0.10 set to zero, total LAI preserve'
     else if (step == 'trimmed_scaled') then
         info%modification = 'cover fractions rescaled to so that grid cell sums to 1.0.'
-    else if (step == 'trimmed_scaled_nocrops') then
+    else if (step == 'trimmed_scaled_natveg') then
         info%modification = 'crop cover set to zero and other cover scaled ' //&
             'up to fill grid cell;  if no other cover type in grid cell, ' //&
             'dominant cover of adjacent grid cells is used'
@@ -2336,8 +2336,8 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
         info%modification = 'cover and ext LAI further extended by latitude ' //&
             'across continental boundaries for ModelE users who use slightly ' //&
             'different continental boundaries.'
-    else if (step == 'modelE' .or. step == 'modelE_nocrops') then
-        info%modification = 'reformat file for GISS ModelE; if nocrops then natural cover scaled'
+    else if (step == 'modelE' .or. step == 'modelE_natveg') then
+        info%modification = 'reformat file for GISS ModelE; if natveg then natural cover scaled up to replace crops'
     else if (step == 'modelE_c') then
         info%modification = 'reformat file for GISS ModelE, retain observed crop cover'
     else
@@ -2347,8 +2347,8 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
 
 !    if ((step/='ent17').and.(step/='pure').and.(step/='purelr').and. &
 !        (step/='trimmed').and. &
-!        (step/='trimmed_scaled').and.(step/='trimmed_scaled_nocrops').and. &
-!        (step/='trimmed_scaled_nocrops_ext').and.(step/='trimmed_scaled_crops_ext')) &
+!        (step/='trimmed_scaled').and.(step/='trimmed_scaled_natveg').and. &
+!        (step/='trimmed_scaled_natveg_ext').and.(step/='trimmed_scaled_crops_ext')) &
 !    then
 !        write(ERROR_UNIT,*) 'Illegal step ', step
 !        stop

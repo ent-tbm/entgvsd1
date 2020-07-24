@@ -336,7 +336,7 @@ if (TRUE) {
 do.checksum = TRUE
 # trimmming
 if (TRUE) {
-   trimopts = c("trimmed", "trimmed_scaled", "trimmed_scaled_nocrops") #, "trimmed_scaled_crops_ext")
+   trimopts = c("trimmed", "trimmed_scaled", "trimmed_scaled_natveg") #, "trimmed_scaled_crops_ext")
     res="HXH"
     filepre = "VHXH_EntGVSD"
     icov = "16G"
