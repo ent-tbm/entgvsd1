@@ -138,7 +138,6 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
         call chunker0%move_to(ichunk,jchunk)
         call chunker1%move_to(ichunk,jchunk)
 
-        print *, 'esub%ncover', esub%ncover
         do k=1,esub%ncover
             call hntr%regrid4( &
                 io1_ann_lc(k,1)%buf, io0_ann_lc(k,1)%buf, &
