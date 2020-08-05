@@ -1595,7 +1595,55 @@ create.entgvsd.template.4D.nc = function(res, varname, longname, units, NAMECOV,
     close.nc(ncid)
 }
 
+#----------------------
 
+create.soilalbedo.ModelE.template.2D.nc = function(res, description, fileout, contact="Nancy.Y.Kiang@nasa.gov"){
+    BANDS = 6
+    im.jm = IM.JM.from.res(res=res)
+    IM = im.jm[1]
+    JM = im.jm[2]
+
+    band_names =  c('VIS ','NIR1', 'NIR2', 'NIR3', 'NIR4', 'NIR5')
+    vnames = paste('soilalb_',  trimws(band_names), sep="")
+    band_names_nm = c('VIS (330-770 nm)    ',
+    'NIR1 (770-860 nm)   ', 
+    'NIR2 (860-1250 nm)  ', 
+    'NIR3 (1250-1500 nm) ', 
+    'NIR4 (1500-2200 nm) ', 
+    'NIR5 (2200-4000 nm) ')
+ 
+    ncid <- create.nc(filename=fileout)
+    dim.def.nc(ncid, "lon", IM)
+    dim.def.nc(ncid, "lat", JM)
+    dim.def.nc(ncid, 'band',BANDS)
+
+    var.def.nc(ncid, 'lon', 'NC_FLOAT', 'lon')
+    var.def.nc(ncid, 'lat', 'NC_FLOAT', 'lat')
+    var.def.nc(ncid, 'band','NC_INT', 'band')
+
+    att.put.nc(ncid, 'lon', 'long_name', 'NC_CHAR', 'longitude degrees east')
+    att.put.nc(ncid, 'lat', 'long_name', 'NC_CHAR', 'latitude degrees north')
+    att.put.nc(ncid, 'band', 'long_name', 'NC_CHAR', 'GISS GCM band albedo')
+
+    att.put.nc(ncid, 'NC_GLOBAL', 'Description', 'NC_CHAR', description)
+    att.put.nc(ncid, 'NC_GLOBAL', 'Contact','NC_CHAR', contact)
+    att.put.nc(ncid, 'NC_GLOBAL', 'Date created','NC_CHAR', paste(date()))
+    att.put.nc(ncid, 'NC_GLOBAL', 'Institution', 'NC_CHAR', 'NASA Goddard Institute for Space Studies')
+
+    for (b in 1:BANDS) {
+        varname = vnames[b]
+        longname = paste('soil albedo ', trimws(band_names_nm[b]), sep="")
+        units = '1'
+        undef = -1.e30
+        description = 'annual mean soil albedo, GISS GCM spectral bands'
+        var.def.nc(ncid, varname, 'NC_FLOAT', dimensions=c('lon','lat'))
+        att.put.nc(ncid, varname, 'long_name', 'NC_CHAR', longname)
+        att.put.nc(ncid, varname, 'units', 'NC_FLOAT', units)
+        att.put.nc(ncid, varname, '_FillValue', 'NC_FLOAT', undef)
+    }
+
+    close.nc(ncid)
+}
 #------------
 create.soilalbedo.ModelE.template.nc = function(res, description, fileout, contact="Nancy.Y.Kiang@nasa.gov"){
     BANDS = 6
