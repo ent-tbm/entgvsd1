@@ -147,18 +147,18 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 !            if ((k.eq.esub%crops_herb).or.(k.eq.esub%crops_woody)) then
               call hntr%regrid4( &
                 io1_ann_lai(k,1)%buf, io0_ann_lai(k,1)%buf, &
-                chunker0%wta1, 1d0, 0d0, &   ! weighting
+                io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
                 io1_ann_lai(k,1)%startB(2), io1_ann_lai(k,1)%chunker%chunk_size(2))
 
               call hntr%regrid4( &
                 io1_ann_hgt(k,1)%buf, io0_ann_hgt(k,1)%buf, &
-                chunker0%wta1, 1d0, 0d0, &   ! weighting
+                io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
                 io1_ann_hgt(k,1)%startB(2), io1_ann_hgt(k,1)%chunker%chunk_size(2))
 
               do m=1,NMONTH
                 call hntr%regrid4( &
                     io1_mon_lai(k,m)%buf, io0_mon_lai(k,m)%buf, &
-                    chunker0%wta1, 1d0, 0d0, &   ! weighting
+                    io0_ann_lc(k,1)%buf, 1d0, 0d0, &   ! weighting
                     io1_mon_lai(k,m)%startB(2), io1_mon_lai(k,m)%chunker%chunk_size(2))
               end do
 

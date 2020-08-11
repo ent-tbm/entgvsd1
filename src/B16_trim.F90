@@ -366,6 +366,8 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
     integer :: m, k, ii, jj !cell to search for natural (i,j or adjacent)
     real*4 :: covmax
     integer :: covmaxk, covmaxii,covmaxjj
+    real*4 :: covmaxlai
+    integer :: covmaxlaik
     real*4, allocatable :: covsum(:), covavglai(:)   ! (NATVEG=14)
     real*4, allocatable :: covsumm(:,:),covavglaim(:,:)  ! (NMONTH,NATVEG)
     integer :: dg
@@ -401,6 +403,14 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
           covmaxk = k
        endif
     enddo
+    covmaxlai = 0.d0
+    covmaxlaik = 0
+    do k=1,NATVEG         !Find max lai of non-crop, non-bare natural cover type
+       if (laic(i,j,k) > covmaxlai)  then
+          covmaxlai = laic(i,j,k)
+          covmaxlaik = k
+       endif
+    enddo
     if (covmax.gt.0.d0) then  !Assign dominant natural veg to crop
        ! -------------- Replace crops with dominant natural vegetation type
        naturalvegfound = .true.
@@ -415,6 +425,15 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
        !!laic(i,j,covmaxk) = laic(covmaxii,covmaxjj,covmaxk)
        !!laim(:,i,j,covmaxk) = laim(:,covmaxii,covmaxjj,covmaxk)
        !write(*,*) 'Cell has crops + natural',i,j,s
+    elseif (covmaxlai.gt.0.d0) then  !Assign natural veg from more detailed lai
+       ! -------------- Replace crops with dominant natural vegetation type from lai file
+       naturalvegfound = .true.
+       vfc(i,j,covmaxlaik) = vfc(i,j,covmaxlaik)  &
+            + vfc(i,j,crops_herb_s)  + vfc(i,j,crops_woody_s)
+       vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
+       vfm(:,i,j,covmaxlaik) = vfm(:,i,j,covmaxlaik) &
+            + vfm(:,i,j,crops_herb_s)  + vfm(:,i,j,crops_woody_s)
+       vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
     else
        ! --------- If no natural vegetation, look at adjacent cells for veg type
        write(*,*) "No natural veg in (i,j). Checking adjacent",i,j !,s
@@ -433,18 +452,18 @@ subroutine replace_crops(esub, IMn,JMn,i,j, &
               ! (this code block copied from below)
               vfc(i,j,c3_grass_s) = vfc(i,j,c3_grass_s)  &
                    + vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s)
-              vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
               vfm(:,i,j,c3_grass_s) = vfm(:,i,j,c3_grass_s) &
                    + vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s)
-              vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover  - done below
 
-              ! Move the crop LAI to the new C3 grass
+              ! Copy the crop LAI to the new C3 grass
               laic(i,j,c3_grass_s) = &
                   (laic(i,j,crops_herb_s)*vfc(i,j,crops_herb_s) + laic(i,j,crops_woody_s)*vfc(i,j,crops_woody_s)) &
                   / (vfc(i,j,crops_herb_s) + vfc(i,j,crops_woody_s))
               laim(:,i,j,c3_grass_s) = &
                   (laim(:,i,j,crops_herb_s)*vfm(:,i,j,crops_herb_s) + laim(:,i,j,crops_woody_s)*vfm(:,i,j,crops_woody_s)) &
                   / (vfm(:,i,j,crops_herb_s) + vfm(:,i,j,crops_woody_s))
+              !vfc(i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover - done below
+              !vfm(:,i,j,crops_herb_s:crops_woody_s) = 0.0 !zero out crop cover  - done below
 
               EXIT   ! do loop; done increasing dg
           end if
@@ -1174,6 +1193,7 @@ print *,'c3herb',crops_herb_s,crops_woody_s
 !end do
 end subroutine do_part3_maxcrops
 
+! Replace crops with natural vegetation.
 subroutine do_part4_natveg(esub, IM,JM, io_bs, ts,   nc)
     use cropmerge_laisparse_splitbare_mod, only:  split_bare_single
     implicit none
