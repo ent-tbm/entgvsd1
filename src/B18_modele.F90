@@ -29,7 +29,8 @@ implicit none
 CONTAINS
 
 
-subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, modification)
+subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, &
+    im1,jm1, N_BARE, N_WATERICE, modification)
     type(ReadWrites_t) :: rw
     type(EntSet_t), intent(IN) :: esub
     character(*), intent(IN) :: lcpart0
@@ -37,6 +38,7 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
     character(*), intent(IN) :: hgtpart0
     character(*), intent(IN) :: part1    ! Destination section
     integer, intent(IN) :: im1,jm1    ! Destination resolution
+    integer, intent(IN) :: N_BARE, N_WATERICE
     character*(*), intent(IN) :: modification
     ! ----------- Locals
     integer :: ichunk,jchunk
@@ -59,6 +61,9 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 
     type(FileInfo_t) :: om   ! overmeta
 
+    integer :: i,j, ii, jj, shapebuf(2)
+    real*8 :: sum_vfc
+    
     call clear_file_info(om)
 
     om%modification = modification
@@ -182,10 +187,38 @@ subroutine make_modele(rw, esub, lcpart0, laipart0, hgtpart0, part1, im1,jm1, mo
 !            endif
         end do
 
-        call chunker1%write_chunks
+        ! Rescale lc fractions so that the land fractions sum to 1 and exclude water_ice in same pixel.
+        ! Will leave water_ice that is 100% of grid cell.
+        !N_BARE = esub%ncover - 1!esub%bare_dark. Crappy programming, cannot access cover types with EntSet_t
+        !N_WATERICE = esub%ncover !esub%water_ice
+        shapebuf = shape(io1_ann_lc(1,1)%buf)
+        ii = shapebuf(1)
+        jj = shapebuf(2)
+        print *, 'ii, jj', ii, jj
+        do i=1,ii
+           do j=1,jj
+              sum_vfc = 0.
+              do k=1,N_BARE
+                 sum_vfc = sum_vfc + io1_ann_lc(k,1)%buf(i,j)
+              enddo
+              !grid cells with land scale land to sum to 1 and set water_ice to 0.
+             !If all land got trimmed out, then set water_ice to 1. 
+              if ( sum_vfc > 0. ) then
+                 do k=1,N_BARE
+                    io1_ann_lc(k,1)%buf(i,j) = io1_ann_lc(k,1)%buf(i,j)/ sum_vfc
+                 enddo
+                 io1_ann_lc(N_WATERICE,1)%buf(i,j) = 0.
+              else if ((io1_ann_lc(N_WATERICE,1)%buf(i,j).gt.0.).and.(io1_ann_lc(N_WATERICE,1)%buf(i,j).lt.1.)) then
+                 print *, 'ERR with water_ice: sum_vfc, vfc', sum_vfc, io1_ann_lc(N_WATERICE,1)%buf(i,j)
+                 io1_ann_lc(N_WATERICE,1)%buf(i,j) = 1.
+              end if
+              !sum_vfc = sum(vfc(1:N_BARE))
+           enddo
+        enddo
 
-    end do
-    end do
+        call chunker1%write_chunks
+     end do
+  end do
 
     call chunker0%close_chunks
     call chunker1%close_chunks
@@ -203,10 +236,13 @@ implicit none
     type(GcmEntSet_t), target :: esub
     class(EntSet_t), pointer :: esub_p
     type(ReadWrites_t) :: rw
+    integer :: N_BARE, N_WATERICE
 
     call rw%init(THIS_OUTPUTS_DIR, "B18_modele", 300,300)
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
+    N_WATERICE = esub%water_ice
+    N_BARE = N_WATERICE - 1 !esub%bare_dark, assume water_ice is last cover type and only non-land.
     esub_p => esub
 
     ! Here we put different combinations for ModelE consumption
@@ -215,7 +251,8 @@ implicit none
         'trimmed_scaled_natveg', &            ! LAIMAX, LAI
         'trimmed_scaled_natveg', &            ! HGT
         'modelE_natveg', & ! output part
-        IM2,JM2, 'reformat for GISS ModelE, natveg, no crops')
+        IM2,JM2, N_BARE, N_WATERICE, &
+        'reformat for GISS ModelE, natveg, no crops')
 
 
     call make_modele(rw, esub_p, &
@@ -223,7 +260,8 @@ implicit none
         'trimmed_scaled', &            ! LAIMAX, LAI
         'trimmed_scaled', &            ! HGT
         'modelE', & ! output part
-        IM2,JM2, 'reformat for GISS ModelE, retain observed crop cover')
+        IM2,JM2, N_BARE, N_WATERICE, &
+        'reformat for GISS ModelE, retain observed crop cover')
 
 
     call rw%write_mk
