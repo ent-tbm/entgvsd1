@@ -1239,7 +1239,11 @@ subroutine file_metadata_entgvsd(ncid, modification)
             'doi:10.1002/joc.3711)'//NEW_LINE('A')//&
         'precipitation:  Global Precipitation Climatology Centre ' // &
             '(GPCC) V6, precipitation, monthly, 0.5, 1901-2010 ' // &
-            '(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)')
+            '(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)'//NEW_LINE('A')//&
+        'biomass: Center for Sustainability and the Global Environment, ' // &
+            'Nelson Institute for Environmental Studies, University ' // &
+            'of Wisconsin-Madison, Biomass Carbon Density, 300m, ' // &
+            '(Spawn et al. 2010, doi:10.1038/s41597-020-0444-4')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'modification', trim(modification))
 
@@ -2278,6 +2282,11 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
             write(ERROR_UNIT,*) 'No doytype allowed with hgt or bs_brightratio variable'
             stop
         end if
+    else if (var=='biomass') then ! added biomass
+        info%long_name = 'Biomass Carbon Density'
+        info%units='kg m-2'
+        info%data_source = 'https://doi.org/10.1038/s41597-020-0444-4'
+        time = 'ann_'
     else 
         if (.not.(present(doytype).or.present(varsuffix))) then
             write(ERROR_UNIT,*) 'filename(): Requires doytype unless var=laimax, lc or hgt or bs_brightratio'
