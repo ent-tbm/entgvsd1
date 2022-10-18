@@ -13,10 +13,12 @@ for stage in \
     B08_lc_laimax.F90 \
     B09_lc_lai_doy.F90 \
     B10_lc_lai_monthly.F90 \
+    B10b_lc_biomass_ann.F90 \
     B11_reclass_annual.F90 \
     B12_reclass_doy.F90 \
     B13_reclass_monthly.F90 \
     B14_regrid.F90 \
+    B14b_regrid_biomass.F90 \
     B15_regrid_controls.F90 \
     B16_trim.F90 \
     B17_checksum.F90 \
