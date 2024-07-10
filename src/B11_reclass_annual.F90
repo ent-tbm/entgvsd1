@@ -51,10 +51,19 @@ subroutine do_reindex(esub)
     type(ChunkIO_t) :: io_lchgt_checksum(one)
     type(ChunkIO_t) :: io_lclai_checksum(one)
     type(ChunkIO_t) :: io_simout(esub%ncover,one)
-    type(FileInfo_t) :: info
+    type(FileInfo_t) :: info, overmeta
     integer :: k,ksub
+#if (defined HGT_GEDI)
+    integer, parameter :: hgt_year = 2020
+    character*5, parameter :: hgt_ver = '1.1.2'
+#elif (defined HGT_POTAPOV)
+    integer, parameter :: hgt_year = 2021
+    character*5, parameter :: hgt_ver = '1.1.3'
+#endif
 
     esub_p => esub
+
+    call clear_file_info(overmeta)
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', &
         100, &   ! # files to >= (N_VEG + N_BARE)*(LC + LAI) + BARE_BRIGHTRATIO = 41
@@ -76,9 +85,14 @@ subroutine do_reindex(esub)
     call chunker%nc_open(io_bs, chunker%outputs_dir, 'soilalbedo/', &
         'soilalbedo_1km_bs_brightratio_fill.nc', 'bs_brightratio', 1)
 
-    ! Simard heights
     call chunker%nc_open_set(ent20, io_simin(:,1), &
-        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'ent17', '1.1')
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+        LAI_SOURCE, 'Ha', 'hgt', hgt_year, 'ent17', hgt_ver &
+#else
+    ! Simard heights
+        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'ent17', '1.1' &
+#endif
+        )
 
     ! Climate statistics (we want TCinave = temperature [C])
     call chunker%nc_open_input(io_TCinave, &
@@ -92,21 +106,45 @@ subroutine do_reindex(esub)
 
     ! PURE WITH WATER_ICE  
 
+overmeta%global_data_source = "lc : Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+  "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+  "al. 2010, doi:10.1016/j.rse.2009.08.016)"
     ! LC_pure
     call chunker%nc_create_set( &
         esub_p, io_lcout(:,1), &
         repeat_weights(esub%ncover, chunker%wta1, 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', '1.1', overmeta=overmeta)
 
+#if (defined HGT_GEDI)
+overmeta%global_data_source = "hgt: P. Potapov et al. (2020) Mapping and monitoring global "// &
+  "forest canopy height through integration of GEDI and Landsat data. Remote Sensing of Environment,"// &
+  " 112165. https://doi.org/10.1016/j.rse.2020.112165"
+overmeta%data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#elif (defined HGT_POTAPOV)
+overmeta%global_data_source = "Potapov et  al. (2021) Remote Sensing of "// &
+   "Environment, Volume 253. https://doi.org/10.1016/j.rse.2020.112165. Landsat/GEDI "// &
+   "30 m global forest heights upscaled to 1 km mean and standard deviation. "// &
+   "Personal communication, Peter Potapov, potapov@umd.edu."
+overmeta%data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#else
+overmeta%global_data_source = "hgt:  RH100 heights (Simard et al. 2011, doi:10.1029/2011jg001708)"
+#endif
     ! ENTPFT heights in ENT16 indices
     call chunker%nc_create_set( &
         esub_p, io_simout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', '1.1')
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+        LAI_SOURCE, 'Ha', 'hgt', hgt_year, 'pure', hgt_ver, &
+#else
+        LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', '1.1', &
+#endif
+        overmeta=overmeta)
 
+overmeta%global_data_source = "lai and laimax: Beijing Normal University LAI data product, "// &
+  "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)."
     ! laimax_pure
     call chunker%nc_create_set( &
         esub_p, io_laiout(:,1), lc_weights(io_lcout(:,1), 1d0, 0d0), &
-        LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', '1.1')
+        LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', '1.1', overmeta=overmeta)
 
     ! PURE_NOH2O scale out water_ice
 

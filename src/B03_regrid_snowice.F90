@@ -62,7 +62,11 @@ implicit none
         weighting(chunkerlr%wta1,1d0,0d0), &
         trim(info%dir), trim(info%leaf), trim(info%vname), &
         'Land Cover Fractions', '1', &
-        ent2%layer_names(), ent2%long_layer_names())!, create_lr=.false.)
+        ent2%layer_names(), ent2%long_layer_names(), &
+        global_data_source = "Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+        "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+        "al. 2010, doi:10.1016/j.rse.2009.08.016)")!, create_lr=.false.)
+      
     do k=1,2
         call chunkerlr%nc_reuse_var( &
             ioall_lcout, io_lcout(k), (/1,1,k/), &

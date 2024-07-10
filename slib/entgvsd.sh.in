@@ -5,7 +5,7 @@
 set -e
 
 # https://archive.is/TRzn4
-while getopts ":pd" opt; do
+while getopts ":pdv:l:c:h:b:" opt; do
   case $opt in
     d)
       echo "Debug mode set: will run on only small region" >&2
@@ -14,6 +14,29 @@ while getopts ":pd" opt; do
     p)
       echo "Will just write dependencies, will not run" >&2
       JUST_DEPENDENCIES="-DJUST_DEPENDENCIES"
+      ;;
+    v) # version number
+      echo "Using version ${OPTARG}" >&2
+      VERSION="-DV${OPTARG}"
+      ;;
+    l) # lai source
+      echo "Using data source ${OPTARG} for LAI" >&2
+      LAI="-DLAI_${OPTARG}"
+      ;;
+    c) # lc source
+      echo "Using data source ${OPTARG} for LC" >&2
+      LC="-DLC_${OPTARG}"
+      ;;
+    h) # hgt source
+      echo "Using data source ${OPTARG} for HGT" >&2
+      HGT="-DHGT_${OPTARG}"
+      ;;
+    b) # biomass source
+      echo "Using data source ${OPTARG} for BIOMASS" >&2
+      BIOMASS="-DBIOMASS_${OPTARG}"
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument" >&2
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -36,7 +59,7 @@ trap finish EXIT
 #LLP0="$LD_LIBRARY_PATH"
 #export LD_LIBRARY_PATH=
 
-@CMAKE_Fortran_COMPILER@ -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG \
+@CMAKE_Fortran_COMPILER@ -cpp $JUST_DEPENDENCIES $ENTGVSD_DEBUG $VERSION $LAI $LC $HGT $BIOMASS \
     -I@CMAKE_INSTALL_PREFIX@/include \
     -I@NETCDF4_FORTRAN_INCLUDE_DIR@ \
     @FFLAGS@ \

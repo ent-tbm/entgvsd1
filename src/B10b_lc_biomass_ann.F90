@@ -17,6 +17,14 @@ module assign_biomass_mod
   use hntr_mod
 implicit none
   real(kind=kind(1.0d0)), parameter :: FillValue8 = -1d30
+
+#if (defined BIOMASS_SPAWN)
+  integer, parameter :: n_biomass = 2
+#elif (defined BIOMASS_GEDI)
+  integer, parameter :: n_biomass = 1
+#else
+  integer, parameter :: n_biomass = -1
+#endif
   contains
 
 subroutine assign_biomass(chunker,&
@@ -33,11 +41,11 @@ subroutine assign_biomass(chunker,&
   type(Chunker_t) :: chunker!, chunkerlr
   integer :: jc0, jc1, ic0, ic1
   type(ChunkIO_t) :: io_lc(NENT20)
-  type(ChunkIO_t) :: io_biomass(2) ! only 2 files; 1=aboveground 2=belowground
-  type(ChunkIO_t) :: io_biomassout(NENT20,2)
+  type(ChunkIO_t) :: io_biomass(n_biomass) ! 1=aboveground 2=belowground
+  type(ChunkIO_t) :: io_biomassout(NENT20,n_biomass)
   !type(ChunkIO_t) :: io_biomassout_lr(NENT20,2)
   real, dimension(:,:), optional :: mywta
-  type(ChunkIO_t), optional :: checksum(2)
+  type(ChunkIO_t), optional :: checksum(n_biomass)
   !type(HntrCalc_t) :: hntr_lr
 
   ! local vars
@@ -58,8 +66,11 @@ subroutine assign_biomass(chunker,&
     do jc = 1,chunker%chunk_size(2)
     do ic = 1,chunker%chunk_size(1)
 
-      do l=1,2
+      do l=1,n_biomass
         val = io_biomass(l)%buf(ic,jc)
+#ifdef BIOMASS_GEDI
+        val = val * 0.1 ! Mg Ha-1 to kg m-2
+#endif
 
         if (present(checksum)) then
           checksum(l)%buf(ic,jc) = 0d0
@@ -71,19 +82,22 @@ subroutine assign_biomass(chunker,&
         
         lcw = io_lc(k)%buf(ic,jc)
 
-        if (val .eq. val) then ! nanF does not equal itself
-          io_biomassout(k,l)%buf(ic,jc) = val
-
-          if (present(checksum)) then
-            checksum(l)%buf(ic,jc) = checksum(l)%buf(ic,jc) + val*lcw
-          endif
+        ! filter out fillvalues from various sources
+        if (val .eq. val .and. lcw .eq. lcw) then ! nanF does not equal itself, NaN = not land
 
           ! doesn't work the way you'd expect it to
           !if (val .le. 0d0 .or. lcw .le. 0d0 .or. lcw .eq. FillValue) then ! check if 0 or fillval
           if (lcw .le. 0d0 .or. lcw .eq. FillValue) then ! check if 0 or fillval
             io_biomassout(k,l)%buf(ic,jc) = 0d0 !FillValue8
-          !  mywta1(ic,jc) = 0d0
+            mywta1(ic,jc) = 0d0
+          else
+            io_biomassout(k,l)%buf(ic,jc) = max(val, 0d0) ! filter negative fill values (-9999) 
           endif
+
+          if (present(checksum)) then
+            checksum(l)%buf(ic,jc) = checksum(l)%buf(ic,jc) + io_biomassout(k,l)%buf(ic,jc)
+          endif
+
         else
           io_biomassout(k,l)%buf(ic,jc) = FillValue8
           mywta1(ic,jc) = 0d0
@@ -146,29 +160,51 @@ implicit none
 
 type(Chunker_t) :: chunker!, chunkerlr
 ! Input files
-type(ChunkIO_t), target :: io_biomass(2), io_lc(NENT20)
+type(ChunkIO_t), target :: io_biomass(n_biomass), io_lc(NENT20)
 real*4, allocatable :: mywta(:,:)
 ! Output files
-type(ChunkIO_t) :: io_biomassout(NENT20,2)
+type(ChunkIO_t) :: io_biomassout(NENT20,n_biomass)
 !type(ChunkIO_t) :: io_biomassout_lr(NENT20,2)
-type(ChunkIO_t) :: io_biomass_checksum(2)
+type(ChunkIO_t) :: io_biomass_checksum(n_biomass)
 !type(ChunkIO_t) :: io_lclai_checksum(nmonth)
 !type(ChunkIO_t) :: io_lclai_checksum_allmonths
 !type(HntrSpec_t) :: spec_hr, spec_lr
 !type(HntrCalc_t) :: hntr_lr    ! Preparation to regrid
 
-type(FileInfo_t) :: info
+type(FileInfo_t) :: info, overmeta
 integer :: imonth,k
 
+#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI)
+#else
+write(*,*) "Missing argument for biomass: -b SPAWN or -b GEDI"
+stop 1
+#endif
+
+    call clear_file_info(overmeta)
+#if (defined BIOMASS_SPAWN)
+    overmeta%data_source = 'https://doi.org/10.1038/s41597-020-0444-4'
+    overmeta%global_data_source = &
+        'biomass: Center for Sustainability and the Global Environment, ' // &
+            'Nelson Institute for Environmental Studies, University ' // &
+            'of Wisconsin-Madison, Biomass Carbon Density, 300m, ' // &
+            '(Spawn et al. 2010, doi:10.1038/s41597-020-0444-4)'
+#elif (defined BIOMASS_GEDI)
+    overmeta%data_source = 'https://doi.org/10.3334/ORNLDAAC/2017'
+    overmeta%global_data_source = &
+        'biomass: Dubayah, R.O., J. Armston, S.P. Healey, Z. Yang, P.L. ' // &
+            'Patterson, S. Saarela, G. Stahl, L. Duncanson, and J.R. Kellner. 2022.' // &
+            'GEDI L4B Gridded Aboveground Biomass Density, Version 2. ORNL DAAC, Oak ' // &
+            'Ridge, Tennessee, USA. https://doi.org/10.3334/ORNLDAAC/2017. NOTE: DRYBIOMASS'
+#endif
     call init_ent_labels
     call chunker%init(IM1km, JM1km, IMH,JMH, 'forplot', 100, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
-    call chunkerlr%init(IMLR,JMLR,IM2,JM2, 'forplot', 100, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
+!   call chunkerlr%init(IMLR,JMLR,IM2,JM2, 'forplot', 100, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
     allocate(mywta(chunker%chunk_size(1), chunker%chunk_size(2)))
 
 !hntr stuff
-   spec_hr = hntr_spec(chunker%chunk_size(1),chunker%ngrid(2),0d0,180d0*60d0 / chunker%ngrid(2))
-   spec_lr = hntr_spec(chunkerlr%chunk_size(1),chunkerlr%ngrid(2),0d0,180d0*60d0 / chunkerlr%ngrid(2))
-   hntr_lr = hntr_calc(spec_lr, spec_hr, FillValue8) ! datmis = FillValue
+!  spec_hr = hntr_spec(chunker%chunk_size(1),chunker%ngrid(2),0d0,180d0*60d0 / chunker%ngrid(2))
+!  spec_lr = hntr_spec(chunkerlr%chunk_size(1),chunkerlr%ngrid(2),0d0,180d0*60d0 / chunkerlr%ngrid(2))
+!  hntr_lr = hntr_calc(spec_lr, spec_hr, FillValue8) ! datmis = FillValue
 
 
 !allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -176,6 +212,7 @@ integer :: imonth,k
 !* Input file.
 
 ! ===================== Input Files
+#if (defined BIOMASS_SPAWN)
 ! above and belowground biomass
     call chunker%nc_open_input(io_biomass(1), &
         INPUTS_URL, INPUTS_DIR, &
@@ -185,20 +222,33 @@ integer :: imonth,k
         INPUTS_URL, INPUTS_DIR, &
         'biomass/', 'V1km_SpawnBiomass_netcdf4.nc', &
         'biomass_belowground', 1)
+#elif (defined BIOMASS_GEDI)
+    call chunker%nc_open_input(io_biomass(1), &
+        INPUTS_URL, INPUTS_DIR, &
+        'biomass/', 'V1km_GEDI_aboveground_biomass_v2.nc', &
+        'aboveground_biomass_density', 1)
+#endif
 
 ! --- ENTPFTLC: Open outputs written by A00
     call chunker%nc_open_set(ent20, io_lc, &
         LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
 
 ! =================== Output Files
+#if (defined BIOMASS_SPAWN)
     call chunker%nc_create_set( & ! lcweights are dummy!!
         ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
-        LAI_SOURCE, '', 'biomass', 2010, 'biomass', '1.0_aboveground', &
-        create_lr=.false.)
+        LAI_SOURCE, 'Sp', 'biomass', 2010, 'ent17', '1.1.2_aboveground', &
+        create_lr=.true., overmeta=overmeta)
     call chunker%nc_create_set( & ! lcweights are dummy!!
         ent20, io_biomassout(:,2), lc_weights(io_lc, 0d0, 1d0), &
-        LAI_SOURCE, '', 'biomass', 2010, 'biomass', '1.0_belowground', &
-        create_lr=.false.)
+        LAI_SOURCE, 'Sp', 'biomass', 2010, 'ent17', '1.1.2_belowground', &
+        create_lr=.true., overmeta=overmeta)
+#elif (defined BIOMASS_GEDI)
+    call chunker%nc_create_set( & ! lcweights are dummy!!
+        ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
+        LAI_SOURCE, 'Ha', 'biomass', 2022, 'ent17', '1.1.2_aboveground', &
+        create_lr=.true., overmeta=overmeta)
+#endif
 
 ! =================== Regridded Files
 !   call chunkerlr%nc_create_set( & ! lcweights are dummy!!
@@ -211,19 +261,28 @@ integer :: imonth,k
 !       create_lr=.false.)
 
 ! =================== Checksum Files
-    call chunker%file_info(info, ent20, LAI_SOURCE, '', 'biomass', 2010, &
-    'biomass', '1.0_aboveground', varsuffix='_checksum')
+#if (defined BIOMASS_SPAWN)
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'Sp', 'biomass', 2010, &
+    'ent17', '1.1.2_aboveground', varsuffix='_checksum')
     call chunker%nc_create(io_biomass_checksum(1), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
-      info%long_name, info%units)
+      info%long_name, info%units, global_data_source=overmeta%global_data_source)
       
-    call chunker%file_info(info, ent20, LAI_SOURCE, '', 'biomass', 2010, &
-    'biomass', '1.0_belowground', varsuffix='_checksum')
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'Sp', 'biomass', 2010, &
+    'ent17', '1.1.2_belowground', varsuffix='_checksum')
     call chunker%nc_create(io_biomass_checksum(2), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
-      info%long_name, info%units)
+      info%long_name, info%units, global_data_source=overmeta%global_data_source)
+#elif (defined BIOMASS_GEDI)
+    call chunker%file_info(info, ent20, LAI_SOURCE, 'Ha', 'biomass', 2022, &
+    'ent17', '1.1.2_aboveground', varsuffix='_checksum')
+    call chunker%nc_create(io_biomass_checksum(1), &
+      weighting(mywta,1d0,0d0), &
+      info%dir, info%leaf, info%vname, &
+      info%long_name, info%units, global_data_source=overmeta%global_data_source)
+#endif
 
 ! Quit if we had any problems opening files
 call chunker%nc_check('B10b_lc_biomass_ann')
@@ -258,8 +317,5 @@ call assign_biomass(chunker,&
   ! io_biomassout_lr, &
     mywta=mywta, &
     checksum=io_biomass_checksum)
-
-call chunker%close_chunks
-
 
 end program biomass

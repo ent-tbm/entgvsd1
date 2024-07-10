@@ -44,7 +44,9 @@ enddo
 ! =================== Output Files
 call chunker%nc_create(io_laimax, weighting(chunker%wta1,1d0,0d0), &
     'tmp/bnu/', 'bnu_laimax', &
-    'laimax', 'Maximum of montly LAI', 'm^2 m-2')
+    'laimax', 'Maximum of montly LAI', 'm^2 m-2', &
+    global_data_source="Beijing Normal University LAI data product, "// &
+    "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).")
 
 call chunker%nc_check('B01_bnu_laimax')
 #ifdef JUST_DEPENDENCIES

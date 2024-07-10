@@ -96,7 +96,14 @@ subroutine regrid_controls(rw, root)
 
 #if 1
     call regrid_control(rw, &
-        INPUTS_DIR, 'height/', 'simard_forest_heights', 'heights')
+#if (defined HGT_GEDI)
+        INPUTS_DIR, 'height/', 'V1km_Forest_height_GEDILandsat.nc', 'heights' &
+#elif (defined HGT_POTAPOV)
+        INPUTS_DIR, 'height/', 'V1km_forest_height_Potapov2021.nc', 'heights' &
+#else
+        INPUTS_DIR, 'height/', 'simard_forest_heights', 'heights' &
+#endif
+        )
 
 
     do imonth=1,NMONTH

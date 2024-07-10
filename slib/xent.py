@@ -49,6 +49,7 @@ for i in range(1,len(sys.argv)):
 
         cmd = [launcher] + sys.argv[1:]
         print(cmd)
+        exit()
         sys.exit(subprocess.call(cmd))
 
 raise ValueError('Could not identify Fortran source file on command line')
