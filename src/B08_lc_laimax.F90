@@ -34,10 +34,16 @@ type(ChunkIO_t) :: io_laiout(NENT20,one)
 type(ChunkIO_t) :: io_err(NENT20,one)
 type(ChunkIO_t) :: io_lclai_checksum(one)
 
-type(FileInfo_t) :: info
+type(FileInfo_t) :: info, overmeta
 integer :: k
 integer :: ichunk,jchunk, ic,jc, ii,jj
 
+call clear_file_info(overmeta)
+overmeta%global_data_source = "lc : Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+  "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+  "al. 2010, doi:10.1016/j.rse.2009.08.016)"//NEW_LINE('A')// &
+  "lai and laimax: Beijing Normal University LAI data product, "// &
+  "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)."
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120,10, outputs_dir=THIS_OUTPUTS_DIR)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -64,12 +70,13 @@ call chunker%nc_open_set(ent20, io_lc, &
 
 call chunker%nc_create_set( &
     ent20, io_laiout(:,1), lc_weights(io_lc, 1d0, 0d0), &
-    LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1')
+    LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1', &
+    overmeta=overmeta)
 
 call chunker%nc_create_set( &
     ent20, io_err(:,1), lc_weights(io_lc, 1d0, 0d0), &
     LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1', &
-    varsuffix='_err')
+    varsuffix='_err', overmeta=overmeta)
 
 call chunker%file_info(info, ent20, &
     LAI_SOURCE, 'M', 'lclaimax', LAI_YEAR, 'ent17', '1.1', &
@@ -77,7 +84,7 @@ call chunker%file_info(info, ent20, &
 call chunker%nc_create( &
     io_lclai_checksum(1),  weighting(sum_lc,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
-    'Sum(LC*LAI)', info%units)
+    'Sum(LC*LAI)', info%units, global_data_source=overmeta%global_data_source)
 
 ! ====================== Done Opening Files
 

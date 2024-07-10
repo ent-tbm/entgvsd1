@@ -377,6 +377,12 @@ type(ChunkIO_t) :: ioall_laicheck, io_laicheck(NENT20)
 #ifdef COMPUTE_LAI
 type(ChunkIO_t) :: io_lclai_checksum
 #endif
+character*512 :: gds = "lc: Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+              "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et " // &
+              "al. 2010, doi:10.1016/j.rse.2009.08.016)"//ACHAR(13)//ACHAR(10)// &
+              "precipitation:  Global Precipitation Climatology Centre "// &
+              "(GPCC) V6, precipitation, monthly, 0.5, 1901-2010 "// &
+              "(Schneider et al. 2014, doi:10.1007/s00704-013-0860-x)"
 
     call init_ent_labels
 
@@ -475,6 +481,7 @@ call chunker%nc_open_input(io_waterpart, &
 
 !      ENTPFTLC -- Land Cover
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1')
+info%global_data_source = trim(gds)
 call chunker%nc_create1(ioall_lc, &
     weighting(chunker%wta1, 1d0, 0d0), & ! Dummy
     info%dir, info%leaf, info, &
@@ -493,6 +500,7 @@ end do
 
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1.1', &
     varsuffix = '_modis_checksum')
+info%global_data_source = trim(gds)
 call chunker%nc_create1(io_lc_modis_checksum, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
 
@@ -510,7 +518,8 @@ call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1
     varsuffix = '_npftgrid')
 call chunker%nc_create(io_npftgrid, weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
-    'Number of PFTs per gridcell', '1')
+    'Number of PFTs per gridcell', '1', &
+    global_data_source=trim(gds))
 io_npftgrid%regrid_lr => accum_lr_stats
 
 !     DOMPFTLC   Dominant PFT's LC in a gridcell
@@ -518,7 +527,8 @@ call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1
     varsuffix = '_dompftlc')
 call chunker%nc_create(io_dompftlc, weighting(io_lc(CV_WATER)%buf,-1d0,1d0), &  ! LC is Land-weighted &
     info%dir, info%leaf, info%vname, &
-    'LC of Dominant PFT in each gridcell', '1')
+    'LC of Dominant PFT in each gridcell', '1', &
+    global_data_source=trim(gds))
 io_dompftlc%regrid_lr => nop_regrid_lr
 
 !     DOMPFT     Dominant PFT index in a gridcell (int)
@@ -526,7 +536,8 @@ call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'ent17', '1
     varsuffix = '_dompft')
 call chunker%nc_create(io_dompft, weighting(io_dompftlc%buf,1d0,0d0), &
     info%dir, info%leaf, info%vname, &
-    'Index of Dominant PFT in each gridcell', '1')
+    'Index of Dominant PFT in each gridcell', '1', &
+    global_data_source=trim(gds))
 io_dompft%regrid_lr => nop_regrid_lr
 ! ------------------------------------------------------------
 
@@ -541,6 +552,8 @@ enddo
 
 ! ENTPFTLAIMAX
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'ent17', '1.1')
+info%global_data_source = "Beijing Normal University LAI data product, "// &
+    "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)."
 call chunker%nc_create1(ioall_laiout, &
     weighting(chunker%wta1, 1d0, 0d0), &    ! TODO: Scale by _lc; store an array of 2D array pointers
     info%dir, info%leaf, info, &

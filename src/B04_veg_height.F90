@@ -8,6 +8,8 @@
 ! ballpark heights).
 !
 ! Author: Nancy Kiang, Carlo Monte, Elizabeth Fischer
+
+! 1/2024 James Lui added in ifdef for GEDI heights
 !-----------------------------------------------------------------
       
 #ifdef JUST_DEPENDENCIES
@@ -16,7 +18,11 @@
 #    define THIS_OUTPUTS_DIR DEFAULT_OUTPUTS_DIR
 #endif
 
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+program gedi
+#else
 program simard
+#endif
 
     use netcdf
     use chunker_mod
@@ -38,9 +44,31 @@ implicit none
     type(ChunkIO_t) :: io_lchgt_checksum
 
     real*4 :: SHEIGHT, OHEIGHT
-    type(FileInfo_t) :: info
+    type(FileInfo_t) :: info, overmeta
     integer :: k
+#if (defined HGT_GEDI)
+    integer, parameter :: hgt_year = 2020
+    character*5, parameter :: hgt_ver = '1.1.2'
+#elif (defined HGT_POTAPOV)
+    integer, parameter :: hgt_year = 2021
+    character*5, parameter :: hgt_ver = '1.1.3'
+#endif
 
+call clear_file_info(overmeta)
+#if (defined HGT_GEDI)
+overmeta%global_data_source = "hgt: P. Potapov et al. (2020) Mapping and monitoring global "// &
+  "forest canopy height through integration of GEDI and Landsat data. Remote Sensing of Environment,"// &
+  " 112165. https://doi.org/10.1016/j.rse.2020.112165"
+overmeta%data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#elif (defined HGT_POTAPOV)
+overmeta%global_data_source = "Potapov et  al. (2021) Remote Sensing of "// &
+   "Environment, Volume 253. https://doi.org/10.1016/j.rse.2020.112165. Landsat/GEDI "// &
+   "30 m global forest heights upscaled to 1 km mean and standard deviation. "// &
+   "Personal communication, Peter Potapov, potapov@umd.edu."
+overmeta%data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#else
+overmeta%global_data_source = "hgt:  RH100 heights (Simard et al. 2011, doi:10.1029/2011jg001708)"
+#endif
 call init_ent_labels
 
 ! -----------------------------------------------------
@@ -56,7 +84,14 @@ call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_di
 call chunker%nc_open_input(io_sim, &
     INPUTS_URL, INPUTS_DIR, &
     'height/', &
-    'simard_forest_heights.nc', 'heights', 1)
+#if (defined HGT_GEDI)
+    'V1km_Forest_height_GEDILandsat.nc', 'heights', &
+#elif (defined HGT_POTAPOV)
+    'V1km_forest_height_Potapov2021.nc', 'heights', &
+#else
+    'simard_forest_heights.nc', 'heights', &
+#endif
+     1 )
 
 !     ENTPFTLC
 call chunker%nc_open_set(ent20, io_lc, &
@@ -67,11 +102,23 @@ call chunker%nc_open_set(ent20, io_lc, &
 
 call chunker%nc_create_set( &
     ent20, io_out, lc_weights(io_lc, 1d0, 0d0), &
-    LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'ent17', '1.1')
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+    LAI_SOURCE, 'Ha', 'hgt', hgt_year, 'ent17', hgt_ver, &
+#else
+    LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'ent17', '1.1', &
+#endif
+    overmeta=overmeta)
 
 ! ---------- Checksums
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+call chunker%file_info(info, ent20, LAI_SOURCE, 'Ha', 'lchgt', hgt_year, 'ent17', hgt_ver, &
+    varsuffix='_checksum')
+info%global_data_source = overmeta%global_data_source
+info%data_source = overmeta%data_source
+#else
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lchgt', LAI_YEAR, 'ent17', '1.1', &
     varsuffix='_checksum')
+#endif
 call chunker%nc_create1(io_lchgt_checksum, &
     weighting(chunker%wta1,1d0,0d0), &
     info%dir, info%leaf, info)
@@ -112,7 +159,7 @@ do ichunk = 1,chunker%nchunk(1)
                 OHEIGHT = FillValue   ! Default if nothing in this PFT
                 if (io_lc(k)%buf(ic,jc) > 0) then
                     ! Lookup what the height should be
-                    SHEIGHT = io_sim%buf(ic,jc)
+                    SHEIGHT = max(io_sim%buf(ic,jc), 0.) ! filter out negative
                     OHEIGHT = SHEIGHT * heights_form(1,k) + heights_form(2,k)
                     io_lchgt_checksum%buf(ic,jc) = io_lchgt_checksum%buf(ic,jc) + &
                         io_lc(k)%buf(ic,jc) * OHEIGHT
@@ -137,5 +184,9 @@ end do ! jchunk
 call chunker%close_chunks
 
       
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+end program gedi
+#else
 end program simard
+#endif
 

@@ -45,11 +45,17 @@ subroutine do_reindex(esub)
     type(ChunkIO_t) :: io_laiout(esub%ncover,ndoy)
     type(ChunkIO_t) :: io_lclai_checksum(ndoy)
 
-    type(FileInfo_t) :: info
+    type(FileInfo_t) :: info, overmeta
     integer :: k,ksub
     integer :: idoy
 
     esub_p => esub
+
+    call clear_file_info(overmeta)
+    overmeta%global_data_source = "lc : Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+  "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+  "al. 2010, doi:10.1016/j.rse.2009.08.016)"//NEW_LINE('A')// &
+  "lai and laimax: Beijing Normal University LAI data product, "// &
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_dir=THIS_OUTPUTS_DIR)
     allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -89,7 +95,7 @@ subroutine do_reindex(esub)
         call chunker%nc_create_set( &
             esub_p, io_laiout(:,idoy), lc_weights(io_lc_pure, 1d0, 0d0), &
             LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'pure', '1.1', &
-            doytype='doy', idoy=idoy)
+            doytype='doy', idoy=idoy, overmeta=overmeta)
 
         call chunker%file_info(info, esub_p, &
             LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'pure', '1.1', &
@@ -98,7 +104,7 @@ subroutine do_reindex(esub)
         call chunker%nc_create(io_lclai_checksum(idoy), &
             weighting(sum_lc, 1d0, 0d0), &   ! TODO: Scale by _lc
             info%dir, info%leaf, info%vname, &
-            'SUM(LC*LAI)', info%units)
+            'SUM(LC*LAI)', info%units, global_data_source=overmeta%global_data_source)
     end do   ! idoy
 
     call chunker%nc_check('B12_reclass_doy')

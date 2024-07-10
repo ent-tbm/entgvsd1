@@ -30,9 +30,15 @@ real*4, allocatable :: sum_lc(:,:)
 type(ChunkIO_t) :: io_laiout(NENT20,ndoy)
 type(ChunkIO_t) :: io_lclai_checksum(ndoy)
 
-type(FileInfo_t) :: info
+type(FileInfo_t) :: info, overmeta
 integer :: idoy,k
 
+call clear_file_info(overmeta)
+overmeta%global_data_source = "lc : Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+  "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+  "al. 2010, doi:10.1016/j.rse.2009.08.016)"//NEW_LINE('A')// &
+  "lai and laimax: Beijing Normal University LAI data product, "// &
+  "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)."
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 120, 10, outputs_dir=THIS_OUTPUTS_DIR)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -56,14 +62,14 @@ do idoy = 1,ndoy
     call chunker%nc_create_set( &
         ent20, io_laiout(:,idoy), lc_weights(io_lc, 1d0, 0d0), &
         LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'ent17', '1.1', &
-        doytype='doy', idoy=idoy)
+        doytype='doy', idoy=idoy, overmeta=overmeta)
 
     call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
         doytype='doy', idoy=idoy, varsuffix='_checksum')
     call chunker%nc_create(io_lclai_checksum(idoy), &
         weighting(sum_lc,1d0,0d0), &
         info%dir, info%leaf, info%vname, &
-        info%long_name, info%units)
+        info%long_name, info%units, global_data_source=overmeta%global_data_source)
 enddo
 
 ! ====================== Done Opening Files

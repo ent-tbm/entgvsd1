@@ -33,9 +33,15 @@ type(ChunkIO_t) :: io_laiout(NENT20,nmonth)
 type(ChunkIO_t) :: io_lclai_checksum(nmonth)
 type(ChunkIO_t) :: io_lclai_checksum_allmonths
 
-type(FileInfo_t) :: info
+type(FileInfo_t) :: info, overmeta
 integer :: imonth,k
 
+call clear_file_info(overmeta)
+overmeta%global_data_source = "lc : Moderate Resolution Imaging Spectroradiometer (MODIS) "// &
+  "MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et "// &
+  "al. 2010, doi:10.1016/j.rse.2009.08.016)"//NEW_LINE('A')// &
+  "lai and laimax: Beijing Normal University LAI data product, "// &
+  "1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001)."
 call init_ent_labels
 call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'forplot', 100, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
 allocate(sum_lc(chunker%chunk_size(1), chunker%chunk_size(2)))
@@ -59,18 +65,19 @@ do imonth=1,nmonth
     call chunker%nc_create_set( &
         ent20, io_laiout(:,imonth), lc_weights(io_lc, 1d0, 0d0), &
         LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'ent17', '1.1', &
-        doytype='month', idoy=imonth)
+        doytype='month', idoy=imonth, overmeta=overmeta)
 
     call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
         doytype='month', idoy=imonth, varsuffix='_checksum')
     call chunker%nc_create(io_lclai_checksum(imonth), &
         weighting(sum_lc,1d0,0d0), &
         info%dir, info%leaf, info%vname, &
-        info%long_name, info%units)
+        info%long_name, info%units, global_data_source=overmeta%global_data_source)
 enddo
 
 call chunker%file_info(info, ent20, LAI_SOURCE, 'M', 'lclai', LAI_YEAR, 'ent17', '1.1', &
     varsuffix='_allmonth_checksum')
+info%global_data_source = overmeta%global_data_source
 call chunker%nc_create(io_lclai_checksum_allmonths, &
     weighting(sum_lc,1d0,0d0), &
     info%dir, info%leaf, info%vname, &

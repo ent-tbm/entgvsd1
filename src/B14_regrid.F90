@@ -68,7 +68,7 @@ end function make_fname
 
 function make_fname2(ichunker, ochunker, ents, lc_weighting, &
     laisource, cropsource, var, year, istep, ostep, ver, &
-    doytype, idoy, varsuffix) &
+    doytype, idoy, varsuffix, data_source, global_data_source) &
 result(fn)
     class(Chunker_t), intent(IN) :: ichunker, ochunker
     type(EntSet_t), intent(IN) :: ents
@@ -85,6 +85,7 @@ result(fn)
     character*(*), intent(IN), OPTIONAL :: doytype ! ann,doy,month
     integer, intent(IN), OPTIONAL :: idoy
     character*(*), intent(IN), OPTIONAL :: varsuffix
+    character*(*), intent(IN), OPTIONAL :: data_source, global_data_source
     type(IOFname_t) :: fn       ! RESULT
 
     ! ------------- Locals
@@ -103,6 +104,13 @@ result(fn)
     fn%oleaf = oinfo%leaf
     fn%lc_weighting = lc_weighting
     fn%info = iinfo   ! Copy all metadata
+
+    if present(data_source) then
+      fn%info%data_source = data_source
+    endif
+    if present(global_data_source) then
+      fn%info%global_data_source = global_data_source
+    endif
 
 end function make_fname2
 
@@ -334,6 +342,15 @@ subroutine do_regrid_all_lais(rw)
     type(IOFname_t) :: fname(MAXFILES),fnames1(1)
     integer :: nf,i0,i1,idoy,imonth
     type(Chunker_t) :: chunker, chunkerlr
+#if (defined HGT_GEDI)
+    integer, parameter :: hgt_year = 2020
+    character*5, parameter :: hgt_ver = '1.1.2'
+#elif (defined HGT_POTAPOV)
+    integer, parameter :: hgt_year = 2021
+    character*5, parameter :: hgt_ver = '1.1.3'
+#endif
+    character*(300) :: data_source
+    character*(512) :: global_data_source
 
     call init_ent_labels
     esub = make_ent_gcm_subset(combine_crops_c3_c4, split_bare_soil)
@@ -346,19 +363,50 @@ subroutine do_regrid_all_lais(rw)
     nf = 0
 
     ! ----------- Annual
+    global_data_source = &
+        'lc:  Moderate Resolution Imaging Spectroradiometer (MODIS) ' // &
+        'MCD12Q1 L3 V051,, Land Cover, 500 m, annual (Friedl et ' // &
+        'al. 2010, doi:10.1016/j.rse.2009.08.016)'
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .false., LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', 'purelr', '1.1')
+        .false., LAI_SOURCE, 'M', 'lc', LAI_YEAR, 'pure', 'purelr', '1.1', &
+        global_data_source=global_data_source)
 
-
+    global_data_source = &
+        'lai and laimax: Beijing Normal University LAI data product, ' // &
+        '1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).'
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', 'purelr', '1.1')
+        .true., LAI_SOURCE, 'M', 'laimax', LAI_YEAR, 'pure', 'purelr', '1.1', &
+        global_data_source=global_data_source)
 
+#if (defined HGT_GEDI)
+    global_data_source = "hgt: P. Potapov et al. (2020) Mapping and monitoring global "// &
+        "forest canopy height through integration of GEDI and Landsat data. Remote Sensing of Environment,"// &
+        " 112165. https://doi.org/10.1016/j.rse.2020.112165"
+    data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#elif (defined HGT_POTATPOV)
+    global_data_source = "Potapov et  al. (2021) Remote Sensing of "// &
+        "Environment, Volume 253. https://doi.org/10.1016/j.rse.2020.112165. Landsat/GEDI "// &
+        "30 m global forest heights upscaled to 1 km mean and standard deviation. "// &
+        "Personal communication, Peter Potapov, potapov@umd.edu."
+    data_source = "hgt: GEDI heights (Landsat) (P. Potapov et al. 2020, https://doi.org/10.1016/j.rse.2020.112165)"
+#else
+    global_data_source = "hgt:  RH100 heights (Simard et al. 2011, doi:10.1029/2011jg001708)"
+#endif
     nf = nf + 1
     fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
-        .true., LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', 'purelr', '1.1')
+#if (defined HGT_GEDI) || (defined HGT_POTAPOV)
+        .true., LAI_SOURCE, 'Ha', 'hgt', hgt_year, 'pure', 'purelr', hgt_ver, &
+        data_source=data_source, &
+#else
+        .true., LAI_SOURCE, 'M', 'hgt', LAI_YEAR, 'pure', 'purelr', '1.1', &
+#endif
+        global_data_source=global_data_source)
 
+    global_data_source = &
+        'lai and laimax: Beijing Normal University LAI data product, ' // &
+        '1 km (Yuan et al. 2011, doi:10.1016/j.rse.2011.01.001).'
 #if 0
 ! We only need the doy files at the ent17 and pure steps.  We do not
 ! need them at later trimming steps. The doy files are only for 1km
@@ -369,7 +417,7 @@ subroutine do_regrid_all_lais(rw)
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
             .true., LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'pure', 'purelr', '1.1', &
-            'doy', idoy)
+            'doy', idoy, global_data_source=global_data_source)
     end do
 #endif
 
@@ -378,7 +426,7 @@ subroutine do_regrid_all_lais(rw)
         nf = nf + 1
         fname(nf) = make_fname2(chunker, chunkerlr, esub_p, &
             .true., LAI_SOURCE, 'M', 'lai', LAI_YEAR, 'pure', 'purelr', '1.1', &
-            'month', imonth)
+            'month', imonth, global_data_source=global_data_source)
     end do
 
 

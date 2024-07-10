@@ -298,7 +298,9 @@ type FileInfo_t
     character*(20) :: units
     character*(200) :: modification
     character*(300) :: data_source
+    character*(512) :: global_data_source ! J Lui Jan 2024 use to customize global metadata without having to edit slib
     character*(20) :: file_metadata_type
+    character*(10) :: ver ! J Lui Jan 2024 version number in metadata controlled by version in nc_create_set, nc_create(1)
 end type FileInfo_t
 
 
@@ -315,7 +317,9 @@ subroutine clear_file_info(info)
     info%units = ''
     info%modification = ''
     info%data_source = ''
+    info%global_data_source = ''
     info%file_metadata_type = 'entgvsd'
+    info%ver = ''
 end subroutine clear_file_info
 
 subroutine handle_nf90_error(status, message)
@@ -1203,9 +1207,11 @@ function make_chunksizes(imjm, nchunk) result(chunksizes)
 end function make_chunksizes
 
 ! Creates file-level metadata for standard EntGVSD files
-subroutine file_metadata_entgvsd(ncid, modification)
+subroutine file_metadata_entgvsd(ncid, modification, version, metadata)
     integer :: ncid
     character*(*) :: modification
+    character*(*) :: version
+    character*(*), optional :: metadata ! METADATA OVERRIDE allows metadata to be put in from src directory @ J Lui Jan 2024
     ! -------------- Local Vars
     integer :: status
 
@@ -1214,13 +1220,17 @@ subroutine file_metadata_entgvsd(ncid, modification)
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'description', 'Ent Terrestrial Biosphere Model (Ent TBM) Global Vegetation Structure Data Set (Ent GVSD)')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
-        'version', '1.1')
+        'version', trim(version))
     status=nf90_put_att(ncid,NF90_GLOBAL, &
         'contact', 'Nancy.Y.Kiang@nasa.gov, Elizabeth.Fischer@columbia.edu')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'institution', 'NASA Goddard Institute for Space Studies, New York, NY 10025, USA')
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'reference', '__ENT GVSD_NASA TECHNICAL_REPORT__')
+    if (present(metadata)) then
+    status=nf90_put_att(ncid, NF90_GLOBAL, &
+        'data_sources', trim(metadata))
+    else ! revert to previous behavior if not specified
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'data_sources', &
         'v1.1:'//NEW_LINE('A')//&
@@ -1244,6 +1254,7 @@ subroutine file_metadata_entgvsd(ncid, modification)
             'Nelson Institute for Environmental Studies, University ' // &
             'of Wisconsin-Madison, Biomass Carbon Density, 300m, ' // &
             '(Spawn et al. 2010, doi:10.1038/s41597-020-0444-4')
+    endif
     status=nf90_put_att(ncid, NF90_GLOBAL, &
         'modification', trim(modification))
 
@@ -1363,7 +1374,11 @@ subroutine my_nf90_create_Ent_single(ncid, varid, nlayers, nchunk, &
          trim(info%long_name))
 
     if (trim(info%file_metadata_type) == 'entgvsd') then
-        call file_metadata_entgvsd(ncid, info%modification)
+        if (info%global_data_source /= '') then
+            call file_metadata_entgvsd(ncid, info%modification, info%ver, info%global_data_source)
+        else    
+            call file_metadata_entgvsd(ncid, info%modification, info%ver)
+        end if
     elseif (trim(info%file_metadata_type) == 'soilalbedo') then
         call file_metadata_carrer(ncid)
     else
@@ -1532,7 +1547,8 @@ subroutine nc_create(this, cio, &
 wta, &   ! Weight by weights(i,j)*MM + BB
 dir, leaf, &
 vname,long_name,units, &
-layer_names, long_layer_names, create_lr)
+layer_names, long_layer_names, create_lr, &
+global_data_source, data_source, ver)
 
     class(Chunker_t) :: this
     type(ChunkIO_t), target :: cio
@@ -1544,6 +1560,9 @@ layer_names, long_layer_names, create_lr)
     character(len=*), dimension(:), OPTIONAL :: layer_names
     character(len=*), dimension(:), OPTIONAL :: long_layer_names
     logical, intent(IN), OPTIONAL :: create_lr
+    character*(*), intent(in), optional :: global_data_source
+    character*(*), intent(in), optional :: data_source
+    character*(*), intent(in), optional :: ver
 
     type(FileInfo_t) :: info
     call clear_file_info(info)
@@ -1565,6 +1584,24 @@ layer_names, long_layer_names, create_lr)
         info%units = units
     else
         info%units = ''
+    end if
+
+    if (present(global_data_source)) then
+        info%global_data_source = global_data_source
+    else
+        info%global_data_source = ''
+    end if
+
+    if (present(ver)) then
+        info%ver = ver
+    else
+        info%ver = '1.1'
+    end if
+
+    if (present(data_source)) then
+        info%data_source = data_source
+    else
+        info%data_source = ''
     end if
 
     call this%nc_create1(cio, wta, dir, leaf, info, layer_names, long_layer_names, create_lr)
@@ -1892,6 +1929,8 @@ subroutine nc_create_set( &
         if (overmeta%units /= '') info%units = overmeta%units
         if (overmeta%modification /= '') info%modification = overmeta%modification
         if (overmeta%data_source /= '') info%data_source = overmeta%data_source
+        if (overmeta%global_data_source /= '') info%global_data_source = overmeta%global_data_source
+        if (overmeta%ver /= '') info%ver = overmeta%ver ! if for some reason the metadata should be different than the filename
     end if
 
 
@@ -2380,6 +2419,7 @@ subroutine file_info(this, info, ents, laisource, cropsource, var,year,step, ver
 
     info%dir = trim(step) // '/'
     info%vname = trim(var) // trim(xvarsuffix)
+    info%ver = trim(ver)
 end subroutine file_info
 
 
