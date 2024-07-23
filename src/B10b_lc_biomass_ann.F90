@@ -16,7 +16,6 @@ module assign_biomass_mod
   use ent_labels_mod
   use hntr_mod
 implicit none
-  real(kind=kind(1.0d0)), parameter :: FillValue8 = -1d30
 
 #if (defined BIOMASS_SPAWN)
   integer, parameter :: n_biomass = 2
@@ -73,7 +72,7 @@ subroutine assign_biomass(chunker,&
 #endif
 
         if (present(checksum)) then
-          checksum(l)%buf(ic,jc) = 0d0
+          checksum(l)%buf(ic,jc) = 0.
         endif
       do k=1,NENT20
 
@@ -87,11 +86,11 @@ subroutine assign_biomass(chunker,&
 
           ! doesn't work the way you'd expect it to
           !if (val .le. 0d0 .or. lcw .le. 0d0 .or. lcw .eq. FillValue) then ! check if 0 or fillval
-          if (lcw .le. 0d0 .or. lcw .eq. FillValue) then ! check if 0 or fillval
-            io_biomassout(k,l)%buf(ic,jc) = 0d0 !FillValue8
-            mywta1(ic,jc) = 0d0
+          if (lcw .le. 0. .or. lcw .eq. FillValue) then ! check if 0 or fillval
+            io_biomassout(k,l)%buf(ic,jc) = 0. !FillValue
+            mywta1(ic,jc) = 0.
           else
-            io_biomassout(k,l)%buf(ic,jc) = max(val, 0d0) ! filter negative fill values (-9999) 
+            io_biomassout(k,l)%buf(ic,jc) = max(val, 0.) ! filter negative fill values (-9999) 
           endif
 
           if (present(checksum)) then
@@ -99,8 +98,8 @@ subroutine assign_biomass(chunker,&
           endif
 
         else
-          io_biomassout(k,l)%buf(ic,jc) = FillValue8
-          mywta1(ic,jc) = 0d0
+          io_biomassout(k,l)%buf(ic,jc) = FillValue
+          mywta1(ic,jc) = 0.
         end if 
 
       enddo ! k
@@ -237,17 +236,17 @@ stop 1
 #if (defined BIOMASS_SPAWN)
     call chunker%nc_create_set( & ! lcweights are dummy!!
         ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
-        LAI_SOURCE, 'Sp', 'biomass', 2010, 'ent17', '1.1.2_aboveground', &
+        'Spawn2020', '', 'biomass_agb', 2010, 'ent17', '1.1.2', &
         create_lr=.true., overmeta=overmeta)
     call chunker%nc_create_set( & ! lcweights are dummy!!
         ent20, io_biomassout(:,2), lc_weights(io_lc, 0d0, 1d0), &
-        LAI_SOURCE, 'Sp', 'biomass', 2010, 'ent17', '1.1.2_belowground', &
+        'Spawn2020', '', 'biomass_bgb', 2010, 'ent17', '1.1.2', &
         create_lr=.true., overmeta=overmeta)
 #elif (defined BIOMASS_GEDI)
     call chunker%nc_create_set( & ! lcweights are dummy!!
         ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
-        LAI_SOURCE, 'Ha', 'biomass', 2022, 'ent17', '1.1.2_aboveground', &
-        create_lr=.true., overmeta=overmeta)
+        'GEDI', '', 'biomass_agb', 2022, 'ent17', '1.1.2', &
+        create_lr=.true., overmeta=overmeta, heightsource='H2')
 #endif
 
 ! =================== Regridded Files
@@ -262,22 +261,22 @@ stop 1
 
 ! =================== Checksum Files
 #if (defined BIOMASS_SPAWN)
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'Sp', 'biomass', 2010, &
-    'ent17', '1.1.2_aboveground', varsuffix='_checksum')
+    call chunker%file_info(info, ent20, 'Spawn2020', '', 'biomass_agb', 2010, &
+    'ent17', '1.1.2', varsuffix='_checksum')
     call chunker%nc_create(io_biomass_checksum(1), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
       info%long_name, info%units, global_data_source=overmeta%global_data_source)
       
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'Sp', 'biomass', 2010, &
-    'ent17', '1.1.2_belowground', varsuffix='_checksum')
+    call chunker%file_info(info, ent20, 'Spawn2020', '', 'biomass_bgb', 2010, &
+    'ent17', '1.1.2', varsuffix='_checksum')
     call chunker%nc_create(io_biomass_checksum(2), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
       info%long_name, info%units, global_data_source=overmeta%global_data_source)
 #elif (defined BIOMASS_GEDI)
-    call chunker%file_info(info, ent20, LAI_SOURCE, 'Ha', 'biomass', 2022, &
-    'ent17', '1.1.2_aboveground', varsuffix='_checksum')
+    call chunker%file_info(info, ent20, 'GEDI', '', 'biomass_agb', 2022, &
+    'ent17', '1.1.2', varsuffix='_checksum', heightsource='H2')
     call chunker%nc_create(io_biomass_checksum(1), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
