@@ -31,7 +31,7 @@ implicit none
     integer, parameter :: one = 1
 #if (defined BIOMASS_SPAWN)
     integer, parameter :: n_biomass = 2
-#elif (defined BIOMASS_GEDI)
+#elif (defined BIOMASS_GEDI) || (BIOMASS_XU)
     integer, parameter :: n_biomass = 1
 #else
     integer, parameter :: n_biomass = -1
@@ -78,6 +78,11 @@ subroutine do_reindex(esub)
             'Patterson, S. Saarela, G. Stahl, L. Duncanson, and J.R. Kellner. 2022.' // &
             'GEDI L4B Gridded Aboveground Biomass Density, Version 2. ORNL DAAC, Oak ' // &
             'Ridge, Tennessee, USA. https://doi.org/10.3334/ORNLDAAC/2017. NOTE: DRYBIOMASS'
+#elif (defined BIOMASS_XU)
+    overmeta%data_source = 'https://doi.org/10.1126/sciadv.abe9829'
+    overmeta%global_data_source = &
+        'biomass: Liang Xu et al. ,Changes in global terrestrial live biomass ' // &
+            'over the 21st century.Sci. Adv.7,eabe9829(2021).DOI:10.1126/sciadv.abe9829'
 #endif
 
     call chunker%init(IM1km, JM1km, IMH*2,JMH*2, 'QXQ', &
@@ -103,6 +108,10 @@ subroutine do_reindex(esub)
     call chunker%nc_open_set(ent20, io_biomassin(:,1), &
         'GEDI', '', 'biomass_agb', 2022, 'ent17', '1.1.2', &
         heightsource='H2')
+#elif (defined BIOMASS_XU)
+    call chunker%nc_open_set(ent20, io_biomassin(:,1), &
+        'Xu', '', 'biomass_agb', 2004, 'ent17', '1.1.2', &
+        heightsource='X')
 #endif
 
     ! Bare Soil Brightness Ratio
@@ -137,6 +146,11 @@ subroutine do_reindex(esub)
         esub_p, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
         'GEDI', '', 'biomass_agb', 2022, 'pure', '1.1.2', &
         overmeta=overmeta, heightsource='H2')
+#elif (defined BIOMASS_XU)
+    call chunker%nc_create_set( & ! lcweights are dummy!!
+        esub_p, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
+        'Xu', '', 'biomass_agb', 2004, 'pure', '1.1.2', &
+        overmeta=overmeta, heightsource='X')
 #endif
 
     ! PURE_NOH2O scale out water_ice
@@ -210,9 +224,10 @@ implicit none
     type(GcmEntSet_t), target :: esub
     type(GcmEntSet_t), target :: esubnoh2o
 
-#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI)
+#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI) ||\
+    (defined BIOMASS_XU)
 #else
-    write(*,*) "Missing argument for biomass: -b SPAWN or -b GEDI"
+    write(*,*) "Missing argument for biomass: -b SPAWN, GEDI, or XU"
     stop 1
 #endif
 

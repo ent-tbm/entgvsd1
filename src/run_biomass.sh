@@ -7,3 +7,6 @@
 #../build/bin/entgvsd -b SPAWN B10b_lc_biomass_ann.F90 
 #../build/bin/entgvsd -b SPAWN B11b_reclass_biomass.F90 
 ../build/bin/entgvsd -b SPAWN B14b_regrid_biomass_pure.F90
+#../build/bin/entgvsd -b XU B10b_lc_biomass_ann.F90 
+#../build/bin/entgvsd -b XU B11b_reclass_biomass.F90 
+#../build/bin/entgvsd -b XU B14b_regrid_biomass_pure.F90

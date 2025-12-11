@@ -19,7 +19,7 @@ module regrid_biomass_mod
 implicit none
 #if (defined BIOMASS_SPAWN)
   integer, parameter :: n_biomass = 2 ! 1=agb, 2=bgb
-#elif (defined BIOMASS_GEDI)
+#elif (defined BIOMASS_GEDI) || (defined BIOMASS_XU)
   integer, parameter :: n_biomass = 1 ! 1=agb only
 #else
   integer, parameter :: n_biomass = -1
@@ -68,7 +68,7 @@ subroutine regrid_biomass(esub,&
 
       if (allocated(mywta1)) deallocate(mywta1)
       allocate(mywta1(chunker%chunk_size(1), chunker%chunk_size(2)))
-      mywta1 = io_biomass1km(k,l)%buf
+      mywta1 = 1.0 !io_lc_pure(k)%buf
 
       do jc = 1,chunker%chunk_size(2)
       do ic = 1,chunker%chunk_size(1)
@@ -164,6 +164,11 @@ integer :: imonth,k
             'Patterson, S. Saarela, G. Stahl, L. Duncanson, and J.R. Kellner. 2022.' // &
             'GEDI L4B Gridded Aboveground Biomass Density, Version 2. ORNL DAAC, Oak ' // &
             'Ridge, Tennessee, USA. https://doi.org/10.3334/ORNLDAAC/2017. NOTE: DRYBIOMASS'
+#elif (defined BIOMASS_XU)
+    overmeta%data_source = 'https://doi.org/10.1126/sciadv.abe9829'
+    overmeta%global_data_source = &
+        'biomass: Liang Xu et al. ,Changes in global terrestrial live biomass ' // &
+            'over the 21st century.Sci. Adv.7,eabe9829(2021).DOI:10.1126/sciadv.abe9829'
 #endif
 
     !call init_ent_labels
@@ -198,6 +203,9 @@ integer :: imonth,k
 #elif (defined BIOMASS_GEDI)
     call chunker%nc_open_set(esub_p, io_biomass1km(:,1), &
         'GEDI', '', 'biomass_agb', 2022, 'pure', '1.1.2', heightsource='H2')
+#elif (defined BIOMASS_XU)
+    call chunker%nc_open_set(esub_p, io_biomass1km(:,1), &
+        'Xu', '', 'biomass_agb', 2004, 'pure', '1.1.2', heightsource='X')
 #endif
 
 ! =================== Regridded Files
@@ -227,6 +235,15 @@ integer :: imonth,k
         esub_p, io_biomass_2x2h(:,1), lc_weights(io_lc_pure, 0d0, 1d0), &
         'GEDI', '', 'biomass_agb', 2022, 'pure', '1.1.2', &
         create_lr=.false., overmeta=overmeta, heightsource='H2')
+#elif (defined BIOMASS_XU)
+    call chunkerhxh%nc_create_set( & 
+        esub_p, io_biomass_hxh(:,1), lc_weights(io_lc_pure, 0d0, 1d0), &
+        'Xu', '', 'biomass_agb', 2004, 'pure', '1.1.2', &
+        create_lr=.false., overmeta=overmeta, heightsource='X')
+    call chunker2x2h%nc_create_set( & 
+        esub_p, io_biomass_2x2h(:,1), lc_weights(io_lc_pure, 0d0, 1d0), &
+        'Xu', '', 'biomass_agb', 2004, 'pure', '1.1.2', &
+        create_lr=.false., overmeta=overmeta, heightsource='X')
 #endif
 
 ! Quit if we had any problems opening files
@@ -276,9 +293,10 @@ implicit none
     type(GcmEntSet_t), target :: esub
     type(ReadWrites_t) :: rw
 
-#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI)
+#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI) ||\
+    (defined BIOMASS_XU)
 #else
-    write(*,*) "Missing argument for biomass: -b SPAWN or -b GEDI"
+    write(*,*) "Missing argument for biomass: -b SPAWN, GEDI, or XU"
     stop 1
 #endif
     call rw%init(THIS_OUTPUTS_DIR, "B14_regrid", 40,40)

@@ -19,7 +19,7 @@ implicit none
 
 #if (defined BIOMASS_SPAWN)
   integer, parameter :: n_biomass = 2
-#elif (defined BIOMASS_GEDI)
+#elif (defined BIOMASS_GEDI) || (defined BIOMASS_XU)
   integer, parameter :: n_biomass = 1
 #else
   integer, parameter :: n_biomass = -1
@@ -67,7 +67,7 @@ subroutine assign_biomass(chunker,&
 
       do l=1,n_biomass
         val = io_biomass(l)%buf(ic,jc)
-#ifdef BIOMASS_GEDI
+#if (defined BIOMASS_GEDI)
         val = val * 0.1 ! Mg Ha-1 to kg m-2
 #endif
 
@@ -173,9 +173,10 @@ type(ChunkIO_t) :: io_biomass_checksum(n_biomass)
 type(FileInfo_t) :: info, overmeta
 integer :: imonth,k
 
-#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI)
+#if (defined BIOMASS_SPAWN) || (defined BIOMASS_GEDI) ||\
+    (defined BIOMASS_XU)
 #else
-write(*,*) "Missing argument for biomass: -b SPAWN or -b GEDI"
+write(*,*) "Missing argument for biomass: -b SPAWN, GEDI, or XU"
 stop 1
 #endif
 
@@ -194,6 +195,11 @@ stop 1
             'Patterson, S. Saarela, G. Stahl, L. Duncanson, and J.R. Kellner. 2022.' // &
             'GEDI L4B Gridded Aboveground Biomass Density, Version 2. ORNL DAAC, Oak ' // &
             'Ridge, Tennessee, USA. https://doi.org/10.3334/ORNLDAAC/2017. NOTE: DRYBIOMASS'
+#elif (defined BIOMASS_XU)
+    overmeta%data_source = 'https://doi.org/10.1126/sciadv.abe9829'
+    overmeta%global_data_source = &
+        'biomass: Liang Xu et al. ,Changes in global terrestrial live biomass ' // &
+            'over the 21st century.Sci. Adv.7,eabe9829(2021).DOI:10.1126/sciadv.abe9829'
 #endif
     call init_ent_labels
     call chunker%init(IM1km, JM1km, IMH,JMH, 'forplot', 100, 320, 20, outputs_dir=THIS_OUTPUTS_DIR)
@@ -226,6 +232,11 @@ stop 1
         INPUTS_URL, INPUTS_DIR, &
         'biomass/', 'V1km_GEDI_aboveground_biomass_v2.nc', &
         'aboveground_biomass_density', 1)
+#elif (defined BIOMASS_XU)
+    call chunker%nc_open_input(io_biomass(1), &
+        INPUTS_URL, INPUTS_DIR, &
+        'biomass/', 'V1km_Xu2021_biomass_2004_v2.nc', &
+        'carbon_density', 1)
 #endif
 
 ! --- ENTPFTLC: Open outputs written by A00
@@ -247,6 +258,11 @@ stop 1
         ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
         'GEDI', '', 'biomass_agb', 2022, 'ent17', '1.1.2', &
         create_lr=.true., overmeta=overmeta, heightsource='H2')
+#elif (defined BIOMASS_XU)
+    call chunker%nc_create_set( & ! lcweights are dummy!!
+        ent20, io_biomassout(:,1), lc_weights(io_lc, 0d0, 1d0), &
+        'Xu', '', 'biomass_agb', 2004, 'ent17', '1.1.2', &
+        create_lr=.true., overmeta=overmeta, heightsource='X')
 #endif
 
 ! =================== Regridded Files
@@ -277,6 +293,13 @@ stop 1
 #elif (defined BIOMASS_GEDI)
     call chunker%file_info(info, ent20, 'GEDI', '', 'biomass_agb', 2022, &
     'ent17', '1.1.2', varsuffix='_checksum', heightsource='H2')
+    call chunker%nc_create(io_biomass_checksum(1), &
+      weighting(mywta,1d0,0d0), &
+      info%dir, info%leaf, info%vname, &
+      info%long_name, info%units, global_data_source=overmeta%global_data_source)
+#elif (defined BIOMASS_XU)
+    call chunker%file_info(info, ent20, 'Xu', '', 'biomass_agb', 2004, &
+    'ent17', '1.1.2', varsuffix='_checksum', heightsource='X')
     call chunker%nc_create(io_biomass_checksum(1), &
       weighting(mywta,1d0,0d0), &
       info%dir, info%leaf, info%vname, &
