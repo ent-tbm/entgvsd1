@@ -233,6 +233,37 @@ program.  These ``.mk`` files are written twice:
 Looking in these ``.mk`` files is useful to give a definitive answer
 on what files each program opens.
 
+Run Biomass
+----------------------
+
+Classification of biomass into individual Ent PFTs can be done in EntGVSD as a series side steps independent of the main code. Currently, three different biomass datasets are supported:
+
+1. Spawn et al. 2010
+
+1. GEDI (Dubayah et al. 2022)
+
+1. Liang Xu et al. 2021
+
+The biomass code should be ran stand-alone only after the main steps B01-B09 have been run. There are three Fortran scripts related to biomass:
+
+.. code-block:: bash
+   B10b_lc_biomass_ann.F90                Assign 1kmx1km biomass value to Ent PFTs.
+   B11b_reclass_biomass.F90               Reclass biomass from 20 land cover class scheme to 18 class scheme.
+   B14b_regrid_biomass_pure.F90           Regrid the 'pure' biomass files from 1km to 1/2 degree resolution.
+
+Running the biomass code is identical to the syntax of running a single step:
+
+.. code-block:: bash
+
+   cd ~/git/entgvsd1/src
+   ../build/bin/entgvsd -b GEDI B10b_lc_biomass_ann.F90
+   ../build/bin/entgvsd -b GEDI B11b_reclass_biomass.F90
+   ../build/bin/entgvsd -b GEDI B14b_regrid_biomass_pure.F90
+
+.. note::
+
+   The option -b <GEDI|SPAWN|XU> must be specified.
+
 Plotting
 ====================
 In addition to the fortran programs, there are utility python and R scripts for for generating map plots and reformatting files to the GISS GCM ModelE file format.  These are run by the Makefile after the fortran programs and can also be invoked at the command line.  For python scripts, use python3.  For R, use the command Rscript.
